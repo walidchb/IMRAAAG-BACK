@@ -1,10 +1,10 @@
 const mongoose = require('mongoose');
 
-const MONGO_URI = process.env.MONGODB_URI || 'mongodb://***REMOVED***:***REMOVED***@ac-wd9znsx-shard-00-00.on0pbcb.mongodb.net:27017,ac-wd9znsx-shard-00-01.on0pbcb.mongodb.net:27017,ac-wd9znsx-shard-00-02.on0pbcb.mongodb.net:27017/?ssl=true&replicaSet=atlas-bb0bfr-shard-0&authSource=admin&appName=cluster-imraaah-dev';
+const MONGO_URI = process.env.MONGODB_URI;
 
-const ZR_API_KEY = '***REMOVED***';
-const ZR_TENANT_ID = '***REMOVED***';
-const ZR_API_BASE = 'https://api.zrexpress.app/api/v1.0';
+const ZR_API_KEY = process.env.ZR_API_KEY;
+const ZR_TENANT_ID = process.env.ZR_TENANT_ID;
+const ZR_API_BASE = process.env.ZR_API_BASE || 'https://api.zrexpress.app/api/v1.0';
 
 const wilayaSchema = new mongoose.Schema({
   code: { type: String, required: true, unique: true },

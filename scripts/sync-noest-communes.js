@@ -2,10 +2,10 @@ const mongoose = require('mongoose');
 const fs = require('fs');
 const path = require('path');
 
-const MONGO_URI = 'mongodb://***REMOVED***:***REMOVED***@ac-wd9znsx-shard-00-00.on0pbcb.mongodb.net:27017,ac-wd9znsx-shard-00-01.on0pbcb.mongodb.net:27017,ac-wd9znsx-shard-00-02.on0pbcb.mongodb.net:27017/?ssl=true&replicaSet=atlas-bb0bfr-shard-0&authSource=admin&appName=cluster-imraaah-dev';
+const MONGO_URI = process.env.MONGODB_URI;
 
 const NOEST_BASE = 'https://app.noest-dz.com';
-const API_TOKEN = '***REMOVED***';
+const API_TOKEN = process.env.NOEST_API_TOKEN;
 
 function normalizeName(name) {
   return name.toLowerCase().trim()

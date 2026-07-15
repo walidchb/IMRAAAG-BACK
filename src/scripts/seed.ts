@@ -16,13 +16,13 @@ async function bootstrap() {
     const userModel = app.get<Model<User>>(getModelToken(User.name));
     
     // Check if admin already exists
-    const adminEmail = 'admin@imraaah.com';
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@imraaah.com';
     const existingAdmin = await userModel.findOne({ email: adminEmail });
     
     if (existingAdmin) {
       console.log('Admin user already exists. Skipping creation.');
     } else {
-      const hashedPassword = await bcrypt.hash('Admin123!', 10);
+      const hashedPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD || 'Admin123!', 10);
       const newAdmin = new userModel({
         email: adminEmail,
         password: hashedPassword,

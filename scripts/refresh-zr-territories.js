@@ -1,9 +1,9 @@
 const fs = require('fs');
 const path = require('path');
 
-const ZR_API_KEY = '***REMOVED***';
-const ZR_TENANT_ID = '***REMOVED***';
-const ZR_API_BASE = 'https://api.zrexpress.app/api/v1.0';
+const ZR_API_KEY = process.env.ZR_API_KEY;
+const ZR_TENANT_ID = process.env.ZR_TENANT_ID;
+const ZR_API_BASE = process.env.ZR_API_BASE || 'https://api.zrexpress.app/api/v1.0';
 
 async function fetchAllTerritories() {
   const allItems = [];

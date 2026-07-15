@@ -4,7 +4,7 @@ export default () => ({
     uri: process.env.MONGODB_URI || 'mongodb://localhost:27017/imraaah',
   },
   jwt: {
-    secret: process.env.JWT_SECRET || '***REMOVED***',
+    secret: process.env.JWT_SECRET || 'change-me-in-production-use-a-strong-secret',
   },
   smtp: {
     host: process.env.SMTP_HOST || '',

@@ -24,7 +24,7 @@ import { StoresModule } from '../stores/stores.module';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('jwt.secret') || '***REMOVED***',
+        secret: configService.get<string>('jwt.secret') || 'change-me-in-production-use-a-strong-secret',
         signOptions: { expiresIn: '7d' },
       }),
       inject: [ConfigService],
