@@ -1,0 +1,9248 @@
+[
+  {
+    "nom": "Adrar",
+    "wilaya_id": 1,
+    "code_postal": "01001",
+    "is_active": 1
+  },
+  {
+    "nom": "Tamest",
+    "wilaya_id": 1,
+    "code_postal": "01002",
+    "is_active": 1
+  },
+  {
+    "nom": "Reggane",
+    "wilaya_id": 1,
+    "code_postal": "01004",
+    "is_active": 1
+  },
+  {
+    "nom": "Inozghmir",
+    "wilaya_id": 1,
+    "code_postal": "01005",
+    "is_active": 1
+  },
+  {
+    "nom": "Tit",
+    "wilaya_id": 1,
+    "code_postal": "01006",
+    "is_active": 0
+  },
+  {
+    "nom": "Tsabit",
+    "wilaya_id": 1,
+    "code_postal": "01008",
+    "is_active": 1
+  },
+  {
+    "nom": "Zaouiet Kounta",
+    "wilaya_id": 1,
+    "code_postal": "01011",
+    "is_active": 1
+  },
+  {
+    "nom": "Aoulef",
+    "wilaya_id": 1,
+    "code_postal": "01012",
+    "is_active": 1
+  },
+  {
+    "nom": "Timokten",
+    "wilaya_id": 1,
+    "code_postal": "01013",
+    "is_active": 1
+  },
+  {
+    "nom": "Tamentit",
+    "wilaya_id": 1,
+    "code_postal": "01014",
+    "is_active": 1
+  },
+  {
+    "nom": "Fenoughil",
+    "wilaya_id": 1,
+    "code_postal": "01015",
+    "is_active": 1
+  },
+  {
+    "nom": "Sali",
+    "wilaya_id": 1,
+    "code_postal": "01018",
+    "is_active": 1
+  },
+  {
+    "nom": "Akabli",
+    "wilaya_id": 1,
+    "code_postal": "01019",
+    "is_active": 1
+  },
+  {
+    "nom": "O Ahmed Timmi",
+    "wilaya_id": 1,
+    "code_postal": "01021",
+    "is_active": 1
+  },
+  {
+    "nom": "Bouda",
+    "wilaya_id": 1,
+    "code_postal": "01022",
+    "is_active": 1
+  },
+  {
+    "nom": "Sbaa",
+    "wilaya_id": 1,
+    "code_postal": "01026",
+    "is_active": 1
+  },
+  {
+    "nom": "Chlef",
+    "wilaya_id": 2,
+    "code_postal": "02001",
+    "is_active": 1
+  },
+  {
+    "nom": "Tenes",
+    "wilaya_id": 2,
+    "code_postal": "02002",
+    "is_active": 1
+  },
+  {
+    "nom": "Benairia",
+    "wilaya_id": 2,
+    "code_postal": "02003",
+    "is_active": 1
+  },
+  {
+    "nom": "El Karimia",
+    "wilaya_id": 2,
+    "code_postal": "02004",
+    "is_active": 1
+  },
+  {
+    "nom": "Tadjna",
+    "wilaya_id": 2,
+    "code_postal": "02005",
+    "is_active": 1
+  },
+  {
+    "nom": "Taougrite",
+    "wilaya_id": 2,
+    "code_postal": "02006",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Haoua",
+    "wilaya_id": 2,
+    "code_postal": "02007",
+    "is_active": 1
+  },
+  {
+    "nom": "Sobha",
+    "wilaya_id": 2,
+    "code_postal": "02008",
+    "is_active": 1
+  },
+  {
+    "nom": "Harchoun",
+    "wilaya_id": 2,
+    "code_postal": "02009",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Fares",
+    "wilaya_id": 2,
+    "code_postal": "02010",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Akacha",
+    "wilaya_id": 2,
+    "code_postal": "02011",
+    "is_active": 1
+  },
+  {
+    "nom": "Boukadir",
+    "wilaya_id": 2,
+    "code_postal": "02012",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Rached",
+    "wilaya_id": 2,
+    "code_postal": "02013",
+    "is_active": 1
+  },
+  {
+    "nom": "Talassa",
+    "wilaya_id": 2,
+    "code_postal": "02014",
+    "is_active": 1
+  },
+  {
+    "nom": "Herenfa",
+    "wilaya_id": 2,
+    "code_postal": "02015",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued Goussine",
+    "wilaya_id": 2,
+    "code_postal": "02016",
+    "is_active": 1
+  },
+  {
+    "nom": "Dahra",
+    "wilaya_id": 2,
+    "code_postal": "02017",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Abbes",
+    "wilaya_id": 2,
+    "code_postal": "02018",
+    "is_active": 1
+  },
+  {
+    "nom": "Sendjas",
+    "wilaya_id": 2,
+    "code_postal": "02019",
+    "is_active": 1
+  },
+  {
+    "nom": "Zeboudja",
+    "wilaya_id": 2,
+    "code_postal": "02020",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued Sly",
+    "wilaya_id": 2,
+    "code_postal": "02021",
+    "is_active": 1
+  },
+  {
+    "nom": "Abou El Hassen",
+    "wilaya_id": 2,
+    "code_postal": "02022",
+    "is_active": 1
+  },
+  {
+    "nom": "El Marsa",
+    "wilaya_id": 2,
+    "code_postal": "02023",
+    "is_active": 1
+  },
+  {
+    "nom": "Chettia",
+    "wilaya_id": 2,
+    "code_postal": "02024",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Abderrahmane",
+    "wilaya_id": 2,
+    "code_postal": "02025",
+    "is_active": 1
+  },
+  {
+    "nom": "Moussadek",
+    "wilaya_id": 2,
+    "code_postal": "02026",
+    "is_active": 1
+  },
+  {
+    "nom": "El Hadjadj",
+    "wilaya_id": 2,
+    "code_postal": "02027",
+    "is_active": 0
+  },
+  {
+    "nom": "Labiod Medjadja",
+    "wilaya_id": 2,
+    "code_postal": "02028",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued Fodda",
+    "wilaya_id": 2,
+    "code_postal": "02029",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Ben Abdelkader",
+    "wilaya_id": 2,
+    "code_postal": "02030",
+    "is_active": 1
+  },
+  {
+    "nom": "Bouzghaia",
+    "wilaya_id": 2,
+    "code_postal": "02031",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Merane",
+    "wilaya_id": 2,
+    "code_postal": "02032",
+    "is_active": 1
+  },
+  {
+    "nom": "Oum Drou",
+    "wilaya_id": 2,
+    "code_postal": "02033",
+    "is_active": 1
+  },
+  {
+    "nom": "Breira",
+    "wilaya_id": 2,
+    "code_postal": "02034",
+    "is_active": 1
+  },
+  {
+    "nom": "Ben Boutaleb",
+    "wilaya_id": 2,
+    "code_postal": "02035",
+    "is_active": 0
+  },
+  {
+    "nom": "Laghouat",
+    "wilaya_id": 3,
+    "code_postal": "03001",
+    "is_active": 1
+  },
+  {
+    "nom": "Ksar El Hirane",
+    "wilaya_id": 3,
+    "code_postal": "03002",
+    "is_active": 1
+  },
+  {
+    "nom": "Benacer Ben Chohra",
+    "wilaya_id": 3,
+    "code_postal": "03003",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Makhlouf",
+    "wilaya_id": 3,
+    "code_postal": "03004",
+    "is_active": 1
+  },
+  {
+    "nom": "Hassi Delaa",
+    "wilaya_id": 3,
+    "code_postal": "03005",
+    "is_active": 1
+  },
+  {
+    "nom": "Hassi R Mel",
+    "wilaya_id": 3,
+    "code_postal": "03006",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Mahdi",
+    "wilaya_id": 3,
+    "code_postal": "03007",
+    "is_active": 1
+  },
+  {
+    "nom": "Tadjmout",
+    "wilaya_id": 3,
+    "code_postal": "03008",
+    "is_active": 1
+  },
+  {
+    "nom": "Kheneg",
+    "wilaya_id": 3,
+    "code_postal": "03009",
+    "is_active": 1
+  },
+  {
+    "nom": "Gueltat Sidi Saad",
+    "wilaya_id": 3,
+    "code_postal": "03010",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Sidi Ali",
+    "wilaya_id": 3,
+    "code_postal": "03011",
+    "is_active": 1
+  },
+  {
+    "nom": "Beidha",
+    "wilaya_id": 3,
+    "code_postal": "03012",
+    "is_active": 1
+  },
+  {
+    "nom": "Brida",
+    "wilaya_id": 3,
+    "code_postal": "03013",
+    "is_active": 1
+  },
+  {
+    "nom": "El Ghicha",
+    "wilaya_id": 3,
+    "code_postal": "03014",
+    "is_active": 1
+  },
+  {
+    "nom": "Hadj Mechri",
+    "wilaya_id": 3,
+    "code_postal": "03015",
+    "is_active": 1
+  },
+  {
+    "nom": "Sebgag",
+    "wilaya_id": 3,
+    "code_postal": "03016",
+    "is_active": 1
+  },
+  {
+    "nom": "Taouiala",
+    "wilaya_id": 3,
+    "code_postal": "03017",
+    "is_active": 1
+  },
+  {
+    "nom": "Tadjrouna",
+    "wilaya_id": 3,
+    "code_postal": "03018",
+    "is_active": 1
+  },
+  {
+    "nom": "Aflou",
+    "wilaya_id": 3,
+    "code_postal": "03019",
+    "is_active": 1
+  },
+  {
+    "nom": "El Assafia",
+    "wilaya_id": 3,
+    "code_postal": "03020",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued Morra",
+    "wilaya_id": 3,
+    "code_postal": "03021",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued M Zi",
+    "wilaya_id": 3,
+    "code_postal": "03022",
+    "is_active": 1
+  },
+  {
+    "nom": "El Haouaita",
+    "wilaya_id": 3,
+    "code_postal": "03023",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Bouzid",
+    "wilaya_id": 3,
+    "code_postal": "03024",
+    "is_active": 1
+  },
+  {
+    "nom": "Oum El Bouaghi",
+    "wilaya_id": 4,
+    "code_postal": "04001",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Beida",
+    "wilaya_id": 4,
+    "code_postal": "04002",
+    "is_active": 1
+  },
+  {
+    "nom": "Ainmlila",
+    "wilaya_id": 4,
+    "code_postal": "04003",
+    "is_active": 1
+  },
+  {
+    "nom": "Behir Chergui",
+    "wilaya_id": 4,
+    "code_postal": "04004",
+    "is_active": 1
+  },
+  {
+    "nom": "El Amiria",
+    "wilaya_id": 4,
+    "code_postal": "04005",
+    "is_active": 1
+  },
+  {
+    "nom": "Sigus",
+    "wilaya_id": 4,
+    "code_postal": "04006",
+    "is_active": 1
+  },
+  {
+    "nom": "El Belala",
+    "wilaya_id": 4,
+    "code_postal": "04007",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Babouche",
+    "wilaya_id": 4,
+    "code_postal": "04008",
+    "is_active": 1
+  },
+  {
+    "nom": "Berriche",
+    "wilaya_id": 4,
+    "code_postal": "04009",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Hamla",
+    "wilaya_id": 4,
+    "code_postal": "04010",
+    "is_active": 1
+  },
+  {
+    "nom": "Dhala",
+    "wilaya_id": 4,
+    "code_postal": "04011",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Kercha",
+    "wilaya_id": 4,
+    "code_postal": "04012",
+    "is_active": 1
+  },
+  {
+    "nom": "Hanchir Toumghani",
+    "wilaya_id": 4,
+    "code_postal": "04013",
+    "is_active": 1
+  },
+  {
+    "nom": "El Djazia",
+    "wilaya_id": 4,
+    "code_postal": "04014",
+    "is_active": 0
+  },
+  {
+    "nom": "Ain Diss",
+    "wilaya_id": 4,
+    "code_postal": "04015",
+    "is_active": 1
+  },
+  {
+    "nom": "Fkirina",
+    "wilaya_id": 4,
+    "code_postal": "04016",
+    "is_active": 1
+  },
+  {
+    "nom": "Souk Naamane",
+    "wilaya_id": 4,
+    "code_postal": "04017",
+    "is_active": 1
+  },
+  {
+    "nom": "Zorg",
+    "wilaya_id": 4,
+    "code_postal": "04018",
+    "is_active": 1
+  },
+  {
+    "nom": "El Fedjoudj Boughrar",
+    "wilaya_id": 4,
+    "code_postal": "04019",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Zouai",
+    "wilaya_id": 4,
+    "code_postal": "04020",
+    "is_active": 1
+  },
+  {
+    "nom": "Bir Chouhada",
+    "wilaya_id": 4,
+    "code_postal": "04021",
+    "is_active": 1
+  },
+  {
+    "nom": "Ksar Sbahi",
+    "wilaya_id": 4,
+    "code_postal": "04022",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued Nini",
+    "wilaya_id": 4,
+    "code_postal": "04023",
+    "is_active": 1
+  },
+  {
+    "nom": "Meskiana",
+    "wilaya_id": 4,
+    "code_postal": "04024",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Fekroune",
+    "wilaya_id": 4,
+    "code_postal": "04025",
+    "is_active": 1
+  },
+  {
+    "nom": "Rahia",
+    "wilaya_id": 4,
+    "code_postal": "04026",
+    "is_active": 0
+  },
+  {
+    "nom": "Ain Zitoun",
+    "wilaya_id": 4,
+    "code_postal": "04027",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Gacem",
+    "wilaya_id": 4,
+    "code_postal": "04028",
+    "is_active": 1
+  },
+  {
+    "nom": "El Harmilia",
+    "wilaya_id": 4,
+    "code_postal": "04029",
+    "is_active": 1
+  },
+  {
+    "nom": "Batna",
+    "wilaya_id": 5,
+    "code_postal": "05001",
+    "is_active": 1
+  },
+  {
+    "nom": "Ghassira",
+    "wilaya_id": 5,
+    "code_postal": "05002",
+    "is_active": 1
+  },
+  {
+    "nom": "Maafa",
+    "wilaya_id": 5,
+    "code_postal": "05003",
+    "is_active": 1
+  },
+  {
+    "nom": "Merouana",
+    "wilaya_id": 5,
+    "code_postal": "05004",
+    "is_active": 1
+  },
+  {
+    "nom": "Seriana",
+    "wilaya_id": 5,
+    "code_postal": "05005",
+    "is_active": 1
+  },
+  {
+    "nom": "Menaa",
+    "wilaya_id": 5,
+    "code_postal": "05006",
+    "is_active": 1
+  },
+  {
+    "nom": "El Madher",
+    "wilaya_id": 5,
+    "code_postal": "05007",
+    "is_active": 1
+  },
+  {
+    "nom": "Tazoult",
+    "wilaya_id": 5,
+    "code_postal": "05008",
+    "is_active": 1
+  },
+  {
+    "nom": "Ngaous",
+    "wilaya_id": 5,
+    "code_postal": "05009",
+    "is_active": 1
+  },
+  {
+    "nom": "Guigba",
+    "wilaya_id": 5,
+    "code_postal": "05010",
+    "is_active": 1
+  },
+  {
+    "nom": "Inoughissen",
+    "wilaya_id": 5,
+    "code_postal": "05011",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouyoun El Assafir",
+    "wilaya_id": 5,
+    "code_postal": "05012",
+    "is_active": 1
+  },
+  {
+    "nom": "Djerma",
+    "wilaya_id": 5,
+    "code_postal": "05013",
+    "is_active": 1
+  },
+  {
+    "nom": "Bitam",
+    "wilaya_id": 5,
+    "code_postal": "05014",
+    "is_active": 1
+  },
+  {
+    "nom": "Metkaouak",
+    "wilaya_id": 5,
+    "code_postal": "05015",
+    "is_active": 1
+  },
+  {
+    "nom": "Arris",
+    "wilaya_id": 5,
+    "code_postal": "05016",
+    "is_active": 1
+  },
+  {
+    "nom": "Kimmel",
+    "wilaya_id": 5,
+    "code_postal": "05017",
+    "is_active": 1
+  },
+  {
+    "nom": "Tilatou",
+    "wilaya_id": 5,
+    "code_postal": "05018",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Djasser",
+    "wilaya_id": 5,
+    "code_postal": "05019",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Selam",
+    "wilaya_id": 5,
+    "code_postal": "05020",
+    "is_active": 1
+  },
+  {
+    "nom": "Tigherghar",
+    "wilaya_id": 5,
+    "code_postal": "05021",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Yagout",
+    "wilaya_id": 5,
+    "code_postal": "05022",
+    "is_active": 1
+  },
+  {
+    "nom": "Fesdis",
+    "wilaya_id": 5,
+    "code_postal": "05023",
+    "is_active": 1
+  },
+  {
+    "nom": "Sefiane",
+    "wilaya_id": 5,
+    "code_postal": "05024",
+    "is_active": 1
+  },
+  {
+    "nom": "Rahbat",
+    "wilaya_id": 5,
+    "code_postal": "05025",
+    "is_active": 1
+  },
+  {
+    "nom": "Tighanimine",
+    "wilaya_id": 5,
+    "code_postal": "05026",
+    "is_active": 1
+  },
+  {
+    "nom": "Lemsane",
+    "wilaya_id": 5,
+    "code_postal": "05027",
+    "is_active": 1
+  },
+  {
+    "nom": "Ksar Belezma",
+    "wilaya_id": 5,
+    "code_postal": "05028",
+    "is_active": 1
+  },
+  {
+    "nom": "Seggana",
+    "wilaya_id": 5,
+    "code_postal": "05029",
+    "is_active": 1
+  },
+  {
+    "nom": "Ichmoul",
+    "wilaya_id": 5,
+    "code_postal": "05030",
+    "is_active": 1
+  },
+  {
+    "nom": "Foum Toub",
+    "wilaya_id": 5,
+    "code_postal": "05031",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Foudhala El Hakania",
+    "wilaya_id": 5,
+    "code_postal": "05032",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued El Ma",
+    "wilaya_id": 5,
+    "code_postal": "05033",
+    "is_active": 1
+  },
+  {
+    "nom": "Talkhamt",
+    "wilaya_id": 5,
+    "code_postal": "05034",
+    "is_active": 1
+  },
+  {
+    "nom": "Bouzina",
+    "wilaya_id": 5,
+    "code_postal": "05035",
+    "is_active": 1
+  },
+  {
+    "nom": "Chemora",
+    "wilaya_id": 5,
+    "code_postal": "05036",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued Chaaba",
+    "wilaya_id": 5,
+    "code_postal": "05037",
+    "is_active": 1
+  },
+  {
+    "nom": "Taxlent",
+    "wilaya_id": 5,
+    "code_postal": "05038",
+    "is_active": 1
+  },
+  {
+    "nom": "Gosbat",
+    "wilaya_id": 5,
+    "code_postal": "05039",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Aouf",
+    "wilaya_id": 5,
+    "code_postal": "05040",
+    "is_active": 1
+  },
+  {
+    "nom": "Boumagueur",
+    "wilaya_id": 5,
+    "code_postal": "05041",
+    "is_active": 1
+  },
+  {
+    "nom": "Barika",
+    "wilaya_id": 5,
+    "code_postal": "05042",
+    "is_active": 1
+  },
+  {
+    "nom": "Djezzar",
+    "wilaya_id": 5,
+    "code_postal": "05043",
+    "is_active": 1
+  },
+  {
+    "nom": "Tkout",
+    "wilaya_id": 5,
+    "code_postal": "05044",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Touta",
+    "wilaya_id": 5,
+    "code_postal": "05045",
+    "is_active": 1
+  },
+  {
+    "nom": "Hidoussa",
+    "wilaya_id": 5,
+    "code_postal": "05046",
+    "is_active": 1
+  },
+  {
+    "nom": "Teniet El Abed",
+    "wilaya_id": 5,
+    "code_postal": "05047",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued Taga",
+    "wilaya_id": 5,
+    "code_postal": "05048",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Fadel",
+    "wilaya_id": 5,
+    "code_postal": "05049",
+    "is_active": 1
+  },
+  {
+    "nom": "Timgad",
+    "wilaya_id": 5,
+    "code_postal": "05050",
+    "is_active": 1
+  },
+  {
+    "nom": "Ras El Aioun",
+    "wilaya_id": 5,
+    "code_postal": "05051",
+    "is_active": 1
+  },
+  {
+    "nom": "Chir",
+    "wilaya_id": 5,
+    "code_postal": "05052",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Si Slimane",
+    "wilaya_id": 5,
+    "code_postal": "05053",
+    "is_active": 1
+  },
+  {
+    "nom": "Zanat El Beida",
+    "wilaya_id": 5,
+    "code_postal": "05054",
+    "is_active": 1
+  },
+  {
+    "nom": "Amdoukal",
+    "wilaya_id": 5,
+    "code_postal": "05055",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Ammar",
+    "wilaya_id": 5,
+    "code_postal": "05056",
+    "is_active": 1
+  },
+  {
+    "nom": "El Hassi",
+    "wilaya_id": 5,
+    "code_postal": "05057",
+    "is_active": 1
+  },
+  {
+    "nom": "Lazrou",
+    "wilaya_id": 5,
+    "code_postal": "05058",
+    "is_active": 1
+  },
+  {
+    "nom": "Boumia",
+    "wilaya_id": 5,
+    "code_postal": "05059",
+    "is_active": 1
+  },
+  {
+    "nom": "Boulhilat",
+    "wilaya_id": 5,
+    "code_postal": "05060",
+    "is_active": 1
+  },
+  {
+    "nom": "Larbaa",
+    "wilaya_id": 5,
+    "code_postal": "05061",
+    "is_active": 1
+  },
+  {
+    "nom": "Bejaia",
+    "wilaya_id": 6,
+    "code_postal": "06001",
+    "is_active": 1
+  },
+  {
+    "nom": "Amizour",
+    "wilaya_id": 6,
+    "code_postal": "06002",
+    "is_active": 1
+  },
+  {
+    "nom": "Ferraoun",
+    "wilaya_id": 6,
+    "code_postal": "06003",
+    "is_active": 1
+  },
+  {
+    "nom": "Taourirt Ighil",
+    "wilaya_id": 6,
+    "code_postal": "06004",
+    "is_active": 1
+  },
+  {
+    "nom": "Chelata",
+    "wilaya_id": 6,
+    "code_postal": "06005",
+    "is_active": 1
+  },
+  {
+    "nom": "Tamokra",
+    "wilaya_id": 6,
+    "code_postal": "06006",
+    "is_active": 0
+  },
+  {
+    "nom": "Timzrit",
+    "wilaya_id": 6,
+    "code_postal": "06007",
+    "is_active": 1
+  },
+  {
+    "nom": "Souk El Thenine",
+    "wilaya_id": 6,
+    "code_postal": "06008",
+    "is_active": 1
+  },
+  {
+    "nom": "Mcisna",
+    "wilaya_id": 6,
+    "code_postal": "06009",
+    "is_active": 1
+  },
+  {
+    "nom": "Thinabdher",
+    "wilaya_id": 6,
+    "code_postal": "06010",
+    "is_active": 1
+  },
+  {
+    "nom": "Tichi",
+    "wilaya_id": 6,
+    "code_postal": "06011",
+    "is_active": 1
+  },
+  {
+    "nom": "Semaoun",
+    "wilaya_id": 6,
+    "code_postal": "06012",
+    "is_active": 1
+  },
+  {
+    "nom": "Kendira",
+    "wilaya_id": 6,
+    "code_postal": "06013",
+    "is_active": 1
+  },
+  {
+    "nom": "Tifra",
+    "wilaya_id": 6,
+    "code_postal": "06014",
+    "is_active": 1
+  },
+  {
+    "nom": "Ighram",
+    "wilaya_id": 6,
+    "code_postal": "06015",
+    "is_active": 1
+  },
+  {
+    "nom": "Amalou",
+    "wilaya_id": 6,
+    "code_postal": "06016",
+    "is_active": 1
+  },
+  {
+    "nom": "Ighil Ali",
+    "wilaya_id": 6,
+    "code_postal": "06017",
+    "is_active": 0
+  },
+  {
+    "nom": "Ifelain Ilmathen",
+    "wilaya_id": 6,
+    "code_postal": "06018",
+    "is_active": 1
+  },
+  {
+    "nom": "Toudja",
+    "wilaya_id": 6,
+    "code_postal": "06019",
+    "is_active": 1
+  },
+  {
+    "nom": "Darguina",
+    "wilaya_id": 6,
+    "code_postal": "06020",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Ayad",
+    "wilaya_id": 6,
+    "code_postal": "06021",
+    "is_active": 1
+  },
+  {
+    "nom": "Aokas",
+    "wilaya_id": 6,
+    "code_postal": "06022",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Djellil",
+    "wilaya_id": 6,
+    "code_postal": "06023",
+    "is_active": 1
+  },
+  {
+    "nom": "Adekar",
+    "wilaya_id": 6,
+    "code_postal": "06024",
+    "is_active": 1
+  },
+  {
+    "nom": "Akbou",
+    "wilaya_id": 6,
+    "code_postal": "06025",
+    "is_active": 1
+  },
+  {
+    "nom": "Seddouk",
+    "wilaya_id": 6,
+    "code_postal": "06026",
+    "is_active": 1
+  },
+  {
+    "nom": "Tazmalt",
+    "wilaya_id": 6,
+    "code_postal": "06027",
+    "is_active": 1
+  },
+  {
+    "nom": "Ait Rizine",
+    "wilaya_id": 6,
+    "code_postal": "06028",
+    "is_active": 1
+  },
+  {
+    "nom": "Chemini",
+    "wilaya_id": 6,
+    "code_postal": "06029",
+    "is_active": 1
+  },
+  {
+    "nom": "Souk Oufella",
+    "wilaya_id": 6,
+    "code_postal": "06030",
+    "is_active": 1
+  },
+  {
+    "nom": "Taskriout",
+    "wilaya_id": 6,
+    "code_postal": "06031",
+    "is_active": 1
+  },
+  {
+    "nom": "Tibane",
+    "wilaya_id": 6,
+    "code_postal": "06032",
+    "is_active": 1
+  },
+  {
+    "nom": "Tala Hamza",
+    "wilaya_id": 6,
+    "code_postal": "06033",
+    "is_active": 1
+  },
+  {
+    "nom": "Barbacha",
+    "wilaya_id": 6,
+    "code_postal": "06034",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Ksila",
+    "wilaya_id": 6,
+    "code_postal": "06035",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouzallaguen",
+    "wilaya_id": 6,
+    "code_postal": "06036",
+    "is_active": 1
+  },
+  {
+    "nom": "Bouhamza",
+    "wilaya_id": 6,
+    "code_postal": "06037",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Melikeche",
+    "wilaya_id": 6,
+    "code_postal": "06038",
+    "is_active": 0
+  },
+  {
+    "nom": "Sidi Aich",
+    "wilaya_id": 6,
+    "code_postal": "06039",
+    "is_active": 1
+  },
+  {
+    "nom": "El Kseur",
+    "wilaya_id": 6,
+    "code_postal": "06040",
+    "is_active": 1
+  },
+  {
+    "nom": "Melbou",
+    "wilaya_id": 6,
+    "code_postal": "06041",
+    "is_active": 1
+  },
+  {
+    "nom": "Akfadou",
+    "wilaya_id": 6,
+    "code_postal": "06042",
+    "is_active": 1
+  },
+  {
+    "nom": "Leflaye",
+    "wilaya_id": 6,
+    "code_postal": "06043",
+    "is_active": 1
+  },
+  {
+    "nom": "Kherrata",
+    "wilaya_id": 6,
+    "code_postal": "06044",
+    "is_active": 1
+  },
+  {
+    "nom": "Draa Kaid",
+    "wilaya_id": 6,
+    "code_postal": "06045",
+    "is_active": 0
+  },
+  {
+    "nom": "Tamridjet",
+    "wilaya_id": 6,
+    "code_postal": "06046",
+    "is_active": 0
+  },
+  {
+    "nom": "Ait Smail",
+    "wilaya_id": 6,
+    "code_postal": "06047",
+    "is_active": 1
+  },
+  {
+    "nom": "Boukhelifa",
+    "wilaya_id": 6,
+    "code_postal": "06048",
+    "is_active": 1
+  },
+  {
+    "nom": "Tizi Nberber",
+    "wilaya_id": 6,
+    "code_postal": "06049",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Maouch",
+    "wilaya_id": 6,
+    "code_postal": "06050",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued Ghir",
+    "wilaya_id": 6,
+    "code_postal": "06051",
+    "is_active": 1
+  },
+  {
+    "nom": "Boudjellil",
+    "wilaya_id": 6,
+    "code_postal": "06052",
+    "is_active": 1
+  },
+  {
+    "nom": "Biskra",
+    "wilaya_id": 7,
+    "code_postal": "07001",
+    "is_active": 1
+  },
+  {
+    "nom": "Oumache",
+    "wilaya_id": 7,
+    "code_postal": "07002",
+    "is_active": 1
+  },
+  {
+    "nom": "Branis",
+    "wilaya_id": 7,
+    "code_postal": "07003",
+    "is_active": 1
+  },
+  {
+    "nom": "Chetma",
+    "wilaya_id": 7,
+    "code_postal": "07004",
+    "is_active": 1
+  },
+  {
+    "nom": "Besbes",
+    "wilaya_id": 36,
+    "code_postal": "36016",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Okba",
+    "wilaya_id": 7,
+    "code_postal": "07011",
+    "is_active": 1
+  },
+  {
+    "nom": "Mchouneche",
+    "wilaya_id": 7,
+    "code_postal": "07012",
+    "is_active": 1
+  },
+  {
+    "nom": "El Haouch",
+    "wilaya_id": 7,
+    "code_postal": "07013",
+    "is_active": 0
+  },
+  {
+    "nom": "Ain Naga",
+    "wilaya_id": 7,
+    "code_postal": "07014",
+    "is_active": 1
+  },
+  {
+    "nom": "Zeribet El Oued",
+    "wilaya_id": 7,
+    "code_postal": "07015",
+    "is_active": 1
+  },
+  {
+    "nom": "El Feidh",
+    "wilaya_id": 7,
+    "code_postal": "07016",
+    "is_active": 1
+  },
+  {
+    "nom": "El Kantara",
+    "wilaya_id": 7,
+    "code_postal": "07017",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Zaatout",
+    "wilaya_id": 7,
+    "code_postal": "07018",
+    "is_active": 0
+  },
+  {
+    "nom": "El Outaya",
+    "wilaya_id": 7,
+    "code_postal": "07019",
+    "is_active": 1
+  },
+  {
+    "nom": "Djemorah",
+    "wilaya_id": 7,
+    "code_postal": "07020",
+    "is_active": 1
+  },
+  {
+    "nom": "Tolga",
+    "wilaya_id": 7,
+    "code_postal": "07021",
+    "is_active": 1
+  },
+  {
+    "nom": "Lioua",
+    "wilaya_id": 7,
+    "code_postal": "07022",
+    "is_active": 1
+  },
+  {
+    "nom": "Lichana",
+    "wilaya_id": 7,
+    "code_postal": "07023",
+    "is_active": 1
+  },
+  {
+    "nom": "Ourlal",
+    "wilaya_id": 7,
+    "code_postal": "07024",
+    "is_active": 1
+  },
+  {
+    "nom": "Mlili",
+    "wilaya_id": 7,
+    "code_postal": "07025",
+    "is_active": 1
+  },
+  {
+    "nom": "Foughala",
+    "wilaya_id": 7,
+    "code_postal": "07026",
+    "is_active": 1
+  },
+  {
+    "nom": "Bordj Ben Azzouz",
+    "wilaya_id": 7,
+    "code_postal": "07027",
+    "is_active": 1
+  },
+  {
+    "nom": "Meziraa",
+    "wilaya_id": 7,
+    "code_postal": "07028",
+    "is_active": 1
+  },
+  {
+    "nom": "Bouchagroun",
+    "wilaya_id": 7,
+    "code_postal": "07029",
+    "is_active": 1
+  },
+  {
+    "nom": "Mekhadma",
+    "wilaya_id": 7,
+    "code_postal": "07030",
+    "is_active": 1
+  },
+  {
+    "nom": "El Ghrous",
+    "wilaya_id": 7,
+    "code_postal": "07031",
+    "is_active": 1
+  },
+  {
+    "nom": "El Hadjab",
+    "wilaya_id": 7,
+    "code_postal": "07032",
+    "is_active": 1
+  },
+  {
+    "nom": "Khanguet Sidinadji",
+    "wilaya_id": 7,
+    "code_postal": "07033",
+    "is_active": 0
+  },
+  {
+    "nom": "Bechar",
+    "wilaya_id": 8,
+    "code_postal": "08001",
+    "is_active": 1
+  },
+  {
+    "nom": "Erg Ferradj",
+    "wilaya_id": 8,
+    "code_postal": "08002",
+    "is_active": 1
+  },
+  {
+    "nom": "Meridja",
+    "wilaya_id": 8,
+    "code_postal": "08004",
+    "is_active": 1
+  },
+  {
+    "nom": "Lahmar",
+    "wilaya_id": 8,
+    "code_postal": "08006",
+    "is_active": 1
+  },
+  {
+    "nom": "Mechraa Houari B",
+    "wilaya_id": 8,
+    "code_postal": "08009",
+    "is_active": 1
+  },
+  {
+    "nom": "Kenedsa",
+    "wilaya_id": 8,
+    "code_postal": "08010",
+    "is_active": 1
+  },
+  {
+    "nom": "Tabalbala",
+    "wilaya_id": 8,
+    "code_postal": "08012",
+    "is_active": 0
+  },
+  {
+    "nom": "Taghit",
+    "wilaya_id": 8,
+    "code_postal": "08013",
+    "is_active": 1
+  },
+  {
+    "nom": "Boukais",
+    "wilaya_id": 8,
+    "code_postal": "08015",
+    "is_active": 1
+  },
+  {
+    "nom": "Mogheul",
+    "wilaya_id": 8,
+    "code_postal": "08016",
+    "is_active": 1
+  },
+  {
+    "nom": "Abadla",
+    "wilaya_id": 8,
+    "code_postal": "08017",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Ounif",
+    "wilaya_id": 8,
+    "code_postal": "08021",
+    "is_active": 1
+  },
+  {
+    "nom": "Blida",
+    "wilaya_id": 9,
+    "code_postal": "09001",
+    "is_active": 1
+  },
+  {
+    "nom": "Chebli",
+    "wilaya_id": 9,
+    "code_postal": "09002",
+    "is_active": 1
+  },
+  {
+    "nom": "Bouinan",
+    "wilaya_id": 9,
+    "code_postal": "09003",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued El Alleug",
+    "wilaya_id": 9,
+    "code_postal": "09004",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Yaich",
+    "wilaya_id": 9,
+    "code_postal": "09007",
+    "is_active": 1
+  },
+  {
+    "nom": "Chrea",
+    "wilaya_id": 9,
+    "code_postal": "09008",
+    "is_active": 1
+  },
+  {
+    "nom": "El Affroun",
+    "wilaya_id": 9,
+    "code_postal": "09010",
+    "is_active": 1
+  },
+  {
+    "nom": "Chiffa",
+    "wilaya_id": 9,
+    "code_postal": "09011",
+    "is_active": 1
+  },
+  {
+    "nom": "Hammam Melouane",
+    "wilaya_id": 9,
+    "code_postal": "09012",
+    "is_active": 1
+  },
+  {
+    "nom": "Ben Khlil",
+    "wilaya_id": 9,
+    "code_postal": "09013",
+    "is_active": 1
+  },
+  {
+    "nom": "Soumaa",
+    "wilaya_id": 9,
+    "code_postal": "09014",
+    "is_active": 1
+  },
+  {
+    "nom": "Mouzaia",
+    "wilaya_id": 9,
+    "code_postal": "09016",
+    "is_active": 1
+  },
+  {
+    "nom": "Souhane",
+    "wilaya_id": 9,
+    "code_postal": "09017",
+    "is_active": 1
+  },
+  {
+    "nom": "Meftah",
+    "wilaya_id": 9,
+    "code_postal": "09018",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Selama",
+    "wilaya_id": 9,
+    "code_postal": "09019",
+    "is_active": 1
+  },
+  {
+    "nom": "Boufarik",
+    "wilaya_id": 9,
+    "code_postal": "09020",
+    "is_active": 1
+  },
+  {
+    "nom": "Larbaa",
+    "wilaya_id": 9,
+    "code_postal": "09021",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued Djer",
+    "wilaya_id": 9,
+    "code_postal": "09022",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Tamou",
+    "wilaya_id": 9,
+    "code_postal": "09023",
+    "is_active": 1
+  },
+  {
+    "nom": "Bouarfa",
+    "wilaya_id": 9,
+    "code_postal": "09024",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Mered",
+    "wilaya_id": 9,
+    "code_postal": "09025",
+    "is_active": 1
+  },
+  {
+    "nom": "Bougara",
+    "wilaya_id": 9,
+    "code_postal": "09026",
+    "is_active": 1
+  },
+  {
+    "nom": "Guerrouaou",
+    "wilaya_id": 9,
+    "code_postal": "09027",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Romana",
+    "wilaya_id": 9,
+    "code_postal": "09028",
+    "is_active": 1
+  },
+  {
+    "nom": "Djebabra",
+    "wilaya_id": 9,
+    "code_postal": "09029",
+    "is_active": 1
+  },
+  {
+    "nom": "Bouira",
+    "wilaya_id": 10,
+    "code_postal": "10001",
+    "is_active": 1
+  },
+  {
+    "nom": "El Asnam",
+    "wilaya_id": 10,
+    "code_postal": "10002",
+    "is_active": 1
+  },
+  {
+    "nom": "Guerrouma",
+    "wilaya_id": 10,
+    "code_postal": "10003",
+    "is_active": 1
+  },
+  {
+    "nom": "Souk El Khemis",
+    "wilaya_id": 10,
+    "code_postal": "10004",
+    "is_active": 1
+  },
+  {
+    "nom": "Kadiria",
+    "wilaya_id": 10,
+    "code_postal": "10005",
+    "is_active": 1
+  },
+  {
+    "nom": "Hanif",
+    "wilaya_id": 10,
+    "code_postal": "10006",
+    "is_active": 1
+  },
+  {
+    "nom": "Dirah",
+    "wilaya_id": 10,
+    "code_postal": "10007",
+    "is_active": 1
+  },
+  {
+    "nom": "Ait Laaziz",
+    "wilaya_id": 10,
+    "code_postal": "10008",
+    "is_active": 1
+  },
+  {
+    "nom": "Taghzout",
+    "wilaya_id": 10,
+    "code_postal": "10009",
+    "is_active": 1
+  },
+  {
+    "nom": "Raouraoua",
+    "wilaya_id": 10,
+    "code_postal": "10010",
+    "is_active": 1
+  },
+  {
+    "nom": "Mezdour",
+    "wilaya_id": 10,
+    "code_postal": "10011",
+    "is_active": 1
+  },
+  {
+    "nom": "Haizer",
+    "wilaya_id": 10,
+    "code_postal": "10012",
+    "is_active": 1
+  },
+  {
+    "nom": "Lakhdaria",
+    "wilaya_id": 10,
+    "code_postal": "10013",
+    "is_active": 1
+  },
+  {
+    "nom": "Maala",
+    "wilaya_id": 10,
+    "code_postal": "10014",
+    "is_active": 1
+  },
+  {
+    "nom": "El Hachimia",
+    "wilaya_id": 10,
+    "code_postal": "10015",
+    "is_active": 1
+  },
+  {
+    "nom": "Aomar",
+    "wilaya_id": 10,
+    "code_postal": "10016",
+    "is_active": 1
+  },
+  {
+    "nom": "Chorfa",
+    "wilaya_id": 10,
+    "code_postal": "10017",
+    "is_active": 1
+  },
+  {
+    "nom": "Bordj Oukhriss",
+    "wilaya_id": 10,
+    "code_postal": "10018",
+    "is_active": 1
+  },
+  {
+    "nom": "El Adjiba",
+    "wilaya_id": 10,
+    "code_postal": "10019",
+    "is_active": 1
+  },
+  {
+    "nom": "El Hakimia",
+    "wilaya_id": 10,
+    "code_postal": "10020",
+    "is_active": 1
+  },
+  {
+    "nom": "El Khebouzia",
+    "wilaya_id": 10,
+    "code_postal": "10021",
+    "is_active": 1
+  },
+  {
+    "nom": "Ahl El Ksar",
+    "wilaya_id": 10,
+    "code_postal": "10022",
+    "is_active": 1
+  },
+  {
+    "nom": "Bouderbala",
+    "wilaya_id": 10,
+    "code_postal": "10023",
+    "is_active": 1
+  },
+  {
+    "nom": "Zbarbar",
+    "wilaya_id": 10,
+    "code_postal": "10024",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain El Hadjar",
+    "wilaya_id": 10,
+    "code_postal": "10025",
+    "is_active": 1
+  },
+  {
+    "nom": "Djebahia",
+    "wilaya_id": 10,
+    "code_postal": "10026",
+    "is_active": 1
+  },
+  {
+    "nom": "Aghbalou",
+    "wilaya_id": 10,
+    "code_postal": "10027",
+    "is_active": 1
+  },
+  {
+    "nom": "Taguedit",
+    "wilaya_id": 10,
+    "code_postal": "10028",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Turk",
+    "wilaya_id": 10,
+    "code_postal": "10029",
+    "is_active": 1
+  },
+  {
+    "nom": "Saharidj",
+    "wilaya_id": 10,
+    "code_postal": "10030",
+    "is_active": 1
+  },
+  {
+    "nom": "Dechmia",
+    "wilaya_id": 10,
+    "code_postal": "10031",
+    "is_active": 1
+  },
+  {
+    "nom": "Ridane",
+    "wilaya_id": 10,
+    "code_postal": "10032",
+    "is_active": 1
+  },
+  {
+    "nom": "Bechloul",
+    "wilaya_id": 10,
+    "code_postal": "10033",
+    "is_active": 1
+  },
+  {
+    "nom": "Boukram",
+    "wilaya_id": 10,
+    "code_postal": "10034",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Bessam",
+    "wilaya_id": 10,
+    "code_postal": "10035",
+    "is_active": 1
+  },
+  {
+    "nom": "Bir Ghbalou",
+    "wilaya_id": 10,
+    "code_postal": "10036",
+    "is_active": 1
+  },
+  {
+    "nom": "Mchedallah",
+    "wilaya_id": 10,
+    "code_postal": "10037",
+    "is_active": 1
+  },
+  {
+    "nom": "Sour El Ghozlane",
+    "wilaya_id": 10,
+    "code_postal": "10038",
+    "is_active": 1
+  },
+  {
+    "nom": "Maamora",
+    "wilaya_id": 10,
+    "code_postal": "10039",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Rached",
+    "wilaya_id": 10,
+    "code_postal": "10040",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Laloui",
+    "wilaya_id": 10,
+    "code_postal": "10041",
+    "is_active": 1
+  },
+  {
+    "nom": "Hadjera Zerga",
+    "wilaya_id": 10,
+    "code_postal": "10042",
+    "is_active": 1
+  },
+  {
+    "nom": "Ath Mansour",
+    "wilaya_id": 10,
+    "code_postal": "10043",
+    "is_active": 1
+  },
+  {
+    "nom": "El Mokrani",
+    "wilaya_id": 10,
+    "code_postal": "10044",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued El Berdi",
+    "wilaya_id": 10,
+    "code_postal": "10045",
+    "is_active": 1
+  },
+  {
+    "nom": "Tamanghasset",
+    "wilaya_id": 11,
+    "code_postal": "11001",
+    "is_active": 1
+  },
+  {
+    "nom": "Abalessa",
+    "wilaya_id": 11,
+    "code_postal": "11002",
+    "is_active": 0
+  },
+  {
+    "nom": "Idles",
+    "wilaya_id": 11,
+    "code_postal": "11005",
+    "is_active": 0
+  },
+  {
+    "nom": "Tazouk",
+    "wilaya_id": 11,
+    "code_postal": "11006",
+    "is_active": 0
+  },
+  {
+    "nom": "In Amguel",
+    "wilaya_id": 11,
+    "code_postal": "11009",
+    "is_active": 0
+  },
+  {
+    "nom": "Tebessa",
+    "wilaya_id": 12,
+    "code_postal": "12001",
+    "is_active": 1
+  },
+  {
+    "nom": "Bir El Ater",
+    "wilaya_id": 12,
+    "code_postal": "12002",
+    "is_active": 1
+  },
+  {
+    "nom": "Cheria",
+    "wilaya_id": 12,
+    "code_postal": "12003",
+    "is_active": 1
+  },
+  {
+    "nom": "Stah Guentis",
+    "wilaya_id": 12,
+    "code_postal": "12004",
+    "is_active": 1
+  },
+  {
+    "nom": "El Aouinet",
+    "wilaya_id": 12,
+    "code_postal": "12005",
+    "is_active": 1
+  },
+  {
+    "nom": "Lahouidjbet",
+    "wilaya_id": 12,
+    "code_postal": "12006",
+    "is_active": 1
+  },
+  {
+    "nom": "Safsaf El Ouesra",
+    "wilaya_id": 12,
+    "code_postal": "12007",
+    "is_active": 1
+  },
+  {
+    "nom": "Hammamet",
+    "wilaya_id": 12,
+    "code_postal": "12008",
+    "is_active": 1
+  },
+  {
+    "nom": "Negrine",
+    "wilaya_id": 12,
+    "code_postal": "12009",
+    "is_active": 0
+  },
+  {
+    "nom": "Bir El Mokadem",
+    "wilaya_id": 12,
+    "code_postal": "12010",
+    "is_active": 1
+  },
+  {
+    "nom": "El Kouif",
+    "wilaya_id": 12,
+    "code_postal": "12011",
+    "is_active": 1
+  },
+  {
+    "nom": "Morsott",
+    "wilaya_id": 12,
+    "code_postal": "12012",
+    "is_active": 1
+  },
+  {
+    "nom": "El Ogla",
+    "wilaya_id": 12,
+    "code_postal": "12013",
+    "is_active": 1
+  },
+  {
+    "nom": "Bir Dheheb",
+    "wilaya_id": 12,
+    "code_postal": "12014",
+    "is_active": 1
+  },
+  {
+    "nom": "El Ogla El Malha",
+    "wilaya_id": 12,
+    "code_postal": "12015",
+    "is_active": 1
+  },
+  {
+    "nom": "Gorriguer",
+    "wilaya_id": 12,
+    "code_postal": "12016",
+    "is_active": 1
+  },
+  {
+    "nom": "Bekkaria",
+    "wilaya_id": 12,
+    "code_postal": "12017",
+    "is_active": 1
+  },
+  {
+    "nom": "Boukhadra",
+    "wilaya_id": 12,
+    "code_postal": "12018",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouenza",
+    "wilaya_id": 12,
+    "code_postal": "12019",
+    "is_active": 1
+  },
+  {
+    "nom": "El Ma El Biodh",
+    "wilaya_id": 12,
+    "code_postal": "12020",
+    "is_active": 1
+  },
+  {
+    "nom": "Oum Ali",
+    "wilaya_id": 12,
+    "code_postal": "12021",
+    "is_active": 1
+  },
+  {
+    "nom": "Thlidjene",
+    "wilaya_id": 12,
+    "code_postal": "12022",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Zerga",
+    "wilaya_id": 12,
+    "code_postal": "12023",
+    "is_active": 1
+  },
+  {
+    "nom": "El Meridj",
+    "wilaya_id": 12,
+    "code_postal": "12024",
+    "is_active": 1
+  },
+  {
+    "nom": "Boulhaf Dyr",
+    "wilaya_id": 12,
+    "code_postal": "12025",
+    "is_active": 1
+  },
+  {
+    "nom": "Bedjene",
+    "wilaya_id": 12,
+    "code_postal": "12026",
+    "is_active": 1
+  },
+  {
+    "nom": "El Mazeraa",
+    "wilaya_id": 12,
+    "code_postal": "12027",
+    "is_active": 1
+  },
+  {
+    "nom": "Ferkane",
+    "wilaya_id": 12,
+    "code_postal": "12028",
+    "is_active": 0
+  },
+  {
+    "nom": "Tlemcen",
+    "wilaya_id": 13,
+    "code_postal": "13001",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Mester",
+    "wilaya_id": 13,
+    "code_postal": "13002",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Tallout",
+    "wilaya_id": 13,
+    "code_postal": "13003",
+    "is_active": 1
+  },
+  {
+    "nom": "Remchi",
+    "wilaya_id": 13,
+    "code_postal": "13004",
+    "is_active": 1
+  },
+  {
+    "nom": "El Fehoul",
+    "wilaya_id": 13,
+    "code_postal": "13005",
+    "is_active": 1
+  },
+  {
+    "nom": "Sabra",
+    "wilaya_id": 13,
+    "code_postal": "13006",
+    "is_active": 1
+  },
+  {
+    "nom": "Ghazaouet",
+    "wilaya_id": 13,
+    "code_postal": "13007",
+    "is_active": 1
+  },
+  {
+    "nom": "Souani",
+    "wilaya_id": 13,
+    "code_postal": "13008",
+    "is_active": 1
+  },
+  {
+    "nom": "Djebala",
+    "wilaya_id": 13,
+    "code_postal": "13009",
+    "is_active": 1
+  },
+  {
+    "nom": "El Gor",
+    "wilaya_id": 13,
+    "code_postal": "13010",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued Chouly",
+    "wilaya_id": 13,
+    "code_postal": "13011",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Fezza",
+    "wilaya_id": 13,
+    "code_postal": "13012",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Mimoun",
+    "wilaya_id": 13,
+    "code_postal": "13013",
+    "is_active": 1
+  },
+  {
+    "nom": "Amieur",
+    "wilaya_id": 13,
+    "code_postal": "13014",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Youcef",
+    "wilaya_id": 13,
+    "code_postal": "13015",
+    "is_active": 1
+  },
+  {
+    "nom": "Zenata",
+    "wilaya_id": 13,
+    "code_postal": "13016",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Snous",
+    "wilaya_id": 13,
+    "code_postal": "13017",
+    "is_active": 1
+  },
+  {
+    "nom": "Bab El Assa",
+    "wilaya_id": 13,
+    "code_postal": "13018",
+    "is_active": 1
+  },
+  {
+    "nom": "Dar Yaghmouracene",
+    "wilaya_id": 13,
+    "code_postal": "13019",
+    "is_active": 1
+  },
+  {
+    "nom": "Fellaoucene",
+    "wilaya_id": 13,
+    "code_postal": "13020",
+    "is_active": 1
+  },
+  {
+    "nom": "Azails",
+    "wilaya_id": 13,
+    "code_postal": "13021",
+    "is_active": 1
+  },
+  {
+    "nom": "Sebbaa Chioukh",
+    "wilaya_id": 13,
+    "code_postal": "13022",
+    "is_active": 1
+  },
+  {
+    "nom": "Terni Beni Hediel",
+    "wilaya_id": 13,
+    "code_postal": "13023",
+    "is_active": 1
+  },
+  {
+    "nom": "Bensekrane",
+    "wilaya_id": 13,
+    "code_postal": "13024",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Nehala",
+    "wilaya_id": 13,
+    "code_postal": "13025",
+    "is_active": 1
+  },
+  {
+    "nom": "Hennaya",
+    "wilaya_id": 13,
+    "code_postal": "13026",
+    "is_active": 1
+  },
+  {
+    "nom": "Maghnia",
+    "wilaya_id": 13,
+    "code_postal": "13027",
+    "is_active": 1
+  },
+  {
+    "nom": "Hammam Boughrara",
+    "wilaya_id": 13,
+    "code_postal": "13028",
+    "is_active": 1
+  },
+  {
+    "nom": "Souahlia",
+    "wilaya_id": 13,
+    "code_postal": "13029",
+    "is_active": 1
+  },
+  {
+    "nom": "Msirda Fouaga",
+    "wilaya_id": 13,
+    "code_postal": "13030",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Fetah",
+    "wilaya_id": 13,
+    "code_postal": "13031",
+    "is_active": 1
+  },
+  {
+    "nom": "El Aricha",
+    "wilaya_id": 13,
+    "code_postal": "13032",
+    "is_active": 1
+  },
+  {
+    "nom": "Souk Thlata",
+    "wilaya_id": 13,
+    "code_postal": "13033",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Abdelli",
+    "wilaya_id": 13,
+    "code_postal": "13034",
+    "is_active": 1
+  },
+  {
+    "nom": "Sebdou",
+    "wilaya_id": 13,
+    "code_postal": "13035",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Ouarsous",
+    "wilaya_id": 13,
+    "code_postal": "13036",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Medjahed",
+    "wilaya_id": 13,
+    "code_postal": "13037",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Boussaid",
+    "wilaya_id": 13,
+    "code_postal": "13038",
+    "is_active": 1
+  },
+  {
+    "nom": "Marsa Ben Mhidi",
+    "wilaya_id": 13,
+    "code_postal": "13039",
+    "is_active": 1
+  },
+  {
+    "nom": "Nedroma",
+    "wilaya_id": 13,
+    "code_postal": "13040",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Djillali",
+    "wilaya_id": 13,
+    "code_postal": "13041",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Bahdel",
+    "wilaya_id": 13,
+    "code_postal": "13042",
+    "is_active": 1
+  },
+  {
+    "nom": "El Bouihi",
+    "wilaya_id": 13,
+    "code_postal": "13043",
+    "is_active": 1
+  },
+  {
+    "nom": "Honaine",
+    "wilaya_id": 13,
+    "code_postal": "13044",
+    "is_active": 1
+  },
+  {
+    "nom": "Tianet",
+    "wilaya_id": 13,
+    "code_postal": "13045",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Riyah",
+    "wilaya_id": 13,
+    "code_postal": "13046",
+    "is_active": 1
+  },
+  {
+    "nom": "Bouhlou",
+    "wilaya_id": 13,
+    "code_postal": "13047",
+    "is_active": 1
+  },
+  {
+    "nom": "Souk El Khemis",
+    "wilaya_id": 13,
+    "code_postal": "13048",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Ghoraba",
+    "wilaya_id": 13,
+    "code_postal": "13049",
+    "is_active": 1
+  },
+  {
+    "nom": "Chetouane",
+    "wilaya_id": 13,
+    "code_postal": "13050",
+    "is_active": 1
+  },
+  {
+    "nom": "Mansourah",
+    "wilaya_id": 13,
+    "code_postal": "13051",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Semiel",
+    "wilaya_id": 13,
+    "code_postal": "13052",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Kebira",
+    "wilaya_id": 13,
+    "code_postal": "13053",
+    "is_active": 1
+  },
+  {
+    "nom": "Tiaret",
+    "wilaya_id": 14,
+    "code_postal": "14001",
+    "is_active": 1
+  },
+  {
+    "nom": "Medroussa",
+    "wilaya_id": 14,
+    "code_postal": "14002",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Bouchekif",
+    "wilaya_id": 14,
+    "code_postal": "14003",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Ali Mellal",
+    "wilaya_id": 14,
+    "code_postal": "14004",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Zarit",
+    "wilaya_id": 14,
+    "code_postal": "14005",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Deheb",
+    "wilaya_id": 14,
+    "code_postal": "14006",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Bakhti",
+    "wilaya_id": 14,
+    "code_postal": "14007",
+    "is_active": 1
+  },
+  {
+    "nom": "Medrissa",
+    "wilaya_id": 14,
+    "code_postal": "14008",
+    "is_active": 1
+  },
+  {
+    "nom": "Zmalet El Emir Aek",
+    "wilaya_id": 14,
+    "code_postal": "14009",
+    "is_active": 1
+  },
+  {
+    "nom": "Madna",
+    "wilaya_id": 14,
+    "code_postal": "14010",
+    "is_active": 1
+  },
+  {
+    "nom": "Sebt",
+    "wilaya_id": 14,
+    "code_postal": "14011",
+    "is_active": 1
+  },
+  {
+    "nom": "Mellakou",
+    "wilaya_id": 14,
+    "code_postal": "14012",
+    "is_active": 1
+  },
+  {
+    "nom": "Dahmouni",
+    "wilaya_id": 14,
+    "code_postal": "14013",
+    "is_active": 1
+  },
+  {
+    "nom": "Rahouia",
+    "wilaya_id": 14,
+    "code_postal": "14014",
+    "is_active": 1
+  },
+  {
+    "nom": "Mahdia",
+    "wilaya_id": 14,
+    "code_postal": "14015",
+    "is_active": 1
+  },
+  {
+    "nom": "Sougueur",
+    "wilaya_id": 14,
+    "code_postal": "14016",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Abdelghani",
+    "wilaya_id": 14,
+    "code_postal": "14017",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain El Hadid",
+    "wilaya_id": 14,
+    "code_postal": "14018",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Djerad",
+    "wilaya_id": 14,
+    "code_postal": "14019",
+    "is_active": 1
+  },
+  {
+    "nom": "Naima",
+    "wilaya_id": 14,
+    "code_postal": "14020",
+    "is_active": 1
+  },
+  {
+    "nom": "Meghila",
+    "wilaya_id": 14,
+    "code_postal": "14021",
+    "is_active": 1
+  },
+  {
+    "nom": "Guertoufa",
+    "wilaya_id": 14,
+    "code_postal": "14022",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Hosni",
+    "wilaya_id": 14,
+    "code_postal": "14023",
+    "is_active": 1
+  },
+  {
+    "nom": "Djillali Ben Amar",
+    "wilaya_id": 14,
+    "code_postal": "14024",
+    "is_active": 1
+  },
+  {
+    "nom": "Sebaine",
+    "wilaya_id": 14,
+    "code_postal": "14025",
+    "is_active": 1
+  },
+  {
+    "nom": "Tousnina",
+    "wilaya_id": 14,
+    "code_postal": "14026",
+    "is_active": 1
+  },
+  {
+    "nom": "Frenda",
+    "wilaya_id": 14,
+    "code_postal": "14027",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Kermes",
+    "wilaya_id": 14,
+    "code_postal": "14028",
+    "is_active": 1
+  },
+  {
+    "nom": "Ksar Chellala",
+    "wilaya_id": 14,
+    "code_postal": "14029",
+    "is_active": 1
+  },
+  {
+    "nom": "Rechaiga",
+    "wilaya_id": 14,
+    "code_postal": "14030",
+    "is_active": 1
+  },
+  {
+    "nom": "Nadorah",
+    "wilaya_id": 14,
+    "code_postal": "14031",
+    "is_active": 1
+  },
+  {
+    "nom": "Tagdemt",
+    "wilaya_id": 14,
+    "code_postal": "14032",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued Lilli",
+    "wilaya_id": 14,
+    "code_postal": "14033",
+    "is_active": 1
+  },
+  {
+    "nom": "Mechraa Safa",
+    "wilaya_id": 14,
+    "code_postal": "14034",
+    "is_active": 1
+  },
+  {
+    "nom": "Hamadia",
+    "wilaya_id": 14,
+    "code_postal": "14035",
+    "is_active": 1
+  },
+  {
+    "nom": "Chehaima",
+    "wilaya_id": 14,
+    "code_postal": "14036",
+    "is_active": 1
+  },
+  {
+    "nom": "Takhemaret",
+    "wilaya_id": 14,
+    "code_postal": "14037",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Abderrahmane",
+    "wilaya_id": 14,
+    "code_postal": "14038",
+    "is_active": 1
+  },
+  {
+    "nom": "Serghine",
+    "wilaya_id": 14,
+    "code_postal": "14039",
+    "is_active": 1
+  },
+  {
+    "nom": "Bougara",
+    "wilaya_id": 14,
+    "code_postal": "14040",
+    "is_active": 1
+  },
+  {
+    "nom": "Faidja",
+    "wilaya_id": 14,
+    "code_postal": "14041",
+    "is_active": 1
+  },
+  {
+    "nom": "Tidda",
+    "wilaya_id": 14,
+    "code_postal": "14042",
+    "is_active": 1
+  },
+  {
+    "nom": "Tizi Ouzou",
+    "wilaya_id": 15,
+    "code_postal": "15001",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain El Hammam",
+    "wilaya_id": 15,
+    "code_postal": "15002",
+    "is_active": 1
+  },
+  {
+    "nom": "Akbil",
+    "wilaya_id": 15,
+    "code_postal": "15003",
+    "is_active": 1
+  },
+  {
+    "nom": "Freha",
+    "wilaya_id": 15,
+    "code_postal": "15004",
+    "is_active": 1
+  },
+  {
+    "nom": "Souamaa",
+    "wilaya_id": 15,
+    "code_postal": "15005",
+    "is_active": 1
+  },
+  {
+    "nom": "Mechtrass",
+    "wilaya_id": 15,
+    "code_postal": "15006",
+    "is_active": 1
+  },
+  {
+    "nom": "Irdjen",
+    "wilaya_id": 15,
+    "code_postal": "15007",
+    "is_active": 1
+  },
+  {
+    "nom": "Timizart",
+    "wilaya_id": 15,
+    "code_postal": "15008",
+    "is_active": 1
+  },
+  {
+    "nom": "Makouda",
+    "wilaya_id": 15,
+    "code_postal": "15009",
+    "is_active": 1
+  },
+  {
+    "nom": "Draa El Mizan",
+    "wilaya_id": 15,
+    "code_postal": "15010",
+    "is_active": 1
+  },
+  {
+    "nom": "Tizi Ghenif",
+    "wilaya_id": 15,
+    "code_postal": "15011",
+    "is_active": 1
+  },
+  {
+    "nom": "Bounouh",
+    "wilaya_id": 15,
+    "code_postal": "15012",
+    "is_active": 1
+  },
+  {
+    "nom": "Ait Chaffaa",
+    "wilaya_id": 15,
+    "code_postal": "15013",
+    "is_active": 1
+  },
+  {
+    "nom": "Frikat",
+    "wilaya_id": 15,
+    "code_postal": "15014",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Aissi",
+    "wilaya_id": 15,
+    "code_postal": "15015",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Zmenzer",
+    "wilaya_id": 15,
+    "code_postal": "15016",
+    "is_active": 1
+  },
+  {
+    "nom": "Iferhounene",
+    "wilaya_id": 15,
+    "code_postal": "15017",
+    "is_active": 1
+  },
+  {
+    "nom": "Azazga",
+    "wilaya_id": 15,
+    "code_postal": "15018",
+    "is_active": 1
+  },
+  {
+    "nom": "Iloula Oumalou",
+    "wilaya_id": 15,
+    "code_postal": "15019",
+    "is_active": 1
+  },
+  {
+    "nom": "Yakouren",
+    "wilaya_id": 15,
+    "code_postal": "15020",
+    "is_active": 1
+  },
+  {
+    "nom": "Larba Nait Irathen",
+    "wilaya_id": 15,
+    "code_postal": "15021",
+    "is_active": 1
+  },
+  {
+    "nom": "Tizi Rached",
+    "wilaya_id": 15,
+    "code_postal": "15022",
+    "is_active": 1
+  },
+  {
+    "nom": "Zekri",
+    "wilaya_id": 15,
+    "code_postal": "15023",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouaguenoun",
+    "wilaya_id": 15,
+    "code_postal": "15024",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Zaouia",
+    "wilaya_id": 15,
+    "code_postal": "15025",
+    "is_active": 1
+  },
+  {
+    "nom": "Mkira",
+    "wilaya_id": 15,
+    "code_postal": "15026",
+    "is_active": 1
+  },
+  {
+    "nom": "Ait Yahia",
+    "wilaya_id": 15,
+    "code_postal": "15027",
+    "is_active": 1
+  },
+  {
+    "nom": "Ait Mahmoud",
+    "wilaya_id": 15,
+    "code_postal": "15028",
+    "is_active": 1
+  },
+  {
+    "nom": "Maatka",
+    "wilaya_id": 15,
+    "code_postal": "15029",
+    "is_active": 1
+  },
+  {
+    "nom": "Ait Boumehdi",
+    "wilaya_id": 15,
+    "code_postal": "15030",
+    "is_active": 1
+  },
+  {
+    "nom": "Abi Youcef",
+    "wilaya_id": 15,
+    "code_postal": "15031",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Douala",
+    "wilaya_id": 15,
+    "code_postal": "15032",
+    "is_active": 1
+  },
+  {
+    "nom": "Illilten",
+    "wilaya_id": 15,
+    "code_postal": "15033",
+    "is_active": 1
+  },
+  {
+    "nom": "Bouzguen",
+    "wilaya_id": 15,
+    "code_postal": "15034",
+    "is_active": 1
+  },
+  {
+    "nom": "Ait Aggouacha",
+    "wilaya_id": 15,
+    "code_postal": "15035",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouadhia",
+    "wilaya_id": 15,
+    "code_postal": "15036",
+    "is_active": 1
+  },
+  {
+    "nom": "Azzefoun",
+    "wilaya_id": 15,
+    "code_postal": "15037",
+    "is_active": 1
+  },
+  {
+    "nom": "Tigzirt",
+    "wilaya_id": 15,
+    "code_postal": "15038",
+    "is_active": 1
+  },
+  {
+    "nom": "Ait Aissa Mimoun",
+    "wilaya_id": 15,
+    "code_postal": "15039",
+    "is_active": 1
+  },
+  {
+    "nom": "Boghni",
+    "wilaya_id": 15,
+    "code_postal": "15040",
+    "is_active": 1
+  },
+  {
+    "nom": "Ifigha",
+    "wilaya_id": 15,
+    "code_postal": "15041",
+    "is_active": 1
+  },
+  {
+    "nom": "Ait Oumalou",
+    "wilaya_id": 15,
+    "code_postal": "15042",
+    "is_active": 1
+  },
+  {
+    "nom": "Tirmitine",
+    "wilaya_id": 15,
+    "code_postal": "15043",
+    "is_active": 1
+  },
+  {
+    "nom": "Akerrou",
+    "wilaya_id": 15,
+    "code_postal": "15044",
+    "is_active": 1
+  },
+  {
+    "nom": "Yatafen",
+    "wilaya_id": 15,
+    "code_postal": "15045",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Ziki",
+    "wilaya_id": 15,
+    "code_postal": "15046",
+    "is_active": 1
+  },
+  {
+    "nom": "Draa Ben Khedda",
+    "wilaya_id": 15,
+    "code_postal": "15047",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouacif",
+    "wilaya_id": 15,
+    "code_postal": "15048",
+    "is_active": 1
+  },
+  {
+    "nom": "Idjeur",
+    "wilaya_id": 15,
+    "code_postal": "15049",
+    "is_active": 1
+  },
+  {
+    "nom": "Mekla",
+    "wilaya_id": 15,
+    "code_postal": "15050",
+    "is_active": 1
+  },
+  {
+    "nom": "Tizi Nthlata",
+    "wilaya_id": 15,
+    "code_postal": "15051",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Yenni",
+    "wilaya_id": 15,
+    "code_postal": "15052",
+    "is_active": 1
+  },
+  {
+    "nom": "Aghrib",
+    "wilaya_id": 15,
+    "code_postal": "15053",
+    "is_active": 1
+  },
+  {
+    "nom": "Iflissen",
+    "wilaya_id": 15,
+    "code_postal": "15054",
+    "is_active": 1
+  },
+  {
+    "nom": "Boudjima",
+    "wilaya_id": 15,
+    "code_postal": "15055",
+    "is_active": 1
+  },
+  {
+    "nom": "Ait Yahia Moussa",
+    "wilaya_id": 15,
+    "code_postal": "15056",
+    "is_active": 1
+  },
+  {
+    "nom": "Souk El Thenine",
+    "wilaya_id": 15,
+    "code_postal": "15057",
+    "is_active": 1
+  },
+  {
+    "nom": "Ait Khelil",
+    "wilaya_id": 15,
+    "code_postal": "15058",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Naamane",
+    "wilaya_id": 15,
+    "code_postal": "15059",
+    "is_active": 1
+  },
+  {
+    "nom": "Iboudraren",
+    "wilaya_id": 15,
+    "code_postal": "15060",
+    "is_active": 1
+  },
+  {
+    "nom": "Aghni Goughran",
+    "wilaya_id": 15,
+    "code_postal": "15061",
+    "is_active": 1
+  },
+  {
+    "nom": "Mizrana",
+    "wilaya_id": 15,
+    "code_postal": "15062",
+    "is_active": 1
+  },
+  {
+    "nom": "Imsouhal",
+    "wilaya_id": 15,
+    "code_postal": "15063",
+    "is_active": 1
+  },
+  {
+    "nom": "Tadmait",
+    "wilaya_id": 15,
+    "code_postal": "15064",
+    "is_active": 1
+  },
+  {
+    "nom": "Ait Bouadou",
+    "wilaya_id": 15,
+    "code_postal": "15065",
+    "is_active": 1
+  },
+  {
+    "nom": "Assi Youcef",
+    "wilaya_id": 15,
+    "code_postal": "15066",
+    "is_active": 1
+  },
+  {
+    "nom": "Ait Toudert",
+    "wilaya_id": 15,
+    "code_postal": "15067",
+    "is_active": 1
+  },
+  {
+    "nom": "Alger Centre",
+    "wilaya_id": 16,
+    "code_postal": "16001",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Mhamed",
+    "wilaya_id": 16,
+    "code_postal": "16002",
+    "is_active": 1
+  },
+  {
+    "nom": "El Madania",
+    "wilaya_id": 16,
+    "code_postal": "16003",
+    "is_active": 1
+  },
+  {
+    "nom": "Hamma Anassers",
+    "wilaya_id": 16,
+    "code_postal": "16004",
+    "is_active": 1
+  },
+  {
+    "nom": "Bab El Oued",
+    "wilaya_id": 16,
+    "code_postal": "16005",
+    "is_active": 1
+  },
+  {
+    "nom": "Bologhine Ibn Ziri",
+    "wilaya_id": 16,
+    "code_postal": "16006",
+    "is_active": 1
+  },
+  {
+    "nom": "Casbah",
+    "wilaya_id": 16,
+    "code_postal": "16007",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued Koriche",
+    "wilaya_id": 16,
+    "code_postal": "16008",
+    "is_active": 1
+  },
+  {
+    "nom": "Bir Mourad Rais",
+    "wilaya_id": 16,
+    "code_postal": "16009",
+    "is_active": 1
+  },
+  {
+    "nom": "El Biar",
+    "wilaya_id": 16,
+    "code_postal": "16010",
+    "is_active": 1
+  },
+  {
+    "nom": "Bouzareah",
+    "wilaya_id": 16,
+    "code_postal": "16011",
+    "is_active": 1
+  },
+  {
+    "nom": "Birkhadem",
+    "wilaya_id": 16,
+    "code_postal": "16012",
+    "is_active": 1
+  },
+  {
+    "nom": "El Harrach",
+    "wilaya_id": 16,
+    "code_postal": "16013",
+    "is_active": 1
+  },
+  {
+    "nom": "Baraki",
+    "wilaya_id": 16,
+    "code_postal": "16014",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued Smar",
+    "wilaya_id": 16,
+    "code_postal": "16015",
+    "is_active": 1
+  },
+  {
+    "nom": "Bourouba",
+    "wilaya_id": 16,
+    "code_postal": "16016",
+    "is_active": 1
+  },
+  {
+    "nom": "Hussein Dey",
+    "wilaya_id": 16,
+    "code_postal": "16017",
+    "is_active": 1
+  },
+  {
+    "nom": "Kouba",
+    "wilaya_id": 16,
+    "code_postal": "16018",
+    "is_active": 1
+  },
+  {
+    "nom": "Bachedjerah",
+    "wilaya_id": 16,
+    "code_postal": "16019",
+    "is_active": 1
+  },
+  {
+    "nom": "Dar El Beida",
+    "wilaya_id": 16,
+    "code_postal": "16020",
+    "is_active": 1
+  },
+  {
+    "nom": "Bab Azzouar",
+    "wilaya_id": 16,
+    "code_postal": "16021",
+    "is_active": 1
+  },
+  {
+    "nom": "Ben Aknoun",
+    "wilaya_id": 16,
+    "code_postal": "16022",
+    "is_active": 1
+  },
+  {
+    "nom": "Dely Ibrahim",
+    "wilaya_id": 16,
+    "code_postal": "16023",
+    "is_active": 1
+  },
+  {
+    "nom": "Bains Romains",
+    "wilaya_id": 16,
+    "code_postal": "16024",
+    "is_active": 1
+  },
+  {
+    "nom": "Rais Hamidou",
+    "wilaya_id": 16,
+    "code_postal": "16025",
+    "is_active": 1
+  },
+  {
+    "nom": "Djasr Kasentina",
+    "wilaya_id": 16,
+    "code_postal": "16026",
+    "is_active": 1
+  },
+  {
+    "nom": "El Mouradia",
+    "wilaya_id": 16,
+    "code_postal": "16027",
+    "is_active": 1
+  },
+  {
+    "nom": "Hydra",
+    "wilaya_id": 16,
+    "code_postal": "16028",
+    "is_active": 1
+  },
+  {
+    "nom": "Mohammadia",
+    "wilaya_id": 16,
+    "code_postal": "16029",
+    "is_active": 1
+  },
+  {
+    "nom": "Bordj El Kiffan",
+    "wilaya_id": 16,
+    "code_postal": "16030",
+    "is_active": 1
+  },
+  {
+    "nom": "El Magharia",
+    "wilaya_id": 16,
+    "code_postal": "16031",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Messous",
+    "wilaya_id": 16,
+    "code_postal": "16032",
+    "is_active": 1
+  },
+  {
+    "nom": "Les Eucalyptus",
+    "wilaya_id": 16,
+    "code_postal": "16033",
+    "is_active": 1
+  },
+  {
+    "nom": "Birtouta",
+    "wilaya_id": 16,
+    "code_postal": "16034",
+    "is_active": 1
+  },
+  {
+    "nom": "Tassala El Merdja",
+    "wilaya_id": 16,
+    "code_postal": "16035",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Chebel",
+    "wilaya_id": 16,
+    "code_postal": "16036",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Moussa",
+    "wilaya_id": 16,
+    "code_postal": "16037",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Taya",
+    "wilaya_id": 16,
+    "code_postal": "16038",
+    "is_active": 1
+  },
+  {
+    "nom": "Bordj El Bahri",
+    "wilaya_id": 16,
+    "code_postal": "16039",
+    "is_active": 1
+  },
+  {
+    "nom": "Marsa",
+    "wilaya_id": 16,
+    "code_postal": "16040",
+    "is_active": 1
+  },
+  {
+    "nom": "Haraoua",
+    "wilaya_id": 16,
+    "code_postal": "16041",
+    "is_active": 1
+  },
+  {
+    "nom": "Rouiba",
+    "wilaya_id": 16,
+    "code_postal": "16042",
+    "is_active": 1
+  },
+  {
+    "nom": "Reghaia",
+    "wilaya_id": 16,
+    "code_postal": "16043",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Benian",
+    "wilaya_id": 16,
+    "code_postal": "16044",
+    "is_active": 1
+  },
+  {
+    "nom": "Staoueli",
+    "wilaya_id": 16,
+    "code_postal": "16045",
+    "is_active": 1
+  },
+  {
+    "nom": "Zeralda",
+    "wilaya_id": 16,
+    "code_postal": "16046",
+    "is_active": 1
+  },
+  {
+    "nom": "Mahelma",
+    "wilaya_id": 16,
+    "code_postal": "16047",
+    "is_active": 1
+  },
+  {
+    "nom": "Rahmania",
+    "wilaya_id": 16,
+    "code_postal": "16048",
+    "is_active": 1
+  },
+  {
+    "nom": "Souidania",
+    "wilaya_id": 16,
+    "code_postal": "16049",
+    "is_active": 1
+  },
+  {
+    "nom": "Cheraga",
+    "wilaya_id": 16,
+    "code_postal": "16050",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Fayet",
+    "wilaya_id": 16,
+    "code_postal": "16051",
+    "is_active": 1
+  },
+  {
+    "nom": "El Achour",
+    "wilaya_id": 16,
+    "code_postal": "16052",
+    "is_active": 1
+  },
+  {
+    "nom": "Draria",
+    "wilaya_id": 16,
+    "code_postal": "16053",
+    "is_active": 1
+  },
+  {
+    "nom": "Douera",
+    "wilaya_id": 16,
+    "code_postal": "16054",
+    "is_active": 1
+  },
+  {
+    "nom": "Baba Hassen",
+    "wilaya_id": 16,
+    "code_postal": "16055",
+    "is_active": 1
+  },
+  {
+    "nom": "Khracia",
+    "wilaya_id": 16,
+    "code_postal": "16056",
+    "is_active": 1
+  },
+  {
+    "nom": "Saoula",
+    "wilaya_id": 16,
+    "code_postal": "16057",
+    "is_active": 1
+  },
+  {
+    "nom": "Djelfa",
+    "wilaya_id": 17,
+    "code_postal": "17001",
+    "is_active": 1
+  },
+  {
+    "nom": "Moudjebara",
+    "wilaya_id": 17,
+    "code_postal": "17002",
+    "is_active": 1
+  },
+  {
+    "nom": "El Guedid",
+    "wilaya_id": 17,
+    "code_postal": "17003",
+    "is_active": 1
+  },
+  {
+    "nom": "Hassi Bahbah",
+    "wilaya_id": 17,
+    "code_postal": "17004",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Maabed",
+    "wilaya_id": 17,
+    "code_postal": "17005",
+    "is_active": 1
+  },
+  {
+    "nom": "Sed Rahal",
+    "wilaya_id": 17,
+    "code_postal": "17006",
+    "is_active": 1
+  },
+  {
+    "nom": "Feidh El Botma",
+    "wilaya_id": 17,
+    "code_postal": "17007",
+    "is_active": 1
+  },
+  {
+    "nom": "Birine",
+    "wilaya_id": 17,
+    "code_postal": "17008",
+    "is_active": 1
+  },
+  {
+    "nom": "Bouira Lahdeb",
+    "wilaya_id": 17,
+    "code_postal": "17009",
+    "is_active": 1
+  },
+  {
+    "nom": "Zaccar",
+    "wilaya_id": 17,
+    "code_postal": "17010",
+    "is_active": 1
+  },
+  {
+    "nom": "El Khemis",
+    "wilaya_id": 17,
+    "code_postal": "17011",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Baizid",
+    "wilaya_id": 17,
+    "code_postal": "17012",
+    "is_active": 1
+  },
+  {
+    "nom": "Mliliha",
+    "wilaya_id": 17,
+    "code_postal": "17013",
+    "is_active": 1
+  },
+  {
+    "nom": "El Idrissia",
+    "wilaya_id": 17,
+    "code_postal": "17014",
+    "is_active": 1
+  },
+  {
+    "nom": "Douis",
+    "wilaya_id": 17,
+    "code_postal": "17015",
+    "is_active": 1
+  },
+  {
+    "nom": "Hassi El Euch",
+    "wilaya_id": 17,
+    "code_postal": "17016",
+    "is_active": 1
+  },
+  {
+    "nom": "Messaad",
+    "wilaya_id": 17,
+    "code_postal": "17017",
+    "is_active": 1
+  },
+  {
+    "nom": "Guettara",
+    "wilaya_id": 17,
+    "code_postal": "17018",
+    "is_active": 0
+  },
+  {
+    "nom": "Sidi Ladjel",
+    "wilaya_id": 17,
+    "code_postal": "17019",
+    "is_active": 1
+  },
+  {
+    "nom": "Had Sahary",
+    "wilaya_id": 17,
+    "code_postal": "17020",
+    "is_active": 1
+  },
+  {
+    "nom": "Guernini",
+    "wilaya_id": 17,
+    "code_postal": "17021",
+    "is_active": 1
+  },
+  {
+    "nom": "Selmana",
+    "wilaya_id": 17,
+    "code_postal": "17022",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Chouhada",
+    "wilaya_id": 17,
+    "code_postal": "17023",
+    "is_active": 1
+  },
+  {
+    "nom": "Oum Laadham",
+    "wilaya_id": 17,
+    "code_postal": "17024",
+    "is_active": 0
+  },
+  {
+    "nom": "Dar Chouikh",
+    "wilaya_id": 17,
+    "code_postal": "17025",
+    "is_active": 1
+  },
+  {
+    "nom": "Charef",
+    "wilaya_id": 17,
+    "code_postal": "17026",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Yacoub",
+    "wilaya_id": 17,
+    "code_postal": "17027",
+    "is_active": 1
+  },
+  {
+    "nom": "Zaafrane",
+    "wilaya_id": 17,
+    "code_postal": "17028",
+    "is_active": 1
+  },
+  {
+    "nom": "Deldoul",
+    "wilaya_id": 17,
+    "code_postal": "17029",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain El Ibel",
+    "wilaya_id": 17,
+    "code_postal": "17030",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Oussera",
+    "wilaya_id": 17,
+    "code_postal": "17031",
+    "is_active": 1
+  },
+  {
+    "nom": "Benhar",
+    "wilaya_id": 17,
+    "code_postal": "17032",
+    "is_active": 1
+  },
+  {
+    "nom": "Hassi Fedoul",
+    "wilaya_id": 17,
+    "code_postal": "17033",
+    "is_active": 1
+  },
+  {
+    "nom": "Amourah",
+    "wilaya_id": 17,
+    "code_postal": "17034",
+    "is_active": 0
+  },
+  {
+    "nom": "Ain Fekka",
+    "wilaya_id": 17,
+    "code_postal": "17035",
+    "is_active": 1
+  },
+  {
+    "nom": "Tadmit",
+    "wilaya_id": 17,
+    "code_postal": "17036",
+    "is_active": 1
+  },
+  {
+    "nom": "Jijel",
+    "wilaya_id": 18,
+    "code_postal": "18001",
+    "is_active": 1
+  },
+  {
+    "nom": "Erraguene",
+    "wilaya_id": 18,
+    "code_postal": "18002",
+    "is_active": 0
+  },
+  {
+    "nom": "El Aouana",
+    "wilaya_id": 18,
+    "code_postal": "18003",
+    "is_active": 1
+  },
+  {
+    "nom": "Ziamma Mansouriah",
+    "wilaya_id": 18,
+    "code_postal": "18004",
+    "is_active": 1
+  },
+  {
+    "nom": "Taher",
+    "wilaya_id": 18,
+    "code_postal": "18005",
+    "is_active": 1
+  },
+  {
+    "nom": "Emir Abdelkader",
+    "wilaya_id": 18,
+    "code_postal": "18006",
+    "is_active": 1
+  },
+  {
+    "nom": "Chekfa",
+    "wilaya_id": 18,
+    "code_postal": "18007",
+    "is_active": 1
+  },
+  {
+    "nom": "Chahna",
+    "wilaya_id": 18,
+    "code_postal": "18008",
+    "is_active": 0
+  },
+  {
+    "nom": "El Milia",
+    "wilaya_id": 18,
+    "code_postal": "18009",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Maarouf",
+    "wilaya_id": 18,
+    "code_postal": "18010",
+    "is_active": 1
+  },
+  {
+    "nom": "Settara",
+    "wilaya_id": 18,
+    "code_postal": "18011",
+    "is_active": 1
+  },
+  {
+    "nom": "El Ancer",
+    "wilaya_id": 18,
+    "code_postal": "18012",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Abdelaziz",
+    "wilaya_id": 18,
+    "code_postal": "18013",
+    "is_active": 1
+  },
+  {
+    "nom": "Kaous",
+    "wilaya_id": 18,
+    "code_postal": "18014",
+    "is_active": 1
+  },
+  {
+    "nom": "Ghebala",
+    "wilaya_id": 18,
+    "code_postal": "18015",
+    "is_active": 1
+  },
+  {
+    "nom": "Bouraoui Belhadef",
+    "wilaya_id": 18,
+    "code_postal": "18016",
+    "is_active": 0
+  },
+  {
+    "nom": "Djmila",
+    "wilaya_id": 18,
+    "code_postal": "18017",
+    "is_active": 1
+  },
+  {
+    "nom": "Selma Benziada",
+    "wilaya_id": 18,
+    "code_postal": "18018",
+    "is_active": 0
+  },
+  {
+    "nom": "Boussif Ouled Askeur",
+    "wilaya_id": 18,
+    "code_postal": "18019",
+    "is_active": 0
+  },
+  {
+    "nom": "El Kennar Nouchfi",
+    "wilaya_id": 18,
+    "code_postal": "18020",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Yahia Khadrouch",
+    "wilaya_id": 18,
+    "code_postal": "18021",
+    "is_active": 1
+  },
+  {
+    "nom": "Boudria Beni Yadjis",
+    "wilaya_id": 18,
+    "code_postal": "18022",
+    "is_active": 0
+  },
+  {
+    "nom": "Kemir Oued Adjoul",
+    "wilaya_id": 18,
+    "code_postal": "18023",
+    "is_active": 1
+  },
+  {
+    "nom": "Texena",
+    "wilaya_id": 18,
+    "code_postal": "18024",
+    "is_active": 1
+  },
+  {
+    "nom": "Djemaa Beni Habibi",
+    "wilaya_id": 18,
+    "code_postal": "18025",
+    "is_active": 1
+  },
+  {
+    "nom": "Bordj Taher",
+    "wilaya_id": 18,
+    "code_postal": "18026",
+    "is_active": 0
+  },
+  {
+    "nom": "Ouled Rabah",
+    "wilaya_id": 18,
+    "code_postal": "18027",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouadjana",
+    "wilaya_id": 18,
+    "code_postal": "18028",
+    "is_active": 0
+  },
+  {
+    "nom": "Setif",
+    "wilaya_id": 19,
+    "code_postal": "19001",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain El Kebira",
+    "wilaya_id": 19,
+    "code_postal": "19002",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Aziz",
+    "wilaya_id": 19,
+    "code_postal": "19003",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Sidi Ahmed",
+    "wilaya_id": 19,
+    "code_postal": "19004",
+    "is_active": 1
+  },
+  {
+    "nom": "Boutaleb",
+    "wilaya_id": 19,
+    "code_postal": "19005",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Roua",
+    "wilaya_id": 19,
+    "code_postal": "19006",
+    "is_active": 1
+  },
+  {
+    "nom": "Draa Kebila",
+    "wilaya_id": 19,
+    "code_postal": "19007",
+    "is_active": 1
+  },
+  {
+    "nom": "Bir El Arch",
+    "wilaya_id": 19,
+    "code_postal": "19008",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Chebana",
+    "wilaya_id": 19,
+    "code_postal": "19009",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Tebben",
+    "wilaya_id": 19,
+    "code_postal": "19010",
+    "is_active": 1
+  },
+  {
+    "nom": "Hamma",
+    "wilaya_id": 19,
+    "code_postal": "19011",
+    "is_active": 1
+  },
+  {
+    "nom": "Maaouia",
+    "wilaya_id": 19,
+    "code_postal": "19012",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Legraj",
+    "wilaya_id": 19,
+    "code_postal": "19013",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Abessa",
+    "wilaya_id": 19,
+    "code_postal": "19014",
+    "is_active": 1
+  },
+  {
+    "nom": "Dehamcha",
+    "wilaya_id": 19,
+    "code_postal": "19015",
+    "is_active": 1
+  },
+  {
+    "nom": "Babor",
+    "wilaya_id": 19,
+    "code_postal": "19016",
+    "is_active": 1
+  },
+  {
+    "nom": "Guidjel",
+    "wilaya_id": 19,
+    "code_postal": "19017",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Lahdjar",
+    "wilaya_id": 19,
+    "code_postal": "19018",
+    "is_active": 1
+  },
+  {
+    "nom": "Bousselam",
+    "wilaya_id": 19,
+    "code_postal": "19019",
+    "is_active": 1
+  },
+  {
+    "nom": "El Eulma",
+    "wilaya_id": 19,
+    "code_postal": "19020",
+    "is_active": 1
+  },
+  {
+    "nom": "Djemila",
+    "wilaya_id": 19,
+    "code_postal": "19021",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Ouartilane",
+    "wilaya_id": 19,
+    "code_postal": "19022",
+    "is_active": 1
+  },
+  {
+    "nom": "Rosfa",
+    "wilaya_id": 19,
+    "code_postal": "19023",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Addouane",
+    "wilaya_id": 19,
+    "code_postal": "19024",
+    "is_active": 1
+  },
+  {
+    "nom": "Belaa",
+    "wilaya_id": 19,
+    "code_postal": "19025",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Arnat",
+    "wilaya_id": 19,
+    "code_postal": "19026",
+    "is_active": 1
+  },
+  {
+    "nom": "Amoucha",
+    "wilaya_id": 19,
+    "code_postal": "19027",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Oulmane",
+    "wilaya_id": 19,
+    "code_postal": "19028",
+    "is_active": 1
+  },
+  {
+    "nom": "Beidha Bordj",
+    "wilaya_id": 19,
+    "code_postal": "19029",
+    "is_active": 1
+  },
+  {
+    "nom": "Bouandas",
+    "wilaya_id": 19,
+    "code_postal": "19030",
+    "is_active": 1
+  },
+  {
+    "nom": "Bazer Sakhra",
+    "wilaya_id": 19,
+    "code_postal": "19031",
+    "is_active": 1
+  },
+  {
+    "nom": "Hammam Essokhna",
+    "wilaya_id": 19,
+    "code_postal": "19032",
+    "is_active": 1
+  },
+  {
+    "nom": "Mezloug",
+    "wilaya_id": 19,
+    "code_postal": "19033",
+    "is_active": 1
+  },
+  {
+    "nom": "Bir Haddada",
+    "wilaya_id": 19,
+    "code_postal": "19034",
+    "is_active": 1
+  },
+  {
+    "nom": "Serdj El Ghoul",
+    "wilaya_id": 19,
+    "code_postal": "19035",
+    "is_active": 1
+  },
+  {
+    "nom": "Harbil",
+    "wilaya_id": 19,
+    "code_postal": "19036",
+    "is_active": 1
+  },
+  {
+    "nom": "El Ouricia",
+    "wilaya_id": 19,
+    "code_postal": "19037",
+    "is_active": 1
+  },
+  {
+    "nom": "Tizi Nbechar",
+    "wilaya_id": 19,
+    "code_postal": "19038",
+    "is_active": 1
+  },
+  {
+    "nom": "Salah Bey",
+    "wilaya_id": 19,
+    "code_postal": "19039",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Azal",
+    "wilaya_id": 19,
+    "code_postal": "19040",
+    "is_active": 1
+  },
+  {
+    "nom": "Guenzet",
+    "wilaya_id": 19,
+    "code_postal": "19041",
+    "is_active": 1
+  },
+  {
+    "nom": "Talaifacene",
+    "wilaya_id": 19,
+    "code_postal": "19042",
+    "is_active": 1
+  },
+  {
+    "nom": "Bougaa",
+    "wilaya_id": 19,
+    "code_postal": "19043",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Fouda",
+    "wilaya_id": 19,
+    "code_postal": "19044",
+    "is_active": 1
+  },
+  {
+    "nom": "Tachouda",
+    "wilaya_id": 19,
+    "code_postal": "19045",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Mouhli",
+    "wilaya_id": 19,
+    "code_postal": "19046",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Sabor",
+    "wilaya_id": 19,
+    "code_postal": "19047",
+    "is_active": 1
+  },
+  {
+    "nom": "Guellal",
+    "wilaya_id": 19,
+    "code_postal": "19048",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Sebt",
+    "wilaya_id": 19,
+    "code_postal": "19049",
+    "is_active": 1
+  },
+  {
+    "nom": "Hammam Guergour",
+    "wilaya_id": 19,
+    "code_postal": "19050",
+    "is_active": 1
+  },
+  {
+    "nom": "Ait Naoual Mezada",
+    "wilaya_id": 19,
+    "code_postal": "19051",
+    "is_active": 1
+  },
+  {
+    "nom": "Ksar El Abtal",
+    "wilaya_id": 19,
+    "code_postal": "19052",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Hocine",
+    "wilaya_id": 19,
+    "code_postal": "19053",
+    "is_active": 1
+  },
+  {
+    "nom": "Ait Tizi",
+    "wilaya_id": 19,
+    "code_postal": "19054",
+    "is_active": 1
+  },
+  {
+    "nom": "Maouklane",
+    "wilaya_id": 19,
+    "code_postal": "19055",
+    "is_active": 1
+  },
+  {
+    "nom": "Guelta Zerka",
+    "wilaya_id": 19,
+    "code_postal": "19056",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued El Barad",
+    "wilaya_id": 19,
+    "code_postal": "19057",
+    "is_active": 1
+  },
+  {
+    "nom": "Taya",
+    "wilaya_id": 19,
+    "code_postal": "19058",
+    "is_active": 1
+  },
+  {
+    "nom": "El Ouldja",
+    "wilaya_id": 19,
+    "code_postal": "19059",
+    "is_active": 1
+  },
+  {
+    "nom": "Tella",
+    "wilaya_id": 19,
+    "code_postal": "19060",
+    "is_active": 1
+  },
+  {
+    "nom": "Saida",
+    "wilaya_id": 20,
+    "code_postal": "20001",
+    "is_active": 1
+  },
+  {
+    "nom": "Doui Thabet",
+    "wilaya_id": 20,
+    "code_postal": "20002",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain El Hadjar",
+    "wilaya_id": 20,
+    "code_postal": "20003",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Khaled",
+    "wilaya_id": 20,
+    "code_postal": "20004",
+    "is_active": 1
+  },
+  {
+    "nom": "Moulay Larbi",
+    "wilaya_id": 20,
+    "code_postal": "20005",
+    "is_active": 1
+  },
+  {
+    "nom": "Youb",
+    "wilaya_id": 20,
+    "code_postal": "20006",
+    "is_active": 1
+  },
+  {
+    "nom": "Hounet",
+    "wilaya_id": 20,
+    "code_postal": "20007",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Amar",
+    "wilaya_id": 20,
+    "code_postal": "20008",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Boubekeur",
+    "wilaya_id": 20,
+    "code_postal": "20009",
+    "is_active": 1
+  },
+  {
+    "nom": "El Hassasna",
+    "wilaya_id": 20,
+    "code_postal": "20010",
+    "is_active": 1
+  },
+  {
+    "nom": "Maamora",
+    "wilaya_id": 20,
+    "code_postal": "20011",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Ahmed",
+    "wilaya_id": 20,
+    "code_postal": "20012",
+    "is_active": 0
+  },
+  {
+    "nom": "Ain Sekhouna",
+    "wilaya_id": 20,
+    "code_postal": "20013",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Brahim",
+    "wilaya_id": 20,
+    "code_postal": "20014",
+    "is_active": 1
+  },
+  {
+    "nom": "Tircine",
+    "wilaya_id": 20,
+    "code_postal": "20015",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Soltane",
+    "wilaya_id": 20,
+    "code_postal": "20016",
+    "is_active": 1
+  },
+  {
+    "nom": "Skikda",
+    "wilaya_id": 21,
+    "code_postal": "21001",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Zouit",
+    "wilaya_id": 21,
+    "code_postal": "21002",
+    "is_active": 0
+  },
+  {
+    "nom": "El Hadaik",
+    "wilaya_id": 21,
+    "code_postal": "21003",
+    "is_active": 1
+  },
+  {
+    "nom": "Azzaba",
+    "wilaya_id": 21,
+    "code_postal": "21004",
+    "is_active": 1
+  },
+  {
+    "nom": "Djendel Saadi Mohamed",
+    "wilaya_id": 21,
+    "code_postal": "21005",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Cherchar",
+    "wilaya_id": 21,
+    "code_postal": "21006",
+    "is_active": 1
+  },
+  {
+    "nom": "Bekkouche Lakhdar",
+    "wilaya_id": 21,
+    "code_postal": "21007",
+    "is_active": 1
+  },
+  {
+    "nom": "Benazouz",
+    "wilaya_id": 21,
+    "code_postal": "21008",
+    "is_active": 1
+  },
+  {
+    "nom": "Es Sebt",
+    "wilaya_id": 21,
+    "code_postal": "21009",
+    "is_active": 1
+  },
+  {
+    "nom": "Collo",
+    "wilaya_id": 21,
+    "code_postal": "21010",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Zid",
+    "wilaya_id": 21,
+    "code_postal": "21011",
+    "is_active": 0
+  },
+  {
+    "nom": "Kerkera",
+    "wilaya_id": 21,
+    "code_postal": "21012",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Attia",
+    "wilaya_id": 21,
+    "code_postal": "21013",
+    "is_active": 0
+  },
+  {
+    "nom": "Oued Zehour",
+    "wilaya_id": 21,
+    "code_postal": "21014",
+    "is_active": 0
+  },
+  {
+    "nom": "Zitouna",
+    "wilaya_id": 21,
+    "code_postal": "21015",
+    "is_active": 0
+  },
+  {
+    "nom": "El Harrouch",
+    "wilaya_id": 21,
+    "code_postal": "21016",
+    "is_active": 1
+  },
+  {
+    "nom": "Zerdazas",
+    "wilaya_id": 21,
+    "code_postal": "21017",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Hebaba",
+    "wilaya_id": 21,
+    "code_postal": "21018",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Mezghiche",
+    "wilaya_id": 21,
+    "code_postal": "21019",
+    "is_active": 1
+  },
+  {
+    "nom": "Emdjez Edchich",
+    "wilaya_id": 21,
+    "code_postal": "21020",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Oulbane",
+    "wilaya_id": 21,
+    "code_postal": "21021",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Bouziane",
+    "wilaya_id": 21,
+    "code_postal": "21022",
+    "is_active": 1
+  },
+  {
+    "nom": "Ramdane Djamel",
+    "wilaya_id": 21,
+    "code_postal": "21023",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Bachir",
+    "wilaya_id": 21,
+    "code_postal": "21024",
+    "is_active": 1
+  },
+  {
+    "nom": "Salah Bouchaour",
+    "wilaya_id": 21,
+    "code_postal": "21025",
+    "is_active": 1
+  },
+  {
+    "nom": "Tamalous",
+    "wilaya_id": 21,
+    "code_postal": "21026",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Kechra",
+    "wilaya_id": 21,
+    "code_postal": "21027",
+    "is_active": 1
+  },
+  {
+    "nom": "Oum Toub",
+    "wilaya_id": 21,
+    "code_postal": "21028",
+    "is_active": 1
+  },
+  {
+    "nom": "Bein El Ouiden",
+    "wilaya_id": 21,
+    "code_postal": "21029",
+    "is_active": 1
+  },
+  {
+    "nom": "Fil Fila",
+    "wilaya_id": 21,
+    "code_postal": "21030",
+    "is_active": 1
+  },
+  {
+    "nom": "Cheraia",
+    "wilaya_id": 21,
+    "code_postal": "21031",
+    "is_active": 1
+  },
+  {
+    "nom": "Kanoua",
+    "wilaya_id": 21,
+    "code_postal": "21032",
+    "is_active": 0
+  },
+  {
+    "nom": "El Ghedir",
+    "wilaya_id": 21,
+    "code_postal": "21033",
+    "is_active": 1
+  },
+  {
+    "nom": "Bouchtata",
+    "wilaya_id": 21,
+    "code_postal": "21034",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouldja Boulbalout",
+    "wilaya_id": 21,
+    "code_postal": "21035",
+    "is_active": 0
+  },
+  {
+    "nom": "Kheneg Mayoum",
+    "wilaya_id": 21,
+    "code_postal": "21036",
+    "is_active": 0
+  },
+  {
+    "nom": "Hamadi Krouma",
+    "wilaya_id": 21,
+    "code_postal": "21037",
+    "is_active": 1
+  },
+  {
+    "nom": "El Marsa",
+    "wilaya_id": 21,
+    "code_postal": "21038",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Bel Abbes",
+    "wilaya_id": 22,
+    "code_postal": "22001",
+    "is_active": 1
+  },
+  {
+    "nom": "Tessala",
+    "wilaya_id": 22,
+    "code_postal": "22002",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Brahim",
+    "wilaya_id": 22,
+    "code_postal": "22003",
+    "is_active": 1
+  },
+  {
+    "nom": "Mostefa Ben Brahim",
+    "wilaya_id": 22,
+    "code_postal": "22004",
+    "is_active": 1
+  },
+  {
+    "nom": "Telagh",
+    "wilaya_id": 22,
+    "code_postal": "22005",
+    "is_active": 1
+  },
+  {
+    "nom": "Mezaourou",
+    "wilaya_id": 22,
+    "code_postal": "22006",
+    "is_active": 1
+  },
+  {
+    "nom": "Boukhanafis",
+    "wilaya_id": 22,
+    "code_postal": "22007",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Ali Boussidi",
+    "wilaya_id": 22,
+    "code_postal": "22008",
+    "is_active": 1
+  },
+  {
+    "nom": "Badredine El Mokrani",
+    "wilaya_id": 22,
+    "code_postal": "22009",
+    "is_active": 1
+  },
+  {
+    "nom": "Marhoum",
+    "wilaya_id": 22,
+    "code_postal": "22010",
+    "is_active": 1
+  },
+  {
+    "nom": "Tafissour",
+    "wilaya_id": 22,
+    "code_postal": "22011",
+    "is_active": 1
+  },
+  {
+    "nom": "Amarnas",
+    "wilaya_id": 22,
+    "code_postal": "22012",
+    "is_active": 1
+  },
+  {
+    "nom": "Tilmouni",
+    "wilaya_id": 22,
+    "code_postal": "22013",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Lahcene",
+    "wilaya_id": 22,
+    "code_postal": "22014",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Thrid",
+    "wilaya_id": 22,
+    "code_postal": "22015",
+    "is_active": 1
+  },
+  {
+    "nom": "Makedra",
+    "wilaya_id": 22,
+    "code_postal": "22016",
+    "is_active": 1
+  },
+  {
+    "nom": "Tenira",
+    "wilaya_id": 22,
+    "code_postal": "22017",
+    "is_active": 1
+  },
+  {
+    "nom": "Moulay Slissen",
+    "wilaya_id": 22,
+    "code_postal": "22018",
+    "is_active": 1
+  },
+  {
+    "nom": "El Hacaiba",
+    "wilaya_id": 22,
+    "code_postal": "22019",
+    "is_active": 1
+  },
+  {
+    "nom": "Hassi Zehana",
+    "wilaya_id": 22,
+    "code_postal": "22020",
+    "is_active": 1
+  },
+  {
+    "nom": "Tabia",
+    "wilaya_id": 22,
+    "code_postal": "22021",
+    "is_active": 1
+  },
+  {
+    "nom": "Merine",
+    "wilaya_id": 22,
+    "code_postal": "22022",
+    "is_active": 1
+  },
+  {
+    "nom": "Ras El Ma",
+    "wilaya_id": 22,
+    "code_postal": "22023",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Tindamine",
+    "wilaya_id": 22,
+    "code_postal": "22024",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Kada",
+    "wilaya_id": 22,
+    "code_postal": "22025",
+    "is_active": 1
+  },
+  {
+    "nom": "Mcid",
+    "wilaya_id": 22,
+    "code_postal": "22026",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Khaled",
+    "wilaya_id": 22,
+    "code_postal": "22027",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain El Berd",
+    "wilaya_id": 22,
+    "code_postal": "22028",
+    "is_active": 1
+  },
+  {
+    "nom": "Sfissef",
+    "wilaya_id": 22,
+    "code_postal": "22029",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Adden",
+    "wilaya_id": 22,
+    "code_postal": "22030",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued Taourira",
+    "wilaya_id": 22,
+    "code_postal": "22031",
+    "is_active": 1
+  },
+  {
+    "nom": "Dhaya",
+    "wilaya_id": 22,
+    "code_postal": "22032",
+    "is_active": 1
+  },
+  {
+    "nom": "Zerouala",
+    "wilaya_id": 22,
+    "code_postal": "22033",
+    "is_active": 1
+  },
+  {
+    "nom": "Lamtar",
+    "wilaya_id": 22,
+    "code_postal": "22034",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Chaib",
+    "wilaya_id": 22,
+    "code_postal": "22035",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Dahou Dezairs",
+    "wilaya_id": 22,
+    "code_postal": "22036",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued Sbaa",
+    "wilaya_id": 22,
+    "code_postal": "22037",
+    "is_active": 1
+  },
+  {
+    "nom": "Boudjebaa El Bordj",
+    "wilaya_id": 22,
+    "code_postal": "22038",
+    "is_active": 1
+  },
+  {
+    "nom": "Sehala Thaoura",
+    "wilaya_id": 22,
+    "code_postal": "22039",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Yacoub",
+    "wilaya_id": 22,
+    "code_postal": "22040",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Hamadouche",
+    "wilaya_id": 22,
+    "code_postal": "22041",
+    "is_active": 1
+  },
+  {
+    "nom": "Belarbi",
+    "wilaya_id": 22,
+    "code_postal": "22042",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued Sefioun",
+    "wilaya_id": 22,
+    "code_postal": "22043",
+    "is_active": 1
+  },
+  {
+    "nom": "Teghalimet",
+    "wilaya_id": 22,
+    "code_postal": "22044",
+    "is_active": 1
+  },
+  {
+    "nom": "Ben Badis",
+    "wilaya_id": 22,
+    "code_postal": "22045",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Ali Benyoub",
+    "wilaya_id": 22,
+    "code_postal": "22046",
+    "is_active": 1
+  },
+  {
+    "nom": "Chetouane Belaila",
+    "wilaya_id": 22,
+    "code_postal": "22047",
+    "is_active": 1
+  },
+  {
+    "nom": "Bir El Hammam",
+    "wilaya_id": 22,
+    "code_postal": "22048",
+    "is_active": 1
+  },
+  {
+    "nom": "Taoudmout",
+    "wilaya_id": 22,
+    "code_postal": "22049",
+    "is_active": 1
+  },
+  {
+    "nom": "Redjem Demouche",
+    "wilaya_id": 22,
+    "code_postal": "22050",
+    "is_active": 1
+  },
+  {
+    "nom": "Benachiba Chelia",
+    "wilaya_id": 22,
+    "code_postal": "22051",
+    "is_active": 1
+  },
+  {
+    "nom": "Hassi Dahou",
+    "wilaya_id": 22,
+    "code_postal": "22052",
+    "is_active": 1
+  },
+  {
+    "nom": "Annaba",
+    "wilaya_id": 23,
+    "code_postal": "23001",
+    "is_active": 1
+  },
+  {
+    "nom": "Berrahel",
+    "wilaya_id": 23,
+    "code_postal": "23002",
+    "is_active": 1
+  },
+  {
+    "nom": "El Hadjar",
+    "wilaya_id": 23,
+    "code_postal": "23003",
+    "is_active": 1
+  },
+  {
+    "nom": "Eulma",
+    "wilaya_id": 23,
+    "code_postal": "23004",
+    "is_active": 1
+  },
+  {
+    "nom": "El Bouni",
+    "wilaya_id": 23,
+    "code_postal": "23005",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued El Aneb",
+    "wilaya_id": 23,
+    "code_postal": "23006",
+    "is_active": 1
+  },
+  {
+    "nom": "Cheurfa",
+    "wilaya_id": 23,
+    "code_postal": "23007",
+    "is_active": 1
+  },
+  {
+    "nom": "Seraidi",
+    "wilaya_id": 23,
+    "code_postal": "23008",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Berda",
+    "wilaya_id": 23,
+    "code_postal": "23009",
+    "is_active": 1
+  },
+  {
+    "nom": "Chetaibi",
+    "wilaya_id": 23,
+    "code_postal": "23010",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Amer",
+    "wilaya_id": 23,
+    "code_postal": "23011",
+    "is_active": 1
+  },
+  {
+    "nom": "Treat",
+    "wilaya_id": 23,
+    "code_postal": "23012",
+    "is_active": 1
+  },
+  {
+    "nom": "Guelma",
+    "wilaya_id": 24,
+    "code_postal": "24001",
+    "is_active": 1
+  },
+  {
+    "nom": "Nechmaya",
+    "wilaya_id": 24,
+    "code_postal": "24002",
+    "is_active": 1
+  },
+  {
+    "nom": "Bouati Mahmoud",
+    "wilaya_id": 24,
+    "code_postal": "24003",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued Zenati",
+    "wilaya_id": 24,
+    "code_postal": "24004",
+    "is_active": 1
+  },
+  {
+    "nom": "Tamlouka",
+    "wilaya_id": 24,
+    "code_postal": "24005",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued Fragha",
+    "wilaya_id": 24,
+    "code_postal": "24006",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Sandel",
+    "wilaya_id": 24,
+    "code_postal": "24007",
+    "is_active": 1
+  },
+  {
+    "nom": "Ras El Agba",
+    "wilaya_id": 24,
+    "code_postal": "24008",
+    "is_active": 1
+  },
+  {
+    "nom": "Dahouara",
+    "wilaya_id": 24,
+    "code_postal": "24009",
+    "is_active": 1
+  },
+  {
+    "nom": "Belkhir",
+    "wilaya_id": 24,
+    "code_postal": "24010",
+    "is_active": 1
+  },
+  {
+    "nom": "Ben Djarah",
+    "wilaya_id": 24,
+    "code_postal": "24011",
+    "is_active": 1
+  },
+  {
+    "nom": "Bou Hamdane",
+    "wilaya_id": 24,
+    "code_postal": "24012",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Makhlouf",
+    "wilaya_id": 24,
+    "code_postal": "24013",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Ben Beida",
+    "wilaya_id": 24,
+    "code_postal": "24014",
+    "is_active": 1
+  },
+  {
+    "nom": "Khezara",
+    "wilaya_id": 24,
+    "code_postal": "24015",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Mezline",
+    "wilaya_id": 24,
+    "code_postal": "24016",
+    "is_active": 1
+  },
+  {
+    "nom": "Bou Hachana",
+    "wilaya_id": 24,
+    "code_postal": "24017",
+    "is_active": 1
+  },
+  {
+    "nom": "Guelaat Bou Sbaa",
+    "wilaya_id": 24,
+    "code_postal": "24018",
+    "is_active": 1
+  },
+  {
+    "nom": "Hammam Maskhoutine",
+    "wilaya_id": 24,
+    "code_postal": "24019",
+    "is_active": 1
+  },
+  {
+    "nom": "El Fedjoudj",
+    "wilaya_id": 24,
+    "code_postal": "24020",
+    "is_active": 1
+  },
+  {
+    "nom": "Bordj Sabat",
+    "wilaya_id": 24,
+    "code_postal": "24021",
+    "is_active": 1
+  },
+  {
+    "nom": "Hamman Nbail",
+    "wilaya_id": 24,
+    "code_postal": "24022",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Larbi",
+    "wilaya_id": 24,
+    "code_postal": "24023",
+    "is_active": 0
+  },
+  {
+    "nom": "Medjez Amar",
+    "wilaya_id": 24,
+    "code_postal": "24024",
+    "is_active": 1
+  },
+  {
+    "nom": "Bouchegouf",
+    "wilaya_id": 24,
+    "code_postal": "24025",
+    "is_active": 1
+  },
+  {
+    "nom": "Heliopolis",
+    "wilaya_id": 24,
+    "code_postal": "24026",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Hessania",
+    "wilaya_id": 24,
+    "code_postal": "24027",
+    "is_active": 1
+  },
+  {
+    "nom": "Roknia",
+    "wilaya_id": 24,
+    "code_postal": "24028",
+    "is_active": 1
+  },
+  {
+    "nom": "Salaoua Announa",
+    "wilaya_id": 24,
+    "code_postal": "24029",
+    "is_active": 1
+  },
+  {
+    "nom": "Medjez Sfa",
+    "wilaya_id": 24,
+    "code_postal": "24030",
+    "is_active": 1
+  },
+  {
+    "nom": "Boumahra Ahmed",
+    "wilaya_id": 24,
+    "code_postal": "24031",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Reggada",
+    "wilaya_id": 24,
+    "code_postal": "24032",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued Cheham",
+    "wilaya_id": 24,
+    "code_postal": "24033",
+    "is_active": 1
+  },
+  {
+    "nom": "Djeballah Khemissi",
+    "wilaya_id": 24,
+    "code_postal": "24034",
+    "is_active": 1
+  },
+  {
+    "nom": "Constantine",
+    "wilaya_id": 25,
+    "code_postal": "25001",
+    "is_active": 1
+  },
+  {
+    "nom": "Hamma Bouziane",
+    "wilaya_id": 25,
+    "code_postal": "25002",
+    "is_active": 1
+  },
+  {
+    "nom": "El Haria",
+    "wilaya_id": 25,
+    "code_postal": "25003",
+    "is_active": 1
+  },
+  {
+    "nom": "Zighoud Youcef",
+    "wilaya_id": 25,
+    "code_postal": "25004",
+    "is_active": 1
+  },
+  {
+    "nom": "Didouche Mourad",
+    "wilaya_id": 25,
+    "code_postal": "25005",
+    "is_active": 1
+  },
+  {
+    "nom": "El Khroub",
+    "wilaya_id": 25,
+    "code_postal": "25006",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Abid",
+    "wilaya_id": 25,
+    "code_postal": "25007",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Hamiden",
+    "wilaya_id": 25,
+    "code_postal": "25008",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Rahmoune",
+    "wilaya_id": 25,
+    "code_postal": "25009",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Smara",
+    "wilaya_id": 25,
+    "code_postal": "25010",
+    "is_active": 1
+  },
+  {
+    "nom": "Mesaoud Boudjeriou",
+    "wilaya_id": 25,
+    "code_postal": "25011",
+    "is_active": 1
+  },
+  {
+    "nom": "Ibn Ziad",
+    "wilaya_id": 25,
+    "code_postal": "25012",
+    "is_active": 1
+  },
+  {
+    "nom": "Medea",
+    "wilaya_id": 26,
+    "code_postal": "26001",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouzera",
+    "wilaya_id": 26,
+    "code_postal": "26002",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Maaref",
+    "wilaya_id": 26,
+    "code_postal": "26003",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Boucif",
+    "wilaya_id": 26,
+    "code_postal": "26004",
+    "is_active": 1
+  },
+  {
+    "nom": "Aissaouia",
+    "wilaya_id": 26,
+    "code_postal": "26005",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Deide",
+    "wilaya_id": 26,
+    "code_postal": "26006",
+    "is_active": 1
+  },
+  {
+    "nom": "El Omaria",
+    "wilaya_id": 26,
+    "code_postal": "26007",
+    "is_active": 1
+  },
+  {
+    "nom": "Derrag",
+    "wilaya_id": 26,
+    "code_postal": "26008",
+    "is_active": 1
+  },
+  {
+    "nom": "El Guelbelkebir",
+    "wilaya_id": 26,
+    "code_postal": "26009",
+    "is_active": 1
+  },
+  {
+    "nom": "Bouaiche",
+    "wilaya_id": 26,
+    "code_postal": "26010",
+    "is_active": 1
+  },
+  {
+    "nom": "Mezerena",
+    "wilaya_id": 26,
+    "code_postal": "26011",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Brahim",
+    "wilaya_id": 26,
+    "code_postal": "26012",
+    "is_active": 1
+  },
+  {
+    "nom": "Damiat",
+    "wilaya_id": 26,
+    "code_postal": "26013",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Ziane",
+    "wilaya_id": 26,
+    "code_postal": "26014",
+    "is_active": 1
+  },
+  {
+    "nom": "Tamesguida",
+    "wilaya_id": 26,
+    "code_postal": "26015",
+    "is_active": 1
+  },
+  {
+    "nom": "El Hamdania",
+    "wilaya_id": 26,
+    "code_postal": "26016",
+    "is_active": 1
+  },
+  {
+    "nom": "Kef Lakhdar",
+    "wilaya_id": 26,
+    "code_postal": "26017",
+    "is_active": 1
+  },
+  {
+    "nom": "Chelalet El Adhaoura",
+    "wilaya_id": 26,
+    "code_postal": "26018",
+    "is_active": 1
+  },
+  {
+    "nom": "Bouskene",
+    "wilaya_id": 26,
+    "code_postal": "26019",
+    "is_active": 1
+  },
+  {
+    "nom": "Rebaia",
+    "wilaya_id": 26,
+    "code_postal": "26020",
+    "is_active": 1
+  },
+  {
+    "nom": "Bouchrahil",
+    "wilaya_id": 26,
+    "code_postal": "26021",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Hellal",
+    "wilaya_id": 26,
+    "code_postal": "26022",
+    "is_active": 1
+  },
+  {
+    "nom": "Tafraout",
+    "wilaya_id": 26,
+    "code_postal": "26023",
+    "is_active": 1
+  },
+  {
+    "nom": "Baata",
+    "wilaya_id": 26,
+    "code_postal": "26024",
+    "is_active": 1
+  },
+  {
+    "nom": "Boghar",
+    "wilaya_id": 26,
+    "code_postal": "26025",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Naamane",
+    "wilaya_id": 26,
+    "code_postal": "26026",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Bouachra",
+    "wilaya_id": 26,
+    "code_postal": "26027",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Zahar",
+    "wilaya_id": 26,
+    "code_postal": "26028",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued Harbil",
+    "wilaya_id": 26,
+    "code_postal": "26029",
+    "is_active": 1
+  },
+  {
+    "nom": "Benchicao",
+    "wilaya_id": 26,
+    "code_postal": "26030",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Damed",
+    "wilaya_id": 26,
+    "code_postal": "26031",
+    "is_active": 1
+  },
+  {
+    "nom": "Aziz",
+    "wilaya_id": 26,
+    "code_postal": "26032",
+    "is_active": 1
+  },
+  {
+    "nom": "Souagui",
+    "wilaya_id": 26,
+    "code_postal": "26033",
+    "is_active": 1
+  },
+  {
+    "nom": "Zoubiria",
+    "wilaya_id": 26,
+    "code_postal": "26034",
+    "is_active": 1
+  },
+  {
+    "nom": "Ksar El Boukhari",
+    "wilaya_id": 26,
+    "code_postal": "26035",
+    "is_active": 1
+  },
+  {
+    "nom": "El Azizia",
+    "wilaya_id": 26,
+    "code_postal": "26036",
+    "is_active": 1
+  },
+  {
+    "nom": "Djouab",
+    "wilaya_id": 26,
+    "code_postal": "26037",
+    "is_active": 1
+  },
+  {
+    "nom": "Chahbounia",
+    "wilaya_id": 26,
+    "code_postal": "26038",
+    "is_active": 1
+  },
+  {
+    "nom": "Meghraoua",
+    "wilaya_id": 26,
+    "code_postal": "26039",
+    "is_active": 1
+  },
+  {
+    "nom": "Cheniguel",
+    "wilaya_id": 26,
+    "code_postal": "26040",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Ouksir",
+    "wilaya_id": 26,
+    "code_postal": "26041",
+    "is_active": 1
+  },
+  {
+    "nom": "Oum El Djalil",
+    "wilaya_id": 26,
+    "code_postal": "26042",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouamri",
+    "wilaya_id": 26,
+    "code_postal": "26043",
+    "is_active": 1
+  },
+  {
+    "nom": "Si Mahdjoub",
+    "wilaya_id": 26,
+    "code_postal": "26044",
+    "is_active": 1
+  },
+  {
+    "nom": "Tlatet Eddoair",
+    "wilaya_id": 26,
+    "code_postal": "26045",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Slimane",
+    "wilaya_id": 26,
+    "code_postal": "26046",
+    "is_active": 1
+  },
+  {
+    "nom": "Berrouaghia",
+    "wilaya_id": 26,
+    "code_postal": "26047",
+    "is_active": 1
+  },
+  {
+    "nom": "Seghouane",
+    "wilaya_id": 26,
+    "code_postal": "26048",
+    "is_active": 1
+  },
+  {
+    "nom": "Meftaha",
+    "wilaya_id": 26,
+    "code_postal": "26049",
+    "is_active": 1
+  },
+  {
+    "nom": "Mihoub",
+    "wilaya_id": 26,
+    "code_postal": "26050",
+    "is_active": 1
+  },
+  {
+    "nom": "Boughezoul",
+    "wilaya_id": 26,
+    "code_postal": "26051",
+    "is_active": 1
+  },
+  {
+    "nom": "Tablat",
+    "wilaya_id": 26,
+    "code_postal": "26052",
+    "is_active": 1
+  },
+  {
+    "nom": "Deux Bassins",
+    "wilaya_id": 26,
+    "code_postal": "26053",
+    "is_active": 1
+  },
+  {
+    "nom": "Draa Essamar",
+    "wilaya_id": 26,
+    "code_postal": "26054",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Errabia",
+    "wilaya_id": 26,
+    "code_postal": "26055",
+    "is_active": 1
+  },
+  {
+    "nom": "Bir Ben Laabed",
+    "wilaya_id": 26,
+    "code_postal": "26056",
+    "is_active": 1
+  },
+  {
+    "nom": "El Ouinet",
+    "wilaya_id": 26,
+    "code_postal": "26057",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Antar",
+    "wilaya_id": 26,
+    "code_postal": "26058",
+    "is_active": 1
+  },
+  {
+    "nom": "Bouaichoune",
+    "wilaya_id": 26,
+    "code_postal": "26059",
+    "is_active": 1
+  },
+  {
+    "nom": "Hannacha",
+    "wilaya_id": 26,
+    "code_postal": "26060",
+    "is_active": 1
+  },
+  {
+    "nom": "Sedraia",
+    "wilaya_id": 26,
+    "code_postal": "26061",
+    "is_active": 1
+  },
+  {
+    "nom": "Medjebar",
+    "wilaya_id": 26,
+    "code_postal": "26062",
+    "is_active": 1
+  },
+  {
+    "nom": "Khams Djouamaa",
+    "wilaya_id": 26,
+    "code_postal": "26063",
+    "is_active": 1
+  },
+  {
+    "nom": "Saneg",
+    "wilaya_id": 26,
+    "code_postal": "26064",
+    "is_active": 1
+  },
+  {
+    "nom": "Mostaganem",
+    "wilaya_id": 27,
+    "code_postal": "27001",
+    "is_active": 1
+  },
+  {
+    "nom": "Sayada",
+    "wilaya_id": 27,
+    "code_postal": "27002",
+    "is_active": 1
+  },
+  {
+    "nom": "Fornaka",
+    "wilaya_id": 27,
+    "code_postal": "27003",
+    "is_active": 1
+  },
+  {
+    "nom": "Stidia",
+    "wilaya_id": 27,
+    "code_postal": "27004",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Nouissy",
+    "wilaya_id": 27,
+    "code_postal": "27005",
+    "is_active": 1
+  },
+  {
+    "nom": "Hassi Maameche",
+    "wilaya_id": 27,
+    "code_postal": "27006",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Tadles",
+    "wilaya_id": 27,
+    "code_postal": "27007",
+    "is_active": 1
+  },
+  {
+    "nom": "Sour",
+    "wilaya_id": 27,
+    "code_postal": "27008",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued El Kheir",
+    "wilaya_id": 27,
+    "code_postal": "27009",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Bellater",
+    "wilaya_id": 27,
+    "code_postal": "27010",
+    "is_active": 1
+  },
+  {
+    "nom": "Kheiredine ",
+    "wilaya_id": 27,
+    "code_postal": "27011",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Ali",
+    "wilaya_id": 27,
+    "code_postal": "27012",
+    "is_active": 1
+  },
+  {
+    "nom": "Abdelmalek Ramdane",
+    "wilaya_id": 27,
+    "code_postal": "27013",
+    "is_active": 1
+  },
+  {
+    "nom": "Hadjadj",
+    "wilaya_id": 27,
+    "code_postal": "27014",
+    "is_active": 1
+  },
+  {
+    "nom": "Nekmaria",
+    "wilaya_id": 27,
+    "code_postal": "27015",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Lakhdar",
+    "wilaya_id": 27,
+    "code_postal": "27016",
+    "is_active": 1
+  },
+  {
+    "nom": "Achaacha",
+    "wilaya_id": 27,
+    "code_postal": "27017",
+    "is_active": 1
+  },
+  {
+    "nom": "Khadra",
+    "wilaya_id": 27,
+    "code_postal": "27018",
+    "is_active": 1
+  },
+  {
+    "nom": "Bouguirat",
+    "wilaya_id": 27,
+    "code_postal": "27019",
+    "is_active": 1
+  },
+  {
+    "nom": "Sirat",
+    "wilaya_id": 27,
+    "code_postal": "27020",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Sidi Cherif",
+    "wilaya_id": 27,
+    "code_postal": "27021",
+    "is_active": 1
+  },
+  {
+    "nom": "Mesra",
+    "wilaya_id": 27,
+    "code_postal": "27022",
+    "is_active": 1
+  },
+  {
+    "nom": "Mansourah",
+    "wilaya_id": 27,
+    "code_postal": "27023",
+    "is_active": 1
+  },
+  {
+    "nom": "Souaflia",
+    "wilaya_id": 27,
+    "code_postal": "27024",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Boughalem",
+    "wilaya_id": 27,
+    "code_postal": "27025",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Maallah",
+    "wilaya_id": 27,
+    "code_postal": "27026",
+    "is_active": 1
+  },
+  {
+    "nom": "Mezghrane",
+    "wilaya_id": 27,
+    "code_postal": "27027",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Boudinar",
+    "wilaya_id": 27,
+    "code_postal": "27028",
+    "is_active": 1
+  },
+  {
+    "nom": "Tazgait",
+    "wilaya_id": 27,
+    "code_postal": "27029",
+    "is_active": 1
+  },
+  {
+    "nom": "Safsaf",
+    "wilaya_id": 27,
+    "code_postal": "27030",
+    "is_active": 1
+  },
+  {
+    "nom": "Touahria",
+    "wilaya_id": 27,
+    "code_postal": "27031",
+    "is_active": 1
+  },
+  {
+    "nom": "El Hassiane",
+    "wilaya_id": 27,
+    "code_postal": "27032",
+    "is_active": 1
+  },
+  {
+    "nom": "Msila",
+    "wilaya_id": 28,
+    "code_postal": "28001",
+    "is_active": 1
+  },
+  {
+    "nom": "Maadid",
+    "wilaya_id": 28,
+    "code_postal": "28002",
+    "is_active": 1
+  },
+  {
+    "nom": "Hammam Dhalaa",
+    "wilaya_id": 28,
+    "code_postal": "28003",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Derradj",
+    "wilaya_id": 28,
+    "code_postal": "28004",
+    "is_active": 1
+  },
+  {
+    "nom": "Tarmount",
+    "wilaya_id": 28,
+    "code_postal": "28005",
+    "is_active": 1
+  },
+  {
+    "nom": "Mtarfa",
+    "wilaya_id": 28,
+    "code_postal": "28006",
+    "is_active": 1
+  },
+  {
+    "nom": "Khoubana",
+    "wilaya_id": 28,
+    "code_postal": "28007",
+    "is_active": 1
+  },
+  {
+    "nom": "Mcif",
+    "wilaya_id": 28,
+    "code_postal": "28008",
+    "is_active": 1
+  },
+  {
+    "nom": "Chellal",
+    "wilaya_id": 28,
+    "code_postal": "28009",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Madhi",
+    "wilaya_id": 28,
+    "code_postal": "28010",
+    "is_active": 1
+  },
+  {
+    "nom": "Magra",
+    "wilaya_id": 28,
+    "code_postal": "28011",
+    "is_active": 1
+  },
+  {
+    "nom": "Berhoum",
+    "wilaya_id": 28,
+    "code_postal": "28012",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Khadra",
+    "wilaya_id": 28,
+    "code_postal": "28013",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Addi Guebala",
+    "wilaya_id": 28,
+    "code_postal": "28014",
+    "is_active": 1
+  },
+  {
+    "nom": "Belaiba",
+    "wilaya_id": 28,
+    "code_postal": "28015",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Aissa",
+    "wilaya_id": 28,
+    "code_postal": "28016",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain El Hadjel",
+    "wilaya_id": 28,
+    "code_postal": "28017",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Hadjeres",
+    "wilaya_id": 28,
+    "code_postal": "28018",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouanougha",
+    "wilaya_id": 28,
+    "code_postal": "28019",
+    "is_active": 1
+  },
+  {
+    "nom": "Bou Saada",
+    "wilaya_id": 28,
+    "code_postal": "28020",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Sidi Brahim",
+    "wilaya_id": 28,
+    "code_postal": "28021",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Ameur",
+    "wilaya_id": 28,
+    "code_postal": "28022",
+    "is_active": 1
+  },
+  {
+    "nom": "Tamsa",
+    "wilaya_id": 28,
+    "code_postal": "28023",
+    "is_active": 1
+  },
+  {
+    "nom": "Ben Srour",
+    "wilaya_id": 28,
+    "code_postal": "28024",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Slimane",
+    "wilaya_id": 28,
+    "code_postal": "28025",
+    "is_active": 1
+  },
+  {
+    "nom": "El Houamed",
+    "wilaya_id": 28,
+    "code_postal": "28026",
+    "is_active": 1
+  },
+  {
+    "nom": "El Hamel",
+    "wilaya_id": 28,
+    "code_postal": "28027",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Mansour",
+    "wilaya_id": 28,
+    "code_postal": "28028",
+    "is_active": 1
+  },
+  {
+    "nom": "Maarif",
+    "wilaya_id": 28,
+    "code_postal": "28029",
+    "is_active": 1
+  },
+  {
+    "nom": "Dehahna",
+    "wilaya_id": 28,
+    "code_postal": "28030",
+    "is_active": 1
+  },
+  {
+    "nom": "Bouti Sayah",
+    "wilaya_id": 28,
+    "code_postal": "28031",
+    "is_active": 1
+  },
+  {
+    "nom": "Khettouti Sed Djir",
+    "wilaya_id": 28,
+    "code_postal": "28032",
+    "is_active": 1
+  },
+  {
+    "nom": "Zarzour",
+    "wilaya_id": 28,
+    "code_postal": "28033",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued Chair",
+    "wilaya_id": 28,
+    "code_postal": "28034",
+    "is_active": 1
+  },
+  {
+    "nom": "Benzouh",
+    "wilaya_id": 28,
+    "code_postal": "28035",
+    "is_active": 1
+  },
+  {
+    "nom": "Bir Foda",
+    "wilaya_id": 28,
+    "code_postal": "28036",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Fares",
+    "wilaya_id": 28,
+    "code_postal": "28037",
+    "is_active": 0
+  },
+  {
+    "nom": "Sidi Mhamed",
+    "wilaya_id": 28,
+    "code_postal": "28038",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Atia",
+    "wilaya_id": 28,
+    "code_postal": "28039",
+    "is_active": 1
+  },
+  {
+    "nom": "Souamaa",
+    "wilaya_id": 28,
+    "code_postal": "28040",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain El Melh",
+    "wilaya_id": 28,
+    "code_postal": "28041",
+    "is_active": 1
+  },
+  {
+    "nom": "Medjedel",
+    "wilaya_id": 28,
+    "code_postal": "28042",
+    "is_active": 1
+  },
+  {
+    "nom": "Slim",
+    "wilaya_id": 28,
+    "code_postal": "28043",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Errich",
+    "wilaya_id": 28,
+    "code_postal": "28044",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Ilmane",
+    "wilaya_id": 28,
+    "code_postal": "28045",
+    "is_active": 1
+  },
+  {
+    "nom": "Oultene",
+    "wilaya_id": 28,
+    "code_postal": "28046",
+    "is_active": 1
+  },
+  {
+    "nom": "Djebel Messaad",
+    "wilaya_id": 28,
+    "code_postal": "28047",
+    "is_active": 1
+  },
+  {
+    "nom": "Mascara",
+    "wilaya_id": 29,
+    "code_postal": "29001",
+    "is_active": 1
+  },
+  {
+    "nom": "Bou Hanifia",
+    "wilaya_id": 29,
+    "code_postal": "29002",
+    "is_active": 1
+  },
+  {
+    "nom": "Tizi",
+    "wilaya_id": 29,
+    "code_postal": "29003",
+    "is_active": 1
+  },
+  {
+    "nom": "Hacine",
+    "wilaya_id": 29,
+    "code_postal": "29004",
+    "is_active": 1
+  },
+  {
+    "nom": "Maoussa",
+    "wilaya_id": 29,
+    "code_postal": "29005",
+    "is_active": 1
+  },
+  {
+    "nom": "Teghennif",
+    "wilaya_id": 29,
+    "code_postal": "29006",
+    "is_active": 1
+  },
+  {
+    "nom": "El Hachem",
+    "wilaya_id": 29,
+    "code_postal": "29007",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Kada",
+    "wilaya_id": 29,
+    "code_postal": "29008",
+    "is_active": 1
+  },
+  {
+    "nom": "Zelmata",
+    "wilaya_id": 29,
+    "code_postal": "29009",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued El Abtal",
+    "wilaya_id": 29,
+    "code_postal": "29010",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Ferah",
+    "wilaya_id": 29,
+    "code_postal": "29011",
+    "is_active": 1
+  },
+  {
+    "nom": "Ghriss",
+    "wilaya_id": 29,
+    "code_postal": "29012",
+    "is_active": 1
+  },
+  {
+    "nom": "Froha",
+    "wilaya_id": 29,
+    "code_postal": "29013",
+    "is_active": 1
+  },
+  {
+    "nom": "Matemore",
+    "wilaya_id": 29,
+    "code_postal": "29014",
+    "is_active": 1
+  },
+  {
+    "nom": "Makdha",
+    "wilaya_id": 29,
+    "code_postal": "29015",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Boussaid",
+    "wilaya_id": 29,
+    "code_postal": "29016",
+    "is_active": 1
+  },
+  {
+    "nom": "El Bordj",
+    "wilaya_id": 29,
+    "code_postal": "29017",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Fekan",
+    "wilaya_id": 29,
+    "code_postal": "29018",
+    "is_active": 1
+  },
+  {
+    "nom": "Benian",
+    "wilaya_id": 29,
+    "code_postal": "29019",
+    "is_active": 1
+  },
+  {
+    "nom": "Khalouia",
+    "wilaya_id": 29,
+    "code_postal": "29020",
+    "is_active": 1
+  },
+  {
+    "nom": "El Menaouer",
+    "wilaya_id": 29,
+    "code_postal": "29021",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued Taria",
+    "wilaya_id": 29,
+    "code_postal": "29022",
+    "is_active": 1
+  },
+  {
+    "nom": "Aouf",
+    "wilaya_id": 29,
+    "code_postal": "29023",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Fares",
+    "wilaya_id": 29,
+    "code_postal": "29024",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Frass",
+    "wilaya_id": 29,
+    "code_postal": "29025",
+    "is_active": 1
+  },
+  {
+    "nom": "Sig",
+    "wilaya_id": 29,
+    "code_postal": "29026",
+    "is_active": 1
+  },
+  {
+    "nom": "Oggaz",
+    "wilaya_id": 29,
+    "code_postal": "29027",
+    "is_active": 1
+  },
+  {
+    "nom": "Alaimia",
+    "wilaya_id": 29,
+    "code_postal": "29028",
+    "is_active": 1
+  },
+  {
+    "nom": "El Gaada",
+    "wilaya_id": 29,
+    "code_postal": "29029",
+    "is_active": 0
+  },
+  {
+    "nom": "Zahana",
+    "wilaya_id": 29,
+    "code_postal": "29030",
+    "is_active": 1
+  },
+  {
+    "nom": "Mohammadia",
+    "wilaya_id": 29,
+    "code_postal": "29031",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Abdelmoumene",
+    "wilaya_id": 29,
+    "code_postal": "29032",
+    "is_active": 1
+  },
+  {
+    "nom": "Ferraguig",
+    "wilaya_id": 29,
+    "code_postal": "29033",
+    "is_active": 1
+  },
+  {
+    "nom": "El Ghomri",
+    "wilaya_id": 29,
+    "code_postal": "29034",
+    "is_active": 1
+  },
+  {
+    "nom": "Sedjerara",
+    "wilaya_id": 29,
+    "code_postal": "29035",
+    "is_active": 1
+  },
+  {
+    "nom": "Moctadouz",
+    "wilaya_id": 29,
+    "code_postal": "29036",
+    "is_active": 1
+  },
+  {
+    "nom": "Bou Henni",
+    "wilaya_id": 29,
+    "code_postal": "29037",
+    "is_active": 1
+  },
+  {
+    "nom": "Guettena",
+    "wilaya_id": 29,
+    "code_postal": "29038",
+    "is_active": 1
+  },
+  {
+    "nom": "El Mamounia",
+    "wilaya_id": 29,
+    "code_postal": "29039",
+    "is_active": 1
+  },
+  {
+    "nom": "El Keurt",
+    "wilaya_id": 29,
+    "code_postal": "29040",
+    "is_active": 1
+  },
+  {
+    "nom": "Gharrous",
+    "wilaya_id": 29,
+    "code_postal": "29041",
+    "is_active": 1
+  },
+  {
+    "nom": "Gherdjoum",
+    "wilaya_id": 29,
+    "code_postal": "29042",
+    "is_active": 1
+  },
+  {
+    "nom": "Chorfa",
+    "wilaya_id": 29,
+    "code_postal": "29043",
+    "is_active": 1
+  },
+  {
+    "nom": "Ras Ain Amirouche",
+    "wilaya_id": 29,
+    "code_postal": "29044",
+    "is_active": 1
+  },
+  {
+    "nom": "Nesmot",
+    "wilaya_id": 29,
+    "code_postal": "29045",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Abdeldjebar",
+    "wilaya_id": 29,
+    "code_postal": "29046",
+    "is_active": 1
+  },
+  {
+    "nom": "Sehailia",
+    "wilaya_id": 29,
+    "code_postal": "29047",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouargla",
+    "wilaya_id": 30,
+    "code_postal": "30001",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Beida",
+    "wilaya_id": 30,
+    "code_postal": "30002",
+    "is_active": 1
+  },
+  {
+    "nom": "Ngoussa",
+    "wilaya_id": 30,
+    "code_postal": "30003",
+    "is_active": 1
+  },
+  {
+    "nom": "Hassi Messaoud",
+    "wilaya_id": 30,
+    "code_postal": "30004",
+    "is_active": 1
+  },
+  {
+    "nom": "Rouissat",
+    "wilaya_id": 30,
+    "code_postal": "30005",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Khouiled",
+    "wilaya_id": 30,
+    "code_postal": "30011",
+    "is_active": 1
+  },
+  {
+    "nom": "Hassi Ben Abdellah",
+    "wilaya_id": 30,
+    "code_postal": "30012",
+    "is_active": 1
+  },
+  {
+    "nom": "El Borma",
+    "wilaya_id": 30,
+    "code_postal": "30021",
+    "is_active": 0
+  },
+  {
+    "nom": "Oran",
+    "wilaya_id": 31,
+    "code_postal": "31001",
+    "is_active": 1
+  },
+  {
+    "nom": "Gdyel",
+    "wilaya_id": 31,
+    "code_postal": "31002",
+    "is_active": 1
+  },
+  {
+    "nom": "Bir El Djir",
+    "wilaya_id": 31,
+    "code_postal": "31003",
+    "is_active": 1
+  },
+  {
+    "nom": "Hassi Bounif",
+    "wilaya_id": 31,
+    "code_postal": "31004",
+    "is_active": 1
+  },
+  {
+    "nom": "Es Senia",
+    "wilaya_id": 31,
+    "code_postal": "31005",
+    "is_active": 1
+  },
+  {
+    "nom": "Arzew",
+    "wilaya_id": 31,
+    "code_postal": "31006",
+    "is_active": 1
+  },
+  {
+    "nom": "Bethioua",
+    "wilaya_id": 31,
+    "code_postal": "31007",
+    "is_active": 1
+  },
+  {
+    "nom": "Marsat El Hadjadj",
+    "wilaya_id": 31,
+    "code_postal": "31008",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Turk",
+    "wilaya_id": 31,
+    "code_postal": "31009",
+    "is_active": 1
+  },
+  {
+    "nom": "El Ancar",
+    "wilaya_id": 31,
+    "code_postal": "31010",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued Tlelat",
+    "wilaya_id": 31,
+    "code_postal": "31011",
+    "is_active": 1
+  },
+  {
+    "nom": "Tafraoui",
+    "wilaya_id": 31,
+    "code_postal": "31012",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Chami",
+    "wilaya_id": 31,
+    "code_postal": "31013",
+    "is_active": 1
+  },
+  {
+    "nom": "Boufatis",
+    "wilaya_id": 31,
+    "code_postal": "31014",
+    "is_active": 1
+  },
+  {
+    "nom": "Mers El Kebir",
+    "wilaya_id": 31,
+    "code_postal": "31015",
+    "is_active": 1
+  },
+  {
+    "nom": "Bousfer",
+    "wilaya_id": 31,
+    "code_postal": "31016",
+    "is_active": 1
+  },
+  {
+    "nom": "El Karma",
+    "wilaya_id": 31,
+    "code_postal": "31017",
+    "is_active": 1
+  },
+  {
+    "nom": "El Braya",
+    "wilaya_id": 31,
+    "code_postal": "31018",
+    "is_active": 1
+  },
+  {
+    "nom": "Hassi Ben Okba",
+    "wilaya_id": 31,
+    "code_postal": "31019",
+    "is_active": 1
+  },
+  {
+    "nom": "Ben Freha",
+    "wilaya_id": 31,
+    "code_postal": "31020",
+    "is_active": 1
+  },
+  {
+    "nom": "Hassi Mefsoukh",
+    "wilaya_id": 31,
+    "code_postal": "31021",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Ben Yabka",
+    "wilaya_id": 31,
+    "code_postal": "31022",
+    "is_active": 1
+  },
+  {
+    "nom": "Messerghin",
+    "wilaya_id": 31,
+    "code_postal": "31023",
+    "is_active": 1
+  },
+  {
+    "nom": "Boutlelis",
+    "wilaya_id": 31,
+    "code_postal": "31024",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Kerma",
+    "wilaya_id": 31,
+    "code_postal": "31025",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Biya",
+    "wilaya_id": 31,
+    "code_postal": "31026",
+    "is_active": 1
+  },
+  {
+    "nom": "El Bayadh",
+    "wilaya_id": 32,
+    "code_postal": "32001",
+    "is_active": 1
+  },
+  {
+    "nom": "Rogassa",
+    "wilaya_id": 32,
+    "code_postal": "32002",
+    "is_active": 1
+  },
+  {
+    "nom": "Stitten",
+    "wilaya_id": 32,
+    "code_postal": "32003",
+    "is_active": 1
+  },
+  {
+    "nom": "Brezina",
+    "wilaya_id": 32,
+    "code_postal": "32004",
+    "is_active": 1
+  },
+  {
+    "nom": "Ghassoul",
+    "wilaya_id": 32,
+    "code_postal": "32005",
+    "is_active": 1
+  },
+  {
+    "nom": "Boualem",
+    "wilaya_id": 32,
+    "code_postal": "32006",
+    "is_active": 1
+  },
+  {
+    "nom": "El Abiodh Sidi Cheikh",
+    "wilaya_id": 32,
+    "code_postal": "32007",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain El Orak",
+    "wilaya_id": 32,
+    "code_postal": "32008",
+    "is_active": 1
+  },
+  {
+    "nom": "Arbaouat",
+    "wilaya_id": 32,
+    "code_postal": "32009",
+    "is_active": 1
+  },
+  {
+    "nom": "Bougtoub",
+    "wilaya_id": 32,
+    "code_postal": "32010",
+    "is_active": 1
+  },
+  {
+    "nom": "El Kheither",
+    "wilaya_id": 32,
+    "code_postal": "32011",
+    "is_active": 1
+  },
+  {
+    "nom": "Kef El Ahmar",
+    "wilaya_id": 32,
+    "code_postal": "32012",
+    "is_active": 1
+  },
+  {
+    "nom": "Boussemghoun",
+    "wilaya_id": 32,
+    "code_postal": "32013",
+    "is_active": 1
+  },
+  {
+    "nom": "Chellala",
+    "wilaya_id": 32,
+    "code_postal": "32014",
+    "is_active": 1
+  },
+  {
+    "nom": "Krakda",
+    "wilaya_id": 32,
+    "code_postal": "32015",
+    "is_active": 1
+  },
+  {
+    "nom": "El Bnoud",
+    "wilaya_id": 32,
+    "code_postal": "32016",
+    "is_active": 1
+  },
+  {
+    "nom": "Cheguig",
+    "wilaya_id": 32,
+    "code_postal": "32017",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Ameur",
+    "wilaya_id": 32,
+    "code_postal": "32018",
+    "is_active": 1
+  },
+  {
+    "nom": "El Mehara",
+    "wilaya_id": 32,
+    "code_postal": "32019",
+    "is_active": 1
+  },
+  {
+    "nom": "Tousmouline",
+    "wilaya_id": 32,
+    "code_postal": "32020",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Slimane",
+    "wilaya_id": 32,
+    "code_postal": "32021",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Tifour",
+    "wilaya_id": 32,
+    "code_postal": "32022",
+    "is_active": 1
+  },
+  {
+    "nom": "Illizi",
+    "wilaya_id": 33,
+    "code_postal": "33001",
+    "is_active": 1
+  },
+  {
+    "nom": "Debdeb",
+    "wilaya_id": 33,
+    "code_postal": "33003",
+    "is_active": 0
+  },
+  {
+    "nom": "Bordj Omar Driss",
+    "wilaya_id": 33,
+    "code_postal": "33004",
+    "is_active": 0
+  },
+  {
+    "nom": "In Amenas",
+    "wilaya_id": 33,
+    "code_postal": "33006",
+    "is_active": 0
+  },
+  {
+    "nom": "Bordj Bou Arreridj",
+    "wilaya_id": 34,
+    "code_postal": "34001",
+    "is_active": 1
+  },
+  {
+    "nom": "Ras El Oued",
+    "wilaya_id": 34,
+    "code_postal": "34002",
+    "is_active": 1
+  },
+  {
+    "nom": "Bordj Zemoura",
+    "wilaya_id": 34,
+    "code_postal": "34003",
+    "is_active": 1
+  },
+  {
+    "nom": "Mansoura",
+    "wilaya_id": 34,
+    "code_postal": "34004",
+    "is_active": 1
+  },
+  {
+    "nom": "El Mhir",
+    "wilaya_id": 34,
+    "code_postal": "34005",
+    "is_active": 1
+  },
+  {
+    "nom": "Ben Daoud",
+    "wilaya_id": 34,
+    "code_postal": "34006",
+    "is_active": 1
+  },
+  {
+    "nom": "El Achir",
+    "wilaya_id": 34,
+    "code_postal": "34007",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Taghrout",
+    "wilaya_id": 34,
+    "code_postal": "34008",
+    "is_active": 1
+  },
+  {
+    "nom": "Bordj Ghdir",
+    "wilaya_id": 34,
+    "code_postal": "34009",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Embarek",
+    "wilaya_id": 34,
+    "code_postal": "34010",
+    "is_active": 1
+  },
+  {
+    "nom": "El Hamadia",
+    "wilaya_id": 34,
+    "code_postal": "34011",
+    "is_active": 1
+  },
+  {
+    "nom": "Belimour",
+    "wilaya_id": 34,
+    "code_postal": "34012",
+    "is_active": 1
+  },
+  {
+    "nom": "Medjana",
+    "wilaya_id": 34,
+    "code_postal": "34013",
+    "is_active": 1
+  },
+  {
+    "nom": "Teniet En Nasr",
+    "wilaya_id": 34,
+    "code_postal": "34014",
+    "is_active": 1
+  },
+  {
+    "nom": "Djaafra",
+    "wilaya_id": 34,
+    "code_postal": "34015",
+    "is_active": 0
+  },
+  {
+    "nom": "El Main",
+    "wilaya_id": 34,
+    "code_postal": "34016",
+    "is_active": 0
+  },
+  {
+    "nom": "Ouled Brahem",
+    "wilaya_id": 34,
+    "code_postal": "34017",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Dahmane",
+    "wilaya_id": 34,
+    "code_postal": "34018",
+    "is_active": 1
+  },
+  {
+    "nom": "Hasnaoua",
+    "wilaya_id": 34,
+    "code_postal": "34019",
+    "is_active": 1
+  },
+  {
+    "nom": "Khelil",
+    "wilaya_id": 34,
+    "code_postal": "34020",
+    "is_active": 1
+  },
+  {
+    "nom": "Taglait",
+    "wilaya_id": 34,
+    "code_postal": "34021",
+    "is_active": 1
+  },
+  {
+    "nom": "Ksour",
+    "wilaya_id": 34,
+    "code_postal": "34022",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Sidi Brahim",
+    "wilaya_id": 34,
+    "code_postal": "34023",
+    "is_active": 1
+  },
+  {
+    "nom": "Tafreg",
+    "wilaya_id": 34,
+    "code_postal": "34024",
+    "is_active": 0
+  },
+  {
+    "nom": "Colla",
+    "wilaya_id": 34,
+    "code_postal": "34025",
+    "is_active": 0
+  },
+  {
+    "nom": "Tixter",
+    "wilaya_id": 34,
+    "code_postal": "34026",
+    "is_active": 1
+  },
+  {
+    "nom": "El Ach",
+    "wilaya_id": 34,
+    "code_postal": "34027",
+    "is_active": 1
+  },
+  {
+    "nom": "El Anseur",
+    "wilaya_id": 34,
+    "code_postal": "34028",
+    "is_active": 1
+  },
+  {
+    "nom": "Tesmart",
+    "wilaya_id": 34,
+    "code_postal": "34029",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Tesra",
+    "wilaya_id": 34,
+    "code_postal": "34030",
+    "is_active": 1
+  },
+  {
+    "nom": "Bir Kasdali",
+    "wilaya_id": 34,
+    "code_postal": "34031",
+    "is_active": 1
+  },
+  {
+    "nom": "Ghilassa",
+    "wilaya_id": 34,
+    "code_postal": "34032",
+    "is_active": 1
+  },
+  {
+    "nom": "Rabta",
+    "wilaya_id": 34,
+    "code_postal": "34033",
+    "is_active": 1
+  },
+  {
+    "nom": "Haraza",
+    "wilaya_id": 34,
+    "code_postal": "34034",
+    "is_active": 1
+  },
+  {
+    "nom": "Boumerdes",
+    "wilaya_id": 35,
+    "code_postal": "35001",
+    "is_active": 1
+  },
+  {
+    "nom": "Boudouaou",
+    "wilaya_id": 35,
+    "code_postal": "35002",
+    "is_active": 1
+  },
+  {
+    "nom": "Afir",
+    "wilaya_id": 35,
+    "code_postal": "35004",
+    "is_active": 1
+  },
+  {
+    "nom": "Bordj Menaiel",
+    "wilaya_id": 35,
+    "code_postal": "35005",
+    "is_active": 1
+  },
+  {
+    "nom": "Baghlia",
+    "wilaya_id": 35,
+    "code_postal": "35006",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Daoud",
+    "wilaya_id": 35,
+    "code_postal": "35007",
+    "is_active": 1
+  },
+  {
+    "nom": "Naciria",
+    "wilaya_id": 35,
+    "code_postal": "35008",
+    "is_active": 1
+  },
+  {
+    "nom": "Djinet",
+    "wilaya_id": 35,
+    "code_postal": "35009",
+    "is_active": 1
+  },
+  {
+    "nom": "Isser",
+    "wilaya_id": 35,
+    "code_postal": "35010",
+    "is_active": 1
+  },
+  {
+    "nom": "Zemmouri",
+    "wilaya_id": 35,
+    "code_postal": "35011",
+    "is_active": 1
+  },
+  {
+    "nom": "Si Mustapha",
+    "wilaya_id": 35,
+    "code_postal": "35012",
+    "is_active": 1
+  },
+  {
+    "nom": "Tidjelabine",
+    "wilaya_id": 35,
+    "code_postal": "35013",
+    "is_active": 1
+  },
+  {
+    "nom": "Chabet El Ameur",
+    "wilaya_id": 35,
+    "code_postal": "35014",
+    "is_active": 1
+  },
+  {
+    "nom": "Thenia",
+    "wilaya_id": 35,
+    "code_postal": "35015",
+    "is_active": 1
+  },
+  {
+    "nom": "Timezrit",
+    "wilaya_id": 35,
+    "code_postal": "35018",
+    "is_active": 1
+  },
+  {
+    "nom": "Corso",
+    "wilaya_id": 35,
+    "code_postal": "35019",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Moussa",
+    "wilaya_id": 35,
+    "code_postal": "35020",
+    "is_active": 1
+  },
+  {
+    "nom": "Larbatache",
+    "wilaya_id": 35,
+    "code_postal": "35021",
+    "is_active": 1
+  },
+  {
+    "nom": "Bouzegza Keddara",
+    "wilaya_id": 35,
+    "code_postal": "35022",
+    "is_active": 1
+  },
+  {
+    "nom": "Taourga",
+    "wilaya_id": 35,
+    "code_postal": "35025",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Aissa",
+    "wilaya_id": 35,
+    "code_postal": "35026",
+    "is_active": 1
+  },
+  {
+    "nom": "Ben Choud",
+    "wilaya_id": 35,
+    "code_postal": "35027",
+    "is_active": 1
+  },
+  {
+    "nom": "Dellys",
+    "wilaya_id": 35,
+    "code_postal": "35028",
+    "is_active": 1
+  },
+  {
+    "nom": "Ammal",
+    "wilaya_id": 35,
+    "code_postal": "35029",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Amrane",
+    "wilaya_id": 35,
+    "code_postal": "35030",
+    "is_active": 1
+  },
+  {
+    "nom": "Souk El Had",
+    "wilaya_id": 35,
+    "code_postal": "35031",
+    "is_active": 1
+  },
+  {
+    "nom": "Boudouaou El Bahri",
+    "wilaya_id": 35,
+    "code_postal": "35032",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Hedadj",
+    "wilaya_id": 35,
+    "code_postal": "35033",
+    "is_active": 1
+  },
+  {
+    "nom": "Laghata",
+    "wilaya_id": 35,
+    "code_postal": "35035",
+    "is_active": 1
+  },
+  {
+    "nom": "Hammedi",
+    "wilaya_id": 35,
+    "code_postal": "35036",
+    "is_active": 1
+  },
+  {
+    "nom": "Khemis El Khechna",
+    "wilaya_id": 35,
+    "code_postal": "35037",
+    "is_active": 1
+  },
+  {
+    "nom": "El Kharrouba",
+    "wilaya_id": 35,
+    "code_postal": "35038",
+    "is_active": 1
+  },
+  {
+    "nom": "El Tarf",
+    "wilaya_id": 36,
+    "code_postal": "36001",
+    "is_active": 1
+  },
+  {
+    "nom": "Bouhadjar",
+    "wilaya_id": 36,
+    "code_postal": "36002",
+    "is_active": 1
+  },
+  {
+    "nom": "Ben Mhidi",
+    "wilaya_id": 36,
+    "code_postal": "36003",
+    "is_active": 1
+  },
+  {
+    "nom": "Bougous",
+    "wilaya_id": 36,
+    "code_postal": "36004",
+    "is_active": 1
+  },
+  {
+    "nom": "El Kala",
+    "wilaya_id": 36,
+    "code_postal": "36005",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain El Assel",
+    "wilaya_id": 36,
+    "code_postal": "36006",
+    "is_active": 1
+  },
+  {
+    "nom": "El Aioun",
+    "wilaya_id": 36,
+    "code_postal": "36007",
+    "is_active": 1
+  },
+  {
+    "nom": "Bouteldja",
+    "wilaya_id": 36,
+    "code_postal": "36008",
+    "is_active": 1
+  },
+  {
+    "nom": "Souarekh",
+    "wilaya_id": 36,
+    "code_postal": "36009",
+    "is_active": 1
+  },
+  {
+    "nom": "Berrihane",
+    "wilaya_id": 36,
+    "code_postal": "36010",
+    "is_active": 1
+  },
+  {
+    "nom": "Lac Des Oiseaux",
+    "wilaya_id": 36,
+    "code_postal": "36011",
+    "is_active": 1
+  },
+  {
+    "nom": "Chefia",
+    "wilaya_id": 36,
+    "code_postal": "36012",
+    "is_active": 1
+  },
+  {
+    "nom": "Drean",
+    "wilaya_id": 36,
+    "code_postal": "36013",
+    "is_active": 1
+  },
+  {
+    "nom": "Chihani",
+    "wilaya_id": 36,
+    "code_postal": "36014",
+    "is_active": 1
+  },
+  {
+    "nom": "Chebaita Mokhtar",
+    "wilaya_id": 36,
+    "code_postal": "36015",
+    "is_active": 1
+  },
+  {
+    "nom": "Asfour",
+    "wilaya_id": 36,
+    "code_postal": "36017",
+    "is_active": 1
+  },
+  {
+    "nom": "Echatt",
+    "wilaya_id": 36,
+    "code_postal": "36018",
+    "is_active": 1
+  },
+  {
+    "nom": "Zerizer",
+    "wilaya_id": 36,
+    "code_postal": "36019",
+    "is_active": 1
+  },
+  {
+    "nom": "Zitouna",
+    "wilaya_id": 36,
+    "code_postal": "36020",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Kerma",
+    "wilaya_id": 36,
+    "code_postal": "36021",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued Zitoun",
+    "wilaya_id": 36,
+    "code_postal": "36022",
+    "is_active": 1
+  },
+  {
+    "nom": "Hammam Beni Salah",
+    "wilaya_id": 36,
+    "code_postal": "36023",
+    "is_active": 1
+  },
+  {
+    "nom": "Raml Souk",
+    "wilaya_id": 36,
+    "code_postal": "36024",
+    "is_active": 1
+  },
+  {
+    "nom": "Tindouf",
+    "wilaya_id": 37,
+    "code_postal": "37001",
+    "is_active": 1
+  },
+  {
+    "nom": "Oum El Assel",
+    "wilaya_id": 37,
+    "code_postal": "37002",
+    "is_active": 1
+  },
+  {
+    "nom": "Tissemsilt",
+    "wilaya_id": 38,
+    "code_postal": "38001",
+    "is_active": 1
+  },
+  {
+    "nom": "Bordj Bou Naama",
+    "wilaya_id": 38,
+    "code_postal": "38002",
+    "is_active": 1
+  },
+  {
+    "nom": "Theniet El Had",
+    "wilaya_id": 38,
+    "code_postal": "38003",
+    "is_active": 1
+  },
+  {
+    "nom": "Lazharia",
+    "wilaya_id": 38,
+    "code_postal": "38004",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Chaib",
+    "wilaya_id": 38,
+    "code_postal": "38005",
+    "is_active": 1
+  },
+  {
+    "nom": "Lardjem",
+    "wilaya_id": 38,
+    "code_postal": "38006",
+    "is_active": 1
+  },
+  {
+    "nom": "Melaab",
+    "wilaya_id": 38,
+    "code_postal": "38007",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Lantri",
+    "wilaya_id": 38,
+    "code_postal": "38008",
+    "is_active": 1
+  },
+  {
+    "nom": "Bordj El Emir Abdelkader",
+    "wilaya_id": 38,
+    "code_postal": "38009",
+    "is_active": 1
+  },
+  {
+    "nom": "Layoune",
+    "wilaya_id": 38,
+    "code_postal": "38010",
+    "is_active": 1
+  },
+  {
+    "nom": "Khemisti",
+    "wilaya_id": 38,
+    "code_postal": "38011",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Bessem",
+    "wilaya_id": 38,
+    "code_postal": "38012",
+    "is_active": 1
+  },
+  {
+    "nom": "Ammari",
+    "wilaya_id": 38,
+    "code_postal": "38013",
+    "is_active": 1
+  },
+  {
+    "nom": "Youssoufia",
+    "wilaya_id": 38,
+    "code_postal": "38014",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Boutouchent",
+    "wilaya_id": 38,
+    "code_postal": "38015",
+    "is_active": 1
+  },
+  {
+    "nom": "Larbaa",
+    "wilaya_id": 38,
+    "code_postal": "38016",
+    "is_active": 1
+  },
+  {
+    "nom": "Maasem",
+    "wilaya_id": 38,
+    "code_postal": "38017",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Abed",
+    "wilaya_id": 38,
+    "code_postal": "38018",
+    "is_active": 1
+  },
+  {
+    "nom": "Tamalaht",
+    "wilaya_id": 38,
+    "code_postal": "38019",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Slimane",
+    "wilaya_id": 38,
+    "code_postal": "38020",
+    "is_active": 1
+  },
+  {
+    "nom": "Boucaid",
+    "wilaya_id": 38,
+    "code_postal": "38021",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Lahcene",
+    "wilaya_id": 38,
+    "code_postal": "38022",
+    "is_active": 1
+  },
+  {
+    "nom": "El Oued",
+    "wilaya_id": 39,
+    "code_postal": "39001",
+    "is_active": 1
+  },
+  {
+    "nom": "Robbah",
+    "wilaya_id": 39,
+    "code_postal": "39002",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued El Alenda",
+    "wilaya_id": 39,
+    "code_postal": "39003",
+    "is_active": 1
+  },
+  {
+    "nom": "Bayadha",
+    "wilaya_id": 39,
+    "code_postal": "39004",
+    "is_active": 1
+  },
+  {
+    "nom": "Nakhla",
+    "wilaya_id": 39,
+    "code_postal": "39005",
+    "is_active": 1
+  },
+  {
+    "nom": "Guemar",
+    "wilaya_id": 39,
+    "code_postal": "39006",
+    "is_active": 1
+  },
+  {
+    "nom": "Kouinine",
+    "wilaya_id": 39,
+    "code_postal": "39007",
+    "is_active": 1
+  },
+  {
+    "nom": "Reguiba",
+    "wilaya_id": 39,
+    "code_postal": "39008",
+    "is_active": 1
+  },
+  {
+    "nom": "Hamraia",
+    "wilaya_id": 39,
+    "code_postal": "39009",
+    "is_active": 1
+  },
+  {
+    "nom": "Taghzout",
+    "wilaya_id": 39,
+    "code_postal": "39010",
+    "is_active": 1
+  },
+  {
+    "nom": "Debila",
+    "wilaya_id": 39,
+    "code_postal": "39011",
+    "is_active": 1
+  },
+  {
+    "nom": "Hassani Abdelkrim",
+    "wilaya_id": 39,
+    "code_postal": "39012",
+    "is_active": 1
+  },
+  {
+    "nom": "Hassi Khelifa",
+    "wilaya_id": 39,
+    "code_postal": "39013",
+    "is_active": 1
+  },
+  {
+    "nom": "Taleb Larbi",
+    "wilaya_id": 39,
+    "code_postal": "39014",
+    "is_active": 1
+  },
+  {
+    "nom": "Douar El Ma",
+    "wilaya_id": 39,
+    "code_postal": "39015",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Aoun",
+    "wilaya_id": 39,
+    "code_postal": "39016",
+    "is_active": 1
+  },
+  {
+    "nom": "Trifaoui",
+    "wilaya_id": 39,
+    "code_postal": "39017",
+    "is_active": 1
+  },
+  {
+    "nom": "Magrane",
+    "wilaya_id": 39,
+    "code_postal": "39018",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Guecha",
+    "wilaya_id": 39,
+    "code_postal": "39019",
+    "is_active": 1
+  },
+  {
+    "nom": "Ourmas",
+    "wilaya_id": 39,
+    "code_postal": "39020",
+    "is_active": 1
+  },
+  {
+    "nom": "El Ogla",
+    "wilaya_id": 39,
+    "code_postal": "39025",
+    "is_active": 1
+  },
+  {
+    "nom": "Mih Ouansa",
+    "wilaya_id": 39,
+    "code_postal": "39026",
+    "is_active": 1
+  },
+  {
+    "nom": "Khenchela",
+    "wilaya_id": 40,
+    "code_postal": "40001",
+    "is_active": 1
+  },
+  {
+    "nom": "Mtoussa",
+    "wilaya_id": 40,
+    "code_postal": "40002",
+    "is_active": 1
+  },
+  {
+    "nom": "Kais",
+    "wilaya_id": 40,
+    "code_postal": "40003",
+    "is_active": 1
+  },
+  {
+    "nom": "Baghai",
+    "wilaya_id": 40,
+    "code_postal": "40004",
+    "is_active": 1
+  },
+  {
+    "nom": "El Hamma",
+    "wilaya_id": 40,
+    "code_postal": "40005",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Touila",
+    "wilaya_id": 40,
+    "code_postal": "40006",
+    "is_active": 1
+  },
+  {
+    "nom": "Taouzianat",
+    "wilaya_id": 40,
+    "code_postal": "40007",
+    "is_active": 1
+  },
+  {
+    "nom": "Bouhmama",
+    "wilaya_id": 40,
+    "code_postal": "40008",
+    "is_active": 1
+  },
+  {
+    "nom": "El Oueldja",
+    "wilaya_id": 40,
+    "code_postal": "40009",
+    "is_active": 0
+  },
+  {
+    "nom": "Remila",
+    "wilaya_id": 40,
+    "code_postal": "40010",
+    "is_active": 1
+  },
+  {
+    "nom": "Cherchar",
+    "wilaya_id": 40,
+    "code_postal": "40011",
+    "is_active": 1
+  },
+  {
+    "nom": "Djellal",
+    "wilaya_id": 40,
+    "code_postal": "40012",
+    "is_active": 0
+  },
+  {
+    "nom": "Babar",
+    "wilaya_id": 40,
+    "code_postal": "40013",
+    "is_active": 1
+  },
+  {
+    "nom": "Tamza",
+    "wilaya_id": 40,
+    "code_postal": "40014",
+    "is_active": 0
+  },
+  {
+    "nom": "Ensigha",
+    "wilaya_id": 40,
+    "code_postal": "40015",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Rechache",
+    "wilaya_id": 40,
+    "code_postal": "40016",
+    "is_active": 1
+  },
+  {
+    "nom": "El Mahmal",
+    "wilaya_id": 40,
+    "code_postal": "40017",
+    "is_active": 1
+  },
+  {
+    "nom": "Msara",
+    "wilaya_id": 40,
+    "code_postal": "40018",
+    "is_active": 0
+  },
+  {
+    "nom": "Yabous",
+    "wilaya_id": 40,
+    "code_postal": "40019",
+    "is_active": 1
+  },
+  {
+    "nom": "Khirane",
+    "wilaya_id": 40,
+    "code_postal": "40020",
+    "is_active": 0
+  },
+  {
+    "nom": "Chelia",
+    "wilaya_id": 40,
+    "code_postal": "40021",
+    "is_active": 1
+  },
+  {
+    "nom": "Souk Ahras",
+    "wilaya_id": 41,
+    "code_postal": "41001",
+    "is_active": 1
+  },
+  {
+    "nom": "Sedrata",
+    "wilaya_id": 41,
+    "code_postal": "41002",
+    "is_active": 1
+  },
+  {
+    "nom": "Hanancha",
+    "wilaya_id": 41,
+    "code_postal": "41003",
+    "is_active": 1
+  },
+  {
+    "nom": "Mechroha",
+    "wilaya_id": 41,
+    "code_postal": "41004",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Driss",
+    "wilaya_id": 41,
+    "code_postal": "41005",
+    "is_active": 1
+  },
+  {
+    "nom": "Tiffech",
+    "wilaya_id": 41,
+    "code_postal": "41006",
+    "is_active": 1
+  },
+  {
+    "nom": "Zaarouria",
+    "wilaya_id": 41,
+    "code_postal": "41007",
+    "is_active": 1
+  },
+  {
+    "nom": "Taoura",
+    "wilaya_id": 41,
+    "code_postal": "41008",
+    "is_active": 1
+  },
+  {
+    "nom": "Drea",
+    "wilaya_id": 41,
+    "code_postal": "41009",
+    "is_active": 1
+  },
+  {
+    "nom": "Haddada",
+    "wilaya_id": 41,
+    "code_postal": "41010",
+    "is_active": 1
+  },
+  {
+    "nom": "Khedara",
+    "wilaya_id": 41,
+    "code_postal": "41011",
+    "is_active": 1
+  },
+  {
+    "nom": "Merahna",
+    "wilaya_id": 41,
+    "code_postal": "41012",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Moumen",
+    "wilaya_id": 41,
+    "code_postal": "41013",
+    "is_active": 1
+  },
+  {
+    "nom": "Bir Bouhouche",
+    "wilaya_id": 41,
+    "code_postal": "41014",
+    "is_active": 1
+  },
+  {
+    "nom": "Mdaourouche",
+    "wilaya_id": 41,
+    "code_postal": "41015",
+    "is_active": 1
+  },
+  {
+    "nom": "Oum El Adhaim",
+    "wilaya_id": 41,
+    "code_postal": "41016",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Zana",
+    "wilaya_id": 41,
+    "code_postal": "41017",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Soltane",
+    "wilaya_id": 41,
+    "code_postal": "41018",
+    "is_active": 1
+  },
+  {
+    "nom": "Quillen",
+    "wilaya_id": 41,
+    "code_postal": "41019",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Fredj",
+    "wilaya_id": 41,
+    "code_postal": "41020",
+    "is_active": 1
+  },
+  {
+    "nom": "Safel El Ouiden",
+    "wilaya_id": 41,
+    "code_postal": "41021",
+    "is_active": 1
+  },
+  {
+    "nom": "Ragouba",
+    "wilaya_id": 41,
+    "code_postal": "41022",
+    "is_active": 1
+  },
+  {
+    "nom": "Khemissa",
+    "wilaya_id": 41,
+    "code_postal": "41023",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued Keberit",
+    "wilaya_id": 41,
+    "code_postal": "41024",
+    "is_active": 1
+  },
+  {
+    "nom": "Terraguelt",
+    "wilaya_id": 41,
+    "code_postal": "41025",
+    "is_active": 1
+  },
+  {
+    "nom": "Zouabi",
+    "wilaya_id": 41,
+    "code_postal": "41026",
+    "is_active": 1
+  },
+  {
+    "nom": "Tipaza",
+    "wilaya_id": 42,
+    "code_postal": "42001",
+    "is_active": 1
+  },
+  {
+    "nom": "Menaceur",
+    "wilaya_id": 42,
+    "code_postal": "42002",
+    "is_active": 1
+  },
+  {
+    "nom": "Larhat",
+    "wilaya_id": 42,
+    "code_postal": "42003",
+    "is_active": 1
+  },
+  {
+    "nom": "Douaouda",
+    "wilaya_id": 42,
+    "code_postal": "42004",
+    "is_active": 1
+  },
+  {
+    "nom": "Bourkika",
+    "wilaya_id": 42,
+    "code_postal": "42005",
+    "is_active": 1
+  },
+  {
+    "nom": "Khemisti",
+    "wilaya_id": 42,
+    "code_postal": "42006",
+    "is_active": 1
+  },
+  {
+    "nom": "Aghabal",
+    "wilaya_id": 42,
+    "code_postal": "42010",
+    "is_active": 1
+  },
+  {
+    "nom": "Hadjout",
+    "wilaya_id": 42,
+    "code_postal": "42012",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Amar",
+    "wilaya_id": 42,
+    "code_postal": "42013",
+    "is_active": 1
+  },
+  {
+    "nom": "Gouraya",
+    "wilaya_id": 42,
+    "code_postal": "42014",
+    "is_active": 1
+  },
+  {
+    "nom": "Nodor",
+    "wilaya_id": 42,
+    "code_postal": "42015",
+    "is_active": 1
+  },
+  {
+    "nom": "Chaiba",
+    "wilaya_id": 42,
+    "code_postal": "42016",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Tagourait",
+    "wilaya_id": 42,
+    "code_postal": "42017",
+    "is_active": 1
+  },
+  {
+    "nom": "Cherchel",
+    "wilaya_id": 42,
+    "code_postal": "42022",
+    "is_active": 1
+  },
+  {
+    "nom": "Damous",
+    "wilaya_id": 42,
+    "code_postal": "42023",
+    "is_active": 1
+  },
+  {
+    "nom": "Meurad",
+    "wilaya_id": 42,
+    "code_postal": "42024",
+    "is_active": 1
+  },
+  {
+    "nom": "Fouka",
+    "wilaya_id": 42,
+    "code_postal": "42025",
+    "is_active": 1
+  },
+  {
+    "nom": "Bou Ismail",
+    "wilaya_id": 42,
+    "code_postal": "42026",
+    "is_active": 1
+  },
+  {
+    "nom": "Ahmer El Ain",
+    "wilaya_id": 42,
+    "code_postal": "42027",
+    "is_active": 1
+  },
+  {
+    "nom": "Bou Haroun",
+    "wilaya_id": 42,
+    "code_postal": "42030",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Ghiles",
+    "wilaya_id": 42,
+    "code_postal": "42032",
+    "is_active": 1
+  },
+  {
+    "nom": "Messelmoun",
+    "wilaya_id": 42,
+    "code_postal": "42033",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Rached",
+    "wilaya_id": 42,
+    "code_postal": "42034",
+    "is_active": 1
+  },
+  {
+    "nom": "Kolea",
+    "wilaya_id": 42,
+    "code_postal": "42035",
+    "is_active": 1
+  },
+  {
+    "nom": "Attatba",
+    "wilaya_id": 42,
+    "code_postal": "42036",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Semiane",
+    "wilaya_id": 42,
+    "code_postal": "42040",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Milleuk",
+    "wilaya_id": 42,
+    "code_postal": "42041",
+    "is_active": 1
+  },
+  {
+    "nom": "Hadjerat Ennous",
+    "wilaya_id": 42,
+    "code_postal": "42042",
+    "is_active": 1
+  },
+  {
+    "nom": "Mila",
+    "wilaya_id": 43,
+    "code_postal": "43001",
+    "is_active": 1
+  },
+  {
+    "nom": "Ferdjioua",
+    "wilaya_id": 43,
+    "code_postal": "43002",
+    "is_active": 1
+  },
+  {
+    "nom": "Chelghoum Laid",
+    "wilaya_id": 43,
+    "code_postal": "43003",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued Athmenia",
+    "wilaya_id": 43,
+    "code_postal": "43004",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Mellouk",
+    "wilaya_id": 43,
+    "code_postal": "43005",
+    "is_active": 1
+  },
+  {
+    "nom": "Telerghma",
+    "wilaya_id": 43,
+    "code_postal": "43006",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued Seguen",
+    "wilaya_id": 43,
+    "code_postal": "43007",
+    "is_active": 1
+  },
+  {
+    "nom": "Tadjenanet",
+    "wilaya_id": 43,
+    "code_postal": "43008",
+    "is_active": 1
+  },
+  {
+    "nom": "Benyahia Abderrahmane",
+    "wilaya_id": 43,
+    "code_postal": "43009",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued Endja",
+    "wilaya_id": 43,
+    "code_postal": "43010",
+    "is_active": 1
+  },
+  {
+    "nom": "Ahmed Rachedi",
+    "wilaya_id": 43,
+    "code_postal": "43011",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Khalouf",
+    "wilaya_id": 43,
+    "code_postal": "43012",
+    "is_active": 1
+  },
+  {
+    "nom": "Tiberguent",
+    "wilaya_id": 43,
+    "code_postal": "43013",
+    "is_active": 1
+  },
+  {
+    "nom": "Bouhatem",
+    "wilaya_id": 43,
+    "code_postal": "43014",
+    "is_active": 1
+  },
+  {
+    "nom": "Rouached",
+    "wilaya_id": 43,
+    "code_postal": "43015",
+    "is_active": 1
+  },
+  {
+    "nom": "Tessala Lamatai",
+    "wilaya_id": 43,
+    "code_postal": "43016",
+    "is_active": 0
+  },
+  {
+    "nom": "Grarem Gouga",
+    "wilaya_id": 43,
+    "code_postal": "43017",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Merouane",
+    "wilaya_id": 43,
+    "code_postal": "43018",
+    "is_active": 1
+  },
+  {
+    "nom": "Tassadane Haddada",
+    "wilaya_id": 43,
+    "code_postal": "43019",
+    "is_active": 1
+  },
+  {
+    "nom": "Derradji Bousselah",
+    "wilaya_id": 43,
+    "code_postal": "43020",
+    "is_active": 1
+  },
+  {
+    "nom": "Minar Zarza",
+    "wilaya_id": 43,
+    "code_postal": "43021",
+    "is_active": 1
+  },
+  {
+    "nom": "Amira Arras",
+    "wilaya_id": 43,
+    "code_postal": "43022",
+    "is_active": 1
+  },
+  {
+    "nom": "Terrai Bainen",
+    "wilaya_id": 43,
+    "code_postal": "43023",
+    "is_active": 1
+  },
+  {
+    "nom": "Hamala",
+    "wilaya_id": 43,
+    "code_postal": "43024",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Tine",
+    "wilaya_id": 43,
+    "code_postal": "43025",
+    "is_active": 1
+  },
+  {
+    "nom": "El Mechira",
+    "wilaya_id": 43,
+    "code_postal": "43026",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Khelifa",
+    "wilaya_id": 43,
+    "code_postal": "43027",
+    "is_active": 1
+  },
+  {
+    "nom": "Zeghaia",
+    "wilaya_id": 43,
+    "code_postal": "43028",
+    "is_active": 1
+  },
+  {
+    "nom": "Elayadi Barbes",
+    "wilaya_id": 43,
+    "code_postal": "43029",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Beida Harriche",
+    "wilaya_id": 43,
+    "code_postal": "43030",
+    "is_active": 1
+  },
+  {
+    "nom": "Yahia Beniguecha",
+    "wilaya_id": 43,
+    "code_postal": "43031",
+    "is_active": 1
+  },
+  {
+    "nom": "Chigara",
+    "wilaya_id": 43,
+    "code_postal": "43032",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Defla",
+    "wilaya_id": 44,
+    "code_postal": "44001",
+    "is_active": 1
+  },
+  {
+    "nom": "Miliana",
+    "wilaya_id": 44,
+    "code_postal": "44002",
+    "is_active": 1
+  },
+  {
+    "nom": "Boumedfaa",
+    "wilaya_id": 44,
+    "code_postal": "44003",
+    "is_active": 1
+  },
+  {
+    "nom": "Khemis Miliana",
+    "wilaya_id": 44,
+    "code_postal": "44004",
+    "is_active": 1
+  },
+  {
+    "nom": "Hammam Righa",
+    "wilaya_id": 44,
+    "code_postal": "44005",
+    "is_active": 1
+  },
+  {
+    "nom": "Arib",
+    "wilaya_id": 44,
+    "code_postal": "44006",
+    "is_active": 1
+  },
+  {
+    "nom": "Djelida",
+    "wilaya_id": 44,
+    "code_postal": "44007",
+    "is_active": 1
+  },
+  {
+    "nom": "El Amra",
+    "wilaya_id": 44,
+    "code_postal": "44008",
+    "is_active": 1
+  },
+  {
+    "nom": "Bourached",
+    "wilaya_id": 44,
+    "code_postal": "44009",
+    "is_active": 1
+  },
+  {
+    "nom": "El Attaf",
+    "wilaya_id": 44,
+    "code_postal": "44010",
+    "is_active": 1
+  },
+  {
+    "nom": "El Abadia",
+    "wilaya_id": 44,
+    "code_postal": "44011",
+    "is_active": 1
+  },
+  {
+    "nom": "Djendel",
+    "wilaya_id": 44,
+    "code_postal": "44012",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued Chorfa",
+    "wilaya_id": 44,
+    "code_postal": "44013",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Lechiakh",
+    "wilaya_id": 44,
+    "code_postal": "44014",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued Djemaa",
+    "wilaya_id": 44,
+    "code_postal": "44015",
+    "is_active": 1
+  },
+  {
+    "nom": "Rouina",
+    "wilaya_id": 44,
+    "code_postal": "44016",
+    "is_active": 1
+  },
+  {
+    "nom": "Zeddine",
+    "wilaya_id": 44,
+    "code_postal": "44017",
+    "is_active": 1
+  },
+  {
+    "nom": "El Hassania",
+    "wilaya_id": 44,
+    "code_postal": "44018",
+    "is_active": 1
+  },
+  {
+    "nom": "Bir Ouled Khelifa",
+    "wilaya_id": 44,
+    "code_postal": "44019",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Soltane",
+    "wilaya_id": 44,
+    "code_postal": "44020",
+    "is_active": 1
+  },
+  {
+    "nom": "Tarik Ibn Ziad",
+    "wilaya_id": 44,
+    "code_postal": "44021",
+    "is_active": 1
+  },
+  {
+    "nom": "Bordj Emir Khaled",
+    "wilaya_id": 44,
+    "code_postal": "44022",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Torki",
+    "wilaya_id": 44,
+    "code_postal": "44023",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Lakhdar",
+    "wilaya_id": 44,
+    "code_postal": "44024",
+    "is_active": 1
+  },
+  {
+    "nom": "Ben Allal",
+    "wilaya_id": 44,
+    "code_postal": "44025",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Benian",
+    "wilaya_id": 44,
+    "code_postal": "44026",
+    "is_active": 1
+  },
+  {
+    "nom": "Hoceinia",
+    "wilaya_id": 44,
+    "code_postal": "44027",
+    "is_active": 1
+  },
+  {
+    "nom": "Barbouche",
+    "wilaya_id": 44,
+    "code_postal": "44028",
+    "is_active": 1
+  },
+  {
+    "nom": "Djemaa Ouled Chikh",
+    "wilaya_id": 44,
+    "code_postal": "44029",
+    "is_active": 1
+  },
+  {
+    "nom": "Mekhatria",
+    "wilaya_id": 44,
+    "code_postal": "44030",
+    "is_active": 1
+  },
+  {
+    "nom": "Bathia",
+    "wilaya_id": 44,
+    "code_postal": "44031",
+    "is_active": 1
+  },
+  {
+    "nom": "Tachta Zegagha",
+    "wilaya_id": 44,
+    "code_postal": "44032",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Bouyahia",
+    "wilaya_id": 44,
+    "code_postal": "44033",
+    "is_active": 1
+  },
+  {
+    "nom": "El Maine",
+    "wilaya_id": 44,
+    "code_postal": "44034",
+    "is_active": 1
+  },
+  {
+    "nom": "Tiberkanine",
+    "wilaya_id": 44,
+    "code_postal": "44035",
+    "is_active": 1
+  },
+  {
+    "nom": "Belaas",
+    "wilaya_id": 44,
+    "code_postal": "44036",
+    "is_active": 1
+  },
+  {
+    "nom": "Naama",
+    "wilaya_id": 45,
+    "code_postal": "45001",
+    "is_active": 1
+  },
+  {
+    "nom": "Mechria",
+    "wilaya_id": 45,
+    "code_postal": "45002",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Sefra",
+    "wilaya_id": 45,
+    "code_postal": "45003",
+    "is_active": 1
+  },
+  {
+    "nom": "Tiout",
+    "wilaya_id": 45,
+    "code_postal": "45004",
+    "is_active": 1
+  },
+  {
+    "nom": "Sfissifa",
+    "wilaya_id": 45,
+    "code_postal": "45005",
+    "is_active": 1
+  },
+  {
+    "nom": "Moghrar",
+    "wilaya_id": 45,
+    "code_postal": "45006",
+    "is_active": 1
+  },
+  {
+    "nom": "Assela",
+    "wilaya_id": 45,
+    "code_postal": "45007",
+    "is_active": 1
+  },
+  {
+    "nom": "Djeniane Bourzeg",
+    "wilaya_id": 45,
+    "code_postal": "45008",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Ben Khelil",
+    "wilaya_id": 45,
+    "code_postal": "45009",
+    "is_active": 1
+  },
+  {
+    "nom": "Makman Ben Amer",
+    "wilaya_id": 45,
+    "code_postal": "45010",
+    "is_active": 1
+  },
+  {
+    "nom": "Kasdir",
+    "wilaya_id": 45,
+    "code_postal": "45011",
+    "is_active": 1
+  },
+  {
+    "nom": "El Biod",
+    "wilaya_id": 45,
+    "code_postal": "45012",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Temouchent",
+    "wilaya_id": 46,
+    "code_postal": "46001",
+    "is_active": 1
+  },
+  {
+    "nom": "Chaabet El Ham",
+    "wilaya_id": 46,
+    "code_postal": "46002",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Kihal",
+    "wilaya_id": 46,
+    "code_postal": "46003",
+    "is_active": 1
+  },
+  {
+    "nom": "Hammam Bouhadjar",
+    "wilaya_id": 46,
+    "code_postal": "46004",
+    "is_active": 1
+  },
+  {
+    "nom": "Bou Zedjar",
+    "wilaya_id": 46,
+    "code_postal": "46005",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued Berkeche",
+    "wilaya_id": 46,
+    "code_postal": "46006",
+    "is_active": 1
+  },
+  {
+    "nom": "Aghlal",
+    "wilaya_id": 46,
+    "code_postal": "46007",
+    "is_active": 1
+  },
+  {
+    "nom": "Terga",
+    "wilaya_id": 46,
+    "code_postal": "46008",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain El Arbaa",
+    "wilaya_id": 46,
+    "code_postal": "46009",
+    "is_active": 1
+  },
+  {
+    "nom": "Tamzoura",
+    "wilaya_id": 46,
+    "code_postal": "46010",
+    "is_active": 1
+  },
+  {
+    "nom": "Chentouf",
+    "wilaya_id": 46,
+    "code_postal": "46011",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Ben Adda",
+    "wilaya_id": 46,
+    "code_postal": "46012",
+    "is_active": 1
+  },
+  {
+    "nom": "Aoubellil",
+    "wilaya_id": 46,
+    "code_postal": "46013",
+    "is_active": 1
+  },
+  {
+    "nom": "El Malah",
+    "wilaya_id": 46,
+    "code_postal": "46014",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Boumediene",
+    "wilaya_id": 46,
+    "code_postal": "46015",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued Sabah",
+    "wilaya_id": 46,
+    "code_postal": "46016",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Boudjemaa",
+    "wilaya_id": 46,
+    "code_postal": "46017",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Tolba",
+    "wilaya_id": 46,
+    "code_postal": "46018",
+    "is_active": 1
+  },
+  {
+    "nom": "El Amria",
+    "wilaya_id": 46,
+    "code_postal": "46019",
+    "is_active": 1
+  },
+  {
+    "nom": "Hassi El Ghella",
+    "wilaya_id": 46,
+    "code_postal": "46020",
+    "is_active": 1
+  },
+  {
+    "nom": "Hassasna",
+    "wilaya_id": 46,
+    "code_postal": "46021",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Kihal",
+    "wilaya_id": 46,
+    "code_postal": "46022",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Saf",
+    "wilaya_id": 46,
+    "code_postal": "46023",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Safi",
+    "wilaya_id": 46,
+    "code_postal": "46024",
+    "is_active": 1
+  },
+  {
+    "nom": "Oulhaca El Gheraba",
+    "wilaya_id": 46,
+    "code_postal": "46025",
+    "is_active": 1
+  },
+  {
+    "nom": "Tadmaya",
+    "wilaya_id": 46,
+    "code_postal": "46026",
+    "is_active": 1
+  },
+  {
+    "nom": "El Emir Abdelkader",
+    "wilaya_id": 46,
+    "code_postal": "46027",
+    "is_active": 1
+  },
+  {
+    "nom": "El Messaid",
+    "wilaya_id": 46,
+    "code_postal": "46028",
+    "is_active": 1
+  },
+  {
+    "nom": "Ghardaia",
+    "wilaya_id": 47,
+    "code_postal": "47001",
+    "is_active": 1
+  },
+  {
+    "nom": "Dhayet Bendhahoua",
+    "wilaya_id": 47,
+    "code_postal": "47003",
+    "is_active": 1
+  },
+  {
+    "nom": "Berriane",
+    "wilaya_id": 47,
+    "code_postal": "47004",
+    "is_active": 1
+  },
+  {
+    "nom": "Metlili",
+    "wilaya_id": 47,
+    "code_postal": "47005",
+    "is_active": 1
+  },
+  {
+    "nom": "El Guerrara",
+    "wilaya_id": 47,
+    "code_postal": "47006",
+    "is_active": 1
+  },
+  {
+    "nom": "El Atteuf",
+    "wilaya_id": 47,
+    "code_postal": "47007",
+    "is_active": 1
+  },
+  {
+    "nom": "Zelfana",
+    "wilaya_id": 47,
+    "code_postal": "47008",
+    "is_active": 1
+  },
+  {
+    "nom": "Sebseb",
+    "wilaya_id": 47,
+    "code_postal": "47009",
+    "is_active": 0
+  },
+  {
+    "nom": "Bounoura",
+    "wilaya_id": 47,
+    "code_postal": "47010",
+    "is_active": 1
+  },
+  {
+    "nom": "Mansoura",
+    "wilaya_id": 47,
+    "code_postal": "47013",
+    "is_active": 1
+  },
+  {
+    "nom": "Relizane",
+    "wilaya_id": 48,
+    "code_postal": "48001",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued Rhiou",
+    "wilaya_id": 48,
+    "code_postal": "48002",
+    "is_active": 1
+  },
+  {
+    "nom": "Belaassel Bouzegza",
+    "wilaya_id": 48,
+    "code_postal": "48003",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Saada",
+    "wilaya_id": 48,
+    "code_postal": "48004",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Aiche",
+    "wilaya_id": 48,
+    "code_postal": "48005",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Lazreg",
+    "wilaya_id": 48,
+    "code_postal": "48006",
+    "is_active": 1
+  },
+  {
+    "nom": "El Hamadna",
+    "wilaya_id": 48,
+    "code_postal": "48007",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Mhamed Ben Ali",
+    "wilaya_id": 48,
+    "code_postal": "48008",
+    "is_active": 1
+  },
+  {
+    "nom": "Mediouna",
+    "wilaya_id": 48,
+    "code_postal": "48009",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Khettab",
+    "wilaya_id": 48,
+    "code_postal": "48010",
+    "is_active": 1
+  },
+  {
+    "nom": "Ammi Moussa",
+    "wilaya_id": 48,
+    "code_postal": "48011",
+    "is_active": 1
+  },
+  {
+    "nom": "Zemmoura",
+    "wilaya_id": 48,
+    "code_postal": "48012",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Dergoun",
+    "wilaya_id": 48,
+    "code_postal": "48013",
+    "is_active": 1
+  },
+  {
+    "nom": "Djidiouia",
+    "wilaya_id": 48,
+    "code_postal": "48014",
+    "is_active": 1
+  },
+  {
+    "nom": "El Guettar",
+    "wilaya_id": 48,
+    "code_postal": "48015",
+    "is_active": 1
+  },
+  {
+    "nom": "Hamri",
+    "wilaya_id": 48,
+    "code_postal": "48016",
+    "is_active": 1
+  },
+  {
+    "nom": "El Matmar",
+    "wilaya_id": 48,
+    "code_postal": "48017",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Mhamed Ben Aouda",
+    "wilaya_id": 48,
+    "code_postal": "48018",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Tarek",
+    "wilaya_id": 48,
+    "code_postal": "48019",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued Essalem",
+    "wilaya_id": 48,
+    "code_postal": "48020",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouarizane",
+    "wilaya_id": 48,
+    "code_postal": "48021",
+    "is_active": 1
+  },
+  {
+    "nom": "Mazouna",
+    "wilaya_id": 48,
+    "code_postal": "48022",
+    "is_active": 1
+  },
+  {
+    "nom": "Kalaa",
+    "wilaya_id": 48,
+    "code_postal": "48023",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Rahma",
+    "wilaya_id": 48,
+    "code_postal": "48024",
+    "is_active": 1
+  },
+  {
+    "nom": "Yellel",
+    "wilaya_id": 48,
+    "code_postal": "48025",
+    "is_active": 1
+  },
+  {
+    "nom": "Oued El Djemaa",
+    "wilaya_id": 48,
+    "code_postal": "48026",
+    "is_active": 1
+  },
+  {
+    "nom": "Ramka",
+    "wilaya_id": 48,
+    "code_postal": "48027",
+    "is_active": 1
+  },
+  {
+    "nom": "Mendes",
+    "wilaya_id": 48,
+    "code_postal": "48028",
+    "is_active": 1
+  },
+  {
+    "nom": "Lahlef",
+    "wilaya_id": 48,
+    "code_postal": "48029",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Zentis",
+    "wilaya_id": 48,
+    "code_postal": "48030",
+    "is_active": 1
+  },
+  {
+    "nom": "Souk El Haad",
+    "wilaya_id": 48,
+    "code_postal": "48031",
+    "is_active": 1
+  },
+  {
+    "nom": "Dar Ben Abdellah",
+    "wilaya_id": 48,
+    "code_postal": "48032",
+    "is_active": 1
+  },
+  {
+    "nom": "El Hassi",
+    "wilaya_id": 48,
+    "code_postal": "48033",
+    "is_active": 1
+  },
+  {
+    "nom": "Had Echkalla",
+    "wilaya_id": 48,
+    "code_postal": "48034",
+    "is_active": 1
+  },
+  {
+    "nom": "Bendaoud",
+    "wilaya_id": 48,
+    "code_postal": "48035",
+    "is_active": 1
+  },
+  {
+    "nom": "El Ouldja",
+    "wilaya_id": 48,
+    "code_postal": "48036",
+    "is_active": 1
+  },
+  {
+    "nom": "Merdja Sidi Abed",
+    "wilaya_id": 48,
+    "code_postal": "48037",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Sidi Mihoub",
+    "wilaya_id": 48,
+    "code_postal": "48038",
+    "is_active": 1
+  },
+  {
+    "nom": "Charouine",
+    "wilaya_id": 49,
+    "code_postal": "49004",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Aissa",
+    "wilaya_id": 49,
+    "code_postal": "49001",
+    "is_active": 0
+  },
+  {
+    "nom": "Talmine",
+    "wilaya_id": 49,
+    "code_postal": "49002",
+    "is_active": 0
+  },
+  {
+    "nom": "Ouled Said",
+    "wilaya_id": 49,
+    "code_postal": "49003",
+    "is_active": 1
+  },
+  {
+    "nom": "Timimoun",
+    "wilaya_id": 49,
+    "code_postal": "49000",
+    "is_active": 1
+  },
+  {
+    "nom": "Ksar Kaddour",
+    "wilaya_id": 49,
+    "code_postal": "49005",
+    "is_active": 1
+  },
+  {
+    "nom": "Tinerkouk",
+    "wilaya_id": 49,
+    "code_postal": "49006",
+    "is_active": 1
+  },
+  {
+    "nom": "Deldoul",
+    "wilaya_id": 49,
+    "code_postal": "49007",
+    "is_active": 1
+  },
+  {
+    "nom": "Metarfa",
+    "wilaya_id": 49,
+    "code_postal": "49008",
+    "is_active": 0
+  },
+  {
+    "nom": "Aougrout",
+    "wilaya_id": 49,
+    "code_postal": "49009",
+    "is_active": 1
+  },
+  {
+    "nom": "Bordj Badji Mokhtar",
+    "wilaya_id": 50,
+    "code_postal": "50000",
+    "is_active": 0
+  },
+  {
+    "nom": "Timiaouine",
+    "wilaya_id": 50,
+    "code_postal": "50001",
+    "is_active": 0
+  },
+  {
+    "nom": "Chaiba",
+    "wilaya_id": 51,
+    "code_postal": "51001",
+    "is_active": 1
+  },
+  {
+    "nom": "Doucen",
+    "wilaya_id": 51,
+    "code_postal": "51002",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled Djellal",
+    "wilaya_id": 51,
+    "code_postal": "51000",
+    "is_active": 1
+  },
+  {
+    "nom": "Besbes",
+    "wilaya_id": 51,
+    "code_postal": "51003",
+    "is_active": 1
+  },
+  {
+    "nom": "Ras El Miad",
+    "wilaya_id": 51,
+    "code_postal": "51004",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Khaled",
+    "wilaya_id": 51,
+    "code_postal": "51005",
+    "is_active": 1
+  },
+  {
+    "nom": "Ksabi",
+    "wilaya_id": 52,
+    "code_postal": "52001",
+    "is_active": 1
+  },
+  {
+    "nom": "Ouled-Khodeir",
+    "wilaya_id": 52,
+    "code_postal": "52002",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni Abbes",
+    "wilaya_id": 52,
+    "code_postal": "52000",
+    "is_active": 1
+  },
+  {
+    "nom": "Tamtert",
+    "wilaya_id": 52,
+    "code_postal": "52003",
+    "is_active": 1
+  },
+  {
+    "nom": "Igli",
+    "wilaya_id": 52,
+    "code_postal": "52004",
+    "is_active": 1
+  },
+  {
+    "nom": "El Ouata",
+    "wilaya_id": 52,
+    "code_postal": "52005",
+    "is_active": 1
+  },
+  {
+    "nom": "Beni-Ikhlef",
+    "wilaya_id": 52,
+    "code_postal": "52006",
+    "is_active": 1
+  },
+  {
+    "nom": "Kerzaz",
+    "wilaya_id": 52,
+    "code_postal": "52007",
+    "is_active": 1
+  },
+  {
+    "nom": "Timoudi",
+    "wilaya_id": 52,
+    "code_postal": "52008",
+    "is_active": 1
+  },
+  {
+    "nom": "Inghar",
+    "wilaya_id": 53,
+    "code_postal": "53001",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Salah",
+    "wilaya_id": 53,
+    "code_postal": "53000",
+    "is_active": 1
+  },
+  {
+    "nom": "Foggaret Ezzoua",
+    "wilaya_id": 53,
+    "code_postal": "53002",
+    "is_active": 1
+  },
+  {
+    "nom": "Ain Guezzam",
+    "wilaya_id": 54,
+    "code_postal": "54000",
+    "is_active": 0
+  },
+  {
+    "nom": "Tin Zouatine",
+    "wilaya_id": 54,
+    "code_postal": "54001",
+    "is_active": 0
+  },
+  {
+    "nom": "Nezla",
+    "wilaya_id": 55,
+    "code_postal": "55001",
+    "is_active": 1
+  },
+  {
+    "nom": "Tebesbest",
+    "wilaya_id": 55,
+    "code_postal": "55002",
+    "is_active": 1
+  },
+  {
+    "nom": "Touggourt",
+    "wilaya_id": 55,
+    "code_postal": "55000",
+    "is_active": 1
+  },
+  {
+    "nom": "Zaouia El Abidia",
+    "wilaya_id": 55,
+    "code_postal": "55003",
+    "is_active": 1
+  },
+  {
+    "nom": "El Alia",
+    "wilaya_id": 55,
+    "code_postal": "55004",
+    "is_active": 1
+  },
+  {
+    "nom": "El-Hadjira",
+    "wilaya_id": 55,
+    "code_postal": "55005",
+    "is_active": 1
+  },
+  {
+    "nom": "Benaceur",
+    "wilaya_id": 55,
+    "code_postal": "55006",
+    "is_active": 1
+  },
+  {
+    "nom": "M'naguer",
+    "wilaya_id": 55,
+    "code_postal": "55007",
+    "is_active": 1
+  },
+  {
+    "nom": "Taibet",
+    "wilaya_id": 55,
+    "code_postal": "55008",
+    "is_active": 1
+  },
+  {
+    "nom": "Blidet Amor",
+    "wilaya_id": 55,
+    "code_postal": "55009",
+    "is_active": 1
+  },
+  {
+    "nom": "Temacine",
+    "wilaya_id": 55,
+    "code_postal": "55010",
+    "is_active": 1
+  },
+  {
+    "nom": "Megarine",
+    "wilaya_id": 55,
+    "code_postal": "55011",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Slimane",
+    "wilaya_id": 55,
+    "code_postal": "55012",
+    "is_active": 1
+  },
+  {
+    "nom": "Bordj El Haouass",
+    "wilaya_id": 56,
+    "code_postal": "56001",
+    "is_active": 0
+  },
+  {
+    "nom": "Djanet",
+    "wilaya_id": 56,
+    "code_postal": "56000",
+    "is_active": 1
+  },
+  {
+    "nom": "El M'Ghair",
+    "wilaya_id": 57,
+    "code_postal": "57000",
+    "is_active": 1
+  },
+  {
+    "nom": "Oum Touyour",
+    "wilaya_id": 57,
+    "code_postal": "57001",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Khelil",
+    "wilaya_id": 57,
+    "code_postal": "57002",
+    "is_active": 1
+  },
+  {
+    "nom": "Still",
+    "wilaya_id": 57,
+    "code_postal": "57003",
+    "is_active": 1
+  },
+  {
+    "nom": "Djamaa",
+    "wilaya_id": 57,
+    "code_postal": "57004",
+    "is_active": 1
+  },
+  {
+    "nom": "M'rara",
+    "wilaya_id": 57,
+    "code_postal": "57005",
+    "is_active": 1
+  },
+  {
+    "nom": "Sidi Amrane",
+    "wilaya_id": 57,
+    "code_postal": "57006",
+    "is_active": 1
+  },
+  {
+    "nom": "Tenedla",
+    "wilaya_id": 57,
+    "code_postal": "57007",
+    "is_active": 1
+  },
+  {
+    "nom": "El Meniaa",
+    "wilaya_id": 58,
+    "code_postal": "58000",
+    "is_active": 1
+  },
+  {
+    "nom": "Hassi Gara",
+    "wilaya_id": 58,
+    "code_postal": "58001",
+    "is_active": 1
+  },
+  {
+    "nom": "Hassi Fehal",
+    "wilaya_id": 58,
+    "code_postal": "58002",
+    "is_active": 1
+  }
+]

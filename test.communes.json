@@ -1,0 +1,9456 @@
+[{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6521"
+  },
+  "post_code": "01003",
+  "name": "Aoulef",
+  "ar_name": "أولف",
+  "wilaya_code": "1",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6522"
+  },
+  "post_code": "01004",
+  "name": "Reggane",
+  "ar_name": "رقان",
+  "wilaya_code": "1",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6523"
+  },
+  "post_code": "01007",
+  "name": "Zaouiet Kounta",
+  "ar_name": "زاوية كنتة",
+  "wilaya_code": "1",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6524"
+  },
+  "post_code": "01008",
+  "name": "Fenoughil",
+  "ar_name": "فنوغيل",
+  "wilaya_code": "1",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6525"
+  },
+  "post_code": "01009",
+  "name": "Sali",
+  "ar_name": "سالي",
+  "wilaya_code": "1",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6526"
+  },
+  "post_code": "01011",
+  "name": "Tsabit",
+  "ar_name": "تسابيت",
+  "wilaya_code": "1",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6527"
+  },
+  "post_code": "01020",
+  "name": "Tamest",
+  "ar_name": "تامست",
+  "wilaya_code": "1",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6528"
+  },
+  "post_code": "01021",
+  "name": "Tamantit",
+  "ar_name": "تامنطيط",
+  "wilaya_code": "1",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6529"
+  },
+  "post_code": "01022",
+  "name": "Sebaa",
+  "ar_name": "السبع",
+  "wilaya_code": "1",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc652a"
+  },
+  "post_code": "01023",
+  "name": "Bouda",
+  "ar_name": "بودة",
+  "wilaya_code": "1",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc652b"
+  },
+  "post_code": "01025",
+  "name": "Ouled Ahmed Timmi",
+  "ar_name": "أولاد أحمد تيمي",
+  "wilaya_code": "1",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc652c"
+  },
+  "post_code": "01031",
+  "name": "Tit",
+  "ar_name": "تيت",
+  "wilaya_code": "1",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc652d"
+  },
+  "post_code": "01041",
+  "name": "Timekten",
+  "ar_name": "تيمقتن",
+  "wilaya_code": "1",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc652e"
+  },
+  "post_code": "01044",
+  "name": "Akabli",
+  "ar_name": "اقبلي",
+  "wilaya_code": "1",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc652f"
+  },
+  "post_code": "01047",
+  "name": "In Zghmir",
+  "ar_name": "إن زغمير",
+  "wilaya_code": "1",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6531"
+  },
+  "post_code": "02001",
+  "name": "Oued Fodda",
+  "ar_name": "وادي الفضة",
+  "wilaya_code": "2",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6532"
+  },
+  "post_code": "02002",
+  "name": "Boukadir",
+  "ar_name": "بوقادير",
+  "wilaya_code": "2",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6533"
+  },
+  "post_code": "02004",
+  "name": "Ain Merane",
+  "ar_name": "عين مران",
+  "wilaya_code": "2",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6535"
+  },
+  "post_code": "02007",
+  "name": "Chettia",
+  "ar_name": "الشطية",
+  "wilaya_code": "2",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6536"
+  },
+  "post_code": "02008",
+  "name": "El Karimia",
+  "ar_name": "الكريمية",
+  "wilaya_code": "2",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc653c"
+  },
+  "post_code": "02015",
+  "name": "El Marsa",
+  "ar_name": "المرسى",
+  "wilaya_code": "2",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc653d"
+  },
+  "post_code": "02017",
+  "name": "Beni Haoua",
+  "ar_name": "بني حواء",
+  "wilaya_code": "2",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc653e"
+  },
+  "post_code": "02018",
+  "name": "Abou El Hassane",
+  "ar_name": "أبو الحسن",
+  "wilaya_code": "2",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc653f"
+  },
+  "post_code": "02019",
+  "name": "Bouzeghaia",
+  "ar_name": "بوزغاية",
+  "wilaya_code": "2",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6544"
+  },
+  "post_code": "02031",
+  "name": "Harchoun",
+  "ar_name": "حرشون",
+  "wilaya_code": "2",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6545"
+  },
+  "post_code": "02032",
+  "name": "Dahra",
+  "ar_name": "الظهرة",
+  "wilaya_code": "2",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6546"
+  },
+  "post_code": "02035",
+  "name": "Beni Rached",
+  "ar_name": "بني راشد",
+  "wilaya_code": "2",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6548"
+  },
+  "post_code": "02038",
+  "name": "Herenfa",
+  "ar_name": "الهرانفة",
+  "wilaya_code": "2",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6549"
+  },
+  "post_code": "02039",
+  "name": "Benairia",
+  "ar_name": "بنايرية",
+  "wilaya_code": "2",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc654b"
+  },
+  "post_code": "02050",
+  "name": "El Hadjadj",
+  "ar_name": "الحجاج",
+  "wilaya_code": "2",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc654c"
+  },
+  "post_code": "02060",
+  "name": "Moussadek",
+  "ar_name": "مصدق",
+  "wilaya_code": "2",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6550"
+  },
+  "post_code": "02070",
+  "name": "Breira",
+  "ar_name": "بريرة",
+  "wilaya_code": "2",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6551"
+  },
+  "post_code": "02071",
+  "name": "Beni  Bouattab",
+  "ar_name": "بني بوعتاب",
+  "wilaya_code": "2",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6552"
+  },
+  "post_code": "02073",
+  "name": "Labiod Medjadja",
+  "ar_name": "الأبيض مجاجة",
+  "wilaya_code": "2",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.074Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6617"
+  },
+  "post_code": "08029",
+  "name": "Tabelbala",
+  "ar_name": "تبلبالة",
+  "wilaya_code": "8",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.077Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.077Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6874"
+  },
+  "post_code": "26004",
+  "name": "Tablat",
+  "ar_name": "تابلاط",
+  "wilaya_code": "26",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6880"
+  },
+  "post_code": "26020",
+  "name": "Souagui",
+  "ar_name": "السواقي",
+  "wilaya_code": "26",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6881"
+  },
+  "post_code": "26021",
+  "name": "Zoubiria",
+  "ar_name": "الزبيرية",
+  "wilaya_code": "26",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6891"
+  },
+  "post_code": "26041",
+  "name": "Seghouane",
+  "ar_name": "سغوان",
+  "wilaya_code": "26",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6894"
+  },
+  "post_code": "26045",
+  "name": "Si Mahdjoub",
+  "ar_name": "سي المحجوب",
+  "wilaya_code": "26",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6895"
+  },
+  "post_code": "26046",
+  "name": "Tletat Ed Douair",
+  "ar_name": "ثلاث دوائر",
+  "wilaya_code": "26",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68a5"
+  },
+  "post_code": "26069",
+  "name": "Sidi Demed",
+  "ar_name": "سيدي دامد",
+  "wilaya_code": "26",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68a6"
+  },
+  "post_code": "26070",
+  "name": "Sidi Rabie",
+  "ar_name": "سيدي الربيع",
+  "wilaya_code": "26",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68a7"
+  },
+  "post_code": "26071",
+  "name": "Sidi Naamane",
+  "ar_name": "سيدي نعمان",
+  "wilaya_code": "26",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68a8"
+  },
+  "post_code": "26072",
+  "name": "Sidi Zahar",
+  "ar_name": "سيدي زهار",
+  "wilaya_code": "26",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68a9"
+  },
+  "post_code": "26074",
+  "name": "Tafraout",
+  "ar_name": "تفراوت",
+  "wilaya_code": "26",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68aa"
+  },
+  "post_code": "26075",
+  "name": "Tamesguida",
+  "ar_name": "تمسقيدة",
+  "wilaya_code": "26",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68ab"
+  },
+  "post_code": "26076",
+  "name": "Tizi Mahdi",
+  "ar_name": "تيزي مهدي",
+  "wilaya_code": "26",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68ad"
+  },
+  "post_code": "27001",
+  "name": "Ain-Tedles",
+  "ar_name": "عين تادلس",
+  "wilaya_code": "27",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68ae"
+  },
+  "post_code": "27003",
+  "name": "Bouguirat",
+  "ar_name": "بوقيراط",
+  "wilaya_code": "27",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68af"
+  },
+  "post_code": "27004",
+  "name": "Hassi Mameche",
+  "ar_name": "حاسي ماماش",
+  "wilaya_code": "27",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68b0"
+  },
+  "post_code": "27005",
+  "name": "Khadra",
+  "ar_name": "خضرة",
+  "wilaya_code": "27",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68b1"
+  },
+  "post_code": "27007",
+  "name": "Sidi-Lakhdar",
+  "ar_name": "سيدي لخضر",
+  "wilaya_code": "27",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68b2"
+  },
+  "post_code": "27008",
+  "name": "Benabdelmalek Ramdane",
+  "ar_name": "بن عبد المالك رمضان",
+  "wilaya_code": "27",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68b3"
+  },
+  "post_code": "27009",
+  "name": "Achaacha",
+  "ar_name": "عشعاشة",
+  "wilaya_code": "27",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68b4"
+  },
+  "post_code": "27010",
+  "name": "Ain-Nouissy",
+  "ar_name": "عين نويسي",
+  "wilaya_code": "27",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68b5"
+  },
+  "post_code": "27013",
+  "name": "Touahria",
+  "ar_name": "الطواهرية",
+  "wilaya_code": "27",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68b6"
+  },
+  "post_code": "27014",
+  "name": "Fornaka",
+  "ar_name": "فرناقة",
+  "wilaya_code": "27",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68b7"
+  },
+  "post_code": "27015",
+  "name": "Hadjadj",
+  "ar_name": "حجاج",
+  "wilaya_code": "27",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68b8"
+  },
+  "post_code": "27016",
+  "name": "Kheir-Eddine",
+  "ar_name": "خير الدين",
+  "wilaya_code": "27",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68b9"
+  },
+  "post_code": "27017",
+  "name": "Mazagran",
+  "ar_name": "مزغران",
+  "wilaya_code": "27",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68ba"
+  },
+  "post_code": "27018",
+  "name": "Mesra",
+  "ar_name": "ماسرة",
+  "wilaya_code": "27",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68bb"
+  },
+  "post_code": "27020",
+  "name": "Oued El Kheir",
+  "ar_name": "وادي الخير",
+  "wilaya_code": "27",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68bc"
+  },
+  "post_code": "27021",
+  "name": "Sirat",
+  "ar_name": "سيرات",
+  "wilaya_code": "27",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68bd"
+  },
+  "post_code": "27022",
+  "name": "Sour",
+  "ar_name": "سور",
+  "wilaya_code": "27",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68be"
+  },
+  "post_code": "27023",
+  "name": "Stidia",
+  "ar_name": "ستيدية",
+  "wilaya_code": "27",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68bf"
+  },
+  "post_code": "27024",
+  "name": "Ain-Sidi Cherif",
+  "ar_name": "عين سيدي الشريف",
+  "wilaya_code": "27",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68c0"
+  },
+  "post_code": "27026",
+  "name": "Nekmaria",
+  "ar_name": "نكمارية",
+  "wilaya_code": "27",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68c1"
+  },
+  "post_code": "27027",
+  "name": "Ouled Boughalem",
+  "ar_name": "أولاد بوغالم",
+  "wilaya_code": "27",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68c2"
+  },
+  "post_code": "27028",
+  "name": "Ouled-Maalah",
+  "ar_name": "أولاد مع الله",
+  "wilaya_code": "27",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68c3"
+  },
+  "post_code": "27029",
+  "name": "Sidi Belaattar",
+  "ar_name": "سيدي بلعطار",
+  "wilaya_code": "27",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68c4"
+  },
+  "post_code": "27031",
+  "name": "Ain-Boudinar",
+  "ar_name": "عين بودينار",
+  "wilaya_code": "27",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68c5"
+  },
+  "post_code": "27032",
+  "name": "Sidi Ali",
+  "ar_name": "سيدي علي",
+  "wilaya_code": "27",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68c6"
+  },
+  "post_code": "27033",
+  "name": "Hassiane",
+  "ar_name": "الحسيان (بني ياحي",
+  "wilaya_code": "27",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68c7"
+  },
+  "post_code": "27036",
+  "name": "Mansourah",
+  "ar_name": "منصورة",
+  "wilaya_code": "27",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68c8"
+  },
+  "post_code": "27045",
+  "name": "Sayada",
+  "ar_name": "صيادة",
+  "wilaya_code": "27",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68c9"
+  },
+  "post_code": "27046",
+  "name": "Souaflia",
+  "ar_name": "السوافلية",
+  "wilaya_code": "27",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68ca"
+  },
+  "post_code": "27047",
+  "name": "Tazgait",
+  "ar_name": "تزقايت",
+  "wilaya_code": "27",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68cc"
+  },
+  "post_code": "28001",
+  "name": "Bou Saada",
+  "ar_name": "بوسعادة",
+  "wilaya_code": "28",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68cd"
+  },
+  "post_code": "28002",
+  "name": "Sidi Aissa",
+  "ar_name": "سيدي عيسى",
+  "wilaya_code": "28",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68ce"
+  },
+  "post_code": "28003",
+  "name": "Ain El Hadjel",
+  "ar_name": "عين الحجل",
+  "wilaya_code": "28",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68cf"
+  },
+  "post_code": "28004",
+  "name": "Ain El Melh",
+  "ar_name": "عين الملح",
+  "wilaya_code": "28",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68d0"
+  },
+  "post_code": "28005",
+  "name": "Hammam Dalaa",
+  "ar_name": "حمام الضلعة",
+  "wilaya_code": "28",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68d1"
+  },
+  "post_code": "28006",
+  "name": "Magra",
+  "ar_name": "مقرة",
+  "wilaya_code": "28",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68d2"
+  },
+  "post_code": "28008",
+  "name": "Ain Khadra",
+  "ar_name": "عين الخضراء",
+  "wilaya_code": "28",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68d3"
+  },
+  "post_code": "28009",
+  "name": "Ben Srour",
+  "ar_name": "بن سرور",
+  "wilaya_code": "28",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68d4"
+  },
+  "post_code": "28010",
+  "name": "Berhoum",
+  "ar_name": "برهوم",
+  "wilaya_code": "28",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68d5"
+  },
+  "post_code": "28011",
+  "name": "Maadid",
+  "ar_name": "المعاضيد",
+  "wilaya_code": "28",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68d6"
+  },
+  "post_code": "28014",
+  "name": "Chellal",
+  "ar_name": "شلال",
+  "wilaya_code": "28",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68d7"
+  },
+  "post_code": "28015",
+  "name": "El Hamel",
+  "ar_name": "الهامل",
+  "wilaya_code": "28",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68d8"
+  },
+  "post_code": "28016",
+  "name": "Medjedel",
+  "ar_name": "امجدل",
+  "wilaya_code": "28",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68d9"
+  },
+  "post_code": "28017",
+  "name": "Ouanougha",
+  "ar_name": "ونوغة",
+  "wilaya_code": "28",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68da"
+  },
+  "post_code": "28021",
+  "name": "Ouled Addi Guebala",
+  "ar_name": "أولاد عدي لقبالة",
+  "wilaya_code": "28",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68db"
+  },
+  "post_code": "28022",
+  "name": "Ouled Derradj",
+  "ar_name": "أولاد دراج",
+  "wilaya_code": "28",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68dc"
+  },
+  "post_code": "28023",
+  "name": "Ain Fares",
+  "ar_name": "عين فارس",
+  "wilaya_code": "28",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68dd"
+  },
+  "post_code": "28024",
+  "name": "Djebel Messaad",
+  "ar_name": "جبل مساعد",
+  "wilaya_code": "28",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68de"
+  },
+  "post_code": "28025",
+  "name": "Ain Rich",
+  "ar_name": "عين الريش",
+  "wilaya_code": "28",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68df"
+  },
+  "post_code": "28026",
+  "name": "Belaiba",
+  "ar_name": "بلعايبة",
+  "wilaya_code": "28",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68e0"
+  },
+  "post_code": "28027",
+  "name": "Beni Ilmane",
+  "ar_name": "بني يلمان",
+  "wilaya_code": "28",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68e1"
+  },
+  "post_code": "28028",
+  "name": "Benzouh",
+  "ar_name": "بن زوه",
+  "wilaya_code": "28",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68e2"
+  },
+  "post_code": "28029",
+  "name": "M'cif",
+  "ar_name": "مسيف",
+  "wilaya_code": "28",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68e3"
+  },
+  "post_code": "28030",
+  "name": "Khoubana",
+  "ar_name": "خبانة",
+  "wilaya_code": "28",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68e4"
+  },
+  "post_code": "28031",
+  "name": "Ouled Slimane",
+  "ar_name": "أولاد سليمان",
+  "wilaya_code": "28",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68e5"
+  },
+  "post_code": "28032",
+  "name": "Ouled Sidi Brahim",
+  "ar_name": "أولاد سيدي ابراهيم",
+  "wilaya_code": "28",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68e6"
+  },
+  "post_code": "28033",
+  "name": "Mohamed Boudiaf",
+  "ar_name": "محمد بوضياف",
+  "wilaya_code": "28",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68e7"
+  },
+  "post_code": "28036",
+  "name": "Sidi Hadjeres",
+  "ar_name": "سيدي هجرس",
+  "wilaya_code": "28",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68e8"
+  },
+  "post_code": "28037",
+  "name": "Slim",
+  "ar_name": "سليم",
+  "wilaya_code": "28",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68e9"
+  },
+  "post_code": "28038",
+  "name": "Tarmount",
+  "ar_name": "تارمونت",
+  "wilaya_code": "28",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68ea"
+  },
+  "post_code": "28041",
+  "name": "Maarif",
+  "ar_name": "معاريف",
+  "wilaya_code": "28",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68eb"
+  },
+  "post_code": "28042",
+  "name": "Bouti Sayeh",
+  "ar_name": "بوطي السايح",
+  "wilaya_code": "28",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.081Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68ec"
+  },
+  "post_code": "28043",
+  "name": "Bir Foda",
+  "ar_name": "بئر فضة",
+  "wilaya_code": "28",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68ed"
+  },
+  "post_code": "28045",
+  "name": "Sidi M'hamed",
+  "ar_name": "سيدي امحمد",
+  "wilaya_code": "28",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68ee"
+  },
+  "post_code": "28047",
+  "name": "Ouled Madhi",
+  "ar_name": "أولاد ماضي",
+  "wilaya_code": "28",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68ef"
+  },
+  "post_code": "28048",
+  "name": "Dehahna",
+  "ar_name": "دهاهنة",
+  "wilaya_code": "28",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68f0"
+  },
+  "post_code": "28054",
+  "name": "Oulteme",
+  "ar_name": "ولتام",
+  "wilaya_code": "28",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68f1"
+  },
+  "post_code": "28056",
+  "name": "Khettouti Sed-El-Jir",
+  "ar_name": "خطوطي سد الجير",
+  "wilaya_code": "28",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68f2"
+  },
+  "post_code": "28060",
+  "name": "Ouled Mansour",
+  "ar_name": "أولاد منصور",
+  "wilaya_code": "28",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68f3"
+  },
+  "post_code": "28064",
+  "name": "Souamaa",
+  "ar_name": "السوامع",
+  "wilaya_code": "28",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68f4"
+  },
+  "post_code": "28065",
+  "name": "Tamsa",
+  "ar_name": "تامسة",
+  "wilaya_code": "28",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68f5"
+  },
+  "post_code": "28067",
+  "name": "Zarzour",
+  "ar_name": "زرزور",
+  "wilaya_code": "28",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68f7"
+  },
+  "post_code": "29001",
+  "name": "Sig",
+  "ar_name": "سيق",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68f8"
+  },
+  "post_code": "29003",
+  "name": "Mohammadia",
+  "ar_name": "المحمدية",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68f9"
+  },
+  "post_code": "29004",
+  "name": "Tighennif",
+  "ar_name": "تيغنيف",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68fa"
+  },
+  "post_code": "29005",
+  "name": "Bouhanifia",
+  "ar_name": "بوحنيفية",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68fb"
+  },
+  "post_code": "29006",
+  "name": "Ghriss",
+  "ar_name": "غريس",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68fc"
+  },
+  "post_code": "29011",
+  "name": "Ain Fekan",
+  "ar_name": "عين فكان",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68fd"
+  },
+  "post_code": "29012",
+  "name": "El Bordj",
+  "ar_name": "البرج",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68fe"
+  },
+  "post_code": "29013",
+  "name": "El Hachem",
+  "ar_name": "الحشم",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc68ff"
+  },
+  "post_code": "29014",
+  "name": "Hacine",
+  "ar_name": "حسين",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6900"
+  },
+  "post_code": "29015",
+  "name": "Maoussa",
+  "ar_name": "ماوسة",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6901"
+  },
+  "post_code": "29016",
+  "name": "Oued El Abtal",
+  "ar_name": "وادي الأبطال",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6902"
+  },
+  "post_code": "29017",
+  "name": "Oued Taria",
+  "ar_name": "وادي التاغية",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6903"
+  },
+  "post_code": "29019",
+  "name": "Zahana",
+  "ar_name": "زهانة",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6904"
+  },
+  "post_code": "29021",
+  "name": "Aouf",
+  "ar_name": "عوف",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6905"
+  },
+  "post_code": "29022",
+  "name": "Bou Henni",
+  "ar_name": "بوهني",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6906"
+  },
+  "post_code": "29023",
+  "name": "El Ghomri",
+  "ar_name": "الغمري",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6907"
+  },
+  "post_code": "29024",
+  "name": "Froha",
+  "ar_name": "فروحة",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6908"
+  },
+  "post_code": "29025",
+  "name": "Khalouia",
+  "ar_name": "خلوية",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6909"
+  },
+  "post_code": "29026",
+  "name": "Matemore",
+  "ar_name": "المطمور",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc690a"
+  },
+  "post_code": "29027",
+  "name": "Mocta-Douz",
+  "ar_name": "مقطع الدوز",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc690b"
+  },
+  "post_code": "29029",
+  "name": "Oggaz",
+  "ar_name": "عقاز",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc690c"
+  },
+  "post_code": "29030",
+  "name": "Sidi Kada",
+  "ar_name": "سيدي قادة",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc690d"
+  },
+  "post_code": "29032",
+  "name": "Ain Ferah",
+  "ar_name": "عين فراح",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc690e"
+  },
+  "post_code": "29034",
+  "name": "Ain Frass",
+  "ar_name": "عين أفرص",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc690f"
+  },
+  "post_code": "29036",
+  "name": "Alaimia",
+  "ar_name": "العلايمية",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6910"
+  },
+  "post_code": "29038",
+  "name": "Benian",
+  "ar_name": "بنيان",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6911"
+  },
+  "post_code": "29039",
+  "name": "Chorfa",
+  "ar_name": "الشرفاء",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6912"
+  },
+  "post_code": "29041",
+  "name": "El Gaada",
+  "ar_name": "القعدة",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6913"
+  },
+  "post_code": "29042",
+  "name": "El Gueitena",
+  "ar_name": "القطنة",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6914"
+  },
+  "post_code": "29043",
+  "name": "El Keurt",
+  "ar_name": "القرط",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6915"
+  },
+  "post_code": "29044",
+  "name": "El Menaouer",
+  "ar_name": "المنور",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6916"
+  },
+  "post_code": "29046",
+  "name": "Ferraguig",
+  "ar_name": "فراقيق",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6917"
+  },
+  "post_code": "29047",
+  "name": "Gharrous",
+  "ar_name": "غروس",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6918"
+  },
+  "post_code": "29050",
+  "name": "Guerdjoum",
+  "ar_name": "قرجوم",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6919"
+  },
+  "post_code": "29054",
+  "name": "Sidi Abdelmoumene",
+  "ar_name": "سيدي عبد المومن",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc691a"
+  },
+  "post_code": "29055",
+  "name": "Makhda",
+  "ar_name": "ماقضة",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc691b"
+  },
+  "post_code": "29056",
+  "name": "El Mamounia",
+  "ar_name": "المأمونية",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc691c"
+  },
+  "post_code": "29057",
+  "name": "Zelamta",
+  "ar_name": "زلامطة",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc691d"
+  },
+  "post_code": "29058",
+  "name": "Nesmot",
+  "ar_name": "نسمط",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc691e"
+  },
+  "post_code": "29060",
+  "name": "Ras El Ain Amirouche",
+  "ar_name": "رأس عين عميروش",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc691f"
+  },
+  "post_code": "29062",
+  "name": "Sedjerara",
+  "ar_name": "سجرارة",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6920"
+  },
+  "post_code": "29063",
+  "name": "Sehailia",
+  "ar_name": "السهايلية",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6921"
+  },
+  "post_code": "29065",
+  "name": "Sidi Abdeldjebar",
+  "ar_name": "سيدي عبد الجبار",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6922"
+  },
+  "post_code": "29069",
+  "name": "Sidi Boussaid",
+  "ar_name": "سيدي بوسعيد",
+  "wilaya_code": "29",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6924"
+  },
+  "post_code": "30001",
+  "name": "Hassi Messaoud",
+  "ar_name": "حاسي مسعود",
+  "wilaya_code": "30",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6925"
+  },
+  "post_code": "30013",
+  "name": "Rouissat",
+  "ar_name": "الرويسات",
+  "wilaya_code": "30",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6926"
+  },
+  "post_code": "30025",
+  "name": "El Borma",
+  "ar_name": "البرمة",
+  "wilaya_code": "30",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6927"
+  },
+  "post_code": "30026",
+  "name": "N'goussa",
+  "ar_name": "انقوسة",
+  "wilaya_code": "30",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6928"
+  },
+  "post_code": "30035",
+  "name": "Sidi Khouiled",
+  "ar_name": "سيدي خويلد",
+  "wilaya_code": "30",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6929"
+  },
+  "post_code": "30052",
+  "name": "Hassi Ben Abdellah",
+  "ar_name": "حاسي بن عبد الله",
+  "wilaya_code": "30",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc692b"
+  },
+  "post_code": "31001",
+  "name": "Bir El Djir",
+  "ar_name": "بئر الجير",
+  "wilaya_code": "31",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc692c"
+  },
+  "post_code": "31004",
+  "name": "Arzew",
+  "ar_name": "أرزيو",
+  "wilaya_code": "31",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc692d"
+  },
+  "post_code": "31005",
+  "name": "Es Senia",
+  "ar_name": "السانية",
+  "wilaya_code": "31",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc692e"
+  },
+  "post_code": "31014",
+  "name": "Ain Turk",
+  "ar_name": "عين الترك",
+  "wilaya_code": "31",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc692f"
+  },
+  "post_code": "31015",
+  "name": "Bethioua",
+  "ar_name": "بطيوة",
+  "wilaya_code": "31",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6930"
+  },
+  "post_code": "31016",
+  "name": "Boutlelis",
+  "ar_name": "بوتليليس",
+  "wilaya_code": "31",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6931"
+  },
+  "post_code": "31017",
+  "name": "Gdyel",
+  "ar_name": "قديل",
+  "wilaya_code": "31",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6932"
+  },
+  "post_code": "31019",
+  "name": "Mers El Kebir",
+  "ar_name": "المرسى الكبير",
+  "wilaya_code": "31",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6933"
+  },
+  "post_code": "31024",
+  "name": "Boufatis",
+  "ar_name": "بوفاتيس",
+  "wilaya_code": "31",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6934"
+  },
+  "post_code": "31025",
+  "name": "Bousfer",
+  "ar_name": "بوسفر",
+  "wilaya_code": "31",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6935"
+  },
+  "post_code": "31026",
+  "name": "El Kerma",
+  "ar_name": "الكرمة",
+  "wilaya_code": "31",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6936"
+  },
+  "post_code": "31027",
+  "name": "Ben Freha",
+  "ar_name": "بن فريحة",
+  "wilaya_code": "31",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6937"
+  },
+  "post_code": "31028",
+  "name": "Hassi Bounif",
+  "ar_name": "حاسي بونيف",
+  "wilaya_code": "31",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6938"
+  },
+  "post_code": "31030",
+  "name": "Marsat El Hadjadj",
+  "ar_name": "مرسى الحجاج",
+  "wilaya_code": "31",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6939"
+  },
+  "post_code": "31031",
+  "name": "Messerghin",
+  "ar_name": "مسرغين",
+  "wilaya_code": "31",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc693a"
+  },
+  "post_code": "31037",
+  "name": "Oued Tlelat",
+  "ar_name": "وادي تليلات",
+  "wilaya_code": "31",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc693b"
+  },
+  "post_code": "31038",
+  "name": "Sidi Chami",
+  "ar_name": "سيدي الشحمي",
+  "wilaya_code": "31",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc693c"
+  },
+  "post_code": "31040",
+  "name": "Ain Biya",
+  "ar_name": "عين البية",
+  "wilaya_code": "31",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc693d"
+  },
+  "post_code": "31043",
+  "name": "El Ancor",
+  "ar_name": "العنصر",
+  "wilaya_code": "31",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc693e"
+  },
+  "post_code": "31046",
+  "name": "Hassi Mefsoukh",
+  "ar_name": "حاسي مفسوخ",
+  "wilaya_code": "31",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc693f"
+  },
+  "post_code": "31049",
+  "name": "Hassi Ben Okba",
+  "ar_name": "حاسي بن عقبة",
+  "wilaya_code": "31",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6940"
+  },
+  "post_code": "31058",
+  "name": "Sidi Ben Yebka",
+  "ar_name": "سيدي بن يبقى",
+  "wilaya_code": "31",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6941"
+  },
+  "post_code": "31059",
+  "name": "Ain Kerma",
+  "ar_name": "عين الكرمة",
+  "wilaya_code": "31",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6942"
+  },
+  "post_code": "31070",
+  "name": "El Braya",
+  "ar_name": "البراية",
+  "wilaya_code": "31",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6943"
+  },
+  "post_code": "31077",
+  "name": "Tafraoui",
+  "ar_name": "طفراوي",
+  "wilaya_code": "31",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6945"
+  },
+  "post_code": "32001",
+  "name": "Bougtoub",
+  "ar_name": "بوقطب",
+  "wilaya_code": "32",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6946"
+  },
+  "post_code": "32002",
+  "name": "Brezina",
+  "ar_name": "بريزينة",
+  "wilaya_code": "32",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6947"
+  },
+  "post_code": "32003",
+  "name": "Labiodh Sidi Cheikh",
+  "ar_name": "الأبيض سيدي الشيخ",
+  "wilaya_code": "32",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6948"
+  },
+  "post_code": "32005",
+  "name": "Arbaouat",
+  "ar_name": "اربوات",
+  "wilaya_code": "32",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6949"
+  },
+  "post_code": "32006",
+  "name": "Boualem",
+  "ar_name": "بوعلام",
+  "wilaya_code": "32",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc694a"
+  },
+  "post_code": "32011",
+  "name": "El Kheiter",
+  "ar_name": "الخيثر",
+  "wilaya_code": "32",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc694b"
+  },
+  "post_code": "32013",
+  "name": "Kef El Ahmar",
+  "ar_name": "الكاف الأحمر",
+  "wilaya_code": "32",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc694c"
+  },
+  "post_code": "32014",
+  "name": "Boussemghoun",
+  "ar_name": "بوسمغون",
+  "wilaya_code": "32",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc694d"
+  },
+  "post_code": "32015",
+  "name": "Chellala",
+  "ar_name": "شلالة",
+  "wilaya_code": "32",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc694e"
+  },
+  "post_code": "32017",
+  "name": "Ghassoul",
+  "ar_name": "الغاسول",
+  "wilaya_code": "32",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc694f"
+  },
+  "post_code": "32018",
+  "name": "Rogassa",
+  "ar_name": "رقاصة",
+  "wilaya_code": "32",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6950"
+  },
+  "post_code": "32019",
+  "name": "Ain El Orak",
+  "ar_name": "عين العراك",
+  "wilaya_code": "32",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6951"
+  },
+  "post_code": "32022",
+  "name": "Cheguig",
+  "ar_name": "الشقيق",
+  "wilaya_code": "32",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6952"
+  },
+  "post_code": "32024",
+  "name": "El Mehara",
+  "ar_name": "المحرة",
+  "wilaya_code": "32",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6953"
+  },
+  "post_code": "32025",
+  "name": "El Bnoud",
+  "ar_name": "البنود",
+  "wilaya_code": "32",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6954"
+  },
+  "post_code": "32027",
+  "name": "Krakda",
+  "ar_name": "كراكدة",
+  "wilaya_code": "32",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6955"
+  },
+  "post_code": "32032",
+  "name": "Sidi Tiffour",
+  "ar_name": "سيدي طيفور",
+  "wilaya_code": "32",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6956"
+  },
+  "post_code": "32033",
+  "name": "Stitten",
+  "ar_name": "ستيتن",
+  "wilaya_code": "32",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6957"
+  },
+  "post_code": "32034",
+  "name": "Tousmouline",
+  "ar_name": "توسمولين",
+  "wilaya_code": "32",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6959"
+  },
+  "post_code": "33001",
+  "name": "In Amenas",
+  "ar_name": "إن أمناس",
+  "wilaya_code": "33",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc695a"
+  },
+  "post_code": "33003",
+  "name": "Bordj Omar Driss",
+  "ar_name": "برج عمر إدريس",
+  "wilaya_code": "33",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc695b"
+  },
+  "post_code": "33004",
+  "name": "Debdeb",
+  "ar_name": "دبداب",
+  "wilaya_code": "33",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc695d"
+  },
+  "post_code": "34001",
+  "name": "Ras El Oued",
+  "ar_name": "رأس الوادي",
+  "wilaya_code": "34",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc695e"
+  },
+  "post_code": "34004",
+  "name": "Bordj Ghedir",
+  "ar_name": "برج الغدير",
+  "wilaya_code": "34",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc695f"
+  },
+  "post_code": "34005",
+  "name": "Bordj Zemmoura",
+  "ar_name": "برج زمورة",
+  "wilaya_code": "34",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6960"
+  },
+  "post_code": "34006",
+  "name": "El Achir",
+  "ar_name": "الياشير",
+  "wilaya_code": "34",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6961"
+  },
+  "post_code": "34008",
+  "name": "Mansoura",
+  "ar_name": "المنصورة",
+  "wilaya_code": "34",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6962"
+  },
+  "post_code": "34009",
+  "name": "Medjana",
+  "ar_name": "مجانة",
+  "wilaya_code": "34",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6963"
+  },
+  "post_code": "34010",
+  "name": "Ain Taghrout",
+  "ar_name": "عين تاغروت",
+  "wilaya_code": "34",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6964"
+  },
+  "post_code": "34011",
+  "name": "Bir Kasdali",
+  "ar_name": "بئر قاصد علي",
+  "wilaya_code": "34",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6965"
+  },
+  "post_code": "34015",
+  "name": "Colla",
+  "ar_name": "القلة",
+  "wilaya_code": "34",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6966"
+  },
+  "post_code": "34016",
+  "name": "Djaafra",
+  "ar_name": "جعافرة",
+  "wilaya_code": "34",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6967"
+  },
+  "post_code": "34018",
+  "name": "El Main",
+  "ar_name": "الماين",
+  "wilaya_code": "34",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6968"
+  },
+  "post_code": "34019",
+  "name": "El M'hir",
+  "ar_name": "المهير",
+  "wilaya_code": "34",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6969"
+  },
+  "post_code": "34020",
+  "name": "Sidi-Embarek",
+  "ar_name": "سيدي أمبارك",
+  "wilaya_code": "34",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc696a"
+  },
+  "post_code": "34021",
+  "name": "Teniet En Nasr",
+  "ar_name": "ثنية النصر",
+  "wilaya_code": "34",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc696b"
+  },
+  "post_code": "34022",
+  "name": "Tixter",
+  "ar_name": "تيكستار",
+  "wilaya_code": "34",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc696c"
+  },
+  "post_code": "34025",
+  "name": "Belimour",
+  "ar_name": "بليمور",
+  "wilaya_code": "34",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc696d"
+  },
+  "post_code": "34026",
+  "name": "Tassamert",
+  "ar_name": "تسامرت",
+  "wilaya_code": "34",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc696e"
+  },
+  "post_code": "34027",
+  "name": "Ain Tesra",
+  "ar_name": "عين تسرة",
+  "wilaya_code": "34",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc696f"
+  },
+  "post_code": "34028",
+  "name": "Khelil",
+  "ar_name": "خليل",
+  "wilaya_code": "34",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6970"
+  },
+  "post_code": "34029",
+  "name": "El Euch",
+  "ar_name": "العش",
+  "wilaya_code": "34",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6971"
+  },
+  "post_code": "34030",
+  "name": "El Annasseur",
+  "ar_name": "العناصر",
+  "wilaya_code": "34",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6972"
+  },
+  "post_code": "34031",
+  "name": "Ghailasa",
+  "ar_name": "غيلاسة",
+  "wilaya_code": "34",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6973"
+  },
+  "post_code": "34032",
+  "name": "Ouled Brahem",
+  "ar_name": "أولاد أبراهم",
+  "wilaya_code": "34",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6974"
+  },
+  "post_code": "34033",
+  "name": "Ouled Dahmane",
+  "ar_name": "أولاد دحمان",
+  "wilaya_code": "34",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6975"
+  },
+  "post_code": "34035",
+  "name": "Rabta",
+  "ar_name": "الرابطة",
+  "wilaya_code": "34",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6976"
+  },
+  "post_code": "34047",
+  "name": "Haraza",
+  "ar_name": "حرازة",
+  "wilaya_code": "34",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6977"
+  },
+  "post_code": "34048",
+  "name": "Ksour",
+  "ar_name": "القصور",
+  "wilaya_code": "34",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6978"
+  },
+  "post_code": "34052",
+  "name": "Ouled Sidi-Brahim",
+  "ar_name": "أولاد سيدي ابراهيم",
+  "wilaya_code": "34",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6979"
+  },
+  "post_code": "34059",
+  "name": "Taglait",
+  "ar_name": "تقلعيت",
+  "wilaya_code": "34",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc697a"
+  },
+  "post_code": "34061",
+  "name": "Tefreg",
+  "ar_name": "تفرق",
+  "wilaya_code": "34",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc697b"
+  },
+  "post_code": "34068",
+  "name": "Hasnaoua",
+  "ar_name": "حسناوة",
+  "wilaya_code": "34",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc697c"
+  },
+  "post_code": "34073",
+  "name": "Ben Daoud",
+  "ar_name": "بن داود",
+  "wilaya_code": "34",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc697e"
+  },
+  "post_code": "35001",
+  "name": "Bordj Menaiel",
+  "ar_name": "برج منايل",
+  "wilaya_code": "35",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc697f"
+  },
+  "post_code": "35003",
+  "name": "Boudouaou",
+  "ar_name": "بودواو",
+  "wilaya_code": "35",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6980"
+  },
+  "post_code": "35004",
+  "name": "Dellys",
+  "ar_name": "دلس",
+  "wilaya_code": "35",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6981"
+  },
+  "post_code": "35005",
+  "name": "Thenia",
+  "ar_name": "الثنية",
+  "wilaya_code": "35",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6982"
+  },
+  "post_code": "35006",
+  "name": "Beni Amrane",
+  "ar_name": "بني عمران",
+  "wilaya_code": "35",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6983"
+  },
+  "post_code": "35008",
+  "name": "Chabet El Ameur",
+  "ar_name": "شعبة العامر",
+  "wilaya_code": "35",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6984"
+  },
+  "post_code": "35009",
+  "name": "Isser",
+  "ar_name": "يسر",
+  "wilaya_code": "35",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6985"
+  },
+  "post_code": "35010",
+  "name": "Khemis El Khechna",
+  "ar_name": "خميس الخشنة",
+  "wilaya_code": "35",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6986"
+  },
+  "post_code": "35011",
+  "name": "Ouled Moussa",
+  "ar_name": "أولاد موسى",
+  "wilaya_code": "35",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6987"
+  },
+  "post_code": "35012",
+  "name": "Zemmouri",
+  "ar_name": "زموري",
+  "wilaya_code": "35",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6988"
+  },
+  "post_code": "35013",
+  "name": "Baghlia",
+  "ar_name": "بغلية",
+  "wilaya_code": "35",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6989"
+  },
+  "post_code": "35014",
+  "name": "Corso",
+  "ar_name": "قورصو",
+  "wilaya_code": "35",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc698a"
+  },
+  "post_code": "35015",
+  "name": "Hammedi",
+  "ar_name": "حمادي",
+  "wilaya_code": "35",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc698b"
+  },
+  "post_code": "35017",
+  "name": "Larbatache",
+  "ar_name": "الاربعطاش",
+  "wilaya_code": "35",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc698c"
+  },
+  "post_code": "35018",
+  "name": "Naciria",
+  "ar_name": "الناصرية",
+  "wilaya_code": "35",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc698d"
+  },
+  "post_code": "35019",
+  "name": "Sidi Daoud",
+  "ar_name": "سيدي داود",
+  "wilaya_code": "35",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc698e"
+  },
+  "post_code": "35021",
+  "name": "Tidjelabine",
+  "ar_name": "تيجلابين",
+  "wilaya_code": "35",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc698f"
+  },
+  "post_code": "35022",
+  "name": "Afir",
+  "ar_name": "أعفير",
+  "wilaya_code": "35",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6990"
+  },
+  "post_code": "35023",
+  "name": "Boudouaou El Bahri",
+  "ar_name": "بودواو البحري",
+  "wilaya_code": "35",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6991"
+  },
+  "post_code": "35024",
+  "name": "Djinet",
+  "ar_name": "جنات",
+  "wilaya_code": "35",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6992"
+  },
+  "post_code": "35026",
+  "name": "Leghata",
+  "ar_name": "لقاطة",
+  "wilaya_code": "35",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6993"
+  },
+  "post_code": "35027",
+  "name": "Timezrit",
+  "ar_name": "تيمزريت",
+  "wilaya_code": "35",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6994"
+  },
+  "post_code": "35028",
+  "name": "Si Mustapha",
+  "ar_name": "سي مصطفى",
+  "wilaya_code": "35",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6995"
+  },
+  "post_code": "35029",
+  "name": "Taourga",
+  "ar_name": "تاورقة",
+  "wilaya_code": "35",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6996"
+  },
+  "post_code": "35031",
+  "name": "Ammal",
+  "ar_name": "عمال",
+  "wilaya_code": "35",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6997"
+  },
+  "post_code": "35033",
+  "name": "Ben Choud",
+  "ar_name": "بن شود",
+  "wilaya_code": "35",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6998"
+  },
+  "post_code": "35038",
+  "name": "Bouzegza Keddara",
+  "ar_name": "بوزقزة قدارة",
+  "wilaya_code": "35",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6999"
+  },
+  "post_code": "35052",
+  "name": "Ouled Hedadj",
+  "ar_name": "أولاد هداج",
+  "wilaya_code": "35",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc699b"
+  },
+  "post_code": "36001",
+  "name": "Drean",
+  "ar_name": "الذرعـان",
+  "wilaya_code": "36",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc699c"
+  },
+  "post_code": "36002",
+  "name": "El Kala",
+  "ar_name": "القالة",
+  "wilaya_code": "36",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc699d"
+  },
+  "post_code": "36003",
+  "name": "Ben M Hidi",
+  "ar_name": "بن مهيدي",
+  "wilaya_code": "36",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc699e"
+  },
+  "post_code": "36005",
+  "name": "Bouhadjar",
+  "ar_name": "بوحجار",
+  "wilaya_code": "36",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc699f"
+  },
+  "post_code": "36006",
+  "name": "Bouteldja",
+  "ar_name": "بوثلجة",
+  "wilaya_code": "36",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69a0"
+  },
+  "post_code": "36010",
+  "name": "Ain El Assel",
+  "ar_name": "عين العسل",
+  "wilaya_code": "36",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69a1"
+  },
+  "post_code": "36011",
+  "name": "Ain Kerma",
+  "ar_name": "عين الكرمة",
+  "wilaya_code": "36",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69a2"
+  },
+  "post_code": "36012",
+  "name": "Asfour",
+  "ar_name": "عصفور",
+  "wilaya_code": "36",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69a3"
+  },
+  "post_code": "36013",
+  "name": "Chebaita Mokhtar",
+  "ar_name": "شبيطة مختار",
+  "wilaya_code": "36",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69a4"
+  },
+  "post_code": "36014",
+  "name": "Chihani",
+  "ar_name": "شحاني",
+  "wilaya_code": "36",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69a5"
+  },
+  "post_code": "36015",
+  "name": "Zerizer",
+  "ar_name": "زريزر",
+  "wilaya_code": "36",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69a6"
+  },
+  "post_code": "36017",
+  "name": "Besbes",
+  "ar_name": "البسباس",
+  "wilaya_code": "36",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69a7"
+  },
+  "post_code": "36018",
+  "name": "El Aioun",
+  "ar_name": "العيون",
+  "wilaya_code": "36",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69a8"
+  },
+  "post_code": "36019",
+  "name": "Lac Des Oiseaux",
+  "ar_name": "بحيرة الطيور",
+  "wilaya_code": "36",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69a9"
+  },
+  "post_code": "36020",
+  "name": "Souarekh",
+  "ar_name": "السوارخ",
+  "wilaya_code": "36",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69aa"
+  },
+  "post_code": "36021",
+  "name": "Raml Souk",
+  "ar_name": "رمل السوق",
+  "wilaya_code": "36",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69ab"
+  },
+  "post_code": "36025",
+  "name": "Echatt",
+  "ar_name": "الشط",
+  "wilaya_code": "36",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69ac"
+  },
+  "post_code": "36027",
+  "name": "Berrihane",
+  "ar_name": "بريحان",
+  "wilaya_code": "36",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69ad"
+  },
+  "post_code": "36029",
+  "name": "Bougous",
+  "ar_name": "بوقوس",
+  "wilaya_code": "36",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69ae"
+  },
+  "post_code": "36032",
+  "name": "Chefia",
+  "ar_name": "الشافية",
+  "wilaya_code": "36",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69af"
+  },
+  "post_code": "36036",
+  "name": "Hammam Beni Salah",
+  "ar_name": "حمام بني صالح",
+  "wilaya_code": "36",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69b0"
+  },
+  "post_code": "36039",
+  "name": "Zitouna",
+  "ar_name": "الزيتونة",
+  "wilaya_code": "36",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69b1"
+  },
+  "post_code": "36044",
+  "name": "Oued Zitoun",
+  "ar_name": "وادي الزيتون",
+  "wilaya_code": "36",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69b3"
+  },
+  "post_code": "37003",
+  "name": "Oum El Assel",
+  "ar_name": "أم العسل",
+  "wilaya_code": "37",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69b5"
+  },
+  "post_code": "38001",
+  "name": "Bordj Bounaama",
+  "ar_name": "برج بونعامة",
+  "wilaya_code": "38",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69b6"
+  },
+  "post_code": "38002",
+  "name": "Lardjem",
+  "ar_name": "لرجام",
+  "wilaya_code": "38",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69b7"
+  },
+  "post_code": "38003",
+  "name": "Theniet El Had",
+  "ar_name": "ثنية الاحد",
+  "wilaya_code": "38",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69b8"
+  },
+  "post_code": "38005",
+  "name": "Boucaid",
+  "ar_name": "بوقائد",
+  "wilaya_code": "38",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69b9"
+  },
+  "post_code": "38007",
+  "name": "Layoune",
+  "ar_name": "العيون",
+  "wilaya_code": "38",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69ba"
+  },
+  "post_code": "38008",
+  "name": "Lazharia",
+  "ar_name": "الأزهرية",
+  "wilaya_code": "38",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69bb"
+  },
+  "post_code": "38012",
+  "name": "Ammari",
+  "ar_name": "عماري",
+  "wilaya_code": "38",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69bc"
+  },
+  "post_code": "38013",
+  "name": "Melaab",
+  "ar_name": "الملعب",
+  "wilaya_code": "38",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69bd"
+  },
+  "post_code": "38014",
+  "name": "Ouled Bessam",
+  "ar_name": "أولاد بسام",
+  "wilaya_code": "38",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69be"
+  },
+  "post_code": "38016",
+  "name": "Khemisti",
+  "ar_name": "خميستي",
+  "wilaya_code": "38",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69bf"
+  },
+  "post_code": "38019",
+  "name": "Beni Chaib",
+  "ar_name": "بني شعيب",
+  "wilaya_code": "38",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69c0"
+  },
+  "post_code": "38020",
+  "name": "Beni Lahcene",
+  "ar_name": "بني لحسن",
+  "wilaya_code": "38",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69c1"
+  },
+  "post_code": "38023",
+  "name": "Maacem",
+  "ar_name": "المعاصم",
+  "wilaya_code": "38",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69c2"
+  },
+  "post_code": "38025",
+  "name": "Sidi Abed",
+  "ar_name": "سيدي عابد",
+  "wilaya_code": "38",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69c3"
+  },
+  "post_code": "38026",
+  "name": "Sidi Boutouchent",
+  "ar_name": "سيدي بوتوشنت",
+  "wilaya_code": "38",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69c4"
+  },
+  "post_code": "38027",
+  "name": "Sidi Lantri",
+  "ar_name": "سيدي العنتري",
+  "wilaya_code": "38",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69c5"
+  },
+  "post_code": "38029",
+  "name": "Tamellahet",
+  "ar_name": "تملاحت",
+  "wilaya_code": "38",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69c6"
+  },
+  "post_code": "38031",
+  "name": "Youssoufia",
+  "ar_name": "اليوسفية",
+  "wilaya_code": "38",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69c7"
+  },
+  "post_code": "38041",
+  "name": "Bordj El Emir Abdelkader",
+  "ar_name": "برج الأمير عبد القادر",
+  "wilaya_code": "38",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69c9"
+  },
+  "post_code": "39002",
+  "name": "Guemar",
+  "ar_name": "قمار",
+  "wilaya_code": "39",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69ca"
+  },
+  "post_code": "39003",
+  "name": "Debila",
+  "ar_name": "الدبيلة",
+  "wilaya_code": "39",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69cb"
+  },
+  "post_code": "39007",
+  "name": "Bayadha",
+  "ar_name": "البياضة",
+  "wilaya_code": "39",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69cc"
+  },
+  "post_code": "39013",
+  "name": "Hassi Khalifa",
+  "ar_name": "حاسي خليفة",
+  "wilaya_code": "39",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69cd"
+  },
+  "post_code": "39014",
+  "name": "Kouinine",
+  "ar_name": "كوينين",
+  "wilaya_code": "39",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69ce"
+  },
+  "post_code": "39015",
+  "name": "Magrane",
+  "ar_name": "المقرن",
+  "wilaya_code": "39",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69cf"
+  },
+  "post_code": "39016",
+  "name": "Reguiba",
+  "ar_name": "الرقيبة",
+  "wilaya_code": "39",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69d0"
+  },
+  "post_code": "39017",
+  "name": "Robbah",
+  "ar_name": "الرباح",
+  "wilaya_code": "39",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69d1"
+  },
+  "post_code": "39019",
+  "name": "Taleb Larbi",
+  "ar_name": "الطالب العربي",
+  "wilaya_code": "39",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.082Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69d2"
+  },
+  "post_code": "39020",
+  "name": "Hassani Abdelkrim",
+  "ar_name": "حساني عبد الكريم",
+  "wilaya_code": "39",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69d3"
+  },
+  "post_code": "39024",
+  "name": "Douar El Maa",
+  "ar_name": "دوار الماء",
+  "wilaya_code": "39",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69d4"
+  },
+  "post_code": "39030",
+  "name": "Mih Ouansa",
+  "ar_name": "اميه وانسة",
+  "wilaya_code": "39",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69d5"
+  },
+  "post_code": "39031",
+  "name": "Nakhla",
+  "ar_name": "النخلة",
+  "wilaya_code": "39",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69d6"
+  },
+  "post_code": "39033",
+  "name": "Oued El Alenda",
+  "ar_name": "وادي العلندة",
+  "wilaya_code": "39",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69d7"
+  },
+  "post_code": "39035",
+  "name": "Ourmes",
+  "ar_name": "ورماس",
+  "wilaya_code": "39",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69d8"
+  },
+  "post_code": "39037",
+  "name": "Sidi Aoun",
+  "ar_name": "سيدي عون",
+  "wilaya_code": "39",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69d9"
+  },
+  "post_code": "39044",
+  "name": "Trifaoui",
+  "ar_name": "الطريفاوي",
+  "wilaya_code": "39",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69da"
+  },
+  "post_code": "39048",
+  "name": "Ben Guecha",
+  "ar_name": "بن  قشة",
+  "wilaya_code": "39",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69db"
+  },
+  "post_code": "39055",
+  "name": "El Ogla",
+  "ar_name": "العقلة",
+  "wilaya_code": "39",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69dc"
+  },
+  "post_code": "39061",
+  "name": "Hamraia",
+  "ar_name": "الحمراية",
+  "wilaya_code": "39",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69dd"
+  },
+  "post_code": "39083",
+  "name": "Taghzout",
+  "ar_name": "تغزوت",
+  "wilaya_code": "39",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69df"
+  },
+  "post_code": "40001",
+  "name": "Kais",
+  "ar_name": "قايس",
+  "wilaya_code": "40",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69e0"
+  },
+  "post_code": "40006",
+  "name": "Babar",
+  "ar_name": "بابار",
+  "wilaya_code": "40",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69e1"
+  },
+  "post_code": "40007",
+  "name": "Bouhmama",
+  "ar_name": "بوحمامة",
+  "wilaya_code": "40",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69e2"
+  },
+  "post_code": "40008",
+  "name": "Chechar",
+  "ar_name": "ششار",
+  "wilaya_code": "40",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69e3"
+  },
+  "post_code": "40011",
+  "name": "Taouzianat",
+  "ar_name": "تاوزيانت",
+  "wilaya_code": "40",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69e4"
+  },
+  "post_code": "40012",
+  "name": "El Mahmal",
+  "ar_name": "المحمل",
+  "wilaya_code": "40",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69e5"
+  },
+  "post_code": "40013",
+  "name": "Ouled Rechache",
+  "ar_name": "أولاد رشاش",
+  "wilaya_code": "40",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69e6"
+  },
+  "post_code": "40014",
+  "name": "Baghai",
+  "ar_name": "بغاي",
+  "wilaya_code": "40",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69e7"
+  },
+  "post_code": "40015",
+  "name": "Djellal",
+  "ar_name": "جلال",
+  "wilaya_code": "40",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69e8"
+  },
+  "post_code": "40021",
+  "name": "M'toussa",
+  "ar_name": "متوسة",
+  "wilaya_code": "40",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69e9"
+  },
+  "post_code": "40023",
+  "name": "Yabous",
+  "ar_name": "يابوس",
+  "wilaya_code": "40",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69ea"
+  },
+  "post_code": "40024",
+  "name": "Tamza",
+  "ar_name": "طامزة",
+  "wilaya_code": "40",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69eb"
+  },
+  "post_code": "40028",
+  "name": "Ain Touila",
+  "ar_name": "عين الطويلة",
+  "wilaya_code": "40",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69ec"
+  },
+  "post_code": "40030",
+  "name": "Chelia",
+  "ar_name": "شلية",
+  "wilaya_code": "40",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69ed"
+  },
+  "post_code": "40031",
+  "name": "El Hamma",
+  "ar_name": "الحامة",
+  "wilaya_code": "40",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69ee"
+  },
+  "post_code": "40036",
+  "name": "Khirane",
+  "ar_name": "خيران",
+  "wilaya_code": "40",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69ef"
+  },
+  "post_code": "40039",
+  "name": "M'sara",
+  "ar_name": "مصارة",
+  "wilaya_code": "40",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69f0"
+  },
+  "post_code": "40041",
+  "name": "Remila",
+  "ar_name": "الرميلة",
+  "wilaya_code": "40",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69f1"
+  },
+  "post_code": "40043",
+  "name": "Ensigha",
+  "ar_name": "انسيغة",
+  "wilaya_code": "40",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69f3"
+  },
+  "post_code": "41001",
+  "name": "M'daourouche",
+  "ar_name": "مداوروش",
+  "wilaya_code": "41",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69f4"
+  },
+  "post_code": "41004",
+  "name": "Merahna",
+  "ar_name": "المراهنة",
+  "wilaya_code": "41",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69f5"
+  },
+  "post_code": "41005",
+  "name": "Ouled Driss",
+  "ar_name": "أولاد إدريس",
+  "wilaya_code": "41",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69f6"
+  },
+  "post_code": "41006",
+  "name": "Sedrata",
+  "ar_name": "سدراتة",
+  "wilaya_code": "41",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69f7"
+  },
+  "post_code": "41009",
+  "name": "Taoura",
+  "ar_name": "تاورة",
+  "wilaya_code": "41",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69f8"
+  },
+  "post_code": "41010",
+  "name": "Machroha",
+  "ar_name": "المشروحة",
+  "wilaya_code": "41",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69f9"
+  },
+  "post_code": "41011",
+  "name": "Bir Bouhouche",
+  "ar_name": "بئر بوحوش",
+  "wilaya_code": "41",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69fa"
+  },
+  "post_code": "41012",
+  "name": "Haddada",
+  "ar_name": "الحدادة",
+  "wilaya_code": "41",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69fb"
+  },
+  "post_code": "41013",
+  "name": "Khedara",
+  "ar_name": "الخضارة",
+  "wilaya_code": "41",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69fc"
+  },
+  "post_code": "41015",
+  "name": "Drea",
+  "ar_name": "الدريعة",
+  "wilaya_code": "41",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69fd"
+  },
+  "post_code": "41016",
+  "name": "Hanencha",
+  "ar_name": "الحنانشة",
+  "wilaya_code": "41",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69fe"
+  },
+  "post_code": "41018",
+  "name": "Oued Kebrit",
+  "ar_name": "وادي الكبريت",
+  "wilaya_code": "41",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc69ff"
+  },
+  "post_code": "41019",
+  "name": "Oum El Adhaim",
+  "ar_name": "أم العظايم",
+  "wilaya_code": "41",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a00"
+  },
+  "post_code": "41025",
+  "name": "Zaarouria",
+  "ar_name": "الزعرورية",
+  "wilaya_code": "41",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a01"
+  },
+  "post_code": "41027",
+  "name": "Ain Zana",
+  "ar_name": "عين الزانة",
+  "wilaya_code": "41",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a02"
+  },
+  "post_code": "41029",
+  "name": "Ouillen",
+  "ar_name": "ويلان",
+  "wilaya_code": "41",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a03"
+  },
+  "post_code": "41031",
+  "name": "Khemissa",
+  "ar_name": "خميسة",
+  "wilaya_code": "41",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a04"
+  },
+  "post_code": "41033",
+  "name": "Ragouba",
+  "ar_name": "الراقوبة",
+  "wilaya_code": "41",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a05"
+  },
+  "post_code": "41034",
+  "name": "Ouled Moumen",
+  "ar_name": "أولاد مومن",
+  "wilaya_code": "41",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a06"
+  },
+  "post_code": "41035",
+  "name": "Safel El Ouiden",
+  "ar_name": "سافل الويدان",
+  "wilaya_code": "41",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a07"
+  },
+  "post_code": "41037",
+  "name": "Terraguelt",
+  "ar_name": "ترقالت",
+  "wilaya_code": "41",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a08"
+  },
+  "post_code": "41038",
+  "name": "Tiffech",
+  "ar_name": "تيفاش",
+  "wilaya_code": "41",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a09"
+  },
+  "post_code": "41039",
+  "name": "Zouabi",
+  "ar_name": "الزوابي",
+  "wilaya_code": "41",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a0b"
+  },
+  "post_code": "42001",
+  "name": "Hadjout",
+  "ar_name": "حجوط",
+  "wilaya_code": "42",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a0c"
+  },
+  "post_code": "42002",
+  "name": "Cherchell",
+  "ar_name": "شرشال",
+  "wilaya_code": "42",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a0d"
+  },
+  "post_code": "42003",
+  "name": "Kolea",
+  "ar_name": "القليعة",
+  "wilaya_code": "42",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a0e"
+  },
+  "post_code": "42004",
+  "name": "Bou Ismail",
+  "ar_name": "بواسماعيل",
+  "wilaya_code": "42",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a0f"
+  },
+  "post_code": "42005",
+  "name": "Ahmer El Ain",
+  "ar_name": "أحمر العين",
+  "wilaya_code": "42",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a10"
+  },
+  "post_code": "42006",
+  "name": "Fouka",
+  "ar_name": "فوكة",
+  "wilaya_code": "42",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a11"
+  },
+  "post_code": "42007",
+  "name": "Gouraya",
+  "ar_name": "قوراية",
+  "wilaya_code": "42",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a12"
+  },
+  "post_code": "42008",
+  "name": "Attatba",
+  "ar_name": "الحطاطبة",
+  "wilaya_code": "42",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a13"
+  },
+  "post_code": "42009",
+  "name": "Bou Haroun",
+  "ar_name": "بوهارون",
+  "wilaya_code": "42",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a14"
+  },
+  "post_code": "42011",
+  "name": "Bourkika",
+  "ar_name": "بورقيقة",
+  "wilaya_code": "42",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a15"
+  },
+  "post_code": "42014",
+  "name": "Damous",
+  "ar_name": "الداموس",
+  "wilaya_code": "42",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a16"
+  },
+  "post_code": "42015",
+  "name": "Douaouda",
+  "ar_name": "دواودة",
+  "wilaya_code": "42",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a17"
+  },
+  "post_code": "42016",
+  "name": "Khemisti",
+  "ar_name": "خميستي",
+  "wilaya_code": "42",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a18"
+  },
+  "post_code": "42017",
+  "name": "Larhat",
+  "ar_name": "الأرهاط",
+  "wilaya_code": "42",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a19"
+  },
+  "post_code": "42018",
+  "name": "Menaceur",
+  "ar_name": "مناصر",
+  "wilaya_code": "42",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a1a"
+  },
+  "post_code": "42019",
+  "name": "Merad",
+  "ar_name": "مراد",
+  "wilaya_code": "42",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a1b"
+  },
+  "post_code": "42021",
+  "name": "Sidi Ghiles",
+  "ar_name": "سيدي غيلاس",
+  "wilaya_code": "42",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a1c"
+  },
+  "post_code": "42023",
+  "name": "Ain Tagourait",
+  "ar_name": "عين تاقورايت",
+  "wilaya_code": "42",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a1d"
+  },
+  "post_code": "42024",
+  "name": "Beni Mileuk",
+  "ar_name": "بني ميلك",
+  "wilaya_code": "42",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a1e"
+  },
+  "post_code": "42029",
+  "name": "Hadjret Ennous",
+  "ar_name": "حجرة النص",
+  "wilaya_code": "42",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a1f"
+  },
+  "post_code": "42035",
+  "name": "Aghbal",
+  "ar_name": "أغبال",
+  "wilaya_code": "42",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a20"
+  },
+  "post_code": "42036",
+  "name": "Messelmoun",
+  "ar_name": "مسلمون",
+  "wilaya_code": "42",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a21"
+  },
+  "post_code": "42039",
+  "name": "Nador",
+  "ar_name": "الناظور",
+  "wilaya_code": "42",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a22"
+  },
+  "post_code": "42040",
+  "name": "Sidi Rached",
+  "ar_name": "سيدي راشد",
+  "wilaya_code": "42",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a23"
+  },
+  "post_code": "42041",
+  "name": "Sidi Semiane",
+  "ar_name": "سيدي سميان",
+  "wilaya_code": "42",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a24"
+  },
+  "post_code": "42047",
+  "name": "Chaiba",
+  "ar_name": "الشعيبة",
+  "wilaya_code": "42",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a26"
+  },
+  "post_code": "43001",
+  "name": "Chelghoum Laid",
+  "ar_name": "شلغوم العيد",
+  "wilaya_code": "43",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a27"
+  },
+  "post_code": "43002",
+  "name": "Ferdjioua",
+  "ar_name": "فرجيوة",
+  "wilaya_code": "43",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a28"
+  },
+  "post_code": "43004",
+  "name": "Grarem Gouga",
+  "ar_name": "القرارم قوقة",
+  "wilaya_code": "43",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a29"
+  },
+  "post_code": "43005",
+  "name": "Oued Athmenia",
+  "ar_name": "وادي العثمانية",
+  "wilaya_code": "43",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a2a"
+  },
+  "post_code": "43006",
+  "name": "Oued Endja",
+  "ar_name": "وادي النجاء",
+  "wilaya_code": "43",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a2b"
+  },
+  "post_code": "43007",
+  "name": "Tadjenanet",
+  "ar_name": "تاجنانت",
+  "wilaya_code": "43",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a2c"
+  },
+  "post_code": "43008",
+  "name": "Teleghma",
+  "ar_name": "التلاغمة",
+  "wilaya_code": "43",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a2d"
+  },
+  "post_code": "43009",
+  "name": "Rouached",
+  "ar_name": "الرواشد",
+  "wilaya_code": "43",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a2e"
+  },
+  "post_code": "43010",
+  "name": "Sidi Merouane",
+  "ar_name": "سيدي مروان",
+  "wilaya_code": "43",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a2f"
+  },
+  "post_code": "43012",
+  "name": "Zeghaia",
+  "ar_name": "زغاية",
+  "wilaya_code": "43",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a30"
+  },
+  "post_code": "43013",
+  "name": "Ahmed Rachedi",
+  "ar_name": "أحمد راشدي",
+  "wilaya_code": "43",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a31"
+  },
+  "post_code": "43014",
+  "name": "Ain Beida Harriche",
+  "ar_name": " عين البيضاء أحريش",
+  "wilaya_code": "43",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a32"
+  },
+  "post_code": "43015",
+  "name": "Ain Mellouk",
+  "ar_name": "عين الملوك",
+  "wilaya_code": "43",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a33"
+  },
+  "post_code": "43016",
+  "name": "Ain Tine",
+  "ar_name": "عين التين",
+  "wilaya_code": "43",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a34"
+  },
+  "post_code": "43017",
+  "name": "Amira Arres",
+  "ar_name": "اعميرة اراس",
+  "wilaya_code": "43",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a35"
+  },
+  "post_code": "43018",
+  "name": "Terrai Bainen",
+  "ar_name": "ترعي باينان",
+  "wilaya_code": "43",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a36"
+  },
+  "post_code": "43020",
+  "name": "Benyahia Abderrahmane",
+  "ar_name": "بن يحي عبد الرحمن",
+  "wilaya_code": "43",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a37"
+  },
+  "post_code": "43022",
+  "name": "Bouhatem",
+  "ar_name": "بوحاتم",
+  "wilaya_code": "43",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a38"
+  },
+  "post_code": "43025",
+  "name": "Chigara",
+  "ar_name": "الشيقارة",
+  "wilaya_code": "43",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a39"
+  },
+  "post_code": "43026",
+  "name": "El Mechira",
+  "ar_name": "مشيرة",
+  "wilaya_code": "43",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a3a"
+  },
+  "post_code": "43031",
+  "name": "Oued Seguen",
+  "ar_name": "وادي سقان",
+  "wilaya_code": "43",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a3b"
+  },
+  "post_code": "43032",
+  "name": "Ouled Khalouf",
+  "ar_name": "أولاد اخلوف",
+  "wilaya_code": "43",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a3c"
+  },
+  "post_code": "43033",
+  "name": "Tassadane Haddada",
+  "ar_name": "تسدان حدادة",
+  "wilaya_code": "43",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a3d"
+  },
+  "post_code": "43034",
+  "name": "Tassala Lematai",
+  "ar_name": "تسالة لمطاعي",
+  "wilaya_code": "43",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a3e"
+  },
+  "post_code": "43035",
+  "name": "Tiberguent",
+  "ar_name": "تيبرقنت",
+  "wilaya_code": "43",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a3f"
+  },
+  "post_code": "43036",
+  "name": "Minar Zarza",
+  "ar_name": "مينار زارزة",
+  "wilaya_code": "43",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a40"
+  },
+  "post_code": "43046",
+  "name": "Derrahi Bousselah",
+  "ar_name": "دراحي بوصلاح",
+  "wilaya_code": "43",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a41"
+  },
+  "post_code": "43050",
+  "name": "El Ayadi Barbes",
+  "ar_name": "العياضي برباس",
+  "wilaya_code": "43",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a42"
+  },
+  "post_code": "43052",
+  "name": "Hamala",
+  "ar_name": "حمالة",
+  "wilaya_code": "43",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a43"
+  },
+  "post_code": "43058",
+  "name": "Sidi Khelifa",
+  "ar_name": "سيدي خليفة",
+  "wilaya_code": "43",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a44"
+  },
+  "post_code": "43071",
+  "name": "Yahia Beniguecha",
+  "ar_name": "يحي بني قشة",
+  "wilaya_code": "43",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a46"
+  },
+  "post_code": "44001",
+  "name": "Khemis-Miliana",
+  "ar_name": "خميس مليانة",
+  "wilaya_code": "44",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a47"
+  },
+  "post_code": "44002",
+  "name": "El-Attaf",
+  "ar_name": "العطاف",
+  "wilaya_code": "44",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a48"
+  },
+  "post_code": "44003",
+  "name": "Miliana",
+  "ar_name": "مليانة",
+  "wilaya_code": "44",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a49"
+  },
+  "post_code": "44004",
+  "name": "Boumedfaa",
+  "ar_name": "بومدفع",
+  "wilaya_code": "44",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a4a"
+  },
+  "post_code": "44005",
+  "name": "Djendel",
+  "ar_name": "جندل",
+  "wilaya_code": "44",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a4b"
+  },
+  "post_code": "44006",
+  "name": "El-Abadia",
+  "ar_name": "العبادية",
+  "wilaya_code": "44",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a4c"
+  },
+  "post_code": "44008",
+  "name": "Arib",
+  "ar_name": "عريب",
+  "wilaya_code": "44",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a4d"
+  },
+  "post_code": "44009",
+  "name": "Djelida",
+  "ar_name": "جليدة",
+  "wilaya_code": "44",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a4e"
+  },
+  "post_code": "44010",
+  "name": "El-Amra",
+  "ar_name": "العامرة",
+  "wilaya_code": "44",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a4f"
+  },
+  "post_code": "44017",
+  "name": "Rouina",
+  "ar_name": "الروينة",
+  "wilaya_code": "44",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a50"
+  },
+  "post_code": "44018",
+  "name": "Ain-Lechiakh",
+  "ar_name": "عين الاشياخ",
+  "wilaya_code": "44",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a51"
+  },
+  "post_code": "44019",
+  "name": "Ain-Soltane",
+  "ar_name": "عين السلطان",
+  "wilaya_code": "44",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a52"
+  },
+  "post_code": "44020",
+  "name": "Ain-Torki",
+  "ar_name": "عين التركي",
+  "wilaya_code": "44",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a53"
+  },
+  "post_code": "44021",
+  "name": "Bordj-Emir-Khaled",
+  "ar_name": "برج الأمير خالد",
+  "wilaya_code": "44",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a54"
+  },
+  "post_code": "44022",
+  "name": "Hassania",
+  "ar_name": "الحسانية",
+  "wilaya_code": "44",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a55"
+  },
+  "post_code": "44023",
+  "name": "Hammam-Righa",
+  "ar_name": "حمام ريغة",
+  "wilaya_code": "44",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a56"
+  },
+  "post_code": "44024",
+  "name": "Oued Chorfa",
+  "ar_name": "وادي الشرفاء",
+  "wilaya_code": "44",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a57"
+  },
+  "post_code": "44028",
+  "name": "Tacheta Zegagha",
+  "ar_name": "تاشتة زقاغة",
+  "wilaya_code": "44",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a58"
+  },
+  "post_code": "44029",
+  "name": "Tarik-Ibn-Ziad",
+  "ar_name": "طارق بن زياد",
+  "wilaya_code": "44",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a59"
+  },
+  "post_code": "44030",
+  "name": "Tiberkanine",
+  "ar_name": "تبركانين",
+  "wilaya_code": "44",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a5a"
+  },
+  "post_code": "44031",
+  "name": "Zeddine",
+  "ar_name": "زدين",
+  "wilaya_code": "44",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a5b"
+  },
+  "post_code": "44032",
+  "name": "Ain-Bouyahia",
+  "ar_name": "عين بويحيى",
+  "wilaya_code": "44",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a5c"
+  },
+  "post_code": "44035",
+  "name": "Ain-Benian",
+  "ar_name": "عين البنيان",
+  "wilaya_code": "44",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a5d"
+  },
+  "post_code": "44038",
+  "name": "Belaas",
+  "ar_name": "بلعاص",
+  "wilaya_code": "44",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a5e"
+  },
+  "post_code": "44040",
+  "name": "Ben Allal",
+  "ar_name": "بن علال",
+  "wilaya_code": "44",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a5f"
+  },
+  "post_code": "44041",
+  "name": "Bathia",
+  "ar_name": "بطحية",
+  "wilaya_code": "44",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a60"
+  },
+  "post_code": "44042",
+  "name": "Birbouche",
+  "ar_name": "بربوش",
+  "wilaya_code": "44",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a61"
+  },
+  "post_code": "44043",
+  "name": "Bir-Ould-Khelifa",
+  "ar_name": "بئر ولد خليفة",
+  "wilaya_code": "44",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a62"
+  },
+  "post_code": "44044",
+  "name": "Bourached",
+  "ar_name": "بوراشد",
+  "wilaya_code": "44",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a63"
+  },
+  "post_code": "44047",
+  "name": "Djemaa Ouled Cheikh",
+  "ar_name": "جمعة أولاد الشيخ",
+  "wilaya_code": "44",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a64"
+  },
+  "post_code": "44048",
+  "name": "Hoceinia",
+  "ar_name": "الحسينية",
+  "wilaya_code": "44",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a65"
+  },
+  "post_code": "44049",
+  "name": "Oued Djemaa",
+  "ar_name": "واد الجمعة",
+  "wilaya_code": "44",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a66"
+  },
+  "post_code": "44050",
+  "name": "Mekhatria",
+  "ar_name": "المخاطرية",
+  "wilaya_code": "44",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a67"
+  },
+  "post_code": "44051",
+  "name": "El-Maine",
+  "ar_name": "الماين",
+  "wilaya_code": "44",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a69"
+  },
+  "post_code": "45001",
+  "name": "Ain Sefra",
+  "ar_name": "عين الصفراء",
+  "wilaya_code": "45",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a6a"
+  },
+  "post_code": "45002",
+  "name": "Mecheria",
+  "ar_name": "المشرية",
+  "wilaya_code": "45",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a6b"
+  },
+  "post_code": "45004",
+  "name": "El Biodh",
+  "ar_name": "البيوض",
+  "wilaya_code": "45",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a6c"
+  },
+  "post_code": "45005",
+  "name": "Makmen Ben Amar",
+  "ar_name": "مكمن بن عمار",
+  "wilaya_code": "45",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a6d"
+  },
+  "post_code": "45008",
+  "name": "Ain Ben Khelil",
+  "ar_name": "عين بن خليل",
+  "wilaya_code": "45",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a6e"
+  },
+  "post_code": "45012",
+  "name": "Asla",
+  "ar_name": "عسلة",
+  "wilaya_code": "45",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a6f"
+  },
+  "post_code": "45013",
+  "name": "Djenienne Bourezg",
+  "ar_name": "جنين بورزق",
+  "wilaya_code": "45",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a70"
+  },
+  "post_code": "45014",
+  "name": "Moghrar",
+  "ar_name": "مغرار",
+  "wilaya_code": "45",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a71"
+  },
+  "post_code": "45021",
+  "name": "Sfissifa",
+  "ar_name": "سفيسيفة",
+  "wilaya_code": "45",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a72"
+  },
+  "post_code": "45024",
+  "name": "Kasdir",
+  "ar_name": "القصدير",
+  "wilaya_code": "45",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a73"
+  },
+  "post_code": "45030",
+  "name": "Tiout",
+  "ar_name": "تيوت",
+  "wilaya_code": "45",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a75"
+  },
+  "post_code": "46001",
+  "name": "Beni Saf",
+  "ar_name": "بني صاف",
+  "wilaya_code": "46",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a76"
+  },
+  "post_code": "46005",
+  "name": "Hammam Bou Hadjar",
+  "ar_name": "حمام بوحجر",
+  "wilaya_code": "46",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a77"
+  },
+  "post_code": "46006",
+  "name": "El Amria",
+  "ar_name": "العامرية",
+  "wilaya_code": "46",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a78"
+  },
+  "post_code": "46008",
+  "name": "Ain Kihal",
+  "ar_name": "عين الكيحل",
+  "wilaya_code": "46",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a79"
+  },
+  "post_code": "46009",
+  "name": "Ain El Arbaa",
+  "ar_name": "عين الأربعاء",
+  "wilaya_code": "46",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a7a"
+  },
+  "post_code": "46010",
+  "name": "Ain Tolba",
+  "ar_name": "عين الطلبة",
+  "wilaya_code": "46",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a7b"
+  },
+  "post_code": "46011",
+  "name": "Chaabat El Ham",
+  "ar_name": "شعبة اللحم",
+  "wilaya_code": "46",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a7c"
+  },
+  "post_code": "46012",
+  "name": "Hassi El Ghella",
+  "ar_name": "حاسي الغلة",
+  "wilaya_code": "46",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a7d"
+  },
+  "post_code": "46013",
+  "name": "Sidi Ben Adda",
+  "ar_name": "سيدي بن عدة",
+  "wilaya_code": "46",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a7e"
+  },
+  "post_code": "46015",
+  "name": "Terga",
+  "ar_name": "تارقة",
+  "wilaya_code": "46",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a7f"
+  },
+  "post_code": "46016",
+  "name": "Aghlal",
+  "ar_name": "أغلال",
+  "wilaya_code": "46",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a80"
+  },
+  "post_code": "46017",
+  "name": "Aoubellil",
+  "ar_name": "عقب الليل",
+  "wilaya_code": "46",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a81"
+  },
+  "post_code": "46022",
+  "name": "Oued Berkeche",
+  "ar_name": "وادي برقش",
+  "wilaya_code": "46",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a82"
+  },
+  "post_code": "46023",
+  "name": "Oued Sebbah",
+  "ar_name": "وادي الصباح",
+  "wilaya_code": "46",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a83"
+  },
+  "post_code": "46024",
+  "name": "Sidi Ouriache",
+  "ar_name": "سيدي ورياش",
+  "wilaya_code": "46",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a84"
+  },
+  "post_code": "46025",
+  "name": "Sidi Safi",
+  "ar_name": "سيدي صافي",
+  "wilaya_code": "46",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a85"
+  },
+  "post_code": "46026",
+  "name": "Tamzoura",
+  "ar_name": "تامزورة",
+  "wilaya_code": "46",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a86"
+  },
+  "post_code": "46033",
+  "name": "Bouzedjar",
+  "ar_name": "بوزجار",
+  "wilaya_code": "46",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a87"
+  },
+  "post_code": "46035",
+  "name": "El Messaid",
+  "ar_name": "المساعيد",
+  "wilaya_code": "46",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a88"
+  },
+  "post_code": "46038",
+  "name": "Ouled Kihal",
+  "ar_name": "أولاد الكيحل",
+  "wilaya_code": "46",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a89"
+  },
+  "post_code": "46043",
+  "name": "Ouled Boudjemaa",
+  "ar_name": "أولاد بوجمعة",
+  "wilaya_code": "46",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a8a"
+  },
+  "post_code": "46051",
+  "name": "Sidi Boumediene",
+  "ar_name": "سيدي بومدين",
+  "wilaya_code": "46",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a8b"
+  },
+  "post_code": "46053",
+  "name": "Oulhaca El Gheraba",
+  "ar_name": "ولهاصة الغرابة",
+  "wilaya_code": "46",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a8c"
+  },
+  "post_code": "46067",
+  "name": "El Maleh",
+  "ar_name": "المالح",
+  "wilaya_code": "46",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a8e"
+  },
+  "post_code": "47002",
+  "name": "Metlili",
+  "ar_name": "متليلي",
+  "wilaya_code": "47",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a8f"
+  },
+  "post_code": "47003",
+  "name": "Berriane",
+  "ar_name": "بريان",
+  "wilaya_code": "47",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a90"
+  },
+  "post_code": "47004",
+  "name": "El Guerrara",
+  "ar_name": "القرارة",
+  "wilaya_code": "47",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a91"
+  },
+  "post_code": "47005",
+  "name": "Bounoura",
+  "ar_name": "بونورة",
+  "wilaya_code": "47",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a92"
+  },
+  "post_code": "47007",
+  "name": "Zelfana",
+  "ar_name": "زلفانة",
+  "wilaya_code": "47",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a93"
+  },
+  "post_code": "47011",
+  "name": "Dhayet Bendhahoua",
+  "ar_name": "ضاية بن ضحوة",
+  "wilaya_code": "47",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a94"
+  },
+  "post_code": "47012",
+  "name": "El Atteuf",
+  "ar_name": "العطف",
+  "wilaya_code": "47",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a95"
+  },
+  "post_code": "47023",
+  "name": "Mansoura",
+  "ar_name": "المنصورة",
+  "wilaya_code": "47",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.083Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a96"
+  },
+  "post_code": "47025",
+  "name": "Sebseb",
+  "ar_name": "سبسب",
+  "wilaya_code": "47",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a98"
+  },
+  "post_code": "48001",
+  "name": "Oued-Rhiou",
+  "ar_name": "وادي رهيو",
+  "wilaya_code": "48",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a99"
+  },
+  "post_code": "48002",
+  "name": "Mazouna",
+  "ar_name": "مازونة",
+  "wilaya_code": "48",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a9a"
+  },
+  "post_code": "48003",
+  "name": "Sidi M'hamed Benali",
+  "ar_name": "سيدي أمحمد بن علي",
+  "wilaya_code": "48",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a9b"
+  },
+  "post_code": "48004",
+  "name": "Ammi Moussa",
+  "ar_name": "عمي موسى",
+  "wilaya_code": "48",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a9c"
+  },
+  "post_code": "48005",
+  "name": "Djidiouia",
+  "ar_name": "جديوية",
+  "wilaya_code": "48",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a9d"
+  },
+  "post_code": "48006",
+  "name": "Yellel",
+  "ar_name": "يلل",
+  "wilaya_code": "48",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a9e"
+  },
+  "post_code": "48008",
+  "name": "Zemmoura",
+  "ar_name": "زمورة",
+  "wilaya_code": "48",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6a9f"
+  },
+  "post_code": "48009",
+  "name": "El-Matmar",
+  "ar_name": "المطمر",
+  "wilaya_code": "48",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6aa0"
+  },
+  "post_code": "48011",
+  "name": "Mediouna",
+  "ar_name": "مديونة",
+  "wilaya_code": "48",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6aa1"
+  },
+  "post_code": "48012",
+  "name": "Mendes",
+  "ar_name": "منداس",
+  "wilaya_code": "48",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6aa2"
+  },
+  "post_code": "48013",
+  "name": "Ouarizane",
+  "ar_name": "واريزان",
+  "wilaya_code": "48",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6aa3"
+  },
+  "post_code": "48015",
+  "name": "Ain-Tarek",
+  "ar_name": "عين طارق",
+  "wilaya_code": "48",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6aa4"
+  },
+  "post_code": "48016",
+  "name": "El-Guettar",
+  "ar_name": "القطار",
+  "wilaya_code": "48",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6aa5"
+  },
+  "post_code": "48017",
+  "name": "El H'madna",
+  "ar_name": "الحمادنة",
+  "wilaya_code": "48",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6aa6"
+  },
+  "post_code": "48018",
+  "name": "Kalaa",
+  "ar_name": "القلعة",
+  "wilaya_code": "48",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6aa7"
+  },
+  "post_code": "48019",
+  "name": "Ouled Aiche",
+  "ar_name": "أولاد يعيش",
+  "wilaya_code": "48",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6aa8"
+  },
+  "post_code": "48020",
+  "name": "Lahlef",
+  "ar_name": "لحلاف",
+  "wilaya_code": "48",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6aa9"
+  },
+  "post_code": "48021",
+  "name": "Oued El Djemaa",
+  "ar_name": "وادي الجمعة",
+  "wilaya_code": "48",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6aaa"
+  },
+  "post_code": "48022",
+  "name": "Oued Essalem",
+  "ar_name": "وادي السلام",
+  "wilaya_code": "48",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6aab"
+  },
+  "post_code": "48024",
+  "name": "Ramka",
+  "ar_name": "الرمكة",
+  "wilaya_code": "48",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6aac"
+  },
+  "post_code": "48029",
+  "name": "Sidi Khettab",
+  "ar_name": "سيدي  خطاب",
+  "wilaya_code": "48",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6aad"
+  },
+  "post_code": "48030",
+  "name": "Sidi M'hamed Benaouda",
+  "ar_name": "سيدي امحمد بن عودة",
+  "wilaya_code": "48",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6aae"
+  },
+  "post_code": "48033",
+  "name": "Ain Rahma",
+  "ar_name": "عين الرحمة",
+  "wilaya_code": "48",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6aaf"
+  },
+  "post_code": "48036",
+  "name": "Belaassel Bouzagza",
+  "ar_name": "بلعسل بوزقزة",
+  "wilaya_code": "48",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6ab0"
+  },
+  "post_code": "48039",
+  "name": "Beni Dergoun",
+  "ar_name": "بني درقن",
+  "wilaya_code": "48",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6ab1"
+  },
+  "post_code": "48041",
+  "name": "Beni Zentis",
+  "ar_name": "بني زنطيس",
+  "wilaya_code": "48",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6ab2"
+  },
+  "post_code": "48044",
+  "name": "Dar Ben Abdelah",
+  "ar_name": "دار بن عبد الله",
+  "wilaya_code": "48",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6ab3"
+  },
+  "post_code": "48050",
+  "name": "Had Echkalla",
+  "ar_name": "حد الشكالة",
+  "wilaya_code": "48",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6ab4"
+  },
+  "post_code": "48051",
+  "name": "Hamri",
+  "ar_name": "حمري",
+  "wilaya_code": "48",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6ab5"
+  },
+  "post_code": "48053",
+  "name": "Bendaoud",
+  "ar_name": "بن داود",
+  "wilaya_code": "48",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6ab6"
+  },
+  "post_code": "48056",
+  "name": "Merdja Sidi Abed",
+  "ar_name": "مرجة سيدي عابد",
+  "wilaya_code": "48",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6ab7"
+  },
+  "post_code": "48059",
+  "name": "El Hassi",
+  "ar_name": "الحاسي",
+  "wilaya_code": "48",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6ab8"
+  },
+  "post_code": "48061",
+  "name": "Ouled Sidi Mihoub",
+  "ar_name": "أولاد سيدي الميهوب",
+  "wilaya_code": "48",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6ab9"
+  },
+  "post_code": "48065",
+  "name": "Sidi Lazreg",
+  "ar_name": "سيدي لزرق",
+  "wilaya_code": "48",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6aba"
+  },
+  "post_code": "48067",
+  "name": "Sidi Saada",
+  "ar_name": "سيدي سعادة",
+  "wilaya_code": "48",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6abb"
+  },
+  "post_code": "01001",
+  "name": "Timimoun",
+  "ar_name": "تيميمون",
+  "wilaya_code": "49",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6abc"
+  },
+  "post_code": "01012",
+  "name": "Aougrout",
+  "ar_name": "أوقروت",
+  "wilaya_code": "49",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6abd"
+  },
+  "post_code": "01013",
+  "name": "Tinerkouk",
+  "ar_name": "تنركوك",
+  "wilaya_code": "49",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6abe"
+  },
+  "post_code": "01014",
+  "name": "Charouine",
+  "ar_name": "شروين",
+  "wilaya_code": "49",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6abf"
+  },
+  "post_code": "01033",
+  "name": "Metarfa",
+  "ar_name": "المطارفة",
+  "wilaya_code": "49",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6ac0"
+  },
+  "post_code": "01034",
+  "name": "Talmine",
+  "ar_name": "طالمين",
+  "wilaya_code": "49",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6ac1"
+  },
+  "post_code": "01035",
+  "name": "Ksar Kaddour",
+  "ar_name": "قصر قدور",
+  "wilaya_code": "49",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6ac2"
+  },
+  "post_code": "01036",
+  "name": "Deldoul",
+  "ar_name": "دلدول",
+  "wilaya_code": "49",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6ac3"
+  },
+  "post_code": "01039",
+  "name": "Ouled Said",
+  "ar_name": "أولاد السعيد",
+  "wilaya_code": "49",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6ac4"
+  },
+  "post_code": "01051",
+  "name": "Ouled Aissa",
+  "ar_name": "أولاد عيسى",
+  "wilaya_code": "49",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6ac5"
+  },
+  "post_code": "01010",
+  "name": "Bordj Badji Mokhtar",
+  "ar_name": "برج باجي مختار",
+  "wilaya_code": "50",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6ac6"
+  },
+  "post_code": "01042",
+  "name": "Timiaouine",
+  "ar_name": "تيمياوين",
+  "wilaya_code": "50",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6adb"
+  },
+  "post_code": "30002",
+  "name": "Touggourt",
+  "ar_name": "تقرت",
+  "wilaya_code": "55",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6adc"
+  },
+  "post_code": "30003",
+  "name": "Temacine",
+  "ar_name": "تماسين",
+  "wilaya_code": "55",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6add"
+  },
+  "post_code": "30004",
+  "name": "Nezla",
+  "ar_name": "النزلة",
+  "wilaya_code": "55",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6ade"
+  },
+  "post_code": "30005",
+  "name": "Blidet Amor",
+  "ar_name": "بلدة اعمر",
+  "wilaya_code": "55",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6adf"
+  },
+  "post_code": "30006",
+  "name": "El-Hadjira",
+  "ar_name": "الحجيرة",
+  "wilaya_code": "55",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6ae0"
+  },
+  "post_code": "30009",
+  "name": "Megarine",
+  "ar_name": "المقارين",
+  "wilaya_code": "55",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6ae1"
+  },
+  "post_code": "30015",
+  "name": "Taibet",
+  "ar_name": "الطيبات",
+  "wilaya_code": "55",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6ae2"
+  },
+  "post_code": "30018",
+  "name": "Zaouia El Abidia",
+  "ar_name": "الزاوية العابدية",
+  "wilaya_code": "55",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6ae3"
+  },
+  "post_code": "30020",
+  "name": "Benaceur",
+  "ar_name": "بن ناصر",
+  "wilaya_code": "55",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6ae4"
+  },
+  "post_code": "30023",
+  "name": "El Alia",
+  "ar_name": "العالية",
+  "wilaya_code": "55",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6ae5"
+  },
+  "post_code": "30029",
+  "name": "M'naguer",
+  "ar_name": "المنقر",
+  "wilaya_code": "55",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6ae6"
+  },
+  "post_code": "30030",
+  "name": "Sidi Slimane",
+  "ar_name": "سيدي سليمان",
+  "wilaya_code": "55",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6ae7"
+  },
+  "post_code": "30058",
+  "name": "Tebesbest",
+  "ar_name": "تبسبست",
+  "wilaya_code": "55",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6ae8"
+  },
+  "post_code": "33002",
+  "name": "Djanet",
+  "ar_name": "جانت",
+  "wilaya_code": "56",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6ae9"
+  },
+  "post_code": "33008",
+  "name": "Bordj El Haouass",
+  "ar_name": "برج الحواس",
+  "wilaya_code": "56",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6aea"
+  },
+  "post_code": "39004",
+  "name": "Djamaa",
+  "ar_name": "جامعة",
+  "wilaya_code": "57",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6aeb"
+  },
+  "post_code": "39005",
+  "name": "El-M'ghaier",
+  "ar_name": "المغير",
+  "wilaya_code": "57",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6aec"
+  },
+  "post_code": "39021",
+  "name": "Sidi Amrane",
+  "ar_name": "سيدي عمران",
+  "wilaya_code": "57",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6aed"
+  },
+  "post_code": "39034",
+  "name": "Oum Touyour",
+  "ar_name": "أم الطيور",
+  "wilaya_code": "57",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6aee"
+  },
+  "post_code": "39038",
+  "name": "Sidi Khelil",
+  "ar_name": "سيدي خليل",
+  "wilaya_code": "57",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6aef"
+  },
+  "post_code": "39039",
+  "name": "Still",
+  "ar_name": "سطيل",
+  "wilaya_code": "57",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6af0"
+  },
+  "post_code": "39042",
+  "name": "Tenedla",
+  "ar_name": "تندلة",
+  "wilaya_code": "57",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6af1"
+  },
+  "post_code": "39067",
+  "name": "M'rara",
+  "ar_name": "المرارة",
+  "wilaya_code": "57",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6af2"
+  },
+  "post_code": "47001",
+  "name": "El Meniaa",
+  "ar_name": "المنيعة",
+  "wilaya_code": "58",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6af3"
+  },
+  "post_code": "47006",
+  "name": "Hassi Gara",
+  "ar_name": "حاسي القارة",
+  "wilaya_code": "58",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a4cd74fbabdf95b0dcc6af4"
+  },
+  "post_code": "47021",
+  "name": "Hassi Fehal",
+  "ar_name": "حاسي الفحل",
+  "wilaya_code": "58",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-07T10:39:11.084Z"
+  }
+}]

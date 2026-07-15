@@ -1,0 +1,1262 @@
+Simplified MVP MongoDB Schema
+1. User Schema (with embedded address)
+javascript
+
+const UserSchema = new mongoose.Schema({
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    lowercase: true,
+    trim: true
+  },
+  password: {
+    type: String,
+    required: true
+  },
+  firstName: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  lastName: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  role: {
+    type: String,
+    enum: ['CUSTOMER', 'VENDOR', 'ADMIN'],
+    default: 'CUSTOMER'
+  },
+  profileImage: {
+    type: String,
+    default: null
+  },
+  phoneNumber: {
+    type: String,
+    trim: true
+  },
+  isActive: {
+    type: Boolean,
+    default: true
+  },
+  isEmailVerified: {
+    type: Boolean,
+    default: false
+  },
+  lastLogin: Date,
+  refreshToken: String,
+  
+  // Embedded address (simplified)
+  address: {
+    fullName: String,
+    phoneNumber: String,
+    addressLine1: String,
+    addressLine2: String,
+    city: String,
+    state: String,
+    postalCode: String,
+    country: {
+      type: String,
+      default: 'Algeria'
+    }
+  },
+  
+  // Vendor application (simplified)
+  vendorApplication: {
+    status: {
+      type: String,
+      enum: ['PENDING', 'APPROVED', 'REJECTED', 'NONE'],
+      default: 'NONE'
+    },
+    submittedAt: Date,
+    reviewedAt: Date,
+    reviewedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    rejectionReason: String,
+    businessName: String,
+    taxId: String,
+    businessPhone: String
+  },
+  
+  // Store reference
+  storeId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Store'
+  }
+}, {
+  timestamps: true
+});
+
+// Indexes
+UserSchema.index({ email: 1 });
+UserSchema.index({ role: 1 });
+UserSchema.index({ 'vendorApplication.status': 1 });
+
+2. Store Schema
+javascript
+
+const StoreSchema = new mongoose.Schema({
+  vendorId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+    unique: true
+  },
+  storeName: {
+    type: String,
+    required: true,
+    trim: true,
+    unique: true
+  },
+  storeSlug: {
+    type: String,
+    required: true,
+    unique: true,
+    lowercase: true,
+    trim: true
+  },
+  description: {
+    type: String,
+    required: true
+  },
+  storeLogo: String,
+  coverImage: String,
+  contactEmail: {
+    type: String,
+    required: true
+  },
+  contactPhone: {
+    type: String,
+    required: true
+  },
+  address: {
+    street: String,
+    city: String,
+    state: String,
+    country: String,
+    postalCode: String
+  },
+  isActive: {
+    type: Boolean,
+    default: true
+  },
+  isVerified: {
+    type: Boolean,
+    default: false
+  },
+  totalProducts: {
+    type: Number,
+    default: 0
+  },
+  totalOrders: {
+    type: Number,
+    default: 0
+  }
+}, {
+  timestamps: true
+});
+
+// Indexes
+StoreSchema.index({ storeName: 'text', description: 'text' });
+StoreSchema.index({ storeSlug: 1 });
+StoreSchema.index({ vendorId: 1 });
+StoreSchema.index({ isActive: 1, isVerified: 1 });
+
+3. Product Schema (with variants)
+javascript
+
+const ProductSchema = new mongoose.Schema({
+  vendorId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  storeId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Store',
+    required: true
+  },
+  name: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  slug: {
+    type: String,
+    required: true,
+    unique: true,
+    lowercase: true,
+    trim: true
+  },
+  description: {
+    type: String,
+    required: true
+  },
+  
+  // Static category (from your code constants)
+  category: {
+    type: String,
+    required: true
+  },
+  subCategory: {
+    type: String
+  },
+  
+  // Pricing
+  price: {
+    type: Number,
+    required: true,
+    min: 0
+  },
+  compareAtPrice: {
+    type: Number,
+    min: 0
+  },
+  
+  // Stock
+  stockQuantity: {
+    type: Number,
+    required: true,
+    min: 0,
+    default: 0
+  },
+  isInStock: {
+    type: Boolean,
+    default: true
+  },
+  
+  // Images
+  images: [{
+    url: {
+      type: String,
+      required: true
+    },
+    alt: String,
+    isPrimary: {
+      type: Boolean,
+      default: false
+    }
+  }],
+  
+  // Variants (optional, for MVP)
+  variants: [{
+    type: {
+      type: String,
+      enum: ['SIZE', 'COLOR', 'MATERIAL'],
+      required: true
+    },
+    name: {
+      type: String,
+      required: true
+    },
+    options: [{
+      value: {
+        type: String,
+        required: true
+      },
+      price: Number,
+      stockQuantity: Number,
+      sku: String
+    }]
+  }],
+  
+  // Simple attributes
+  tags: [String],
+  isActive: {
+    type: Boolean,
+    default: true
+  },
+  isFeatured: {
+    type: Boolean,
+    default: false
+  },
+  
+  // SEO
+  metaTitle: String,
+  metaDescription: String
+}, {
+  timestamps: true
+});
+
+// Indexes
+ProductSchema.index({ name: 'text', description: 'text', tags: 'text' });
+ProductSchema.index({ storeId: 1, vendorId: 1 });
+ProductSchema.index({ category: 1, subCategory: 1 });
+ProductSchema.index({ price: 1 });
+ProductSchema.index({ isActive: 1, isInStock: 1 });
+ProductSchema.index({ isFeatured: 1 });
+
+4. Order Schema (simplified for COD)
+javascript
+
+const OrderSchema = new mongoose.Schema({
+  orderNumber: {
+    type: String,
+    required: true,
+    unique: true
+  },
+  customerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  storeId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Store',
+    required: true
+  },
+  vendorId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  
+  // Single product (direct order from product page)
+  product: {
+    productId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Product',
+      required: true
+    },
+    productName: {
+      type: String,
+      required: true
+    },
+    variantId: String,
+    variantOptions: Map,
+    quantity: {
+      type: Number,
+      required: true,
+      min: 1
+    },
+    unitPrice: {
+      type: Number,
+      required: true
+    },
+    totalPrice: {
+      type: Number,
+      required: true
+    },
+    image: String
+  },
+  
+  // Shipping address (copy from user)
+  shippingAddress: {
+    fullName: {
+      type: String,
+      required: true
+    },
+    phoneNumber: {
+      type: String,
+      required: true
+    },
+    addressLine1: {
+      type: String,
+      required: true
+    },
+    addressLine2: String,
+    city: {
+      type: String,
+      required: true
+    },
+    state: {
+      type: String,
+      required: true
+    },
+    postalCode: {
+      type: String,
+      required: true
+    },
+    country: {
+      type: String,
+      required: true,
+      default: 'Algeria'
+    }
+  },
+  
+  // COD specific
+  paymentMethod: {
+    type: String,
+    default: 'COD'
+  },
+  paymentStatus: {
+    type: String,
+    enum: ['PENDING', 'PAID', 'FAILED'],
+    default: 'PENDING'
+  },
+  
+  // Order status
+  orderStatus: {
+    type: String,
+    enum: [
+      'PENDING',
+      'PROCESSING',
+      'SHIPPED',
+      'DELIVERED',
+      'CANCELLED'
+    ],
+    default: 'PENDING'
+  },
+  statusHistory: [{
+    status: String,
+    note: String,
+    updatedAt: {
+      type: Date,
+      default: Date.now
+    },
+    updatedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    }
+  }],
+  
+  // Pricing
+  subtotal: {
+    type: Number,
+    required: true
+  },
+  shippingCost: {
+    type: Number,
+    default: 0
+  },
+  totalAmount: {
+    type: Number,
+    required: true
+  },
+  
+  notes: String,
+  adminNotes: String
+}, {
+  timestamps: true
+});
+
+// Indexes
+OrderSchema.index({ orderNumber: 1 });
+OrderSchema.index({ customerId: 1 });
+OrderSchema.index({ vendorId: 1, storeId: 1 });
+OrderSchema.index({ orderStatus: 1 });
+OrderSchema.index({ createdAt: -1 });
+
+5. Audit Log Schema (minimal)
+javascript
+
+const AuditLogSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  action: {
+    type: String,
+    enum: [
+      'USER_REGISTER',
+      'VENDOR_APPLY',
+      'VENDOR_APPROVE',
+      'VENDOR_REJECT',
+      'PRODUCT_CREATE',
+      'PRODUCT_UPDATE',
+      'PRODUCT_DELETE',
+      'ORDER_CREATE',
+      'ORDER_UPDATE',
+      'ORDER_STATUS_CHANGE',
+      'STORE_CREATE',
+      'STORE_UPDATE'
+    ],
+    required: true
+  },
+  resourceType: {
+    type: String,
+    enum: ['USER', 'STORE', 'PRODUCT', 'ORDER']
+  },
+  resourceId: mongoose.Schema.Types.ObjectId,
+  details: mongoose.Schema.Types.Mixed,
+  ipAddress: String,
+  userAgent: String
+}, {
+  timestamps: true
+});
+
+// Indexes
+AuditLogSchema.index({ userId: 1 });
+AuditLogSchema.index({ action: 1 });
+AuditLogSchema.index({ createdAt: -1 });
+
+Simplified Relationships
+Sample Static Categories (in your frontend code)
+typescript
+
+// lib/constants/categories.ts
+export const CATEGORIES = {
+  'CLOTHING': {
+    id: 'clothing',
+    name: 'Clothing',
+    subCategories: [
+      'Dresses',
+      'Tops',
+      'Bottoms',
+      'Outerwear',
+      'Sportswear'
+    ]
+  },
+  'ACCESSORIES': {
+    id: 'accessories',
+    name: 'Accessories',
+    subCategories: [
+      'Bags',
+      'Jewelry',
+      'Scarves',
+      'Hats',
+      'Belts'
+    ]
+  },
+  'BEAUTY': {
+    id: 'beauty',
+    name: 'Beauty',
+    subCategories: [
+      'Skincare',
+      'Makeup',
+      'Haircare',
+      'Fragrance'
+    ]
+  },
+  'FOOTWEAR': {
+    id: 'footwear',
+    name: 'Footwear',
+    subCategories: [
+      'Sneakers',
+      'Boots',
+      'Sandals',
+      'Heels',
+      'Flats'
+    ]
+  }
+} as const;
+
+Database Setup Commands
+javascript
+
+// Create indexes
+db.users.createIndex({ email: 1 });
+db.users.createIndex({ role: 1 });
+db.users.createIndex({ 'vendorApplication.status': 1 });
+
+db.stores.createIndex({ storeName: 'text', description: 'text' });
+db.stores.createIndex({ storeSlug: 1 });
+db.stores.createIndex({ vendorId: 1 });
+
+db.products.createIndex({ name: 'text', description: 'text' });
+db.products.createIndex({ storeId: 1, vendorId: 1 });
+db.products.createIndex({ category: 1 });
+db.products.createIndex({ price: 1 });
+db.products.createIndex({ isActive: 1, isInStock: 1 });
+
+db.orders.createIndex({ orderNumber: 1 });
+db.orders.createIndex({ customerId: 1 });
+db.orders.createIndex({ vendorId: 1 });
+db.orders.createIndex({ orderStatus: 1 });
+db.orders.createIndex({ createdAt: -1 });
+
+Key MVP Assumptions Simplified
+
+    No Cart: Direct product page ordering
+
+    No Reviews: Skipped for MVP
+
+    Static Categories: Defined in frontend code
+
+    Address in User: Embedded in user document
+
+    COD Only: Single payment method
+
+    Single Product Per Order: Simplified order structure
+
+NestJS DTOs (Quick Reference)
+typescript
+
+// Create Product DTO
+class CreateProductDto {
+  name: string;
+  description: string;
+  category: string;
+  subCategory?: string;
+  price: number;
+  compareAtPrice?: number;
+  stockQuantity: number;
+  images: Array<{ url: string; isPrimary?: boolean }>;
+  variants?: Array<{
+    type: string;
+    name: string;
+    options: Array<{ value: string; price?: number; stockQuantity?: number }>;
+  }>;
+  tags?: string[];
+  isFeatured?: boolean;
+}
+
+// Create Order DTO
+class CreateOrderDto {
+  productId: string;
+  quantity: number;
+  variantId?: string;
+  shippingAddress: {
+    fullName: string;
+    phoneNumber: string;
+    addressLine1: string;
+    addressLine2?: string;
+    city: string;
+    state: string;
+    postalCode: string;
+  };
+  notes?: string;
+}
+
+This simplified schema is perfect for your MVP and can be easily extended later when you add more features like cart, reviews, multiple payment methods, etc.
+okay great , give me a full prompt to give to gemini cli to apply this without the endpoints and front end integration , just to create the database model with mongodb , and use mongoose , give me afull prompt with details , so what i want is to create a nest js app in the root directory and apply this as first basic step , give me the full detailed prompt
+
+Here's a comprehensive prompt for Gemini CLI to set up your NestJS application with MongoDB and Mongoose models:
+text
+
+I need you to create a NestJS application with MongoDB and Mongoose for a multi-vendor e-commerce platform MVP called "Imraaah". Please follow these instructions exactly:
+
+## Project Setup Requirements:
+
+1. **Initialize a NestJS project** in the root directory with the following structure:
+   - Use `@nestjs/cli` to create a new project
+   - Install all required dependencies
+
+2. **Install the following dependencies:**
+   ```bash
+   npm install @nestjs/mongoose mongoose
+   npm install @nestjs/config dotenv
+   npm install @nestjs/jwt @nestjs/passport passport passport-jwt bcrypt
+   npm install class-validator class-transformer
+   npm install @nestjs/platform-express multer
+   npm install @nestjs/swagger swagger-ui-express
+   npm install -D @types/passport @types/passport-jwt @types/bcrypt @types/multer
+
+    Create the following directory structure:
+    text
+
+    src/
+    ├── modules/
+    │   ├── auth/
+    │   ├── users/
+    │   ├── stores/
+    │   ├── products/
+    │   ├── orders/
+    │   └── audit/
+    ├── common/
+    │   ├── constants/
+    │   ├── decorators/
+    │   ├── filters/
+    │   ├── guards/
+    │   ├── interceptors/
+    │   ├── pipes/
+    │   └── interfaces/
+    ├── config/
+    └── database/
+
+    Create the following MongoDB Schemas using Mongoose:
+
+User Schema (src/modules/users/schemas/user.schema.ts):
+typescript
+
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document, Types } from 'mongoose';
+import { Role } from '../../../common/constants/roles.enum';
+import { VendorApplicationStatus } from '../../../common/constants/vendor-status.enum';
+
+export type UserDocument = User & Document;
+
+@Schema({ timestamps: true })
+export class User {
+  @Prop({ required: true, unique: true, lowercase: true, trim: true })
+  email: string;
+
+  @Prop({ required: true })
+  password: string;
+
+  @Prop({ required: true, trim: true })
+  firstName: string;
+
+  @Prop({ required: true, trim: true })
+  lastName: string;
+
+  @Prop({ type: String, enum: Role, default: Role.CUSTOMER })
+  role: Role;
+
+  @Prop()
+  profileImage: string;
+
+  @Prop({ trim: true })
+  phoneNumber: string;
+
+  @Prop({ default: true })
+  isActive: boolean;
+
+  @Prop({ default: false })
+  isEmailVerified: boolean;
+
+  @Prop()
+  lastLogin: Date;
+
+  @Prop()
+  refreshToken: string;
+
+  @Prop({
+    type: {
+      fullName: String,
+      phoneNumber: String,
+      addressLine1: String,
+      addressLine2: String,
+      city: String,
+      state: String,
+      postalCode: String,
+      country: { type: String, default: 'Algeria' }
+    }
+  })
+  address: {
+    fullName?: string;
+    phoneNumber?: string;
+    addressLine1?: string;
+    addressLine2?: string;
+    city?: string;
+    state?: string;
+    postalCode?: string;
+    country?: string;
+  };
+
+  @Prop({
+    type: {
+      status: { type: String, enum: VendorApplicationStatus, default: VendorApplicationStatus.NONE },
+      submittedAt: Date,
+      reviewedAt: Date,
+      reviewedBy: { type: Types.ObjectId, ref: 'User' },
+      rejectionReason: String,
+      businessName: String,
+      taxId: String,
+      businessPhone: String
+    }
+  })
+  vendorApplication: {
+    status: VendorApplicationStatus;
+    submittedAt?: Date;
+    reviewedAt?: Date;
+    reviewedBy?: Types.ObjectId;
+    rejectionReason?: string;
+    businessName?: string;
+    taxId?: string;
+    businessPhone?: string;
+  };
+
+  @Prop({ type: Types.ObjectId, ref: 'Store' })
+  storeId: Types.ObjectId;
+}
+
+export const UserSchema = SchemaFactory.createForClass(User);
+
+// Indexes
+UserSchema.index({ email: 1 });
+UserSchema.index({ role: 1 });
+UserSchema.index({ 'vendorApplication.status': 1 });
+
+Store Schema (src/modules/stores/schemas/store.schema.ts):
+typescript
+
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document, Types } from 'mongoose';
+
+export type StoreDocument = Store & Document;
+
+@Schema({ timestamps: true })
+export class Store {
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true, unique: true })
+  vendorId: Types.ObjectId;
+
+  @Prop({ required: true, trim: true, unique: true })
+  storeName: string;
+
+  @Prop({ required: true, unique: true, lowercase: true, trim: true })
+  storeSlug: string;
+
+  @Prop({ required: true })
+  description: string;
+
+  @Prop()
+  storeLogo: string;
+
+  @Prop()
+  coverImage: string;
+
+  @Prop({ required: true })
+  contactEmail: string;
+
+  @Prop({ required: true })
+  contactPhone: string;
+
+  @Prop({
+    type: {
+      street: String,
+      city: String,
+      state: String,
+      country: String,
+      postalCode: String
+    }
+  })
+  address: {
+    street?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    postalCode?: string;
+  };
+
+  @Prop({ default: true })
+  isActive: boolean;
+
+  @Prop({ default: false })
+  isVerified: boolean;
+
+  @Prop({ default: 0 })
+  totalProducts: number;
+
+  @Prop({ default: 0 })
+  totalOrders: number;
+}
+
+export const StoreSchema = SchemaFactory.createForClass(Store);
+
+// Indexes
+StoreSchema.index({ storeName: 'text', description: 'text' });
+StoreSchema.index({ storeSlug: 1 });
+StoreSchema.index({ vendorId: 1 });
+StoreSchema.index({ isActive: 1, isVerified: 1 });
+
+Product Schema (src/modules/products/schemas/product.schema.ts):
+typescript
+
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document, Types } from 'mongoose';
+
+export type ProductDocument = Product & Document;
+
+@Schema({ timestamps: true })
+export class Product {
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  vendorId: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'Store', required: true })
+  storeId: Types.ObjectId;
+
+  @Prop({ required: true, trim: true })
+  name: string;
+
+  @Prop({ required: true, unique: true, lowercase: true, trim: true })
+  slug: string;
+
+  @Prop({ required: true })
+  description: string;
+
+  @Prop({ required: true })
+  category: string;
+
+  @Prop()
+  subCategory: string;
+
+  @Prop({ required: true, min: 0 })
+  price: number;
+
+  @Prop({ min: 0 })
+  compareAtPrice: number;
+
+  @Prop({ required: true, min: 0, default: 0 })
+  stockQuantity: number;
+
+  @Prop({ default: true })
+  isInStock: boolean;
+
+  @Prop({
+    type: [{
+      url: { type: String, required: true },
+      alt: String,
+      isPrimary: { type: Boolean, default: false }
+    }]
+  })
+  images: Array<{
+    url: string;
+    alt?: string;
+    isPrimary?: boolean;
+  }>;
+
+  @Prop({
+    type: [{
+      type: { type: String, enum: ['SIZE', 'COLOR', 'MATERIAL'], required: true },
+      name: { type: String, required: true },
+      options: [{
+        value: { type: String, required: true },
+        price: Number,
+        stockQuantity: Number,
+        sku: String
+      }]
+    }]
+  })
+  variants: Array<{
+    type: string;
+    name: string;
+    options: Array<{
+      value: string;
+      price?: number;
+      stockQuantity?: number;
+      sku?: string;
+    }>;
+  }>;
+
+  @Prop([String])
+  tags: string[];
+
+  @Prop({ default: true })
+  isActive: boolean;
+
+  @Prop({ default: false })
+  isFeatured: boolean;
+
+  @Prop()
+  metaTitle: string;
+
+  @Prop()
+  metaDescription: string;
+}
+
+export const ProductSchema = SchemaFactory.createForClass(Product);
+
+// Indexes
+ProductSchema.index({ name: 'text', description: 'text', tags: 'text' });
+ProductSchema.index({ storeId: 1, vendorId: 1 });
+ProductSchema.index({ category: 1, subCategory: 1 });
+ProductSchema.index({ price: 1 });
+ProductSchema.index({ isActive: 1, isInStock: 1 });
+ProductSchema.index({ isFeatured: 1 });
+
+Order Schema (src/modules/orders/schemas/order.schema.ts):
+typescript
+
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document, Types } from 'mongoose';
+import { OrderStatus } from '../../../common/constants/order-status.enum';
+import { PaymentStatus } from '../../../common/constants/payment-status.enum';
+import { PaymentMethod } from '../../../common/constants/payment-method.enum';
+
+export type OrderDocument = Order & Document;
+
+@Schema({ timestamps: true })
+export class Order {
+  @Prop({ required: true, unique: true })
+  orderNumber: string;
+
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  customerId: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'Store', required: true })
+  storeId: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  vendorId: Types.ObjectId;
+
+  @Prop({
+    type: {
+      productId: { type: Types.ObjectId, ref: 'Product', required: true },
+      productName: { type: String, required: true },
+      variantId: String,
+      variantOptions: { type: Map, of: String },
+      quantity: { type: Number, required: true, min: 1 },
+      unitPrice: { type: Number, required: true },
+      totalPrice: { type: Number, required: true },
+      image: String
+    },
+    required: true
+  })
+  product: {
+    productId: Types.ObjectId;
+    productName: string;
+    variantId?: string;
+    variantOptions?: Map<string, string>;
+    quantity: number;
+    unitPrice: number;
+    totalPrice: number;
+    image?: string;
+  };
+
+  @Prop({
+    type: {
+      fullName: { type: String, required: true },
+      phoneNumber: { type: String, required: true },
+      addressLine1: { type: String, required: true },
+      addressLine2: String,
+      city: { type: String, required: true },
+      state: { type: String, required: true },
+      postalCode: { type: String, required: true },
+      country: { type: String, required: true, default: 'Algeria' }
+    },
+    required: true
+  })
+  shippingAddress: {
+    fullName: string;
+    phoneNumber: string;
+    addressLine1: string;
+    addressLine2?: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    country: string;
+  };
+
+  @Prop({ type: String, enum: PaymentMethod, default: PaymentMethod.COD })
+  paymentMethod: PaymentMethod;
+
+  @Prop({ type: String, enum: PaymentStatus, default: PaymentStatus.PENDING })
+  paymentStatus: PaymentStatus;
+
+  @Prop({ type: String, enum: OrderStatus, default: OrderStatus.PENDING })
+  orderStatus: OrderStatus;
+
+  @Prop({
+    type: [{
+      status: { type: String, enum: OrderStatus },
+      note: String,
+      updatedAt: { type: Date, default: Date.now },
+      updatedBy: { type: Types.ObjectId, ref: 'User' }
+    }]
+  })
+  statusHistory: Array<{
+    status: OrderStatus;
+    note?: string;
+    updatedAt: Date;
+    updatedBy?: Types.ObjectId;
+  }>;
+
+  @Prop({ required: true })
+  subtotal: number;
+
+  @Prop({ default: 0 })
+  shippingCost: number;
+
+  @Prop({ required: true })
+  totalAmount: number;
+
+  @Prop()
+  notes: string;
+
+  @Prop()
+  adminNotes: string;
+}
+
+export const OrderSchema = SchemaFactory.createForClass(Order);
+
+// Indexes
+OrderSchema.index({ orderNumber: 1 });
+OrderSchema.index({ customerId: 1 });
+OrderSchema.index({ vendorId: 1, storeId: 1 });
+OrderSchema.index({ orderStatus: 1 });
+OrderSchema.index({ createdAt: -1 });
+
+Audit Log Schema (src/modules/audit/schemas/audit-log.schema.ts):
+typescript
+
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document, Types } from 'mongoose';
+import { AuditAction } from '../../../common/constants/audit-action.enum';
+import { ResourceType } from '../../../common/constants/resource-type.enum';
+
+export type AuditLogDocument = AuditLog & Document;
+
+@Schema({ timestamps: true })
+export class AuditLog {
+  @Prop({ type: Types.ObjectId, ref: 'User' })
+  userId: Types.ObjectId;
+
+  @Prop({ type: String, enum: AuditAction, required: true })
+  action: AuditAction;
+
+  @Prop({ type: String, enum: ResourceType })
+  resourceType: ResourceType;
+
+  @Prop({ type: Types.ObjectId })
+  resourceId: Types.ObjectId;
+
+  @Prop({ type: Object })
+  details: Record<string, any>;
+
+  @Prop()
+  ipAddress: string;
+
+  @Prop()
+  userAgent: string;
+}
+
+export const AuditLogSchema = SchemaFactory.createForClass(AuditLog);
+
+// Indexes
+AuditLogSchema.index({ userId: 1 });
+AuditLogSchema.index({ action: 1 });
+AuditLogSchema.index({ createdAt: -1 });
+
+    Create the following constants/enums:
+
+Roles Enum (src/common/constants/roles.enum.ts):
+typescript
+
+export enum Role {
+  CUSTOMER = 'CUSTOMER',
+  VENDOR = 'VENDOR',
+  ADMIN = 'ADMIN'
+}
+
+Vendor Application Status (src/common/constants/vendor-status.enum.ts):
+typescript
+
+export enum VendorApplicationStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+  NONE = 'NONE'
+}
+
+Order Status (src/common/constants/order-status.enum.ts):
+typescript
+
+export enum OrderStatus {
+  PENDING = 'PENDING',
+  PROCESSING = 'PROCESSING',
+  SHIPPED = 'SHIPPED',
+  DELIVERED = 'DELIVERED',
+  CANCELLED = 'CANCELLED'
+}
+
+Payment Status (src/common/constants/payment-status.enum.ts):
+typescript
+
+export enum PaymentStatus {
+  PENDING = 'PENDING',
+  PAID = 'PAID',
+  FAILED = 'FAILED'
+}
+
+Payment Method (src/common/constants/payment-method.enum.ts):
+typescript
+
+export enum PaymentMethod {
+  COD = 'COD'
+}
+
+Audit Action (src/common/constants/audit-action.enum.ts):
+typescript
+
+export enum AuditAction {
+  USER_REGISTER = 'USER_REGISTER',
+  VENDOR_APPLY = 'VENDOR_APPLY',
+  VENDOR_APPROVE = 'VENDOR_APPROVE',
+  VENDOR_REJECT = 'VENDOR_REJECT',
+  PRODUCT_CREATE = 'PRODUCT_CREATE',
+  PRODUCT_UPDATE = 'PRODUCT_UPDATE',
+  PRODUCT_DELETE = 'PRODUCT_DELETE',
+  ORDER_CREATE = 'ORDER_CREATE',
+  ORDER_UPDATE = 'ORDER_UPDATE',
+  ORDER_STATUS_CHANGE = 'ORDER_STATUS_CHANGE',
+  STORE_CREATE = 'STORE_CREATE',
+  STORE_UPDATE = 'STORE_UPDATE'
+}
+
+Resource Type (src/common/constants/resource-type.enum.ts):
+typescript
+
+export enum ResourceType {
+  USER = 'USER',
+  STORE = 'STORE',
+  PRODUCT = 'PRODUCT',
+  ORDER = 'ORDER'
+}
+
+    Create the main app module (src/app.module.ts) that imports:
+
+        ConfigModule for environment variables
+
+        MongooseModule for database connection
+
+        All feature modules (Users, Stores, Products, Orders, Audit)
+
+    Create environment configuration (.env and src/config/configuration.ts):
+
+        MongoDB connection string
+
+        JWT secret
+
+        Port configuration
+
+        Environment mode (development/production)
+
+    Create database connection configuration using @nestjs/mongoose
+
+    Set up the main.ts file with:
+
+        Global validation pipe (ValidationPipe with whitelist and transform options)
+
+        Swagger documentation
+
+        CORS enabled
+
+        Prefix for API routes
+
+    Do NOT create:
+
+        Controllers (except maybe a simple health check)
+
+        Services with business logic
+
+        DTOs
+
+        Guards
+
+        Authentication logic
+
+        Endpoints
+
+        Frontend integration
+
+    Add a simple health check endpoint at /api/health that returns:
+    json
+
+    {
+      "status": "ok",
+      "message": "Imraaah API is running",
+      "timestamp": "2024-01-01T00:00:00.000Z"
+    }
+
+    Create a seed command or script that:
+
+        Creates a default admin user (email: admin@imraaah.com, password: Admin123!)
+
+        Creates sample category data (optional)
+
+    Set up Mongoose plugins for:
+
+        Soft delete (optional)
+
+        Automatic timestamp handling
+
+    Create database indexes by adding the @Index() decorators or using the Schema.index() method in the schemas
+
+    Final Steps:
+
+        Make sure the application starts successfully with npm run start:dev
+
+        Ensure all models are properly registered in their respective modules
+
+        Verify the database connection works
+
+        Confirm Swagger documentation is accessible at /api/docs
+
+Please create the complete NestJS application with all of the above files and configurations. Make sure to use proper TypeScript types, follow NestJS best practices, and organize the code cleanly. The application should be ready to run with npm install && npm run start:dev after creation.
+
+Important: Focus only on the database layer and model setup. Do not implement any business logic, endpoints (except health check), or frontend integration.

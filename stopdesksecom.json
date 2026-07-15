@@ -1,0 +1,1032 @@
+[
+  {
+    "id": 94,
+    "id_wilaya": 1,
+    "nom_bureau": "Adrar",
+    "code_stopdesk": "1A",
+    "adresse": "Cité les palmier en face l'hopital",
+    "adresse_maps": "https://maps.app.goo.gl/2Nrh9EFjphQwNJxXA",
+    "tel_contact": "0550602181, 0561623531",
+    "commune": "Adrar"
+  },
+  {
+    "id": 96,
+    "id_wilaya": 2,
+    "nom_bureau": "Chlef - Tenes",
+    "code_stopdesk": "2B",
+    "adresse": "Rue de Cherchell en face l’école primaire les frères Menad Ténès",
+    "adresse_maps": "https://maps.app.goo.gl/LAM2QA4ikvbwoKur5",
+    "tel_contact": "0560469155",
+    "commune": "Tenes"
+  },
+  {
+    "id": 95,
+    "id_wilaya": 2,
+    "nom_bureau": "Chlef [E-COM]",
+    "code_stopdesk": "2A",
+    "adresse": "District d'Al-Salam Partie I Complexe B3 - Baliaa Al-Shaf",
+    "adresse_maps": "https://maps.app.goo.gl/Jo43KhpUuL37e6gG6",
+    "tel_contact": "0770312519",
+    "commune": "Chlef"
+  },
+  {
+    "id": 97,
+    "id_wilaya": 3,
+    "nom_bureau": "Laghouat",
+    "code_stopdesk": "3A",
+    "adresse": "Cité Al Ouiam (En face la mosquée Hammani )",
+    "adresse_maps": "https://maps.app.goo.gl/n2sXZSeYmxJdFopLA",
+    "tel_contact": "0550600359, 0770611585",
+    "commune": "Laghouat"
+  },
+  {
+    "id": 98,
+    "id_wilaya": 3,
+    "nom_bureau": "Laghouat - AFLOU",
+    "code_stopdesk": "3B",
+    "adresse": "Rue Al-Gaada, à côté de la boulangerie Belkhair",
+    "adresse_maps": null,
+    "tel_contact": "0550314898",
+    "commune": "AFLOU"
+  },
+  {
+    "id": 99,
+    "id_wilaya": 4,
+    "nom_bureau": "Oum EL Bouaghi - Ain Mlila",
+    "code_stopdesk": "4A",
+    "adresse": "Cité El Hanaa, route du Lycée Messas",
+    "adresse_maps": "https://maps.app.goo.gl/8RwhB9oBaPbKUgvp7",
+    "tel_contact": "0561848298",
+    "commune": "Ainmlila"
+  },
+  {
+    "id": 100,
+    "id_wilaya": 4,
+    "nom_bureau": "Oum El Bouaghi",
+    "code_stopdesk": "4B",
+    "adresse": "Cité 176 logements LSP Batiment 13 – Oum El Bouaghi",
+    "adresse_maps": "https://maps.app.goo.gl/uNV57wKUxH1g5ZwK8",
+    "tel_contact": "0560445954, 0560445855",
+    "commune": "Oum El Bouaghi"
+  },
+  {
+    "id": 101,
+    "id_wilaya": 4,
+    "nom_bureau": "Oum El Bouaghi - Aïn El Béïda",
+    "code_stopdesk": "4C",
+    "adresse": "Aïn Béïda en face C.N.A.S  a coté de Pharmacie Belambri",
+    "adresse_maps": "https://maps.app.goo.gl/ejzrBevboShW3FEK8",
+    "tel_contact": "0664093739, 0541149891",
+    "commune": "Ain Beida"
+  },
+  {
+    "id": 103,
+    "id_wilaya": 5,
+    "nom_bureau": "BATNA - BARIKA",
+    "code_stopdesk": "5B",
+    "adresse": "Quartier CHAABANI , en face notaire Bachir Farhani, a coté Algerie Telecom",
+    "adresse_maps": "https://maps.app.goo.gl/dKCKkRS6XXreRWki8",
+    "tel_contact": "0560183389, 0560183413, 0560183206",
+    "commune": "Barika"
+  },
+  {
+    "id": 104,
+    "id_wilaya": 5,
+    "nom_bureau": "BATNA centre",
+    "code_stopdesk": "5C",
+    "adresse": "Cité 1200 logements oulmi en face la nouvelle poste et station pétro baraka",
+    "adresse_maps": "https://maps.app.goo.gl/xdXTyw2ayFftVFbE7",
+    "tel_contact": "0563033092, 0563033091, 0770881575",
+    "commune": "Tazoult"
+  },
+  {
+    "id": 102,
+    "id_wilaya": 5,
+    "nom_bureau": "Batna",
+    "code_stopdesk": "5A",
+    "adresse": "Cité meddour kchida en face les batiments 500",
+    "adresse_maps": "https://maps.app.goo.gl/fS4yobMdauC9yyxYA",
+    "tel_contact": "0560105318, 0561929074, 0770605118",
+    "commune": "Batna"
+  },
+  {
+    "id": 105,
+    "id_wilaya": 6,
+    "nom_bureau": "Bejaïa",
+    "code_stopdesk": "6A",
+    "adresse": "rue des frères Tabet ,a 20 mètres de l'hôtel Golden H en face la nouvelle promotion nid d'abeille.",
+    "adresse_maps": null,
+    "tel_contact": "0561686346, 0550429286, 0561871121",
+    "commune": "Bejaia"
+  },
+  {
+    "id": 106,
+    "id_wilaya": 6,
+    "nom_bureau": "Bejaïa - Akbou",
+    "code_stopdesk": "6B",
+    "adresse": "Rue hibouche – arafou En face de djurdjura cars et alliance assurance",
+    "adresse_maps": "https://maps.app.goo.gl/viKPQgksLQ26xPVd8",
+    "tel_contact": "0555589102, 0555589207",
+    "commune": "Akbou"
+  },
+  {
+    "id": 107,
+    "id_wilaya": 6,
+    "nom_bureau": "Bejaïa - El-Kseur",
+    "code_stopdesk": "6C",
+    "adresse": "Rue hamaoui hamid commune El-Kseur, bejaia | Repère: local en face la sempac el-kseur",
+    "adresse_maps": "https://maps.app.goo.gl/2zADgaMghSCzZhKD6",
+    "tel_contact": "0563026724, 0563026713",
+    "commune": "El Kseur"
+  },
+  {
+    "id": 108,
+    "id_wilaya": 7,
+    "nom_bureau": "Biskra",
+    "code_stopdesk": "7A",
+    "adresse": "N° 05, cité elboustène,(Hai ELmodjahidine) en face du Centre de formation et de d'intervention rapide de la police",
+    "adresse_maps": "https://maps.app.goo.gl/nouoHiui3pgfgNZH6",
+    "tel_contact": "0770608890",
+    "commune": "Biskra"
+  },
+  {
+    "id": 109,
+    "id_wilaya": 8,
+    "nom_bureau": "Béchar",
+    "code_stopdesk": "8A",
+    "adresse": "Cité 622 Logement Al Badr N°02 - Bloc 52 (derière la radio EL SAOURA / En face la protection civile)",
+    "adresse_maps": "https://maps.app.goo.gl/W6zQbC9oQnMk6Kcm9",
+    "tel_contact": "0561686335, 0550429404",
+    "commune": "Bechar"
+  },
+  {
+    "id": 112,
+    "id_wilaya": 9,
+    "nom_bureau": "Beni Mered  [ E-com ]",
+    "code_stopdesk": "9Z",
+    "adresse": "Beni Mered.pas loin du Commissariat de police.",
+    "adresse_maps": "https://maps.app.goo.gl/vZ8uGxh752ucx3rn7",
+    "tel_contact": "0770397248",
+    "commune": "Beni Mered"
+  },
+  {
+    "id": 110,
+    "id_wilaya": 9,
+    "nom_bureau": "Blida",
+    "code_stopdesk": "9A",
+    "adresse": "El ramoule à côté de la nouvelle gare routière",
+    "adresse_maps": "https://maps.app.goo.gl/cNpbAjGRrumo5EDi6",
+    "tel_contact": "0561686325, 0550600998, 0561638691",
+    "commune": "Blida"
+  },
+  {
+    "id": 111,
+    "id_wilaya": 9,
+    "nom_bureau": "Blida -  Boufarik",
+    "code_stopdesk": "9B",
+    "adresse": "La résidence Belkbir en face la salle des fetes Layalina",
+    "adresse_maps": "https://maps.app.goo.gl/YXN6FUhboxnTBxRS7",
+    "tel_contact": "0555589398, 0555589395",
+    "commune": "Boufarik"
+  },
+  {
+    "id": 113,
+    "id_wilaya": 10,
+    "nom_bureau": "Bouira",
+    "code_stopdesk": "10A",
+    "adresse": "Villa hamzaoui, ammar khodja , bouira",
+    "adresse_maps": "https://maps.app.goo.gl/bJQYAUTLNyEnhpUA8",
+    "tel_contact": "0770801024, 0550428219",
+    "commune": "Bouira"
+  },
+  {
+    "id": 114,
+    "id_wilaya": 10,
+    "nom_bureau": "Bouira -  Lakhdaria",
+    "code_stopdesk": "10B",
+    "adresse": "Route national n°05 projet 55 logts social participatif BT A -lakhdaria – bouira (monté tizi elbir à coté de dépôt de vente Semoule MAMA).",
+    "adresse_maps": "https://maps.app.goo.gl/ZrDFweGcU63DVjD49",
+    "tel_contact": "0770170513, 0563026714",
+    "commune": "Lakhdaria"
+  },
+  {
+    "id": 115,
+    "id_wilaya": 11,
+    "nom_bureau": "Tamanrasset",
+    "code_stopdesk": "11A",
+    "adresse": "Quartier Moulay Omar, derrière le siège de la Daïra, à côté du parking de la Direction des Travaux Publics.",
+    "adresse_maps": "https://maps.app.goo.gl/g2ewPChs2HaC9FSA6",
+    "tel_contact": "0770127283, 0770749607, 0770820674",
+    "commune": "Tamanghasset"
+  },
+  {
+    "id": 116,
+    "id_wilaya": 12,
+    "nom_bureau": "Tébessa",
+    "code_stopdesk": "12A",
+    "adresse": "a cote du 2eme commissariat de police et du magasin de meubles REDEL, Tébessa",
+    "adresse_maps": "https://maps.app.goo.gl/UidJ6oXqYPmC8JbT9",
+    "tel_contact": "0770613002, 0550602622",
+    "commune": "Tébessa"
+  },
+  {
+    "id": 118,
+    "id_wilaya": 13,
+    "nom_bureau": "Tlemcen - Maghnia",
+    "code_stopdesk": "13B",
+    "adresse": "Ouled ben saber, À côté restaurant Rais",
+    "adresse_maps": "https://maps.app.goo.gl/bJsoBcyp6G5ydp747",
+    "tel_contact": "0560851262, 0560857684, 0560912307",
+    "commune": "Maghnia"
+  },
+  {
+    "id": 117,
+    "id_wilaya": 13,
+    "nom_bureau": "Tlemcen [ E-COM ]",
+    "code_stopdesk": "13A",
+    "adresse": "municipalité de, terrain de Ben Chaib, Quartier d'Al-Kifan, Tlemcen 13000",
+    "adresse_maps": "https://maps.app.goo.gl/3DHhaCzQtJbUEeps9",
+    "tel_contact": "0770312692",
+    "commune": "Tlemcen"
+  },
+  {
+    "id": 119,
+    "id_wilaya": 14,
+    "nom_bureau": "Tiaret",
+    "code_stopdesk": "14A",
+    "adresse": "Cité 180 logements CNT local 01 N° 63 – Tiaret",
+    "adresse_maps": "https://maps.app.goo.gl/1LrM2edmMH8mSMnV8",
+    "tel_contact": "0550429624, 0560350227",
+    "commune": "Tiaret"
+  },
+  {
+    "id": 120,
+    "id_wilaya": 14,
+    "nom_bureau": "Tiaret -  Frenda",
+    "code_stopdesk": "14B",
+    "adresse": "Cité 60 logements D121 GP 82 - Frenda",
+    "adresse_maps": "https://maps.app.goo.gl/9pvEUxbXywsyPuzV7",
+    "tel_contact": "0560265156, 0560265357",
+    "commune": "Frenda"
+  },
+  {
+    "id": 122,
+    "id_wilaya": 15,
+    "nom_bureau": "Tizi Ouzou - Azazga",
+    "code_stopdesk": "15B",
+    "adresse": "Route nationale N= 12 taddart",
+    "adresse_maps": "https://maps.app.goo.gl/PD37mvfqqr1NXkDy8",
+    "tel_contact": "0561906076, 0561906289",
+    "commune": "Azazga"
+  },
+  {
+    "id": 123,
+    "id_wilaya": 15,
+    "nom_bureau": "Tizi Ouzou - Draa Ben Khedda",
+    "code_stopdesk": "15C",
+    "adresse": "cooperative -EL WOOROUD, EN FACE A.D.E et ANEM de draa-ben khedda",
+    "adresse_maps": "https://maps.app.goo.gl/GXGzTN7o7jZHCoa58",
+    "tel_contact": "0770127536, 0770127817",
+    "commune": "Draa Ben Khedda"
+  },
+  {
+    "id": 121,
+    "id_wilaya": 15,
+    "nom_bureau": "Tizi Ouzou [ E-COM ]",
+    "code_stopdesk": "15A",
+    "adresse": "municipalité de, lotissement Amoud, Boutique 07, Coopérative immobilière Al-Taqaddum, Tizi Ouzou 15000",
+    "adresse_maps": "https://maps.app.goo.gl/aYHf9jWfdpTfwNE6A",
+    "tel_contact": "0770291984",
+    "commune": "Tizi Ouzou"
+  },
+  {
+    "id": 125,
+    "id_wilaya": 16,
+    "nom_bureau": "BAB EZZOUAR",
+    "code_stopdesk": "16B",
+    "adresse": "Devant clinique médicale, En face Ecole Hilal School",
+    "adresse_maps": "https://maps.app.goo.gl/qG22tYtJ4WuWX6W6A",
+    "tel_contact": "0560301762, 0770608746, 0770615054",
+    "commune": "Bab Azzouar"
+  },
+  {
+    "id": 128,
+    "id_wilaya": 16,
+    "nom_bureau": "Baba Hassen",
+    "code_stopdesk": "16F",
+    "adresse": "Cité Cherchali Boualam, À côté de croissant rouge, Baba Hassen",
+    "adresse_maps": "https://maps.app.goo.gl/EdXbRxRZW2EuGMrN6",
+    "tel_contact": "0560182594, 0560182915, 0560183036",
+    "commune": "Baba Hassen"
+  },
+  {
+    "id": 129,
+    "id_wilaya": 16,
+    "nom_bureau": "Baraki",
+    "code_stopdesk": "16G",
+    "adresse": "Baraki, route de Larbaâ, entre la mosquée El Bachir El Ibrahimi et le commissariat de la circonscription administrative.",
+    "adresse_maps": "https://maps.app.goo.gl/iyNkN9K46bvPAHAa8",
+    "tel_contact": "0560158882, 0560158961, 0560158953",
+    "commune": "Baraki"
+  },
+  {
+    "id": 133,
+    "id_wilaya": 16,
+    "nom_bureau": "Bir khadem [ E-COM ]",
+    "code_stopdesk": "16Y",
+    "adresse": "Rue des Rosiers, El Malha Birkhadem",
+    "adresse_maps": "https://maps.app.goo.gl/YHxosRjG6y9A53e76",
+    "tel_contact": "0770397246",
+    "commune": "Bir khadem"
+  },
+  {
+    "id": 124,
+    "id_wilaya": 16,
+    "nom_bureau": "Bir mourad Rais",
+    "code_stopdesk": "16A",
+    "adresse": "02, Lotissement Beau Séjour, Bir Mourad Raïs",
+    "adresse_maps": "https://maps.app.goo.gl/B1hsjSttffH5GSQK9",
+    "tel_contact": "0770610277, 0561660023, 0560158799",
+    "commune": "Bir Mourad Rais"
+  },
+  {
+    "id": 130,
+    "id_wilaya": 16,
+    "nom_bureau": "Bordj el bahri",
+    "code_stopdesk": "16H",
+    "adresse": "Cité Galoul, lotissement coopératif immobilier, n° 428 (A coté de la crèche IBN BAZ - ???? ?????? ??????? ??????? )",
+    "adresse_maps": "https://goo.gl/maps/wunCi94v4i1feEnv8",
+    "tel_contact": "0563029129, 0563029128",
+    "commune": "Bordj El bahri"
+  },
+  {
+    "id": 127,
+    "id_wilaya": 16,
+    "nom_bureau": "Centre - Sacré-Cœur",
+    "code_stopdesk": "16E",
+    "adresse": "22 Rue Hocine BELADJEL, Sacré-Cœur, Alger Centre, (En face la banque BADR)",
+    "adresse_maps": "https://maps.app.goo.gl/TXhvnMmKxGW4qMxs7",
+    "tel_contact": "0560181237, 0560181433, 0560181730, 0560181471",
+    "commune": "Alger Centre"
+  },
+  {
+    "id": 134,
+    "id_wilaya": 16,
+    "nom_bureau": "Chéraga [ E-COM ]",
+    "code_stopdesk": "16X",
+    "adresse": "PETIT STAOUALI ROUTE INSTETUE PASTEUR_x000D_",
+    "adresse_maps": "https://maps.app.goo.gl/wAJHsBnW1XVHGE6f7",
+    "tel_contact": "0770397247",
+    "commune": "Chéraga"
+  },
+  {
+    "id": 135,
+    "id_wilaya": 16,
+    "nom_bureau": "Meftah [ E-COM ]",
+    "code_stopdesk": "16W",
+    "adresse": "Cite Souakria, Meftah",
+    "adresse_maps": "https://maps.app.goo.gl/jqjPPwuHFRkf5ZrY7",
+    "tel_contact": "0770289371",
+    "commune": "Meftah"
+  },
+  {
+    "id": 132,
+    "id_wilaya": 16,
+    "nom_bureau": "Oued smar [ E-COM ]",
+    "code_stopdesk": "16Z",
+    "adresse": "Rue France monic chalis N°01 dar el beida._x000D_",
+    "adresse_maps": "https://maps.app.goo.gl/ysBgD3g8ta3pCJRr6",
+    "tel_contact": "0770397245",
+    "commune": "oued smar"
+  },
+  {
+    "id": 126,
+    "id_wilaya": 16,
+    "nom_bureau": "Reghaia",
+    "code_stopdesk": "16D",
+    "adresse": "822 Logmts LPP Amirouche Batiment A7 N°04 rez-de-chaussée ,Reghaia",
+    "adresse_maps": "https://maps.app.goo.gl/HC8KvHRuviDoZj6h8",
+    "tel_contact": "0560441770, 0560441926, 0561680248",
+    "commune": "Reghaia"
+  },
+  {
+    "id": 131,
+    "id_wilaya": 16,
+    "nom_bureau": "Zeralda",
+    "code_stopdesk": "16I",
+    "adresse": "Local N, Cité 62 local LPP BTN 5C, 02 03 RDC, Zéralda",
+    "adresse_maps": "https://maps.app.goo.gl/AikVJeQ1HCGym1NR6",
+    "tel_contact": "0563029229, 0560262242",
+    "commune": "Zeralda"
+  },
+  {
+    "id": 136,
+    "id_wilaya": 17,
+    "nom_bureau": "Djelfa",
+    "code_stopdesk": "17A",
+    "adresse": "Centre-ville, en face de la Caisse Nationale des Retraites (C.N.R), Quartier Ben Djerma",
+    "adresse_maps": "https://maps.app.goo.gl/XzTJCLFSvtiA4PWV6",
+    "tel_contact": "0770580860, 0550429422",
+    "commune": "Djelfa"
+  },
+  {
+    "id": 137,
+    "id_wilaya": 17,
+    "nom_bureau": "Djelfa - Ain Ouassara",
+    "code_stopdesk": "17B",
+    "adresse": "Quartier Mohamed Boudiaf, Section 23, Local n° 30 Bisi, Commune de Ain Oussera.",
+    "adresse_maps": "https://maps.app.goo.gl/vT6iVZfJrZv8ZgRXA",
+    "tel_contact": "0549746237, 027941332, 0778550473",
+    "commune": "Ain Oussera"
+  },
+  {
+    "id": 138,
+    "id_wilaya": 18,
+    "nom_bureau": "Jijel",
+    "code_stopdesk": "18A",
+    "adresse": "rue26, Avenue Kaoula Mokhtar, cita sans intérdit , Hay IDARI",
+    "adresse_maps": "https://maps.app.goo.gl/Xd69qa4VBgX63ZXMA",
+    "tel_contact": "0770613439, 0561660019",
+    "commune": "Jijel"
+  },
+  {
+    "id": 140,
+    "id_wilaya": 19,
+    "nom_bureau": "El eulma",
+    "code_stopdesk": "19B",
+    "adresse": "Tassahoumi, a coté de transport hamouda et hôtel Rato rue Touaher el khayer et à côté de transport el ikhlas, el eulma, Sétif (La station sera ouverte de 08h30 jusqu’à 18h00.)",
+    "adresse_maps": "https://maps.app.goo.gl/r5e1bxGG3r6ZcjHi6?g_st=aw",
+    "tel_contact": "0561864463, 0550428625, 0770608717",
+    "commune": "El Eulma"
+  },
+  {
+    "id": 139,
+    "id_wilaya": 19,
+    "nom_bureau": "Sétif",
+    "code_stopdesk": "19A",
+    "adresse": "Cité Mesoudi Edhouadi 1014-614 Logement (En face la gare Didouche Mourad)",
+    "adresse_maps": "https://maps.app.goo.gl/6hq9NN4VUM5BAj7D8",
+    "tel_contact": "0550428220, 0561638678",
+    "commune": "Setif"
+  },
+  {
+    "id": 141,
+    "id_wilaya": 19,
+    "nom_bureau": "Sétif - Ain Oulmene",
+    "code_stopdesk": "19C",
+    "adresse": "En face CEM Douhil Abdul Hamid,",
+    "adresse_maps": "https://maps.app.goo.gl/QDG27DsQddAXCgUG6",
+    "tel_contact": "0770749621, 0770749618",
+    "commune": "Ain Oulmane"
+  },
+  {
+    "id": 143,
+    "id_wilaya": 20,
+    "nom_bureau": "Saïda",
+    "code_stopdesk": "20A",
+    "adresse": "Cité Riad en face Maison de l'Environnement",
+    "adresse_maps": "https://maps.app.goo.gl/VviCNGfZ5paDP6Yg8",
+    "tel_contact": "0550428481, 0560421128",
+    "commune": "Saida"
+  },
+  {
+    "id": 144,
+    "id_wilaya": 21,
+    "nom_bureau": "Skikda",
+    "code_stopdesk": "21A",
+    "adresse": "Rue du Chahid Meziane Salah (Route Bouyali, Immeuble Guerza)",
+    "adresse_maps": "https://maps.app.goo.gl/Gq9zgUTm4ouAh5yKA",
+    "tel_contact": "0770773555, 0561759686",
+    "commune": "Skikda"
+  },
+  {
+    "id": 145,
+    "id_wilaya": 21,
+    "nom_bureau": "Skikda -  Azzaba",
+    "code_stopdesk": "21B",
+    "adresse": "Cite mefrouche dahmane",
+    "adresse_maps": null,
+    "tel_contact": "0560316523",
+    "commune": "Azzaba"
+  },
+  {
+    "id": 146,
+    "id_wilaya": 22,
+    "nom_bureau": "Sidi bel abbès",
+    "code_stopdesk": "22A",
+    "adresse": "Rue CPR , En face Masjid El Ansar",
+    "adresse_maps": "https://maps.app.goo.gl/etRK49tRiqgm2jM89",
+    "tel_contact": "0770610413, 0560419987",
+    "commune": "Sidi Bel Abbes"
+  },
+  {
+    "id": 147,
+    "id_wilaya": 23,
+    "nom_bureau": "Annaba",
+    "code_stopdesk": "23A",
+    "adresse": "Rue Djemila, Saint Claud (À côté de la mosqué Badr)",
+    "adresse_maps": "https://maps.app.goo.gl/6yKATA45oXvHHihk9",
+    "tel_contact": "0561623524, 0770582366, 0770582331, 0770610699",
+    "commune": "Annaba"
+  },
+  {
+    "id": 148,
+    "id_wilaya": 23,
+    "nom_bureau": "Annaba - EL BOUNI",
+    "code_stopdesk": "23B",
+    "adresse": "Fractionnement de la Bouni 2, zone urbaine n° 43, rez-de-chaussée, section 40, groupe de propriété 02, Bouni",
+    "adresse_maps": "https://maps.app.goo.gl/z5TMRRUV6awNv3dRA",
+    "tel_contact": "0770932016, 0560777653",
+    "commune": "El Bouni"
+  },
+  {
+    "id": 149,
+    "id_wilaya": 24,
+    "nom_bureau": "Guelma",
+    "code_stopdesk": "24A",
+    "adresse": "Cité 19 Juin - Numéro 02, en face marché Elbaraka",
+    "adresse_maps": "https://maps.app.goo.gl/8gi3VUh2aasGbGQT7",
+    "tel_contact": "0659698421, 0770610741",
+    "commune": "Guelma"
+  },
+  {
+    "id": 152,
+    "id_wilaya": 25,
+    "nom_bureau": "Constantine",
+    "code_stopdesk": "25C",
+    "adresse": "Avenue Kaddour Boumedous (Ciloc) a coté de la direction régionale d’Air Algérie.",
+    "adresse_maps": "https://maps.app.goo.gl/N9uLL4Ji2AagvhWZ9",
+    "tel_contact": "0560459167, 0560463858, 0555508343, 0561906766, 0770890359",
+    "commune": "Constantine"
+  },
+  {
+    "id": 151,
+    "id_wilaya": 25,
+    "nom_bureau": "Constantine - Ali Mendjli",
+    "code_stopdesk": "25B",
+    "adresse": "En face de Sarl Natura pro Algérie/entre deux salles des fêtés el baraka et méga",
+    "adresse_maps": "https://maps.app.goo.gl/qk8oJNE96vvU2kzM7",
+    "tel_contact": "0561623523, 0770570921, 0559006598, 0560183481",
+    "commune": "El Khroub"
+  },
+  {
+    "id": 150,
+    "id_wilaya": 25,
+    "nom_bureau": "Constantine - Zouaghi",
+    "code_stopdesk": "25A",
+    "adresse": "Cité Tlemcen Zouaghi (En face de la gendarmerie)",
+    "adresse_maps": "https://maps.app.goo.gl/hCfjk81JdYZe1kLt8",
+    "tel_contact": "0561850861, 0550429556, 0556910802, 0560005537",
+    "commune": "Hamma Bouziane"
+  },
+  {
+    "id": 153,
+    "id_wilaya": 26,
+    "nom_bureau": "Médéa",
+    "code_stopdesk": "26A",
+    "adresse": "Cité Ennasr (Près du pôle universitaire et Sonelgaz)",
+    "adresse_maps": "https://maps.app.goo.gl/u1nnLgz6wQABnUt19",
+    "tel_contact": "0770605318, 0550429981",
+    "commune": "Medea"
+  },
+  {
+    "id": 154,
+    "id_wilaya": 27,
+    "nom_bureau": "Mostaganem",
+    "code_stopdesk": "27A",
+    "adresse": "La pépinière en face la glacière juste à côté de la libraire BENALIOUA ( cité AKID AMIROUCHE boulevard NAFOUSSI OTHMAN)",
+    "adresse_maps": "https://maps.app.goo.gl/1a83AMSY4JicE49U8",
+    "tel_contact": "0561772345, 0561827231",
+    "commune": "Mostaganem"
+  },
+  {
+    "id": 155,
+    "id_wilaya": 27,
+    "nom_bureau": "Mostaganem - Sidi lakhder",
+    "code_stopdesk": "27B",
+    "adresse": "rue si abdelah  01 novembre devant la poste sidi lakhder",
+    "adresse_maps": "https://maps.app.goo.gl/QKZ5yCySSb2Eo7XP7",
+    "tel_contact": "0560264267",
+    "commune": "Sidi Lakhdar"
+  },
+  {
+    "id": 156,
+    "id_wilaya": 28,
+    "nom_bureau": "M'sila",
+    "code_stopdesk": "28A",
+    "adresse": "Rue Ichbilia (En face l'université de M'Sila)",
+    "adresse_maps": "https://maps.app.goo.gl/GPxraSKTwr6gqPdF6",
+    "tel_contact": "0770754014, 0561821829",
+    "commune": "Msila"
+  },
+  {
+    "id": 157,
+    "id_wilaya": 28,
+    "nom_bureau": "M'sila - Bousaada",
+    "code_stopdesk": "28B",
+    "adresse": "Cité El Bader (ESTTIH) a coté de L'annexe de L'APC ,Bousaada",
+    "adresse_maps": "https://maps.app.goo.gl/Fq9e9wroyanPQ7CA9",
+    "tel_contact": "0559270829",
+    "commune": "Bou Saada"
+  },
+  {
+    "id": 159,
+    "id_wilaya": 29,
+    "nom_bureau": "Mascara",
+    "code_stopdesk": "29B",
+    "adresse": "Rue d'oran , colonel Amirouche , lot 112 N° 07 local 06 ,a coté de hadj Grrifa",
+    "adresse_maps": null,
+    "tel_contact": "0561680241, 0561680236, 0561680238",
+    "commune": "Mascara"
+  },
+  {
+    "id": 158,
+    "id_wilaya": 29,
+    "nom_bureau": "Mascara - mohamadia",
+    "code_stopdesk": "29A",
+    "adresse": "Rue Larbi Ben M'hidi, a coté de l'agence de Barigou,",
+    "adresse_maps": "https://maps.app.goo.gl/8qccid2Pesg8FtpR8",
+    "tel_contact": "0770582372, 0550602272",
+    "commune": "Mohammadia"
+  },
+  {
+    "id": 160,
+    "id_wilaya": 30,
+    "nom_bureau": "Ouargla",
+    "code_stopdesk": "30A",
+    "adresse": "Sidi Abdelkader, derrière la maison de jeune",
+    "adresse_maps": "https://maps.app.goo.gl/Eeq8SWYKwXZVu2XV6",
+    "tel_contact": "0550602271, 0770938789",
+    "commune": "Ouargla"
+  },
+  {
+    "id": 161,
+    "id_wilaya": 30,
+    "nom_bureau": "Ouargla - Hassi Messaoud",
+    "code_stopdesk": "30B",
+    "adresse": "Quartier 1850, rue principale du marché hebdomadaire, en face de l’ancienne agence KIA, Hassi Messaoud",
+    "adresse_maps": "https://maps.app.goo.gl/QKZ5yCySSb2Eo7XP7",
+    "tel_contact": "0563026710, 0563026725",
+    "commune": "Hassi Messaoud"
+  },
+  {
+    "id": 166,
+    "id_wilaya": 31,
+    "nom_bureau": "Maraval [ E-COM ]",
+    "code_stopdesk": "31Z",
+    "adresse": "cite othmania rue ben arbia elhouari N24 loc 09 oran",
+    "adresse_maps": "https://maps.app.goo.gl/rtarVEGCavH3ETgv7",
+    "tel_contact": "0770397258",
+    "commune": "Oran"
+  },
+  {
+    "id": 165,
+    "id_wilaya": 31,
+    "nom_bureau": "Oran - Arzew",
+    "code_stopdesk": "31D",
+    "adresse": "EN FACE ANCIEN DAIRA D’ARZEW , Rue KADIR ELHABIB N° 04, Oran",
+    "adresse_maps": null,
+    "tel_contact": "0560265681, 0560266405",
+    "commune": "Arzew"
+  },
+  {
+    "id": 163,
+    "id_wilaya": 31,
+    "nom_bureau": "Oran - Bir el djir",
+    "code_stopdesk": "31B",
+    "adresse": "Coopérative Immobilière Dar El Amel - N°14 - Local1 RC",
+    "adresse_maps": "https://maps.app.goo.gl/YyNEn3FWzMchRyLK9",
+    "tel_contact": "0550429662, 0550429661",
+    "commune": "Bir el djir"
+  },
+  {
+    "id": 164,
+    "id_wilaya": 31,
+    "nom_bureau": "Oran - Gambita",
+    "code_stopdesk": "31C",
+    "adresse": "Gambetta En face arrêt de bus 51 et 11 de (dispensaire cave-gay)",
+    "adresse_maps": "https://maps.app.goo.gl/832PTz4ngWYMxzkf6",
+    "tel_contact": "0560181020, 0560181117, 0560181125",
+    "commune": "Oran"
+  },
+  {
+    "id": 167,
+    "id_wilaya": 32,
+    "nom_bureau": "El Bayadh",
+    "code_stopdesk": "32A",
+    "adresse": "Cité jolie vue (Al-Mandhar Al-Jamil), à côté de la Direction de la distribution d'électricité et de gaz",
+    "adresse_maps": "https://maps.app.goo.gl/qbL18AuxDX4iTosx9",
+    "tel_contact": "0560481886",
+    "commune": "El Bayadh"
+  },
+  {
+    "id": 168,
+    "id_wilaya": 33,
+    "nom_bureau": "Illizi",
+    "code_stopdesk": "33A",
+    "adresse": "(À côté de la wilaya / Près de boulangerie Ben Ziar)",
+    "adresse_maps": "https://maps.app.goo.gl/EYsD2SuG2x9e1e6N6",
+    "tel_contact": "0560892842",
+    "commune": "Illizi"
+  },
+  {
+    "id": 169,
+    "id_wilaya": 34,
+    "nom_bureau": "Bordj Bou Arreridj [ E-COM ]",
+    "code_stopdesk": "34A",
+    "adresse": "Quartier du 24 avril, route de Sétif, secteur 97, groupement immobilier 68, commune de Bordj Bou Arreridj",
+    "adresse_maps": "https://maps.app.goo.gl/tndtMs9TUTZ4XPgk7",
+    "tel_contact": "0770312410",
+    "commune": "Bordj Bou Arreridj"
+  },
+  {
+    "id": 170,
+    "id_wilaya": 35,
+    "nom_bureau": "Boumerdès  [ E-com ]",
+    "code_stopdesk": "35A",
+    "adresse": "Commune de Boumerdès, Arrondissement Ibn Khaldoun, Wadi Tatariq, Parcelle N°74",
+    "adresse_maps": "https://maps.app.goo.gl/GKZA5jsisKzAmTUa7",
+    "tel_contact": "0770289473",
+    "commune": "Boumerdes"
+  },
+  {
+    "id": 172,
+    "id_wilaya": 35,
+    "nom_bureau": "Boumerdès - Bordj Menaiel",
+    "code_stopdesk": "35C",
+    "adresse": "Rue Madaoui Ali, LOCAL BOUMZER EN FACE OPHTALMOLOGISTE DOCTEUR BENMOUSSA HOCINE, BORDJ MENAIEL, BOUMERDES (La station sera ouverte de 08h30 jusqu'à 18h00)",
+    "adresse_maps": "https://maps.app.goo.gl/fefE7RWUe7anKPwA9",
+    "tel_contact": "0563029215, 0563029214",
+    "commune": "Bordj Menaiel"
+  },
+  {
+    "id": 173,
+    "id_wilaya": 35,
+    "nom_bureau": "Boumerdès - Dellys",
+    "code_stopdesk": "35D",
+    "adresse": "La banlieue Est de Dellys, route nationale n° 24, Rez de chaussée bâtiment (B), Local N° B05, DELLYS | Repère : AGENCE IMMOBILLIERE NADJI",
+    "adresse_maps": "https://maps.app.goo.gl/C4VdGeKvsZBVWPWc9",
+    "tel_contact": "0560018652",
+    "commune": "Dellys"
+  },
+  {
+    "id": 171,
+    "id_wilaya": 35,
+    "nom_bureau": "Boumerdès - Ouled Moussa",
+    "code_stopdesk": "35B",
+    "adresse": "La zone industrielle d'Ouled Moussa",
+    "adresse_maps": "https://maps.app.goo.gl/mZAQoLAj3uJnvEPr8",
+    "tel_contact": "0550430051, 0560665086",
+    "commune": "Ouled Moussa"
+  },
+  {
+    "id": 174,
+    "id_wilaya": 36,
+    "nom_bureau": "El Taref",
+    "code_stopdesk": "36A",
+    "adresse": "City center ( centre commerciale zaydi 1er étage N°10 )wilaya etEl taref",
+    "adresse_maps": "https://maps.app.goo.gl/GJF8NyCrQDXd5w73A",
+    "tel_contact": "0550522421, 0550523464",
+    "commune": "El Tarf"
+  },
+  {
+    "id": 175,
+    "id_wilaya": 37,
+    "nom_bureau": "Tindouf",
+    "code_stopdesk": "37A",
+    "adresse": "Magasin N°03 cité Al-Qasabi, Section 14, Groupement Immobilier N° 165, Commune de Tindouf (la station sera ouverte de 08h30 jusqu’à 17h00)",
+    "adresse_maps": "https://maps.app.goo.gl/gpqJxUdLaebL7NGt7",
+    "tel_contact": "0560555395",
+    "commune": "Tindouf"
+  },
+  {
+    "id": 176,
+    "id_wilaya": 38,
+    "nom_bureau": "Tissemsilt",
+    "code_stopdesk": "38A",
+    "adresse": "Résidence kaidi (promotion) ancien arrêt des taxis",
+    "adresse_maps": "https://maps.app.goo.gl/qBX7DVgH2dBAZfKu6",
+    "tel_contact": "0560650819, 0555589197",
+    "commune": "Tissemsilt"
+  },
+  {
+    "id": 177,
+    "id_wilaya": 39,
+    "nom_bureau": "El Oued",
+    "code_stopdesk": "39A",
+    "adresse": "Cité Al-Rimal, Commune El Oued wilaya El Ouadi (la route menant au tribunal)",
+    "adresse_maps": "https://maps.app.goo.gl/2GeaAQvQotEyjsg28",
+    "tel_contact": "0550520770, 0550521485",
+    "commune": "El Oued"
+  },
+  {
+    "id": 178,
+    "id_wilaya": 40,
+    "nom_bureau": "Khenchela",
+    "code_stopdesk": "40A",
+    "adresse": "Rue du poid lourd à coté de la clinique du dialyse Messai -Khenchela-",
+    "adresse_maps": "https://maps.app.goo.gl/2MmLNCuoL7szc1YA8",
+    "tel_contact": "0561759173, 0560469790, 0555562589",
+    "commune": "Khenchela"
+  },
+  {
+    "id": 179,
+    "id_wilaya": 41,
+    "nom_bureau": "Souk ahres",
+    "code_stopdesk": "41A",
+    "adresse": "En face radio souk ahras et l laboratoire des analyses Taghest",
+    "adresse_maps": "https://maps.app.goo.gl/8sKTN9kvbPMbhF3G8",
+    "tel_contact": "0560030559, 0560039852",
+    "commune": "Souk Ahras"
+  },
+  {
+    "id": 181,
+    "id_wilaya": 42,
+    "nom_bureau": "Tipaza - Koléa",
+    "code_stopdesk": "42B",
+    "adresse": "Route d’Alger - Kolea, commune de Kolea, wilaya de Tipaza.",
+    "adresse_maps": "https://maps.app.goo.gl/6pQ9EdJsh39qbhpW8",
+    "tel_contact": "0563026712, 0563026701, 0770170636",
+    "commune": "Kolea"
+  },
+  {
+    "id": 182,
+    "id_wilaya": 42,
+    "nom_bureau": "Tipaza [ E-com ]",
+    "code_stopdesk": "42Z",
+    "adresse": "cite AADL",
+    "adresse_maps": "https://maps.app.goo.gl/7sBwHqp4wYpACDjV7",
+    "tel_contact": "070397255",
+    "commune": "Tipaza"
+  },
+  {
+    "id": 183,
+    "id_wilaya": 43,
+    "nom_bureau": "Mila",
+    "code_stopdesk": "43A",
+    "adresse": "chateau d'eau en face protection civile",
+    "adresse_maps": "https://maps.app.goo.gl/UVcD63ANz8Zxi1hc8",
+    "tel_contact": "0550518508, 0550518509",
+    "commune": "Mila"
+  },
+  {
+    "id": 184,
+    "id_wilaya": 43,
+    "nom_bureau": "Mila - Chelghoum El aid",
+    "code_stopdesk": "43B",
+    "adresse": "Rue 1er Nouvembre 1954 Chelghoum El aid (hotel Rhumel)",
+    "adresse_maps": null,
+    "tel_contact": "0550523511",
+    "commune": "Chelghoum Laid"
+  },
+  {
+    "id": 180,
+    "id_wilaya": 43,
+    "nom_bureau": "Mila - Ferdjioua",
+    "code_stopdesk": "43D",
+    "adresse": "Rue 1 novembre en face la gam assurance",
+    "adresse_maps": null,
+    "tel_contact": "0770580690, 0550602568",
+    "commune": "Ferdjioua"
+  },
+  {
+    "id": 185,
+    "id_wilaya": 43,
+    "nom_bureau": "Mila - Tadjenanet",
+    "code_stopdesk": "43C",
+    "adresse": "Rue 1 novembre en face cem mohamed abdo",
+    "adresse_maps": null,
+    "tel_contact": "0660968179",
+    "commune": "Tadjenanet"
+  },
+  {
+    "id": 186,
+    "id_wilaya": 44,
+    "nom_bureau": "Ain Defla",
+    "code_stopdesk": "44A",
+    "adresse": "City Najem, en face de l'entrée du groupement régional de la Gendarmerie Nationale, L’escadron",
+    "adresse_maps": "https://maps.app.goo.gl/X6h2X7J9dgH9idGt7",
+    "tel_contact": "0561770486, 0560607115, 0560889758",
+    "commune": "Ain Defla"
+  },
+  {
+    "id": 187,
+    "id_wilaya": 44,
+    "nom_bureau": "Ain Defla - Khemis miliana [ E-com ]",
+    "code_stopdesk": "44B",
+    "adresse": "Cité City halaimi mohamed, commune khemismiliana wilaya de Ain defla",
+    "adresse_maps": "https://maps.app.goo.gl/Ym5umeobLuHaRRpn9",
+    "tel_contact": "0770289462",
+    "commune": "Khemis Miliana"
+  },
+  {
+    "id": 188,
+    "id_wilaya": 45,
+    "nom_bureau": "Naâma - Mecheria",
+    "code_stopdesk": "45A",
+    "adresse": "Route Nationale n°06, à côté de l’hôtel Amine et du centre d’Algérie Télécom",
+    "adresse_maps": "https://maps.app.goo.gl/3CkDdyRMLKmnbbZg9",
+    "tel_contact": "0560294576, 0770615202",
+    "commune": "Mechria"
+  },
+  {
+    "id": 189,
+    "id_wilaya": 46,
+    "nom_bureau": "Aïn Témouchent",
+    "code_stopdesk": "46A",
+    "adresse": "22A cité des oliviers ain témouchnet 46000(en face du parking de la  wilaya)",
+    "adresse_maps": "https://maps.app.goo.gl/V6HZrwBBZgsW5sjx8",
+    "tel_contact": "0560908785, 0550428624",
+    "commune": "Ain Temouchent"
+  },
+  {
+    "id": 190,
+    "id_wilaya": 47,
+    "nom_bureau": "Ghardaïa",
+    "code_stopdesk": "47A",
+    "adresse": "Rue principale Hadj Messaoud en face la branche municipale, Haj Masoud",
+    "adresse_maps": "https://maps.app.goo.gl/o8LUFLQj796inkPe8",
+    "tel_contact": "0561686305, 0561638680",
+    "commune": "Ghardaïa"
+  },
+  {
+    "id": 191,
+    "id_wilaya": 48,
+    "nom_bureau": "Relizane",
+    "code_stopdesk": "48A",
+    "adresse": "Cité 31 logmt en face la justice, a coté de la banque societé général algerie",
+    "adresse_maps": "https://maps.app.goo.gl/TVkvkzx9DSXGLyc26",
+    "tel_contact": "0560754029, 0560791527",
+    "commune": "Relizane"
+  },
+  {
+    "id": 192,
+    "id_wilaya": 49,
+    "nom_bureau": "Timimoun",
+    "code_stopdesk": "49A",
+    "adresse": "cité MAHDJOUB N° de la porte 16 , Timimoun en face le stade et SAA",
+    "adresse_maps": "https://maps.app.goo.gl/NXKZEjzRWWA4b4aA6",
+    "tel_contact": "0555518628",
+    "commune": "Timimoun"
+  },
+  {
+    "id": 193,
+    "id_wilaya": 51,
+    "nom_bureau": "Ouled Djellal",
+    "code_stopdesk": "51A",
+    "adresse": "Rez-de-chaussée de l'hôtel Transit, à côté de la protection civile d'Ouled Djellal.",
+    "adresse_maps": "https://maps.app.goo.gl/NhyzzqPmKrJRgs1b9",
+    "tel_contact": "0770749651",
+    "commune": "Ouled Djellal"
+  },
+  {
+    "id": 194,
+    "id_wilaya": 52,
+    "nom_bureau": "BENI ABBES",
+    "code_stopdesk": "52A",
+    "adresse": "A coté la wilaya BENI ABBES , en face LAPIWI",
+    "adresse_maps": "https://maps.app.goo.gl/27WiRCQt9ZAZ2Xbj9",
+    "tel_contact": "0561906728",
+    "commune": "Beni Abbes"
+  },
+  {
+    "id": 195,
+    "id_wilaya": 53,
+    "nom_bureau": "In Salah",
+    "code_stopdesk": "53A",
+    "adresse": "Près de la Direction des travaux publics, en face de l'entrée du radar d'Algérie Télécom",
+    "adresse_maps": "https://maps.app.goo.gl/kcTKWXveoDBDjXRi6",
+    "tel_contact": "0560362803",
+    "commune": "Ain Salah"
+  },
+  {
+    "id": 196,
+    "id_wilaya": 55,
+    "nom_bureau": "Touggourt",
+    "code_stopdesk": "55A",
+    "adresse": "Cité Sidi Abdeslam (Prés de la banque BEA), Touggourt",
+    "adresse_maps": "https://maps.app.goo.gl/K87WhPBkdSoTX5eS9",
+    "tel_contact": "0770610683",
+    "commune": "Touggourt"
+  },
+  {
+    "id": 197,
+    "id_wilaya": 56,
+    "nom_bureau": "Djanet",
+    "code_stopdesk": "56A",
+    "adresse": "Centre-ville Tine Khatema, à côté du dentiste, Djanet",
+    "adresse_maps": "https://maps.app.goo.gl/JYAs2vcDcr1YYbr87",
+    "tel_contact": "0563026716",
+    "commune": "Djanet"
+  },
+  {
+    "id": 198,
+    "id_wilaya": 58,
+    "nom_bureau": "El Meniaa",
+    "code_stopdesk": "58A",
+    "adresse": "Rue de l'unite African (À côté de la boulangerie Boussaid) Il se trouve à 20 mètres de la mosquée saad beno abi elouas",
+    "adresse_maps": "https://maps.app.goo.gl/q2u9ijWUoQymwa7dA",
+    "tel_contact": "0770602445",
+    "commune": "El Meniaa"
+  }
+]
