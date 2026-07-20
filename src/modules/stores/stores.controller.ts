@@ -77,17 +77,27 @@ export class StoresController {
 
   @Public()
   @Get()
-  @ApiOperation({ summary: 'List all stores (public)' })
+  @ApiOperation({ summary: 'List all stores (public, cursor-based pagination)' })
   @ApiQuery({ name: 'isActive', required: false })
   @ApiQuery({ name: 'isVerified', required: false })
   @ApiQuery({ name: 'search', required: false, description: 'Full-text search' })
-  @ApiResponse({ status: 200, description: 'List of stores', type: [Store] })
+  @ApiQuery({ name: 'limit', required: false, description: 'Items per page (default 10, max 100)' })
+  @ApiQuery({ name: 'cursor', required: false, description: 'JSON stringified cursor {createdAt, _id} from previous response' })
+  @ApiResponse({ status: 200, description: 'Stores with cursor pagination' })
   findAll(
     @Query('isActive') isActive?: string,
     @Query('isVerified') isVerified?: string,
     @Query('search') search?: string,
+    @Query('limit') limit?: string,
+    @Query('cursor') cursor?: string,
   ) {
-    return this.storesService.findAll({ isActive, isVerified, search });
+    return this.storesService.findAll({
+      isActive,
+      isVerified,
+      search,
+      limit: limit ? Number(limit) : undefined,
+      cursor,
+    });
   }
 
   @Public()

@@ -2,6 +2,8 @@ import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/commo
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Product, ProductDocument } from './schemas/product.schema';
+import { Category, CategoryDocument } from '../categories/schemas/category.schema';
+import { SubCategory, SubCategoryDocument } from '../categories/schemas/sub-category.schema';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductQueryDto, CursorDto } from './dto/product-query.dto';
@@ -34,6 +36,8 @@ export interface CursorPaginatedResult<T> {
 export class ProductsService {
   constructor(
     @InjectModel(Product.name) private productModel: Model<ProductDocument>,
+    @InjectModel(Category.name) private categoryModel: Model<CategoryDocument>,
+    @InjectModel(SubCategory.name) private subCategoryModel: Model<SubCategoryDocument>,
     private readonly cacheService: CacheService,
   ) {}
 
@@ -102,7 +106,7 @@ export class ProductsService {
       const escaped = query.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const regex = { $regex: escaped, $options: 'i' };
 
-      const orConditions = [
+      const orConditions: Record<string, any>[] = [
         { nameEn: regex },
         { nameAr: regex },
         { nameFr: regex },
@@ -118,6 +122,31 @@ export class ProductsService {
         { 'variants.options.nameAr': regex },
         { 'variants.options.nameFr': regex },
       ];
+
+      // Also search by category/subcategory name
+      const matchingCategories = await this.categoryModel.find({
+        $or: [
+          { nameEn: regex },
+          { nameAr: regex },
+          { nameFr: regex },
+          { slug: regex },
+        ],
+      }).select('_id').lean().exec();
+      if (matchingCategories.length > 0) {
+        orConditions.push({ category: { $in: matchingCategories.map(c => c._id) } });
+      }
+
+      const matchingSubCategories = await this.subCategoryModel.find({
+        $or: [
+          { nameEn: regex },
+          { nameAr: regex },
+          { nameFr: regex },
+          { slug: regex },
+        ],
+      }).select('_id').lean().exec();
+      if (matchingSubCategories.length > 0) {
+        orConditions.push({ subCategory: { $in: matchingSubCategories.map(s => s._id) } });
+      }
 
       const andConditions: Record<string, any>[] = [filter, { $or: orConditions }];
 

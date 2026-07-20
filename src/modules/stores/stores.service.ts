@@ -1,9 +1,20 @@
 import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Store, StoreDocument } from './schemas/store.schema';
 import { CreateStoreDto } from './dto/create-store.dto';
 import { UpdateStoreDto } from './dto/update-store.dto';
+
+export interface CursorDto {
+  createdAt: string;
+  _id: string;
+}
+
+export interface CursorPaginatedStoresResult {
+  stores: Store[];
+  nextCursor: CursorDto | null;
+  hasMore: boolean;
+}
 
 @Injectable()
 export class StoresService {
@@ -51,24 +62,84 @@ export class StoresService {
     isActive?: string;
     isVerified?: string;
     search?: string;
-  }): Promise<Store[]> {
+    limit?: number;
+    cursor?: string;
+  }): Promise<CursorPaginatedStoresResult> {
     const filter: Record<string, any> = {};
 
     if (query.isActive !== undefined) filter.isActive = query.isActive === 'true';
     if (query.isVerified !== undefined) filter.isVerified = query.isVerified === 'true';
 
-    let queryBuilder = this.storeModel.find(filter);
+    const limit = query.limit || 10;
 
-    if (query.search) {
-      queryBuilder = this.storeModel.find(
-        { ...filter, $text: { $search: query.search } },
-        { score: { $meta: 'textScore' } },
-      ).sort({ score: { $meta: 'textScore' } });
-    } else {
-      queryBuilder = queryBuilder.sort({ createdAt: -1 });
+    let cursorObj: CursorDto | null = null;
+    if (query.cursor) {
+      try { cursorObj = JSON.parse(query.cursor); } catch {}
     }
 
-    return queryBuilder.exec();
+    let searchFilter: Record<string, any>;
+
+    if (query.search) {
+      const escaped = query.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = { $regex: escaped, $options: 'i' };
+
+      const orConditions = [
+        { storeName: regex },
+        { storeSlug: regex },
+        { description: regex },
+        { tagline: regex },
+        { vendorEmail: regex },
+        { contactEmail: regex },
+        { contactPhone: regex },
+        { wilaya: regex },
+        { 'address.city': regex },
+        { 'address.street': regex },
+      ];
+
+      const andConditions: Record<string, any>[] = [filter, { $or: orConditions }];
+
+      if (cursorObj && cursorObj.createdAt && cursorObj._id) {
+        andConditions.push({
+          $or: [
+            { createdAt: { $lt: new Date(cursorObj.createdAt) } },
+            { createdAt: new Date(cursorObj.createdAt), _id: { $lt: new Types.ObjectId(cursorObj._id) } },
+          ],
+        });
+      }
+
+      searchFilter = { $and: andConditions };
+    } else {
+      searchFilter = { ...filter };
+
+      if (cursorObj && cursorObj.createdAt && cursorObj._id) {
+        searchFilter.$or = [
+          { createdAt: { $lt: new Date(cursorObj.createdAt) } },
+          { createdAt: new Date(cursorObj.createdAt), _id: { $lt: new Types.ObjectId(cursorObj._id) } },
+        ];
+      }
+    }
+
+    const items = await this.storeModel
+      .find(searchFilter)
+      .sort({ createdAt: -1, _id: -1 })
+      .limit(limit + 1)
+      .exec();
+
+    const hasMore = items.length > limit;
+    if (hasMore) items.pop();
+
+    let nextCursor: CursorDto | null = null;
+    if (items.length > 0) {
+      const last = items[items.length - 1];
+      nextCursor = {
+        createdAt: (last as any).createdAt instanceof Date
+          ? (last as any).createdAt.toISOString()
+          : String((last as any).createdAt),
+        _id: String(last._id),
+      };
+    }
+
+    return { stores: items as Store[], nextCursor, hasMore };
   }
 
   async findOne(id: string): Promise<Store> {
