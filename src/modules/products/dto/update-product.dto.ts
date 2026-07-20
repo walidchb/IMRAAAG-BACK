@@ -77,11 +77,6 @@ export class UpdateProductDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  vendorEmail?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
   nameEn?: string;
 
   @ApiPropertyOptional()

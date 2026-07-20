@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';
+import sharp from 'sharp';
 
 export type UploadFolder = 'products' | 'stores';
 
@@ -36,16 +37,23 @@ export class UploadService {
   async uploadFile(
     file: Express.Multer.File,
     folder: UploadFolder,
-  ): Promise<{ url: string; key: string }> {
+  ): Promise<{ url: string; key: string; thumbUrl: string; thumbKey: string }> {
     this.validateFile(file);
 
     const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
-    const key = `${folder}/${uuidv4()}${ext}`;
+    const baseName = `${folder}/${uuidv4()}`;
+    const key = `${baseName}${ext}`;
+    const thumbKey = `${baseName}-thumb.webp`;
+
+    const baseUrl = this.publicUrl.replace(/\/+$/, '');
+    const url = baseUrl ? `${baseUrl}/${key}` : key;
+    const thumbUrl = baseUrl ? `${baseUrl}/${thumbKey}` : thumbKey;
 
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000);
+      const timeoutId = setTimeout(() => controller.abort(), 60000);
 
+      // Upload original
       await this.s3.send(
         new PutObjectCommand({
           Bucket: this.bucket,
@@ -57,12 +65,27 @@ export class UploadService {
         { abortSignal: controller.signal },
       );
 
+      // Generate and upload thumbnail
+      const thumbBuffer = await sharp(file.buffer)
+        .resize(400, 400, { fit: 'cover', position: 'centre' })
+        .webp({ quality: 80 })
+        .toBuffer();
+
+      await this.s3.send(
+        new PutObjectCommand({
+          Bucket: this.bucket,
+          Key: thumbKey,
+          Body: thumbBuffer,
+          ContentType: 'image/webp',
+          CacheControl: 'public, max-age=31536000',
+        }),
+        { abortSignal: controller.signal },
+      );
+
       clearTimeout(timeoutId);
 
-      const baseUrl = this.publicUrl.replace(/\/+$/, '');
-      const url = baseUrl ? `${baseUrl}/${key}` : key;
       this.logger.log(`File uploaded: ${url}`);
-      return { url, key };
+      return { url, key, thumbUrl, thumbKey };
     } catch (error) {
       this.logger.error(`Failed to upload file to R2: ${error.message}`);
       const msg = error.message || '';
@@ -101,7 +124,7 @@ export class UploadService {
   async uploadMultipleFiles(
     files: Express.Multer.File[],
     folder: UploadFolder,
-  ): Promise<{ url: string; key: string }[]> {
+  ): Promise<{ url: string; key: string; thumbUrl: string; thumbKey: string }[]> {
     const results = await Promise.all(
       files.map((file) => this.uploadFile(file, folder)),
     );

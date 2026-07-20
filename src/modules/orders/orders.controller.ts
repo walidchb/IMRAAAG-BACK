@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   Query,
+  Req,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { OrdersService } from './orders.service';
@@ -53,6 +54,26 @@ export class OrdersController {
     @Query() query: Record<string, string>,
   ) {
     return this.ordersService.findAll(query);
+  }
+
+  @Get('mine')
+  @ApiOperation({ summary: 'Get my orders (customer)' })
+  @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'limit', required: false })
+  @ApiQuery({ name: 'status', required: false })
+  @ApiResponse({ status: 200, description: 'Paginated customer orders' })
+  findMine(
+    @Req() req: any,
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+    @Query('status') status?: string,
+  ) {
+    const phone = (req.user as any).phoneNumber;
+    return this.ordersService.findByCustomerPhone(phone, {
+      page: Number(page),
+      limit: Number(limit),
+      status,
+    });
   }
 
   @Post('bulk')

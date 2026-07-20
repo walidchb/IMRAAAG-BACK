@@ -4,6 +4,7 @@ import { DeliveryFee, DeliveryFeeSchema } from './schemas/delivery-fee.schema';
 import { DeliveryConfig, DeliveryConfigSchema } from '../delivery/schemas/delivery-config.schema';
 import { DeliveryFeesController } from './delivery-fees.controller';
 import { DeliveryFeesService } from './delivery-fees.service';
+import { CacheService } from '../../common/cache.service';
 
 @Module({
   imports: [
@@ -13,7 +14,7 @@ import { DeliveryFeesService } from './delivery-fees.service';
     ]),
   ],
   controllers: [DeliveryFeesController],
-  providers: [DeliveryFeesService],
+  providers: [DeliveryFeesService, CacheService],
   exports: [DeliveryFeesService, MongooseModule],
 })
 export class DeliveryFeesModule {}

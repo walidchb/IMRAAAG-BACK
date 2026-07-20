@@ -46,6 +46,9 @@ export class User {
   @Prop()
   refreshToken: string;
 
+  @Prop()
+  refreshTokenExpiresAt: Date;
+
   @Prop({
     type: {
       fullName: String,
@@ -94,6 +97,9 @@ export class User {
 
   @Prop({ type: Types.ObjectId, ref: 'Store' })
   storeId: Types.ObjectId;
+
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Product' }] })
+  savedProductIds: Types.ObjectId[];
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

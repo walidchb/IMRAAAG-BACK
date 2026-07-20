@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException, BadRequestException, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { Order, OrderDocument } from './schemas/order.schema';
 import { Product, ProductDocument } from '../products/schemas/product.schema';
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -10,6 +10,7 @@ import { BulkShipDto } from './dto/bulk-ship.dto';
 import { DeliveryService } from '../delivery/delivery.service';
 import { OrderStatusesService } from './order-statuses.service';
 import { BulkOrderResult } from '../delivery/delivery-companies/interfaces/delivery-company-handler.interface';
+import { ORDER_STATUS_TRANSITIONS, OrderStatus } from '../../common/constants/order-statuses.const';
 
 export interface PaginatedOrdersResult {
   data: Order[];
@@ -20,49 +21,14 @@ export interface PaginatedOrdersResult {
   statusCounts: Record<string, number>;
 }
 
-const ALLOWED_TRANSITIONS: Record<string, string[]> = {
-  placed: ['confirmed', 'cancelled'],
-  confirmed: ['dispatched', 'cancelled'],
-  dispatched: ['in-transit', 'cancelled'],
-  'in-transit': ['delivered', 'cancelled'],
-  delivered: ['returned'],
-  cancelled: [],
-  returned: [],
-};
-
 @Injectable()
-export class OrdersService implements OnModuleInit {
-  private slugToIdMap = new Map<string, string>();
-  private idToSlugMap = new Map<string, string>();
-
+export class OrdersService {
   constructor(
     @InjectModel(Order.name) private orderModel: Model<OrderDocument>,
     @InjectModel(Product.name) private productModel: Model<ProductDocument>,
     private readonly deliveryService: DeliveryService,
     private readonly statusesService: OrderStatusesService,
   ) {}
-
-  async onModuleInit() {
-    await this.reloadStatusMaps();
-  }
-
-  async reloadStatusMaps() {
-    const { slugToId, idToSlug } = await this.statusesService.getAllAsMap();
-    this.slugToIdMap = slugToId;
-    this.idToSlugMap = idToSlug;
-  }
-
-  private resolveId(slug: string): string {
-    const id = this.slugToIdMap.get(slug);
-    if (!id) throw new BadRequestException(`Unknown status slug: '${slug}'`);
-    return id;
-  }
-
-  private resolveSlug(id: string): string {
-    const slug = this.idToSlugMap.get(id);
-    if (!slug) throw new BadRequestException(`Unknown status id: '${id}'`);
-    return slug;
-  }
 
   private async generateOrderNo(): Promise<string> {
     const lastOrder = await this.orderModel
@@ -77,42 +43,56 @@ export class OrdersService implements OnModuleInit {
     return nextNumber;
   }
 
-  private validateStatusTransition(currentId: string, nextId: string): void {
-    const currentSlug = this.resolveSlug(currentId);
-    const nextSlug = this.resolveSlug(nextId);
-    const allowed = ALLOWED_TRANSITIONS[currentSlug];
-    if (!allowed || !allowed.includes(nextSlug)) {
-      throw new BadRequestException(
-        `Cannot transition order from '${currentSlug}' to '${nextSlug}'. Allowed transitions: ${(allowed || []).join(', ') || 'none'}`,
-      );
-    }
-  }
-
-  private isSlug(statusId: string, slug: string): boolean {
-    return this.idToSlugMap.get(statusId) === slug;
-  }
-
   async create(createOrderDto: CreateOrderDto): Promise<Order> {
     const nextNumber = await this.generateOrderNo();
-    const now = new Date().toISOString();
+    const now = new Date();
 
     if (createOrderDto.shippingMethod === 'home') {
       if (!createOrderDto.customer?.wilaya || !createOrderDto.customer?.commune) {
         throw new BadRequestException('Wilaya and commune are required for home delivery');
       }
     }
-    if (createOrderDto.shippingMethod === 'stopdesk' && !createOrderDto.stopDeskCode) {
-      throw new BadRequestException('Stop desk code is required for stop desk delivery');
+
+    const objectIds = (createOrderDto.items || [])
+      .map(i => i.productId)
+      .filter((id): id is string => !!id && /^[a-fA-F0-9]{24}$/.test(id));
+
+    const productMap = new Map<string, { price: number; weight: number }>();
+
+    if (objectIds.length > 0) {
+      const products = await this.productModel
+        .find({ _id: { $in: objectIds }, status: 'Active', published: true })
+        .select('price weight')
+        .lean()
+        .exec();
+      for (const p of products) {
+        productMap.set(String(p._id), { price: (p as any).price, weight: (p as any).weight });
+      }
     }
 
-    const itemsTotal = createOrderDto.items
-      .reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const expectedMinTotal = itemsTotal + (createOrderDto.shippingFee || 0);
-    if (createOrderDto.total < expectedMinTotal - 0.01) {
-      throw new BadRequestException(
-        `Total (${createOrderDto.total}) must be at least item subtotal (${itemsTotal}) plus shipping fee (${createOrderDto.shippingFee || 0})`,
-      );
-    }
+    let itemsTotal = 0;
+    const items = (createOrderDto.items || []).map(item => {
+      let price = item.price;
+      let weight = item.weight;
+
+      if (item.productId) {
+        const product = productMap.get(item.productId);
+        if (!product) {
+          throw new BadRequestException(
+            `Product "${item.productName}" is not found or is not available`,
+          );
+        }
+        price = product.price;
+        if (!weight || weight <= 0) {
+          weight = product.weight;
+        }
+      }
+
+      itemsTotal += price * item.quantity;
+      return { ...item, price, weight: weight || item.weight };
+    });
+
+    const total = itemsTotal + (createOrderDto.shippingFee || 0);
 
     let deliveryCompanyId: string | undefined = createOrderDto.deliveryCompanyId;
     if (!deliveryCompanyId && createOrderDto.vendorEmail && createOrderDto.customer?.wilaya) {
@@ -122,21 +102,18 @@ export class OrdersService implements OnModuleInit {
       )) ?? undefined;
     }
 
-    const items = await this.enrichItemsWithWeight(createOrderDto.items || []);
-
-    const placedId = new Types.ObjectId(this.resolveId('placed'));
-
     const created = new this.orderModel({
       ...createOrderDto,
       items,
+      total,
       orderNo: nextNumber,
       date: createOrderDto.date || now,
       createdAt: createOrderDto.createdAt || now,
       deliveryCompanyId: deliveryCompanyId || undefined,
-      status: placedId,
+      status: 'placed',
       history: [
         {
-          status: placedId,
+          status: 'placed',
           date: now,
           user: createOrderDto.createdBy || 'Vendor',
         },
@@ -144,33 +121,6 @@ export class OrdersService implements OnModuleInit {
     });
 
     return created.save();
-  }
-
-  private async enrichItemsWithWeight(
-    items: Array<{ productId?: string; weight?: number }>,
-  ): Promise<Array<{ productId?: string; weight?: number }>> {
-    const objectIds = items
-      .map(i => i.productId)
-      .filter((id): id is string => !!id && /^[a-fA-F0-9]{24}$/.test(id));
-
-    const weightMap = new Map<string, number | undefined>();
-
-    if (objectIds.length > 0) {
-      const products = await this.productModel
-        .find({ _id: { $in: objectIds } })
-        .select('weight')
-        .lean()
-        .exec();
-      for (const p of products) {
-        weightMap.set(String(p._id), (p as any).weight);
-      }
-    }
-
-    return items.map(item => {
-      if (item.weight !== undefined && item.weight > 0) return item;
-      const productWeight = item.productId ? weightMap.get(item.productId) : undefined;
-      return { ...item, weight: productWeight || item.weight };
-    });
   }
 
   async findAll(query: Record<string, string>): Promise<PaginatedOrdersResult> {
@@ -184,8 +134,7 @@ export class OrdersService implements OnModuleInit {
     if (query.vendorEmail) filter.vendorEmail = query.vendorEmail;
 
     if (query.orderStatus) {
-      const statusId = this.slugToIdMap.get(query.orderStatus);
-      if (statusId) filter.status = new Types.ObjectId(statusId);
+      filter.status = query.orderStatus;
     }
 
     if (query.search) {
@@ -210,12 +159,24 @@ export class OrdersService implements OnModuleInit {
     if (query.createdAt) {
       const term = query.createdAt.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       orConditions.push(
-        { createdAt: { $regex: term, $options: 'i' } },
-        { date: { $regex: term, $options: 'i' } },
+        { $expr: { $regexMatch: { input: { $toString: '$createdAt' }, regex: term, options: 'i' } } },
+        { $expr: { $regexMatch: { input: { $toString: '$date' }, regex: term, options: 'i' } } },
       );
     }
-    if (query.confirmedAt) filter.confirmedAt = { $regex: query.confirmedAt.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' };
-    if (query.dispatchedAt) filter.dispatchedAt = { $regex: query.dispatchedAt.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' };
+    const dateExprs: Record<string, any>[] = [];
+    if (query.confirmedAt) {
+      dateExprs.push({
+        $expr: { $regexMatch: { input: { $toString: '$confirmedAt' }, regex: query.confirmedAt.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), options: 'i' } },
+      });
+    }
+    if (query.dispatchedAt) {
+      dateExprs.push({
+        $expr: { $regexMatch: { input: { $toString: '$dispatchedAt' }, regex: query.dispatchedAt.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), options: 'i' } },
+      });
+    }
+    if (dateExprs.length > 0) {
+      filter.$and = dateExprs;
+    }
     if (query.statusConfirmation) {
       const term = query.statusConfirmation.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       orConditions.push(
@@ -248,14 +209,13 @@ export class OrdersService implements OnModuleInit {
     const statusCounts: Record<string, number> = { All: 0 };
     let allTotal = 0;
     for (const entry of statusCountsRaw) {
-      const idStr = entry._id ? String(entry._id) : undefined;
-      const slug = idStr ? this.idToSlugMap.get(idStr) : undefined;
+      const slug = entry._id ? String(entry._id) : undefined;
       if (slug) {
         statusCounts[slug] = entry.count;
         allTotal += entry.count;
       }
     }
-    for (const slug of Object.keys(ALLOWED_TRANSITIONS)) {
+    for (const slug of Object.keys(ORDER_STATUS_TRANSITIONS)) {
       if (!(slug in statusCounts)) statusCounts[slug] = 0;
     }
     statusCounts.All = allTotal;
@@ -276,6 +236,21 @@ export class OrdersService implements OnModuleInit {
     return order;
   }
 
+  async findByCustomerPhone(phone: string, query: { page: number; limit: number; status?: string }) {
+    const filter: any = { 'customer.phone': phone };
+    if (query.status) {
+      filter.status = query.status;
+    }
+    const total = await this.orderModel.countDocuments(filter);
+    const items = await this.orderModel
+      .find(filter)
+      .sort({ createdAt: -1 })
+      .skip((query.page - 1) * query.limit)
+      .limit(query.limit)
+      .exec();
+    return { items, total, page: query.page, pages: Math.ceil(total / query.limit) };
+  }
+
   async update(id: string, updateOrderDto: UpdateOrderDto): Promise<Order> {
     const existing = await this.orderModel.findById(id).exec();
     if (!existing) throw new NotFoundException(`Order ${id} not found`);
@@ -283,21 +258,21 @@ export class OrdersService implements OnModuleInit {
     const updateData: Record<string, any> = { ...updateOrderDto };
 
     if (updateOrderDto.status && updateOrderDto.status !== String(existing.status)) {
-      this.validateStatusTransition(String(existing.status), updateOrderDto.status);
+      this.statusesService.validateTransition(String(existing.status), updateOrderDto.status);
 
-      if (this.isSlug(updateOrderDto.status, 'confirmed') && !this.isSlug(String(existing.status), 'confirmed')) {
-        updateData.confirmedAt = new Date().toISOString();
+      if (updateOrderDto.status === 'confirmed' && String(existing.status) !== 'confirmed') {
+        updateData.confirmedAt = new Date();
         updateData.confirmedBy = updateOrderDto.createdBy || 'Vendor';
       }
 
-      if (this.isSlug(updateOrderDto.status, 'dispatched') && !this.isSlug(String(existing.status), 'dispatched')) {
-        updateData.dispatchedAt = new Date().toISOString();
+      if (updateOrderDto.status === 'dispatched' && String(existing.status) !== 'dispatched') {
+        updateData.dispatchedAt = new Date();
       }
 
       if (!updateOrderDto.history) {
         const historyEntry = {
-          status: new Types.ObjectId(updateOrderDto.status),
-          date: new Date().toISOString(),
+          status: updateOrderDto.status,
+          date: new Date(),
           user: updateOrderDto.createdBy || 'Vendor',
         };
         updateData.history = [...(existing.history || []), historyEntry];
@@ -310,10 +285,7 @@ export class OrdersService implements OnModuleInit {
       const commune = updateOrderDto.customer?.commune || existing.customer?.commune;
       if (!wilaya || !commune) throw new BadRequestException('Wilaya and commune are required for home delivery');
     }
-    if (effectiveShippingMethod === 'stopdesk') {
-      const stopDeskCode = updateOrderDto.stopDeskCode || existing.stopDeskCode;
-      if (!stopDeskCode) throw new BadRequestException('Stop desk code is required for stop desk delivery');
-    }
+
 
     if (updateOrderDto.total !== undefined || updateOrderDto.items) {
       const items = updateOrderDto.items || (existing.items as any[]);
@@ -336,9 +308,7 @@ export class OrdersService implements OnModuleInit {
       updateData.deliveryCompanyId = resolved || undefined;
     }
 
-    const isBecomingDispatched = updateOrderDto.status
-      && this.isSlug(updateOrderDto.status, 'dispatched')
-      && !this.isSlug(String(existing.status), 'dispatched');
+    const isBecomingDispatched = updateOrderDto.status === 'dispatched' && String(existing.status) !== 'dispatched';
 
     if (isBecomingDispatched) {
       const { parcelId, error } = await this.deliveryService.createDeliveryForOrder(existing);
@@ -373,9 +343,8 @@ export class OrdersService implements OnModuleInit {
       return { modifiedCount: result.deletedCount || 0 };
     }
 
-    const targetSlug = action === 'confirm' ? 'confirmed' : 'cancelled';
-    const targetId = this.resolveId(targetSlug);
-    const now = new Date().toISOString();
+    const targetSlug: OrderStatus = action === 'confirm' ? OrderStatus.CONFIRMED : OrderStatus.CANCELLED;
+    const now = new Date();
 
     const orders = await this.orderModel.find({ _id: { $in: ids } }).exec();
     const errors: string[] = [];
@@ -383,10 +352,10 @@ export class OrdersService implements OnModuleInit {
     const bulkOps = orders
       .filter((order) => {
         try {
-          this.validateStatusTransition(String(order.status), targetId);
+          this.statusesService.validateTransition(String(order.status), targetSlug);
           return true;
         } catch {
-          errors.push(`Order ${order.orderNo}: Cannot transition from '${this.resolveSlug(String(order.status))}' to '${targetSlug}'`);
+          errors.push(`Order ${order.orderNo}: Cannot transition from '${String(order.status)}' to '${targetSlug}'`);
           return false;
         }
       })
@@ -395,11 +364,11 @@ export class OrdersService implements OnModuleInit {
           filter: { _id: order._id },
           update: {
             $set: {
-              status: new Types.ObjectId(targetId),
-              ...(targetSlug === 'confirmed' ? { confirmedAt: now, confirmedBy: 'Vendor' } : {}),
+              status: targetSlug,
+              ...(targetSlug === OrderStatus.CONFIRMED ? { confirmedAt: now, confirmedBy: 'Vendor' } : {}),
             },
             $push: {
-              history: { status: new Types.ObjectId(targetId), date: now, user: 'Vendor' },
+              history: { status: targetSlug, date: now, user: 'Vendor' },
             },
           },
         },
@@ -425,8 +394,7 @@ export class OrdersService implements OnModuleInit {
       return [];
     }
 
-    const confirmedId = this.resolveId('confirmed');
-    const nonConfirmable = orders.filter(o => String(o.status) !== confirmedId);
+    const nonConfirmable = orders.filter(o => String(o.status) !== OrderStatus.CONFIRMED);
     if (nonConfirmable.length > 0) {
       const orderNos = nonConfirmable.map(o => o.orderNo).join(', ');
       throw new BadRequestException(
@@ -436,9 +404,8 @@ export class OrdersService implements OnModuleInit {
 
     const results = await this.deliveryService.createBulkDeliveriesForOrders(orders);
 
-    const now = new Date().toISOString();
+    const now = new Date();
     const user = orders[0]?.createdBy || 'Vendor';
-    const dispatchedId = new Types.ObjectId(this.resolveId('dispatched'));
 
     for (const result of results) {
       if (result.success && result.parcelId) {
@@ -446,13 +413,13 @@ export class OrdersService implements OnModuleInit {
           { orderNo: result.orderNo },
           {
             $set: {
-              status: dispatchedId,
+              status: OrderStatus.DISPATCHED,
               deliveryParcelId: result.parcelId,
               deliveryError: undefined,
               dispatchedAt: now,
             },
             $push: {
-              history: { status: dispatchedId, date: now, user },
+              history: { status: OrderStatus.DISPATCHED, date: now, user },
             },
           },
         ).exec();

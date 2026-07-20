@@ -11,6 +11,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ORDER_STATUS_VALUES } from '../../../common/constants/order-statuses.const';
 
 class OrderItemDto {
   @ApiPropertyOptional({ description: 'Product ID' })
@@ -155,9 +156,10 @@ export class CreateOrderDto {
   @Min(0)
   total: number;
 
-  @ApiPropertyOptional({ description: 'Status ID (MongoDB ObjectId)' })
+  @ApiPropertyOptional({ description: 'Order status', enum: ORDER_STATUS_VALUES })
   @IsOptional()
   @IsString()
+  @IsIn(ORDER_STATUS_VALUES)
   status?: string;
 
   @ApiPropertyOptional({ default: 'COD' })

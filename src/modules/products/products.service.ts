@@ -1,9 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Product, ProductDocument } from './schemas/product.schema';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { ProductQueryDto, CursorDto } from './dto/product-query.dto';
+import { CacheService } from '../../common/cache.service';
 
 function firstNonEmpty(...values: (string | undefined | null)[]): string {
   return values.find((v) => typeof v === 'string' && v.trim().length > 0) || '';
@@ -22,10 +24,17 @@ function fillLanguages(
   };
 }
 
+export interface CursorPaginatedResult<T> {
+  products: T[];
+  nextCursor: CursorDto | null;
+  hasMore: boolean;
+}
+
 @Injectable()
 export class ProductsService {
   constructor(
     @InjectModel(Product.name) private productModel: Model<ProductDocument>,
+    private readonly cacheService: CacheService,
   ) {}
 
   private slugify(name: string): string {
@@ -38,7 +47,7 @@ export class ProductsService {
       .replace(/^-|-$/g, '');
   }
 
-  async create(createProductDto: CreateProductDto): Promise<Product> {
+  async create(createProductDto: CreateProductDto, vendorEmail: string): Promise<Product> {
     const filled = fillLanguages(createProductDto.nameEn, createProductDto.nameAr, createProductDto.nameFr);
 
     const baseName = firstNonEmpty(createProductDto.nameEn, createProductDto.nameAr, createProductDto.nameFr);
@@ -51,43 +60,112 @@ export class ProductsService {
 
     const created = new this.productModel({
       ...createProductDto,
+      vendorEmail,
       ...filled,
       price: createProductDto.price ?? createProductDto.originalPrice,
       slug,
     });
 
+    this.cacheService.clear('categories:');
     return created.save();
   }
 
-  async findAll(query: {
-    vendorEmail?: string;
-    category?: string;
-    status?: string;
-    search?: string;
-    published?: string;
-  }): Promise<Product[]> {
-    const filter: Record<string, any> = {};
+  async findAll(query: ProductQueryDto): Promise<CursorPaginatedResult<Product>> {
+    const filter: Record<string, any> = { published: true, status: 'Active' };
 
     if (query.vendorEmail) filter.vendorEmail = query.vendorEmail;
     if (query.category) filter.category = query.category;
-    if (query.status) filter.status = query.status;
-    if (query.published !== undefined) filter.published = query.published === 'true';
-
-    let queryBuilder = this.productModel.find(filter);
-
-    if (query.search) {
-      queryBuilder = this.productModel.find(
-        { ...filter, $text: { $search: query.search } },
-        { score: { $meta: 'textScore' } },
-      ).sort({ score: { $meta: 'textScore' } });
-    } else {
-      queryBuilder = queryBuilder.sort({ createdAt: -1 });
+    if (query.subCategory) filter.subCategory = query.subCategory;
+    if (query.minPrice !== undefined || query.maxPrice !== undefined) {
+      filter.price = {};
+      if (query.minPrice !== undefined) filter.price.$gte = query.minPrice;
+      if (query.maxPrice !== undefined) filter.price.$lte = query.maxPrice;
     }
 
-    return queryBuilder
+    const sortMapping: Record<string, any> = {
+      price_asc: { price: 1, createdAt: -1, _id: -1 },
+      price_desc: { price: -1, createdAt: -1, _id: -1 },
+      newest: { createdAt: -1, _id: -1 },
+      name: { nameEn: 1, createdAt: -1, _id: -1 },
+    };
+
+    const limit = query.limit || 20;
+    let sortOption: Record<string, any>;
+    let searchFilter: Record<string, any>;
+
+    let cursorObj: CursorDto | null = null;
+    if (query.cursor) {
+      try { cursorObj = JSON.parse(query.cursor); } catch {}
+    }
+
+    if (query.search) {
+      const escaped = query.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = { $regex: escaped, $options: 'i' };
+
+      const orConditions = [
+        { nameEn: regex },
+        { nameAr: regex },
+        { nameFr: regex },
+        { storyEn: regex },
+        { storyAr: regex },
+        { storyFr: regex },
+        { slug: regex },
+        { vendorEmail: regex },
+        { 'variants.nameEn': regex },
+        { 'variants.nameAr': regex },
+        { 'variants.nameFr': regex },
+        { 'variants.options.nameEn': regex },
+        { 'variants.options.nameAr': regex },
+        { 'variants.options.nameFr': regex },
+      ];
+
+      const andConditions: Record<string, any>[] = [filter, { $or: orConditions }];
+
+      if (cursorObj && cursorObj.createdAt && cursorObj._id) {
+        andConditions.push({
+          $or: [
+            { createdAt: { $lt: new Date(cursorObj.createdAt) } },
+            { createdAt: new Date(cursorObj.createdAt), _id: { $lt: new Types.ObjectId(cursorObj._id) } },
+          ],
+        });
+      }
+
+      searchFilter = { $and: andConditions };
+      sortOption = { createdAt: -1, _id: -1 };
+    } else {
+      searchFilter = { ...filter };
+      sortOption = sortMapping[query.sortBy || 'newest'] || { createdAt: -1, _id: -1 };
+
+      if (cursorObj && cursorObj.createdAt && cursorObj._id) {
+        searchFilter.$or = [
+          { createdAt: { $lt: new Date(cursorObj.createdAt) } },
+          { createdAt: new Date(cursorObj.createdAt), _id: { $lt: new Types.ObjectId(cursorObj._id) } },
+        ];
+      }
+    }
+    const items = await this.productModel
+      .find(searchFilter)
+      .sort(sortOption)
+      .limit(limit + 1)
       .populate('category', 'nameEn nameAr nameFr slug')
       .populate('subCategory', 'nameEn nameAr nameFr slug')
       .exec();
+
+    const hasMore = items.length > limit;
+    if (hasMore) items.pop();
+
+    let nextCursor: CursorDto | null = null;
+    if (items.length > 0) {
+      const last = items[items.length - 1];
+      nextCursor = {
+        createdAt: (last as any).createdAt instanceof Date
+          ? (last as any).createdAt.toISOString()
+          : String((last as any).createdAt),
+        _id: String(last._id),
+      };
+    }
+
+    return { products: items as Product[], nextCursor, hasMore };
   }
 
   async findOne(id: string): Promise<Product> {
@@ -100,13 +178,15 @@ export class ProductsService {
     return product;
   }
 
-  async update(id: string, updateProductDto: UpdateProductDto): Promise<Product> {
+  async update(id: string, updateProductDto: UpdateProductDto, userEmail: string): Promise<Product> {
     const existing = await this.productModel.findById(id).exec();
     if (!existing) throw new NotFoundException(`Product ${id} not found`);
+    if (existing.vendorEmail !== userEmail) {
+      throw new ForbiddenException('You can only update your own products');
+    }
 
     const updateData: Record<string, any> = {};
 
-    // Fill language fields: if any name is provided, fill empty ones
     if (updateProductDto.nameEn !== undefined || updateProductDto.nameAr !== undefined || updateProductDto.nameFr !== undefined) {
       const filled = fillLanguages(
         updateProductDto.nameEn ?? (existing as any).nameEn,
@@ -131,7 +211,6 @@ export class ProductsService {
       }
     }
 
-    // Copy remaining fields
     for (const key of Object.keys(updateProductDto) as (keyof UpdateProductDto)[]) {
       if (key === 'nameEn' || key === 'nameAr' || key === 'nameFr') continue;
       if (updateProductDto[key] !== undefined) {
@@ -139,7 +218,6 @@ export class ProductsService {
       }
     }
 
-    // Default price to originalPrice if price not provided but originalPrice is updated
     if (updateData.originalPrice !== undefined && updateData.price === undefined) {
       updateData.price = updateData.originalPrice;
     }
@@ -151,12 +229,38 @@ export class ProductsService {
       .exec();
 
     if (!updated) throw new NotFoundException(`Product ${id} not found`);
+    this.cacheService.clear('categories:');
     return updated;
   }
 
-  async remove(id: string): Promise<{ id: string; deleted: true }> {
+  async getMaxPrice(): Promise<number> {
+    const result = await this.productModel
+      .findOne({ published: true, status: 'Active' })
+      .sort({ price: -1 })
+      .select('price')
+      .exec();
+    return result?.price ?? 4500;
+  }
+
+  async findAllRaw(filter: Record<string, any>, sort?: Record<string, any>): Promise<Product[]> {
+    return this.productModel
+      .find(filter)
+      .populate('category', 'nameEn nameAr nameFr slug')
+      .populate('subCategory', 'nameEn nameAr nameFr slug')
+      .sort(sort || { createdAt: -1 })
+      .limit(50)
+      .exec();
+  }
+
+  async remove(id: string, userEmail: string): Promise<{ id: string; deleted: true }> {
+    const existing = await this.productModel.findById(id).exec();
+    if (!existing) throw new NotFoundException(`Product ${id} not found`);
+    if (existing.vendorEmail !== userEmail) {
+      throw new ForbiddenException('You can only delete your own products');
+    }
     const result = await this.productModel.findByIdAndDelete(id).exec();
     if (!result) throw new NotFoundException(`Product ${id} not found`);
+    this.cacheService.clear('categories:');
     return { id: String(result._id), deleted: true };
   }
 }

@@ -1,8 +1,11 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { CacheService } from './common/cache.service';
 import configuration from './config/configuration';
 import { UsersModule } from './modules/users/users.module';
 import { StoresModule } from './modules/stores/stores.module';
@@ -17,6 +20,8 @@ import { DeliveryFeesModule } from './modules/delivery-fees/delivery-fees.module
 import { TerritoriesModule } from './modules/territories/territories.module';
 import { ProfileModule } from './modules/profile/profile.module';
 import { TrackingModule } from './modules/tracking/tracking.module';
+import { SavedProductsModule } from './modules/saved-products/saved-products.module';
+import { SearchModule } from './modules/search/search.module';
 
 @Module({
   imports: [
@@ -31,6 +36,10 @@ import { TrackingModule } from './modules/tracking/tracking.module';
       }),
       inject: [ConfigService],
     }),
+    ThrottlerModule.forRoot([{
+      ttl: 60000,
+      limit: 60,
+    }]),
     AuthModule,
     UsersModule,
     StoresModule,
@@ -44,8 +53,14 @@ import { TrackingModule } from './modules/tracking/tracking.module';
     TerritoriesModule,
     ProfileModule,
     TrackingModule,
+    SavedProductsModule,
+    SearchModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    CacheService,
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+  ],
 })
 export class AppModule {}

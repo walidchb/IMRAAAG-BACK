@@ -12,6 +12,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
 import { User, UserSchema } from '../users/schemas/user.schema';
 import { PasswordResetToken, PasswordResetTokenSchema } from './schemas/password-reset-token.schema';
+import { Otp, OtpSchema } from './schemas/otp.schema';
 import { StoresModule } from '../stores/stores.module';
 
 @Module({
@@ -19,12 +20,13 @@ import { StoresModule } from '../stores/stores.module';
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
       { name: PasswordResetToken.name, schema: PasswordResetTokenSchema },
+      { name: Otp.name, schema: OtpSchema },
     ]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('jwt.secret') || 'change-me-in-production-use-a-strong-secret',
+        secret: configService.get<string>('jwt.secret'),
         signOptions: { expiresIn: '7d' },
       }),
       inject: [ConfigService],

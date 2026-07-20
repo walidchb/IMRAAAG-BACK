@@ -145,6 +145,10 @@ export class StoresService {
     return store.save();
   }
 
+  async findAllRaw(filter: Record<string, any>): Promise<Store[]> {
+    return this.storeModel.find(filter).sort({ createdAt: -1 }).limit(50).exec();
+  }
+
   async remove(id: string): Promise<void> {
     const result = await this.storeModel.findByIdAndDelete(id).exec();
     if (!result) throw new NotFoundException(`Store ${id} not found`);

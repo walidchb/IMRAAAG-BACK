@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document } from 'mongoose';
+import { OrderStatus, ORDER_STATUS_VALUES } from '../../../common/constants/order-statuses.const';
 
 export type OrderDocument = Order & Document;
 
@@ -11,23 +12,23 @@ export class Order {
   @Prop({ required: true })
   vendorEmail: string;
 
-  @Prop()
-  date: string;
+  @Prop({ type: Date })
+  date: Date;
 
-  @Prop()
-  createdAt: string;
+  @Prop({ type: Date })
+  createdAt: Date;
 
   @Prop()
   createdBy: string;
 
-  @Prop()
-  confirmedAt: string;
+  @Prop({ type: Date })
+  confirmedAt: Date;
 
   @Prop()
   confirmedBy: string;
 
-  @Prop()
-  dispatchedAt: string;
+  @Prop({ type: Date })
+  dispatchedAt: Date;
 
   @Prop()
   statusConfirmation: string;
@@ -73,8 +74,8 @@ export class Order {
   @Prop({ required: true })
   total: number;
 
-  @Prop({ type: Types.ObjectId, ref: 'OrderStatus', required: true })
-  status: Types.ObjectId;
+  @Prop({ type: String, enum: ORDER_STATUS_VALUES, required: true })
+  status: OrderStatus;
 
   @Prop({ default: 'COD' })
   paymentMethod: string;
@@ -101,11 +102,11 @@ export class Order {
   stopDeskCode: string;
 
   @Prop([{
-    status: { type: Types.ObjectId, ref: 'OrderStatus' },
-    date: { type: String },
+    status: { type: String, enum: ORDER_STATUS_VALUES },
+    date: { type: Date },
     user: { type: String }
   }])
-  history: Array<{ status: Types.ObjectId; date: string; user: string }>;
+  history: Array<{ status: OrderStatus; date: Date; user: string }>;
 }
 
 export const OrderSchema = SchemaFactory.createForClass(Order);

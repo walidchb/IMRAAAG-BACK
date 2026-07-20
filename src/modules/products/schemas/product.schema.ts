@@ -95,3 +95,8 @@ ProductSchema.index({ category: 1, subCategory: 1 });
 ProductSchema.index({ price: 1 });
 ProductSchema.index({ status: 1 });
 ProductSchema.index({ published: 1 });
+// Cursor pagination indexes
+ProductSchema.index({ published: 1, status: 1, createdAt: -1, _id: -1 });
+ProductSchema.index({ published: 1, status: 1, category: 1, createdAt: -1, _id: -1 });
+ProductSchema.index({ published: 1, status: 1, vendorEmail: 1, createdAt: -1, _id: -1 });
+ProductSchema.index({ published: 1, status: 1, price: 1, createdAt: -1, _id: -1 });

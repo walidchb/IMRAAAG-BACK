@@ -1,35 +1,40 @@
-import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { OrderStatus, OrderStatusDocument } from './schemas/order-status.schema';
+import { Injectable, BadRequestException } from '@nestjs/common';
+import { ORDER_STATUSES, ORDER_STATUS_TRANSITIONS, ORDER_STATUS_VALUES, StatusConfig } from '../../common/constants/order-statuses.const';
 
 @Injectable()
 export class OrderStatusesService {
-  constructor(
-    @InjectModel(OrderStatus.name) private statusModel: Model<OrderStatusDocument>,
-  ) {}
-
-  async getAll(): Promise<OrderStatus[]> {
-    return this.statusModel.find().sort({ sortOrder: 1 }).exec();
+  getAll(): StatusConfig[] {
+    return ORDER_STATUSES;
   }
 
-  async getBySlug(slug: string): Promise<OrderStatus | null> {
-    return this.statusModel.findOne({ slug }).exec();
+  getBySlug(slug: string): StatusConfig | undefined {
+    return ORDER_STATUSES.find(s => s.slug === slug);
   }
 
-  async getById(id: string): Promise<OrderStatus | null> {
-    return this.statusModel.findById(id).exec();
+  getById(_id: string): StatusConfig | undefined {
+    return ORDER_STATUSES.find(s => s.slug === _id);
   }
 
-  async getAllAsMap(): Promise<{ slugToId: Map<string, string>; idToSlug: Map<string, string> }> {
-    const statuses = await this.getAll();
+  getAllAsMap(): { slugToId: Map<string, string>; idToSlug: Map<string, string> } {
     const slugToId = new Map<string, string>();
     const idToSlug = new Map<string, string>();
-    for (const s of statuses) {
-      const id = String((s as any)._id);
-      slugToId.set(s.slug, id);
-      idToSlug.set(id, s.slug);
+    for (const s of ORDER_STATUSES) {
+      slugToId.set(s.slug, s.slug);
+      idToSlug.set(s.slug, s.slug);
     }
     return { slugToId, idToSlug };
+  }
+
+  getTransitions(): Record<string, string[]> {
+    return ORDER_STATUS_TRANSITIONS;
+  }
+
+  validateTransition(currentSlug: string, nextSlug: string): void {
+    const allowed = ORDER_STATUS_TRANSITIONS[currentSlug];
+    if (!allowed || !allowed.includes(nextSlug)) {
+      throw new BadRequestException(
+        `Cannot transition order from '${currentSlug}' to '${nextSlug}'. Allowed transitions: ${(allowed || []).join(', ') || 'none'}`,
+      );
+    }
   }
 }

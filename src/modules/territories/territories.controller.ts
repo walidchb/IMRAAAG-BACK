@@ -1,20 +1,23 @@
 import { Controller, Get, Post, Patch, Query, Body } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery, ApiBody } from '@nestjs/swagger';
 import { TerritoriesService } from './territories.service';
+import { Public } from '../auth/decorators/public.decorator';
 
 @ApiTags('Territories')
 @Controller('territories')
 export class TerritoriesController {
   constructor(private readonly territoriesService: TerritoriesService) {}
 
+  @Public()
   @Get('wilayas')
-  @ApiOperation({ summary: 'Get all wilayas' })
+  @ApiOperation({ summary: 'Get all wilayas (public)' })
   getWilayas() {
     return this.territoriesService.getWilayas();
   }
 
+  @Public()
   @Get('communes')
-  @ApiOperation({ summary: 'Get communes, optionally filtered by wilaya code' })
+  @ApiOperation({ summary: 'Get communes, optionally filtered by wilaya code (public)' })
   @ApiQuery({ name: 'wilayaCode', required: false })
   getCommunes(@Query('wilayaCode') wilayaCode?: string) {
     return this.territoriesService.getCommunes(wilayaCode);

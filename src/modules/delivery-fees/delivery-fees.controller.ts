@@ -2,6 +2,7 @@ import { Controller, Get, Patch, Post, Param, Body, Query, HttpCode } from '@nes
 import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { DeliveryFeesService } from './delivery-fees.service';
 import { UpdateDeliveryFeeDto, BulkUpdateDeliveryFeeDto } from './dto/manage-delivery-fees.dto';
+import { Public } from '../auth/decorators/public.decorator';
 
 @ApiTags('Delivery Fees')
 @Controller('delivery-fees')
@@ -15,6 +16,7 @@ export class DeliveryFeesController {
     return this.feesService.getFees(vendorEmail);
   }
 
+  @Public()
   @Get('by-wilaya')
   @ApiOperation({ summary: 'Get delivery fee for a specific wilaya' })
   @ApiQuery({ name: 'vendorEmail', required: true })

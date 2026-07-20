@@ -8,16 +8,26 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
 
 async function bootstrap() {
+  // Validate critical env vars before any module initialization
+  const jwtSecret = process.env.JWT_SECRET;
+  if (!jwtSecret || jwtSecret === 'change-me-in-production-use-a-strong-secret') {
+    console.error('FATAL: JWT_SECRET environment variable is not set. Set a strong random value before starting the server.');
+    process.exit(1);
+  }
+
   const app = await NestFactory.create(AppModule);
   
   const configService = app.get(ConfigService);
-  const port = configService.get<number>('port') || 3002;
+  const port = configService.get<number>('port') || 3000;
 
   // Set prefix for API routes
   app.setGlobalPrefix('api');
 
   // Enable CORS
-  app.enableCors();
+  app.enableCors({
+    origin: ['http://localhost:3002', 'http://localhost:3001', 'http://localhost:3000'],
+    credentials: true,
+  });
 
   // Global validation pipe
   app.useGlobalPipes(new ValidationPipe());

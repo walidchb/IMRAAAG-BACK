@@ -1,0 +1,760 @@
+[{
+  "_id": {
+    "$oid": "6a3ffd5a01c968875a7c91c9"
+  },
+  "categoryId": {
+    "$oid": "6a3ffd5a01c968875a7c91c6"
+  },
+  "nameEn": "Dresses",
+  "nameAr": "فساتين",
+  "nameFr": "Robes",
+  "slug": "dresses",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:02.608Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:02.608Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5a01c968875a7c91ca"
+  },
+  "categoryId": {
+    "$oid": "6a3ffd5a01c968875a7c91c6"
+  },
+  "nameEn": "Tops",
+  "nameAr": "ملابس علوية",
+  "nameFr": "Hauts",
+  "slug": "tops",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:02.657Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:02.657Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5a01c968875a7c91cb"
+  },
+  "categoryId": {
+    "$oid": "6a3ffd5a01c968875a7c91c6"
+  },
+  "nameEn": "Skirts",
+  "nameAr": "تنانير",
+  "nameFr": "Jupes",
+  "slug": "skirts",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:02.705Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:02.705Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5a01c968875a7c91cc"
+  },
+  "categoryId": {
+    "$oid": "6a3ffd5a01c968875a7c91c6"
+  },
+  "nameEn": "Pants",
+  "nameAr": "سراويل",
+  "nameFr": "Pantalons",
+  "slug": "pants",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:02.753Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:02.753Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5a01c968875a7c91cd"
+  },
+  "categoryId": {
+    "$oid": "6a3ffd5a01c968875a7c91c6"
+  },
+  "nameEn": "Abayas",
+  "nameAr": "عبايات",
+  "nameFr": "Abayas",
+  "slug": "abayas",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:02.801Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:02.801Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5a01c968875a7c91ce"
+  },
+  "categoryId": {
+    "$oid": "6a3ffd5a01c968875a7c91c6"
+  },
+  "nameEn": "Jilbab",
+  "nameAr": "جلباب",
+  "nameFr": "Jilbab",
+  "slug": "jilbab",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:02.849Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:02.849Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5a01c968875a7c91cf"
+  },
+  "categoryId": {
+    "$oid": "6a3ffd5a01c968875a7c91c6"
+  },
+  "nameEn": "Co-ord Sets",
+  "nameAr": "أطقم متناسقة",
+  "nameFr": "Ensembles Coordonnés",
+  "slug": "coord-sets",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:02.897Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:02.897Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5a01c968875a7c91d1"
+  },
+  "categoryId": {
+    "$oid": "6a3ffd5a01c968875a7c91d0"
+  },
+  "nameEn": "Hijabs",
+  "nameAr": "حجاب",
+  "nameFr": "Hijabs",
+  "slug": "hijabs",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:02.994Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:02.994Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5b01c968875a7c91d2"
+  },
+  "categoryId": {
+    "$oid": "6a3ffd5a01c968875a7c91d0"
+  },
+  "nameEn": "Khimars",
+  "nameAr": "خمار",
+  "nameFr": "Khimars",
+  "slug": "khimars",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:03.044Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:03.044Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5b01c968875a7c91d3"
+  },
+  "categoryId": {
+    "$oid": "6a3ffd5a01c968875a7c91d0"
+  },
+  "nameEn": "Abayas",
+  "nameAr": "عبايات",
+  "nameFr": "Abayas",
+  "slug": "modest-abayas",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:03.096Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:03.096Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5b01c968875a7c91d4"
+  },
+  "categoryId": {
+    "$oid": "6a3ffd5a01c968875a7c91d0"
+  },
+  "nameEn": "Niqabs",
+  "nameAr": "نقاب",
+  "nameFr": "Niqabs",
+  "slug": "niqabs",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:03.144Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:03.144Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5b01c968875a7c91d5"
+  },
+  "categoryId": {
+    "$oid": "6a3ffd5a01c968875a7c91d0"
+  },
+  "nameEn": "Prayer Dresses",
+  "nameAr": "ملابس صلاة",
+  "nameFr": "Tenues de Prière",
+  "slug": "prayer-dresses",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:03.198Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:03.198Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5b01c968875a7c91d6"
+  },
+  "categoryId": {
+    "$oid": "6a3ffd5a01c968875a7c91d0"
+  },
+  "nameEn": "Modest Sets",
+  "nameAr": "أطقم محتشمة",
+  "nameFr": "Ensembles Modestes",
+  "slug": "modest-sets",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:03.248Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:03.248Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5b01c968875a7c91d7"
+  },
+  "categoryId": {
+    "$oid": "6a3ffd5a01c968875a7c91d0"
+  },
+  "nameEn": "Underscarves",
+  "nameAr": "بندانات",
+  "nameFr": "Bonnets",
+  "slug": "underscarves",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:03.297Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:03.297Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5b01c968875a7c91d9"
+  },
+  "categoryId": {
+    "$oid": "6a3ffd5b01c968875a7c91d8"
+  },
+  "nameEn": "Sports Hijabs",
+  "nameAr": "حجاب رياضي",
+  "nameFr": "Hijabs de Sport",
+  "slug": "sports-hijabs",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:03.393Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:03.393Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5b01c968875a7c91da"
+  },
+  "categoryId": {
+    "$oid": "6a3ffd5b01c968875a7c91d8"
+  },
+  "nameEn": "Modest Sports Sets",
+  "nameAr": "أطقم رياضية محتشمة",
+  "nameFr": "Ensembles de Sport Modestes",
+  "slug": "modest-sports-sets",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:03.442Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:03.442Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5b01c968875a7c91db"
+  },
+  "categoryId": {
+    "$oid": "6a3ffd5b01c968875a7c91d8"
+  },
+  "nameEn": "Leggings",
+  "nameAr": "ليجينز",
+  "nameFr": "Leggings",
+  "slug": "leggings",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:03.498Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:03.498Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5b01c968875a7c91dc"
+  },
+  "categoryId": {
+    "$oid": "6a3ffd5b01c968875a7c91d8"
+  },
+  "nameEn": "Sports Tops",
+  "nameAr": "قمصان رياضية",
+  "nameFr": "Hauts de Sport",
+  "slug": "sports-tops",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:03.557Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:03.557Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5b01c968875a7c91de"
+  },
+  "categoryId": {
+    "$oid": "6a3ffd5b01c968875a7c91dd"
+  },
+  "nameEn": "Bras",
+  "nameAr": "حمالات صدر",
+  "nameFr": "Soutiens-gorge",
+  "slug": "bras",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:03.655Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:03.655Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5b01c968875a7c91df"
+  },
+  "categoryId": {
+    "$oid": "6a3ffd5b01c968875a7c91dd"
+  },
+  "nameEn": "Underwear",
+  "nameAr": "ملابس داخلية",
+  "nameFr": "Sous-vêtements",
+  "slug": "underwear",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:03.717Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:03.717Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5b01c968875a7c91e0"
+  },
+  "categoryId": {
+    "$oid": "6a3ffd5b01c968875a7c91dd"
+  },
+  "nameEn": "Shapewear",
+  "nameAr": "ملابس مشدة",
+  "nameFr": "Gaines & Sculptants",
+  "slug": "shapewear",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:03.765Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:03.765Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5b01c968875a7c91e1"
+  },
+  "categoryId": {
+    "$oid": "6a3ffd5b01c968875a7c91dd"
+  },
+  "nameEn": "Sleepwear",
+  "nameAr": "ملابس نوم",
+  "nameFr": "Vêtements de Nuit",
+  "slug": "sleepwear",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:03.813Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:03.813Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5b01c968875a7c91e3"
+  },
+  "categoryId": {
+    "$oid": "6a3ffd5b01c968875a7c91e2"
+  },
+  "nameEn": "Bags",
+  "nameAr": "حقائب",
+  "nameFr": "Sacs",
+  "slug": "bags",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:03.906Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:03.906Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5b01c968875a7c91e4"
+  },
+  "categoryId": {
+    "$oid": "6a3ffd5b01c968875a7c91e2"
+  },
+  "nameEn": "Jewelry",
+  "nameAr": "مجوهرات",
+  "nameFr": "Bijoux",
+  "slug": "jewelry",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:03.953Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:03.953Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5c01c968875a7c91e5"
+  },
+  "categoryId": {
+    "$oid": "6a3ffd5b01c968875a7c91e2"
+  },
+  "nameEn": "Belts",
+  "nameAr": "أحزمة",
+  "nameFr": "Ceintures",
+  "slug": "belts",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:04.001Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:04.001Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5c01c968875a7c91e6"
+  },
+  "categoryId": {
+    "$oid": "6a3ffd5b01c968875a7c91e2"
+  },
+  "nameEn": "Scarves Accessories",
+  "nameAr": "إكسسوارات أوشحة",
+  "nameFr": "Accessoires Foulards",
+  "slug": "scarves-accessories",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:04.048Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:04.048Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5c01c968875a7c91e7"
+  },
+  "categoryId": {
+    "$oid": "6a3ffd5b01c968875a7c91e2"
+  },
+  "nameEn": "Hijab Pins",
+  "nameAr": "دبابيس حجاب",
+  "nameFr": "Épingles à Hijab",
+  "slug": "hijab-pins",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:04.094Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:04.094Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5c01c968875a7c91e9"
+  },
+  "categoryId": {
+    "$oid": "6a3ffd5c01c968875a7c91e8"
+  },
+  "nameEn": "Heels",
+  "nameAr": "أحذية كعب عالي",
+  "nameFr": "Talons",
+  "slug": "heels",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:04.186Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:04.186Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5c01c968875a7c91ea"
+  },
+  "categoryId": {
+    "$oid": "6a3ffd5c01c968875a7c91e8"
+  },
+  "nameEn": "Sneakers",
+  "nameAr": "أحذية رياضية",
+  "nameFr": "Baskets",
+  "slug": "sneakers",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:04.233Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:04.233Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5c01c968875a7c91eb"
+  },
+  "categoryId": {
+    "$oid": "6a3ffd5c01c968875a7c91e8"
+  },
+  "nameEn": "Flats",
+  "nameAr": "أحذية مسطحة",
+  "nameFr": "Ballerines & Flats",
+  "slug": "flats",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:04.280Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:04.280Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5c01c968875a7c91ec"
+  },
+  "categoryId": {
+    "$oid": "6a3ffd5c01c968875a7c91e8"
+  },
+  "nameEn": "Sandals",
+  "nameAr": "صنادل",
+  "nameFr": "Sandales",
+  "slug": "sandals",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:04.327Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:04.327Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5c01c968875a7c91ed"
+  },
+  "categoryId": {
+    "$oid": "6a3ffd5c01c968875a7c91e8"
+  },
+  "nameEn": "Boots",
+  "nameAr": "أحذية شتوية",
+  "nameFr": "Bottes",
+  "slug": "boots",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:04.374Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:04.374Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5c01c968875a7c91ef"
+  },
+  "categoryId": {
+    "$oid": "6a3ffd5c01c968875a7c91ee"
+  },
+  "nameEn": "Skincare",
+  "nameAr": "العناية بالبشرة",
+  "nameFr": "Soins de la Peau",
+  "slug": "skincare",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:04.469Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:04.469Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5c01c968875a7c91f0"
+  },
+  "categoryId": {
+    "$oid": "6a3ffd5c01c968875a7c91ee"
+  },
+  "nameEn": "Makeup",
+  "nameAr": "مكياج",
+  "nameFr": "Maquillage",
+  "slug": "makeup",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:04.516Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:04.516Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5c01c968875a7c91f1"
+  },
+  "categoryId": {
+    "$oid": "6a3ffd5c01c968875a7c91ee"
+  },
+  "nameEn": "Hair Care",
+  "nameAr": "العناية بالشعر",
+  "nameFr": "Soins Capillaires",
+  "slug": "hair-care",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:04.562Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:04.562Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5c01c968875a7c91f2"
+  },
+  "categoryId": {
+    "$oid": "6a3ffd5c01c968875a7c91ee"
+  },
+  "nameEn": "Fragrance",
+  "nameAr": "عطور",
+  "nameFr": "Parfums",
+  "slug": "fragrance",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:04.607Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:04.607Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5c01c968875a7c91f4"
+  },
+  "categoryId": {
+    "$oid": "6a3ffd5c01c968875a7c91f3"
+  },
+  "nameEn": "Handmade Abayas",
+  "nameAr": "عبايات مصنوعة يدويًا",
+  "nameFr": "Abayas Fait Main",
+  "slug": "handmade-abayas",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:04.700Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:04.700Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5c01c968875a7c91f5"
+  },
+  "categoryId": {
+    "$oid": "6a3ffd5c01c968875a7c91f3"
+  },
+  "nameEn": "Embroidered Hijabs",
+  "nameAr": "حجاب مطرز",
+  "nameFr": "Hijabs Brodés",
+  "slug": "embroidered-hijabs",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:04.746Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:04.746Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5c01c968875a7c91f6"
+  },
+  "categoryId": {
+    "$oid": "6a3ffd5c01c968875a7c91f3"
+  },
+  "nameEn": "Traditional Jewelry",
+  "nameAr": "مجوهرات تقليدية",
+  "nameFr": "Bijoux Traditionnels",
+  "slug": "traditional-jewelry",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:04.793Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:04.793Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5c01c968875a7c91f7"
+  },
+  "categoryId": {
+    "$oid": "6a3ffd5c01c968875a7c91f3"
+  },
+  "nameEn": "Custom Pieces",
+  "nameAr": "قطع مخصصة",
+  "nameFr": "Pièces sur Mesure",
+  "slug": "custom-pieces",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:04.838Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:04.838Z"
+  },
+  "__v": 0
+}]

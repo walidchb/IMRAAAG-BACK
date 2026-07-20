@@ -15,15 +15,19 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: configService.get<string>('jwt.secret') || 'change-me-in-production-use-a-strong-secret',
+      secretOrKey: configService.get<string>('jwt.secret')!,
     });
   }
 
-  async validate(payload: { sub: string; email: string; role: string }) {
+  async validate(payload: { sub: string; email?: string; role?: string; type?: string }) {
+    if (payload.type === 'otp_verification') {
+      return { phoneNumber: payload.sub, type: 'otp_verification' };
+    }
+
     const user = await this.userModel.findById(payload.sub);
     if (!user || !user.isActive) {
       throw new UnauthorizedException();
     }
-    return { id: user._id, email: user.email, role: user.role, fullName: user.fullName };
+    return { id: user._id, email: user.email, role: user.role, fullName: user.fullName, phoneNumber: user.phoneNumber };
   }
 }

@@ -105,6 +105,7 @@ export class ProfileService {
       profileImage: user.profileImage || null,
       isEmailVerified: user.isEmailVerified,
       createdAt: (user as any).createdAt,
+      savedProductIds: (user.savedProductIds || []).map((id) => id.toString()),
     };
   }
 }

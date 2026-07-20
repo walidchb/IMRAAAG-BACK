@@ -15,6 +15,7 @@ import { CreateStoreDto } from './dto/create-store.dto';
 import { UpdateStoreDto } from './dto/update-store.dto';
 import { Store } from './schemas/store.schema';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { Public } from '../auth/decorators/public.decorator';
 import { Role } from '../../common/constants/roles.enum';
 
 @ApiTags('Stores')
@@ -74,8 +75,9 @@ export class StoresController {
     return this.storesService.create(createStoreDto);
   }
 
+  @Public()
   @Get()
-  @ApiOperation({ summary: 'List all stores' })
+  @ApiOperation({ summary: 'List all stores (public)' })
   @ApiQuery({ name: 'isActive', required: false })
   @ApiQuery({ name: 'isVerified', required: false })
   @ApiQuery({ name: 'search', required: false, description: 'Full-text search' })
@@ -88,16 +90,18 @@ export class StoresController {
     return this.storesService.findAll({ isActive, isVerified, search });
   }
 
+  @Public()
   @Get('by-email/:email')
-  @ApiOperation({ summary: 'Get store by vendor email' })
+  @ApiOperation({ summary: 'Get store by vendor email (public)' })
   @ApiResponse({ status: 200, description: 'Store found', type: Store })
   @ApiResponse({ status: 404, description: 'Store not found' })
   findByEmail(@Param('email') email: string) {
     return this.storesService.findByEmail(email);
   }
 
+  @Public()
   @Get(':id')
-  @ApiOperation({ summary: 'Get store by ID, slug, or vendor ID' })
+  @ApiOperation({ summary: 'Get store by ID, slug, or vendor ID (public)' })
   @ApiQuery({
     name: 'by',
     required: false,

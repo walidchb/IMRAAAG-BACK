@@ -3,13 +3,20 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Category, CategoryDocument } from './schemas/category.schema';
 import { SubCategory, SubCategoryDocument } from './schemas/sub-category.schema';
+import { Product, ProductDocument } from '../products/schemas/product.schema';
 import { CreateCategoryDto } from './dto/create-category.dto';
+import { CacheService } from '../../common/cache.service';
+
+const CACHE_KEY = 'categories:all';
+const CACHE_TTL = 3600000; // 1 hour
 
 @Injectable()
 export class CategoriesService {
   constructor(
     @InjectModel(Category.name) private categoryModel: Model<CategoryDocument>,
     @InjectModel(SubCategory.name) private subCategoryModel: Model<SubCategoryDocument>,
+    @InjectModel(Product.name) private productModel: Model<ProductDocument>,
+    private readonly cacheService: CacheService,
   ) {}
 
   async create(createCategoryDto: CreateCategoryDto): Promise<{ category: Category; subCategories: SubCategory[] }> {
@@ -35,6 +42,7 @@ export class CategoriesService {
       }
     }
 
+    this.cacheService.clear('categories:');
     return { category, subCategories };
   }
 
@@ -145,17 +153,41 @@ export class CategoriesService {
         await sub.save();
       }
     }
+
+    this.cacheService.clear('categories:');
   }
 
-  async findAll(): Promise<{ category: Category; subCategories: SubCategory[] }[]> {
+  async findAll(): Promise<{ category: Category; subCategories: SubCategory[]; productCount: number }[]> {
+    const cached = this.cacheService.get<{ category: Category; subCategories: SubCategory[]; productCount: number }[]>(CACHE_KEY);
+    if (cached) return cached;
+
     const categories = await this.categoryModel.find().sort({ nameEn: 1 }).exec();
-    const result: { category: Category; subCategories: SubCategory[] }[] = [];
+    const categoryIds = categories.map((c) => c._id);
+
+    const [catCounts] = await Promise.all([
+      this.productModel.aggregate<{ _id: Types.ObjectId; count: number }>([
+        { $match: { published: true, status: 'Active', category: { $in: categoryIds } } },
+        { $group: { _id: '$category', count: { $sum: 1 } } },
+      ]).exec(),
+    ]);
+
+    const catCountMap = new Map<string, number>();
+    for (const c of catCounts) {
+      catCountMap.set(c._id.toString(), c.count);
+    }
+
+    const result: { category: Category; subCategories: SubCategory[]; productCount: number }[] = [];
 
     for (const cat of categories) {
       const subs = await this.subCategoryModel.find({ categoryId: cat._id }).sort({ nameEn: 1 }).exec();
-      result.push({ category: cat, subCategories: subs });
+      result.push({
+        category: cat,
+        subCategories: subs,
+        productCount: catCountMap.get(cat._id.toString()) || 0,
+      });
     }
 
+    this.cacheService.set(CACHE_KEY, result, CACHE_TTL);
     return result;
   }
 
@@ -173,5 +205,6 @@ export class CategoriesService {
     if (!category) throw new NotFoundException(`Category ${id} not found`);
     await this.subCategoryModel.deleteMany({ categoryId: category._id }).exec();
     await this.categoryModel.deleteOne({ _id: category._id }).exec();
+    this.cacheService.clear('categories:');
   }
 }

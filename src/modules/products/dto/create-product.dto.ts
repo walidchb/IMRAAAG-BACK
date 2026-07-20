@@ -75,11 +75,6 @@ class VariantDto {
 }
 
 export class CreateProductDto {
-  @ApiProperty({ description: 'Vendor email' })
-  @IsString()
-  @IsNotEmpty()
-  vendorEmail: string;
-
   @AtLeastOneLanguage(['nameEn', 'nameAr', 'nameFr'], { message: 'At least one product name is required (English, Arabic, or French)' })
   @ApiProperty({ description: 'Product name (English)' })
   @IsOptional()

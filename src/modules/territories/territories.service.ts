@@ -5,6 +5,11 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Wilaya, WilayaDocument } from './schemas/wilaya.schema';
 import { Commune, CommuneDocument } from './schemas/commune.schema';
+import { CacheService } from '../../common/cache.service';
+
+const WILAYAS_CACHE_KEY = 'territories:wilayas';
+const COMMUNES_CACHE_PREFIX = 'territories:communes:';
+const CACHE_TTL = 7 * 24 * 3600000; // 1 week
 
 @Injectable()
 export class TerritoriesService {
@@ -13,16 +18,26 @@ export class TerritoriesService {
   constructor(
     @InjectModel(Wilaya.name) private wilayaModel: Model<WilayaDocument>,
     @InjectModel(Commune.name) private communeModel: Model<CommuneDocument>,
+    private readonly cacheService: CacheService,
   ) {}
 
   async getWilayas() {
+    const cached = this.cacheService.get<Awaited<ReturnType<typeof this.wilayaModel.find>>>(WILAYAS_CACHE_KEY);
+    if (cached) return cached;
     const wilayas = await this.wilayaModel.find().exec();
-    return wilayas.sort((a, b) => parseInt(a.code, 10) - parseInt(b.code, 10));
+    const sorted = wilayas.sort((a, b) => parseInt(a.code, 10) - parseInt(b.code, 10));
+    this.cacheService.set(WILAYAS_CACHE_KEY, sorted, CACHE_TTL);
+    return sorted;
   }
 
   async getCommunes(wilayaCode?: string) {
+    const cacheKey = COMMUNES_CACHE_PREFIX + (wilayaCode || 'all');
+    const cached = this.cacheService.get(cacheKey);
+    if (cached) return cached;
     const filter = wilayaCode ? { wilaya_code: wilayaCode } : {};
-    return this.communeModel.find(filter).sort({ name: 1 }).exec();
+    const communes = await this.communeModel.find(filter).sort({ name: 1 }).exec();
+    this.cacheService.set(cacheKey, communes, CACHE_TTL);
+    return communes;
   }
 
   async updateWilayaUuid(code: string, zrexpress_uuid?: string, yalidine_uuid?: string, ecomdelivery_uuid?: string) {
@@ -119,6 +134,7 @@ export class TerritoriesService {
     const insertedWilayas = await this.wilayaModel.insertMany(wilayas);
     const insertedCommunes = await this.communeModel.insertMany(communes);
 
+    this.cacheService.clear('territories:');
     this.logger.log(`Seeded ${insertedWilayas.length} wilayas and ${insertedCommunes.length} communes`);
 
     return { wilayas: insertedWilayas.length, communes: insertedCommunes.length };

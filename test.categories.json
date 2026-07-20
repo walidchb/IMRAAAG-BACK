@@ -1,0 +1,128 @@
+[{
+  "_id": {
+    "$oid": "6a3ffd5a01c968875a7c91c6"
+  },
+  "nameEn": "Women's Fashion",
+  "nameAr": "أزياء نسائية",
+  "nameFr": "Mode Féminine",
+  "slug": "womens-fashion",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:02.542Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:02.542Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5a01c968875a7c91d0"
+  },
+  "nameEn": "Modest Wear",
+  "nameAr": "ملابس محتشمة",
+  "nameFr": "Mode Modeste",
+  "slug": "modest-wear",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:02.945Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:02.945Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5b01c968875a7c91d8"
+  },
+  "nameEn": "Activewear",
+  "nameAr": "ملابس رياضية",
+  "nameFr": "Vêtements de Sport",
+  "slug": "activewear",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:03.345Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:03.345Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5b01c968875a7c91dd"
+  },
+  "nameEn": "Lingerie & Intimates",
+  "nameAr": "لانجري وملابس داخلية",
+  "nameFr": "Lingerie & Sous-vêtements",
+  "slug": "lingerie-intimates",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:03.607Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:03.607Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5b01c968875a7c91e2"
+  },
+  "nameEn": "Accessories",
+  "nameAr": "إكسسوارات",
+  "nameFr": "Accessoires",
+  "slug": "accessories",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:03.859Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:03.859Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5c01c968875a7c91e8"
+  },
+  "nameEn": "Shoes",
+  "nameAr": "أحذية",
+  "nameFr": "Chaussures",
+  "slug": "shoes",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:04.141Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:04.141Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5c01c968875a7c91ee"
+  },
+  "nameEn": "Beauty & Personal Care",
+  "nameAr": "الجمال والعناية الشخصية",
+  "nameFr": "Beauté & Soins",
+  "slug": "beauty-personal-care",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:04.422Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:04.422Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3ffd5c01c968875a7c91f3"
+  },
+  "nameEn": "Handmade & Artisan",
+  "nameAr": "منتجات يدوية وحرفية",
+  "nameFr": "Fait Main & Artisanal",
+  "slug": "handmade-artisan",
+  "createdAt": {
+    "$date": "2026-06-27T16:42:04.654Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-27T16:42:04.654Z"
+  },
+  "__v": 0
+}]

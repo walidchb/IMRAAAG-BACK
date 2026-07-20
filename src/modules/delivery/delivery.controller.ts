@@ -3,6 +3,7 @@ import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { DeliveryService } from './delivery.service';
 import { DeliveryCompaniesService } from './delivery-companies.service';
 import { SaveDeliveryConfigDto, SaveAttributionsDto } from './dto/save-delivery-config.dto';
+import { Public } from '../auth/decorators/public.decorator';
 
 @ApiTags('Delivery')
 @Controller('delivery')
@@ -12,6 +13,7 @@ export class DeliveryController {
     private readonly deliveryCompaniesService: DeliveryCompaniesService,
   ) {}
 
+  @Public()
   @Get('companies')
   @ApiOperation({ summary: 'Get all delivery companies with metadata' })
   getCompanies() {
@@ -44,6 +46,7 @@ export class DeliveryController {
     return this.deliveryService.saveAttributions(vendorEmail, dto);
   }
 
+  @Public()
   @Get('noest-desks')
   @ApiOperation({ summary: 'Get Noest stop desks (pickup points)' })
   @ApiQuery({ name: 'wilayaCode', required: false })
@@ -58,6 +61,7 @@ export class DeliveryController {
     return this.deliveryService.syncNoestDesks(vendorEmail);
   }
 
+  @Public()
   @Get('ecom-desks')
   @ApiOperation({ summary: 'Get Ecom Delivery stop desks (relay points)' })
   @ApiQuery({ name: 'wilayaCode', required: false })
@@ -72,6 +76,7 @@ export class DeliveryController {
     return this.deliveryService.syncEcomDesks(vendorEmail);
   }
 
+  @Public()
   @Get('dhd-desks')
   @ApiOperation({ summary: 'Get DHD stop desks (pickup points)' })
   @ApiQuery({ name: 'wilayaCode', required: false })
@@ -79,6 +84,7 @@ export class DeliveryController {
     return this.deliveryService.getDhdDesks(wilayaCode);
   }
 
+  @Public()
   @Get('zr-hubs')
   @ApiOperation({ summary: 'Get ZR Express hubs (pickup points)' })
   @ApiQuery({ name: 'wilayaCode', required: false })

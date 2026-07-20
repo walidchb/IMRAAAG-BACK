@@ -4,6 +4,9 @@ import { Model } from 'mongoose';
 import { DeliveryFee, DeliveryFeeDocument } from './schemas/delivery-fee.schema';
 import { UpdateDeliveryFeeDto, BulkUpdateDeliveryFeeDto } from './dto/manage-delivery-fees.dto';
 import { DeliveryConfig, DeliveryConfigDocument } from '../delivery/schemas/delivery-config.schema';
+import { CacheService } from '../../common/cache.service';
+
+const CACHE_TTL = 3600000; // 1 hour
 
 interface NoestFeeEntry {
   tarif?: string;
@@ -35,32 +38,43 @@ interface DhdWilayaFee {
 export class DeliveryFeesService {
   private readonly logger = new Logger(DeliveryFeesService.name);
   private readonly noestApiBase = 'https://app.noest-dz.com';
-  private readonly noestApiKey = '***REMOVED***';
 
   constructor(
     @InjectModel(DeliveryFee.name)
     private feeModel: Model<DeliveryFeeDocument>,
     @InjectModel(DeliveryConfig.name)
     private configModel: Model<DeliveryConfigDocument>,
+    private readonly cacheService: CacheService,
   ) {}
 
   async getFees(vendorEmail: string): Promise<DeliveryFee | null> {
-    return this.feeModel.findOne({ vendorEmail }).exec();
+    const cacheKey = `delivery-fees:${vendorEmail}:all`;
+    const cached = this.cacheService.get<DeliveryFee | null>(cacheKey);
+    if (cached !== undefined) return cached;
+    const result = await this.feeModel.findOne({ vendorEmail }).exec();
+    this.cacheService.set(cacheKey, result, CACHE_TTL);
+    return result;
   }
 
   async getFee(vendorEmail: string, wilayaCode: string): Promise<{ wilayaCode: string; homeDeliveryFee: number; stopDeskDeliveryFee: number }> {
+    const cacheKey = `delivery-fees:${vendorEmail}:single:${wilayaCode}`;
+    const cached = this.cacheService.get<{ wilayaCode: string; homeDeliveryFee: number; stopDeskDeliveryFee: number }>(cacheKey);
+    if (cached) return cached;
     const doc = await this.feeModel.findOne({ vendorEmail }).exec();
     if (!doc || !doc.fees || !doc.fees[wilayaCode]) {
       throw new NotFoundException(`Delivery fee not found for wilaya ${wilayaCode}`);
     }
-    return {
+    const result = {
       wilayaCode,
       homeDeliveryFee: doc.fees[wilayaCode].homeDeliveryFee ?? 0,
       stopDeskDeliveryFee: doc.fees[wilayaCode].stopDeskDeliveryFee ?? 0,
     };
+    this.cacheService.set(cacheKey, result, CACHE_TTL);
+    return result;
   }
 
   async updateFee(vendorEmail: string, wilayaCode: string, dto: UpdateDeliveryFeeDto): Promise<DeliveryFee> {
+    this.cacheService.clear(`delivery-fees:${vendorEmail}`);
     const doc = await this.feeModel.findOne({ vendorEmail }).exec();
     const current = doc?.fees?.[wilayaCode] || { homeDeliveryFee: 0, stopDeskDeliveryFee: 0 };
     return this.feeModel.findOneAndUpdate(
@@ -78,6 +92,7 @@ export class DeliveryFeesService {
   }
 
   async bulkUpdate(vendorEmail: string, dto: BulkUpdateDeliveryFeeDto): Promise<{ success: boolean; count: number }> {
+    this.cacheService.clear(`delivery-fees:${vendorEmail}`);
     if (!dto.fees) return { success: false, count: 0 };
     const setFields: Record<string, any> = {};
     for (const [wilayaCode, values] of Object.entries(dto.fees)) {
@@ -97,6 +112,7 @@ export class DeliveryFeesService {
   }
 
   async seedDefaults(vendorEmail: string, wilayaCodes: string[]): Promise<void> {
+    this.cacheService.clear(`delivery-fees:${vendorEmail}`);
     const doc = await this.feeModel.findOne({ vendorEmail }).exec();
     const existingCodes = new Set(Object.keys(doc?.fees || {}));
     const missing = wilayaCodes.filter(c => !existingCodes.has(c));
@@ -112,11 +128,21 @@ export class DeliveryFeesService {
     ).exec();
   }
 
-  private async callNoestFeesApi(): Promise<Record<string, NoestFeeEntry>> {
+  private async getNoestApiToken(vendorEmail: string): Promise<string> {
+    const config = await this.configModel.findOne({ vendorEmail }).lean().exec();
+    const token = config?.companies?.['noest']?.credentials?.apiToken;
+    if (!token) {
+      throw new Error('Noest API token not configured. Set it up in Delivery Configuration.');
+    }
+    return token;
+  }
+
+  private async callNoestFeesApi(vendorEmail: string): Promise<Record<string, NoestFeeEntry>> {
+    const apiToken = await this.getNoestApiToken(vendorEmail);
     const response = await fetch(`${this.noestApiBase}/api/public/fees`, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${this.noestApiKey}`,
+        'Authorization': `Bearer ${apiToken}`,
         'Accept': 'application/json',
       },
     });
@@ -141,6 +167,7 @@ export class DeliveryFeesService {
     vendorEmail: string,
     fees: { wilayaCode: string; homeDeliveryFee: number; stopDeskDeliveryFee: number }[],
   ): Promise<void> {
+    this.cacheService.clear(`delivery-fees:${vendorEmail}`);
     if (fees.length === 0) return;
     const setFields: Record<string, any> = {};
     for (const f of fees) {
@@ -160,7 +187,7 @@ export class DeliveryFeesService {
     vendorEmail: string,
     wilayaCodes: string[],
   ): Promise<void> {
-    const delivery = await this.callNoestFeesApi();
+    const delivery = await this.callNoestFeesApi(vendorEmail);
     const fees = wilayaCodes
       .filter((code) => delivery[code])
       .map((code) => ({
@@ -173,7 +200,7 @@ export class DeliveryFeesService {
 
   async fetchNoestFees(vendorEmail: string): Promise<{ wilayaCode: string; homeDeliveryFee: number; stopDeskDeliveryFee: number }[]> {
     try {
-      const delivery = await this.callNoestFeesApi();
+      const delivery = await this.callNoestFeesApi(vendorEmail);
       return Object.entries(delivery).map(([wilayaId, fee]) => ({
         wilayaCode: wilayaId,
         homeDeliveryFee: parseInt(fee.tarif || '0', 10) || 0,
@@ -188,7 +215,7 @@ export class DeliveryFeesService {
 
   async fetchNoestFeeForWilaya(vendorEmail: string, wilayaCode: string): Promise<{ wilayaCode: string; homeDeliveryFee: number; stopDeskDeliveryFee: number }> {
     try {
-      const delivery = await this.callNoestFeesApi();
+      const delivery = await this.callNoestFeesApi(vendorEmail);
       const fee = delivery[wilayaCode];
       if (!fee) {
         throw new NotFoundException(`No Noest fee found for wilaya ${wilayaCode}`);
