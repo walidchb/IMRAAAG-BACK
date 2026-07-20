@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import * as path from 'path';
 import sharp from 'sharp';
 
@@ -41,7 +41,7 @@ export class UploadService {
     this.validateFile(file);
 
     const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
-    const baseName = `${folder}/${uuidv4()}`;
+    const baseName = `${folder}/${randomUUID()}`;
     const key = `${baseName}${ext}`;
     const thumbKey = `${baseName}-thumb.webp`;
 
