@@ -110,10 +110,10 @@ export class OrdersService {
       date: createOrderDto.date || now,
       createdAt: createOrderDto.createdAt || now,
       deliveryCompanyId: deliveryCompanyId || undefined,
-      status: ORDER_STATUSES.find(s => s.slug === 'placed'),
+      status: ORDER_STATUSES.find(s => s.slug === 'placed')!,
       history: [
         {
-          status: 'placed',
+          status: ORDER_STATUSES.find(s => s.slug === 'placed')!,
           date: now,
           user: createOrderDto.createdBy || 'Vendor',
         },
@@ -288,7 +288,7 @@ export class OrdersService {
 
       if (!updateOrderDto.history) {
         const historyEntry = {
-          status: updateOrderDto.status,
+          status: statusConfig,
           date: new Date(),
           user: updateOrderDto.createdBy || 'Vendor',
         };
@@ -366,7 +366,7 @@ export class OrdersService {
     const orders = await this.orderModel.find({ _id: { $in: ids } }).exec();
     const errors: string[] = [];
 
-    const targetStatusConfig = this.statusesService.getBySlug(targetSlug);
+    const targetStatusConfig = this.statusesService.getBySlug(targetSlug)!;
 
     const bulkOps = orders
       .filter((order) => {
@@ -387,7 +387,7 @@ export class OrdersService {
               ...(targetSlug === OrderStatus.CONFIRMED ? { confirmedAt: now, confirmedBy: 'Vendor' } : {}),
             },
             $push: {
-              history: { status: targetSlug, date: now, user: 'Vendor' },
+              history: { status: targetStatusConfig, date: now, user: 'Vendor' },
             },
           },
         },
@@ -423,7 +423,7 @@ export class OrdersService {
 
     const results = await this.deliveryService.createBulkDeliveriesForOrders(orders);
 
-    const dispatchedStatus = this.statusesService.getBySlug(OrderStatus.DISPATCHED);
+    const dispatchedStatus = this.statusesService.getBySlug(OrderStatus.DISPATCHED)!;
     const now = new Date();
     const user = orders[0]?.createdBy || 'Vendor';
 
@@ -439,7 +439,7 @@ export class OrdersService {
               dispatchedAt: now,
             },
             $push: {
-              history: { status: OrderStatus.DISPATCHED, date: now, user },
+              history: { status: dispatchedStatus, date: now, user },
             },
           },
         ).exec();

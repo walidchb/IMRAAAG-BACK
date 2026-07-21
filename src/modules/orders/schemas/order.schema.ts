@@ -1,6 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import { OrderStatus, ORDER_STATUS_VALUES } from '../../../common/constants/order-statuses.const';
 import type { StatusConfig } from '../../../common/constants/order-statuses.const';
 
 export type OrderDocument = Order & Document;
@@ -103,11 +102,11 @@ export class Order {
   stopDeskCode: string;
 
   @Prop([{
-    status: { type: String, enum: ORDER_STATUS_VALUES },
+    status: { type: Object },
     date: { type: Date },
     user: { type: String }
   }])
-  history: Array<{ status: OrderStatus; date: Date; user: string }>;
+  history: Array<{ status: StatusConfig; date: Date; user: string }>;
 }
 
 export const OrderSchema = SchemaFactory.createForClass(Order);
