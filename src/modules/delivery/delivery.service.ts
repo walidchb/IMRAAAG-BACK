@@ -1,4 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { AppException } from '../../common/errors/app-exception';
+import { AppErrorCode } from '../../common/errors/error-codes.enum';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as fs from 'fs';
@@ -113,15 +115,15 @@ export class DeliveryService {
     return null;
   }
 
-  async createDeliveryForOrder(order: Order): Promise<{ parcelId?: string; error?: string }> {
+  async createDeliveryForOrder(order: Order): Promise<{ parcelId: string }> {
     const companyId = order.deliveryCompanyId;
     if (!companyId) {
-      return { error: 'No delivery company assigned to this order' };
+      throw new AppException(AppErrorCode.DELIVERY_COMPANY_NOT_ASSIGNED, { orderNo: order.orderNo });
     }
 
     const handler = this.deliveryCompanyRegistry.getHandler(companyId);
     if (!handler) {
-      return { error: `No handler registered for delivery company: ${companyId}` };
+      throw new AppException(AppErrorCode.DELIVERY_HANDLER_NOT_FOUND, { companyId });
     }
 
     this.logger.log(`Creating delivery for order ${order.orderNo} via ${companyId}`);
@@ -158,8 +160,13 @@ export class DeliveryService {
       } else {
         this.logger.log(`Creating individual deliveries for ${groupOrders.length} orders via ${companyId} (no bulk endpoint)`);
         for (const order of groupOrders) {
-          const { parcelId, error } = await handler.createOrder(order);
-          results.push({ orderNo: order.orderNo, success: !!parcelId, parcelId, error });
+          try {
+            const { parcelId } = await handler.createOrder(order);
+            results.push({ orderNo: order.orderNo, success: true, parcelId });
+          } catch (err) {
+            const message = err instanceof Error ? err.message : 'Unknown error';
+            results.push({ orderNo: order.orderNo, success: false, error: message });
+          }
         }
       }
     }
@@ -173,23 +180,36 @@ export class DeliveryService {
     const apiToken: string | undefined = creds.apiToken;
 
     if (!apiToken) {
-      throw new Error('Noest API token not configured');
+      throw new AppException(AppErrorCode.DELIVERY_CREDENTIALS_NOT_CONFIGURED, { company: 'Noest' });
     }
 
     this.logger.log(`Fetching Noest desks from ${this.noestApiBase}/api/public/desks`);
 
-    const response = await fetch(`${this.noestApiBase}/api/public/desks`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${apiToken}`,
-        'Accept': 'application/json',
-      },
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    let response: Response;
+    try {
+      response = await fetch(`${this.noestApiBase}/api/public/desks`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${apiToken}`,
+          'Accept': 'application/json',
+        },
+        signal: controller.signal,
+      });
+    } catch (err: unknown) {
+      clearTimeout(timeoutId);
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        throw new AppException(AppErrorCode.DELIVERY_API_TIMEOUT, { company: 'Noest' });
+      }
+      throw new AppException(AppErrorCode.DELIVERY_API_ERROR, { company: 'Noest', message: String(err) });
+    }
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const text = await response.text();
       this.logger.error(`Noest desks API returned ${response.status}: ${text}`);
-      throw new Error(`Noest desks API returned ${response.status}: ${text}`);
+      throw new AppException(AppErrorCode.DELIVERY_API_ERROR, { company: 'Noest', status: response.status, text });
     }
 
     const raw = await response.json() as Record<string, NoestDeskRaw>;
@@ -256,24 +276,37 @@ export class DeliveryService {
     const apiToken: string | undefined = creds.token;
 
     if (!apiKey || !apiToken) {
-      throw new Error('Ecom Delivery API credentials not configured');
+      throw new AppException(AppErrorCode.DELIVERY_CREDENTIALS_NOT_CONFIGURED, { company: 'Ecom' });
     }
 
     this.logger.log('Syncing Ecom Delivery stop desks from API');
 
-    const response = await fetch('https://ecom-dz.com/api_v2/bureaux', {
-      method: 'GET',
-      headers: {
-        'X-API-Key': apiKey,
-        'X-API-Token': apiToken,
-        'Accept': 'application/json',
-      },
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    let response: Response;
+    try {
+      response = await fetch('https://ecom-dz.com/api_v2/bureaux', {
+        method: 'GET',
+        headers: {
+          'X-API-Key': apiKey,
+          'X-API-Token': apiToken,
+          'Accept': 'application/json',
+        },
+        signal: controller.signal,
+      });
+    } catch (err: unknown) {
+      clearTimeout(timeoutId);
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        throw new AppException(AppErrorCode.DELIVERY_API_TIMEOUT, { company: 'Ecom' });
+      }
+      throw new AppException(AppErrorCode.DELIVERY_API_ERROR, { company: 'Ecom', message: String(err) });
+    }
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const text = await response.text();
       this.logger.error(`Ecom desks API returned ${response.status}: ${text}`);
-      throw new Error(`Ecom desks API returned ${response.status}: ${text}`);
+      throw new AppException(AppErrorCode.DELIVERY_API_ERROR, { company: 'Ecom', status: response.status, text });
     }
 
     const raw = await response.json() as Array<Record<string, unknown>>;

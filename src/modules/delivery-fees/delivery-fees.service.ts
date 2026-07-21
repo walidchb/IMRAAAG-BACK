@@ -1,4 +1,6 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { AppException } from '../../common/errors/app-exception';
+import { AppErrorCode } from '../../common/errors/error-codes.enum';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { DeliveryFee, DeliveryFeeDocument } from './schemas/delivery-fee.schema';
@@ -62,7 +64,7 @@ export class DeliveryFeesService {
     if (cached) return cached;
     const doc = await this.feeModel.findOne({ vendorEmail }).exec();
     if (!doc || !doc.fees || !doc.fees[wilayaCode]) {
-      throw new NotFoundException(`Delivery fee not found for wilaya ${wilayaCode}`);
+      throw new AppException(AppErrorCode.FEE_NOT_FOUND_FOR_WILAYA, { wilayaCode });
     }
     const result = {
       wilayaCode,
@@ -132,24 +134,37 @@ export class DeliveryFeesService {
     const config = await this.configModel.findOne({ vendorEmail }).lean().exec();
     const token = config?.companies?.['noest']?.credentials?.apiToken;
     if (!token) {
-      throw new Error('Noest API token not configured. Set it up in Delivery Configuration.');
+      throw new AppException(AppErrorCode.FEE_API_CREDENTIALS_MISSING, { company: 'Noest' });
     }
     return token;
   }
 
   private async callNoestFeesApi(vendorEmail: string): Promise<Record<string, NoestFeeEntry>> {
     const apiToken = await this.getNoestApiToken(vendorEmail);
-    const response = await fetch(`${this.noestApiBase}/api/public/fees`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${apiToken}`,
-        'Accept': 'application/json',
-      },
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    let response: Response;
+    try {
+      response = await fetch(`${this.noestApiBase}/api/public/fees`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${apiToken}`,
+          'Accept': 'application/json',
+        },
+        signal: controller.signal,
+      });
+    } catch (err: unknown) {
+      clearTimeout(timeoutId);
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        throw new AppException(AppErrorCode.FEE_FETCH_FAILED, { company: 'Noest', message: 'Request timed out' });
+      }
+      throw err;
+    }
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const errorBody = await response.text();
-      throw new Error(`Noest API returned ${response.status}: ${errorBody}`);
+      throw new AppException(AppErrorCode.FEE_API_ERROR, { company: 'Noest', status: response.status, body: errorBody });
     }
 
     const data = await response.json() as Record<string, unknown>;
@@ -157,7 +172,7 @@ export class DeliveryFeesService {
     const delivery = tarifs?.delivery as Record<string, unknown> | undefined;
 
     if (!delivery) {
-      throw new Error('No delivery fees found in Noest response');
+      throw new AppException(AppErrorCode.FEE_API_NO_DATA, { company: 'Noest' });
     }
 
     return delivery as Record<string, NoestFeeEntry>;
@@ -209,7 +224,7 @@ export class DeliveryFeesService {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       this.logger.error(`Failed to fetch Noest fees: ${message}`);
-      throw new Error(`Failed to fetch Noest fees: ${message}`);
+      throw new AppException(AppErrorCode.FEE_FETCH_FAILED, { company: 'Noest', message });
     }
   }
 
@@ -218,7 +233,7 @@ export class DeliveryFeesService {
       const delivery = await this.callNoestFeesApi(vendorEmail);
       const fee = delivery[wilayaCode];
       if (!fee) {
-        throw new NotFoundException(`No Noest fee found for wilaya ${wilayaCode}`);
+        throw new AppException(AppErrorCode.FEE_NOT_FOUND_FOR_WILAYA, { company: 'Noest', wilayaCode });
       }
       return {
         wilayaCode,
@@ -226,33 +241,46 @@ export class DeliveryFeesService {
         stopDeskDeliveryFee: parseInt(fee.tarif_stopdesk || '0', 10) || 0,
       };
     } catch (err) {
-      if (err instanceof NotFoundException) throw err;
+      if (err instanceof AppException) throw err;
       const message = err instanceof Error ? err.message : 'Unknown error';
       this.logger.error(`Failed to fetch Noest fee for wilaya ${wilayaCode}: ${message}`);
-      throw new Error(`Failed to fetch Noest fee for wilaya ${wilayaCode}: ${message}`);
+      throw new AppException(AppErrorCode.FEE_FETCH_FAILED, { company: 'Noest', wilayaCode, message });
     }
   }
 
   private async callEcomFeesApi(apiKey: string, apiToken: string): Promise<EcomWilayaFee[]> {
-    const response = await fetch('https://ecom-dz.com/api_v2/tarifs', {
-      method: 'GET',
-      headers: {
-        'X-API-Key': apiKey,
-        'X-API-Token': apiToken,
-        'Accept': 'application/json',
-      },
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    let response: Response;
+    try {
+      response = await fetch('https://ecom-dz.com/api_v2/tarifs', {
+        method: 'GET',
+        headers: {
+          'X-API-Key': apiKey,
+          'X-API-Token': apiToken,
+          'Accept': 'application/json',
+        },
+        signal: controller.signal,
+      });
+    } catch (err: unknown) {
+      clearTimeout(timeoutId);
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        throw new AppException(AppErrorCode.FEE_FETCH_FAILED, { company: 'Ecom', message: 'Request timed out' });
+      }
+      throw err;
+    }
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const errorBody = await response.text();
-      throw new Error(`Ecom Delivery API returned ${response.status}: ${errorBody}`);
+      throw new AppException(AppErrorCode.FEE_API_ERROR, { company: 'Ecom', status: response.status, body: errorBody });
     }
 
     const data = await response.json() as { wilayas?: EcomWilayaFee[] };
     const wilayas = data?.wilayas;
 
     if (!wilayas || !Array.isArray(wilayas)) {
-      throw new Error('No wilayas fees found in Ecom Delivery response');
+      throw new AppException(AppErrorCode.FEE_API_NO_DATA, { company: 'Ecom' });
     }
 
     return wilayas;
@@ -294,7 +322,7 @@ export class DeliveryFeesService {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       this.logger.error(`Failed to fetch Ecom Delivery fees: ${message}`);
-      throw new Error(`Failed to fetch Ecom Delivery fees: ${message}`);
+      throw new AppException(AppErrorCode.FEE_FETCH_FAILED, { company: 'Ecom', message });
     }
   }
 
@@ -308,7 +336,7 @@ export class DeliveryFeesService {
       const wilayas = await this.callEcomFeesApi(apiKey, apiToken);
       const fee = wilayas.find((w) => String(w.wilaya) === wilayaCode);
       if (!fee) {
-        throw new NotFoundException(`No Ecom Delivery fee found for wilaya ${wilayaCode}`);
+        throw new AppException(AppErrorCode.FEE_NOT_FOUND_FOR_WILAYA, { company: 'Ecom', wilayaCode });
       }
       return {
         wilayaCode,
@@ -316,33 +344,46 @@ export class DeliveryFeesService {
         stopDeskDeliveryFee: fee.stopdesk,
       };
     } catch (err) {
-      if (err instanceof NotFoundException) throw err;
+      if (err instanceof AppException) throw err;
       const message = err instanceof Error ? err.message : 'Unknown error';
       this.logger.error(`Failed to fetch Ecom Delivery fee for wilaya ${wilayaCode}: ${message}`);
-      throw new Error(`Failed to fetch Ecom Delivery fee for wilaya ${wilayaCode}: ${message}`);
+      throw new AppException(AppErrorCode.FEE_FETCH_FAILED, { company: 'Ecom', wilayaCode, message });
     }
   }
 
   private async callZrFeesApi(apiKey: string, tenantId: string): Promise<ZrRateEntry[]> {
-    const response = await fetch('https://api.zrexpress.app/api/v1/delivery-pricing/rates', {
-      method: 'GET',
-      headers: {
-        'X-Api-Key': apiKey,
-        'X-Tenant': tenantId,
-        'Accept': 'application/json',
-      },
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    let response: Response;
+    try {
+      response = await fetch('https://api.zrexpress.app/api/v1/delivery-pricing/rates', {
+        method: 'GET',
+        headers: {
+          'X-Api-Key': apiKey,
+          'X-Tenant': tenantId,
+          'Accept': 'application/json',
+        },
+        signal: controller.signal,
+      });
+    } catch (err: unknown) {
+      clearTimeout(timeoutId);
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        throw new AppException(AppErrorCode.FEE_FETCH_FAILED, { company: 'ZR Express', message: 'Request timed out' });
+      }
+      throw err;
+    }
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const errorBody = await response.text();
-      throw new Error(`ZR Express API returned ${response.status}: ${errorBody}`);
+      throw new AppException(AppErrorCode.FEE_API_ERROR, { company: 'ZR Express', status: response.status, body: errorBody });
     }
 
     const data = await response.json() as { rates?: ZrRateEntry[] };
     const rates = data?.rates;
 
     if (!rates || !Array.isArray(rates)) {
-      throw new Error('No rates found in ZR Express response');
+      throw new AppException(AppErrorCode.FEE_API_NO_DATA, { company: 'ZR Express' });
     }
 
     return rates;
@@ -384,7 +425,7 @@ export class DeliveryFeesService {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       this.logger.error(`Failed to fetch ZR Express fees: ${message}`);
-      throw new Error(`Failed to fetch ZR Express fees: ${message}`);
+      throw new AppException(AppErrorCode.FEE_FETCH_FAILED, { company: 'ZR Express', message });
     }
   }
 
@@ -398,7 +439,7 @@ export class DeliveryFeesService {
       const rates = await this.callZrFeesApi(apiKey, tenantId);
       const rate = rates.find((r) => String(r.toTerritoryCode) === wilayaCode);
       if (!rate) {
-        throw new NotFoundException(`No ZR Express fee found for wilaya ${wilayaCode}`);
+        throw new AppException(AppErrorCode.FEE_NOT_FOUND_FOR_WILAYA, { company: 'ZR Express', wilayaCode });
       }
       return {
         wilayaCode,
@@ -406,10 +447,10 @@ export class DeliveryFeesService {
         stopDeskDeliveryFee: rate.deliveryPrices?.find(p => p.deliveryType === 'pickup-point')?.price ?? 0,
       };
     } catch (err) {
-      if (err instanceof NotFoundException) throw err;
+      if (err instanceof AppException) throw err;
       const message = err instanceof Error ? err.message : 'Unknown error';
       this.logger.error(`Failed to fetch ZR Express fee for wilaya ${wilayaCode}: ${message}`);
-      throw new Error(`Failed to fetch ZR Express fee for wilaya ${wilayaCode}: ${message}`);
+      throw new AppException(AppErrorCode.FEE_FETCH_FAILED, { company: 'ZR Express', wilayaCode, message });
     }
   }
 
@@ -417,30 +458,43 @@ export class DeliveryFeesService {
     const config = await this.configModel.findOne({ vendorEmail }).lean().exec();
     const token = config?.companies?.['dhd']?.credentials?.apiToken;
     if (!token) {
-      throw new Error('DHD API token not configured. Set it up in Delivery Configuration.');
+      throw new AppException(AppErrorCode.FEE_API_CREDENTIALS_MISSING, { company: 'DHD' });
     }
     return token;
   }
 
   private async callDhdFeesApi(apiToken: string): Promise<DhdWilayaFee[]> {
-    const response = await fetch('https://platform.dhd-dz.com/api/v1/get/fees', {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${apiToken}`,
-        'Accept': 'application/json',
-      },
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    let response: Response;
+    try {
+      response = await fetch('https://platform.dhd-dz.com/api/v1/get/fees', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${apiToken}`,
+          'Accept': 'application/json',
+        },
+        signal: controller.signal,
+      });
+    } catch (err: unknown) {
+      clearTimeout(timeoutId);
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        throw new AppException(AppErrorCode.FEE_FETCH_FAILED, { company: 'DHD', message: 'Request timed out' });
+      }
+      throw err;
+    }
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const errorBody = await response.text();
-      throw new Error(`DHD API returned ${response.status}: ${errorBody}`);
+      throw new AppException(AppErrorCode.FEE_API_ERROR, { company: 'DHD', status: response.status, body: errorBody });
     }
 
     const data = await response.json() as { livraison?: DhdWilayaFee[] };
     const livraison = data?.livraison;
 
     if (!livraison || !Array.isArray(livraison)) {
-      throw new Error('No delivery fees found in DHD response');
+      throw new AppException(AppErrorCode.FEE_API_NO_DATA, { company: 'DHD' });
     }
 
     return livraison;
@@ -480,7 +534,7 @@ export class DeliveryFeesService {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       this.logger.error(`Failed to fetch DHD fees: ${message}`);
-      throw new Error(`Failed to fetch DHD fees: ${message}`);
+      throw new AppException(AppErrorCode.FEE_FETCH_FAILED, { company: 'DHD', message });
     }
   }
 
@@ -493,7 +547,7 @@ export class DeliveryFeesService {
       const wilayas = await this.callDhdFeesApi(apiToken);
       const fee = wilayas.find((w) => String(w.wilaya_id) === wilayaCode);
       if (!fee) {
-        throw new NotFoundException(`No DHD fee found for wilaya ${wilayaCode}`);
+        throw new AppException(AppErrorCode.FEE_NOT_FOUND_FOR_WILAYA, { company: 'DHD', wilayaCode });
       }
       return {
         wilayaCode,
@@ -501,10 +555,10 @@ export class DeliveryFeesService {
         stopDeskDeliveryFee: parseInt(fee.tarif_stopdesk || '0', 10) || 0,
       };
     } catch (err) {
-      if (err instanceof NotFoundException) throw err;
+      if (err instanceof AppException) throw err;
       const message = err instanceof Error ? err.message : 'Unknown error';
       this.logger.error(`Failed to fetch DHD fee for wilaya ${wilayaCode}: ${message}`);
-      throw new Error(`Failed to fetch DHD fee for wilaya ${wilayaCode}: ${message}`);
+      throw new AppException(AppErrorCode.FEE_FETCH_FAILED, { company: 'DHD', wilayaCode, message });
     }
   }
 }

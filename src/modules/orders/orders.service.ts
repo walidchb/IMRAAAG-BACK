@@ -1,4 +1,6 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { AppException } from '../../common/errors/app-exception';
+import { AppErrorCode } from '../../common/errors/error-codes.enum';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Order, OrderDocument } from './schemas/order.schema';
@@ -49,7 +51,7 @@ export class OrdersService {
 
     if (createOrderDto.shippingMethod === 'home') {
       if (!createOrderDto.customer?.wilaya || !createOrderDto.customer?.commune) {
-        throw new BadRequestException('Wilaya and commune are required for home delivery');
+        throw new AppException(AppErrorCode.ORDER_WILAYA_COMMUNE_REQUIRED);
       }
     }
 
@@ -78,9 +80,7 @@ export class OrdersService {
       if (item.productId) {
         const product = productMap.get(item.productId);
         if (!product) {
-          throw new BadRequestException(
-            `Product "${item.productName}" is not found or is not available`,
-          );
+          throw new AppException(AppErrorCode.ORDER_PRODUCT_NOT_AVAILABLE, { name: item.productName });
         }
         price = product.price;
         if (!weight || weight <= 0) {
@@ -111,13 +111,6 @@ export class OrdersService {
       createdAt: createOrderDto.createdAt || now,
       deliveryCompanyId: deliveryCompanyId || undefined,
       status: ORDER_STATUSES.find(s => s.slug === 'placed')!,
-      history: [
-        {
-          status: ORDER_STATUSES.find(s => s.slug === 'placed')!,
-          date: now,
-          user: createOrderDto.createdBy || 'Vendor',
-        },
-      ],
     });
 
     return created.save();
@@ -236,7 +229,7 @@ export class OrdersService {
 
   async findOne(id: string): Promise<Order> {
     const order = await this.orderModel.findById(id).exec();
-    if (!order) throw new NotFoundException(`Order ${id} not found`);
+    if (!order) throw new AppException(AppErrorCode.ORDER_NOT_FOUND, { id });
     return order;
   }
 
@@ -263,7 +256,7 @@ export class OrdersService {
 
   async update(id: string, updateOrderDto: UpdateOrderDto): Promise<Order> {
     const existing = await this.orderModel.findById(id).exec();
-    if (!existing) throw new NotFoundException(`Order ${id} not found`);
+    if (!existing) throw new AppException(AppErrorCode.ORDER_NOT_FOUND, { id });
 
     const { status: _, ...restDto } = updateOrderDto;
     const updateData: Record<string, any> = { ...restDto };
@@ -271,10 +264,16 @@ export class OrdersService {
     const existingSlug = this.getStatusSlug(existing.status);
 
     if (updateOrderDto.status && updateOrderDto.status !== existingSlug) {
+      if (existingSlug === 'cancelled') {
+        throw new AppException(AppErrorCode.ORDER_ALREADY_CANCELLED, { id });
+      }
+      if (existingSlug === 'delivered') {
+        throw new AppException(AppErrorCode.ORDER_ALREADY_DELIVERED, { id });
+      }
       this.statusesService.validateTransition(existingSlug, updateOrderDto.status);
 
       const statusConfig = this.statusesService.getBySlug(updateOrderDto.status);
-      if (!statusConfig) throw new BadRequestException(`Invalid status: ${updateOrderDto.status}`);
+      if (!statusConfig) throw new AppException(AppErrorCode.ORDER_INVALID_STATUS, { status: updateOrderDto.status });
       updateData.status = statusConfig;
 
       if (updateOrderDto.status === 'confirmed' && existingSlug !== 'confirmed') {
@@ -285,22 +284,13 @@ export class OrdersService {
       if (updateOrderDto.status === 'dispatched' && existingSlug !== 'dispatched') {
         updateData.dispatchedAt = new Date();
       }
-
-      if (!updateOrderDto.history) {
-        const historyEntry = {
-          status: statusConfig,
-          date: new Date(),
-          user: updateOrderDto.createdBy || 'Vendor',
-        };
-        updateData.history = [...(existing.history || []), historyEntry];
-      }
     }
 
     const effectiveShippingMethod = updateOrderDto.shippingMethod || existing.shippingMethod;
     if (effectiveShippingMethod === 'home') {
       const wilaya = updateOrderDto.customer?.wilaya || existing.customer?.wilaya;
       const commune = updateOrderDto.customer?.commune || existing.customer?.commune;
-      if (!wilaya || !commune) throw new BadRequestException('Wilaya and commune are required for home delivery');
+      if (!wilaya || !commune) throw new AppException(AppErrorCode.ORDER_WILAYA_COMMUNE_REQUIRED);
     }
 
 
@@ -311,9 +301,7 @@ export class OrdersService {
       const total = updateOrderDto.total ?? existing.total;
       const expectedMinTotal = itemsTotal + shippingFee;
       if (total < expectedMinTotal - 0.01) {
-        throw new BadRequestException(
-          `Total (${total}) must be at least item subtotal (${itemsTotal}) plus shipping fee (${shippingFee})`,
-        );
+        throw new AppException(AppErrorCode.ORDER_TOTAL_MISMATCH, { total, subtotal: itemsTotal });
       }
     }
 
@@ -328,12 +316,7 @@ export class OrdersService {
     const isBecomingDispatched = updateOrderDto.status === 'dispatched' && existingSlug !== 'dispatched';
 
     if (isBecomingDispatched) {
-      const { parcelId, error } = await this.deliveryService.createDeliveryForOrder(existing);
-
-      if (!parcelId) {
-        throw new BadRequestException(`Failed to create delivery: ${error || 'Unknown error'}`);
-      }
-
+      const { parcelId } = await this.deliveryService.createDeliveryForOrder(existing);
       updateData.deliveryParcelId = parcelId;
     }
 
@@ -341,14 +324,14 @@ export class OrdersService {
       .findByIdAndUpdate(id, updateData, { new: true })
       .exec();
 
-    if (!updated) throw new NotFoundException(`Order ${id} not found`);
+    if (!updated) throw new AppException(AppErrorCode.ORDER_NOT_FOUND, { id });
 
     return updated;
   }
 
   async remove(id: string): Promise<{ id: string; deleted: true }> {
     const result = await this.orderModel.findByIdAndDelete(id).exec();
-    if (!result) throw new NotFoundException(`Order ${id} not found`);
+    if (!result) throw new AppException(AppErrorCode.ORDER_NOT_FOUND, { id });
     return { id: String(result._id), deleted: true };
   }
 
@@ -370,11 +353,20 @@ export class OrdersService {
 
     const bulkOps = orders
       .filter((order) => {
+        const slug = this.getStatusSlug(order.status);
+        if (slug === 'cancelled') {
+          errors.push(`Order ${order.orderNo}: This order has already been cancelled`);
+          return false;
+        }
+        if (slug === 'delivered') {
+          errors.push(`Order ${order.orderNo}: This order has already been delivered`);
+          return false;
+        }
         try {
-          this.statusesService.validateTransition(this.getStatusSlug(order.status), targetSlug);
+          this.statusesService.validateTransition(slug, targetSlug);
           return true;
         } catch {
-          errors.push(`Order ${order.orderNo}: Cannot transition from '${this.getStatusSlug(order.status)}' to '${targetSlug}'`);
+          errors.push(`Order ${order.orderNo}: Cannot transition from '${slug}' to '${targetSlug}'`);
           return false;
         }
       })
@@ -385,9 +377,6 @@ export class OrdersService {
             $set: {
               status: targetStatusConfig,
               ...(targetSlug === OrderStatus.CONFIRMED ? { confirmedAt: now, confirmedBy: 'Vendor' } : {}),
-            },
-            $push: {
-              history: { status: targetStatusConfig, date: now, user: 'Vendor' },
             },
           },
         },
@@ -416,9 +405,7 @@ export class OrdersService {
     const nonConfirmable = orders.filter(o => this.getStatusSlug(o.status) !== OrderStatus.CONFIRMED);
     if (nonConfirmable.length > 0) {
       const orderNos = nonConfirmable.map(o => o.orderNo).join(', ');
-      throw new BadRequestException(
-        `Only confirmed orders can be shipped. Orders not in confirmed status: ${orderNos}`,
-      );
+      throw new AppException(AppErrorCode.ORDER_ONLY_CONFIRMED_CAN_SHIP);
     }
 
     const results = await this.deliveryService.createBulkDeliveriesForOrders(orders);
@@ -437,9 +424,6 @@ export class OrdersService {
               deliveryParcelId: result.parcelId,
               deliveryError: undefined,
               dispatchedAt: now,
-            },
-            $push: {
-              history: { status: dispatchedStatus, date: now, user },
             },
           },
         ).exec();

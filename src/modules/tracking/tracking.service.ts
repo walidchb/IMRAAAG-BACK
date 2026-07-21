@@ -1,4 +1,6 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { AppException } from '../../common/errors/app-exception';
+import { AppErrorCode } from '../../common/errors/error-codes.enum';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as crypto from 'crypto';
@@ -80,7 +82,7 @@ export class TrackingService {
         this.forwardToMeta(config, dto, clientIp, userAgent)
           .then(() => { results.meta = true; })
           .catch((err) => {
-            this.logger.error(`Meta event failed: ${err instanceof Error ? err.message : 'Unknown'}`);
+            this.logger.error(`Meta event failed: ${err instanceof Error ? err.stack || err.message : String(err)}`);
           }),
       );
     }
@@ -90,7 +92,7 @@ export class TrackingService {
         this.forwardToTikTok(config, dto, clientIp, userAgent)
           .then(() => { results.tikTok = true; })
           .catch((err) => {
-            this.logger.error(`TikTok event failed: ${err instanceof Error ? err.message : 'Unknown'}`);
+            this.logger.error(`TikTok event failed: ${err instanceof Error ? err.stack || err.message : String(err)}`);
           }),
       );
     }
@@ -155,7 +157,7 @@ export class TrackingService {
 
     if (!response.ok) {
       const body = await response.text();
-      throw new Error(`Meta CAPI returned ${response.status}: ${body}`);
+      throw new AppException(AppErrorCode.TRACKING_META_API_FAILED, { status: response.status, body });
     }
   }
 
@@ -207,7 +209,7 @@ export class TrackingService {
 
     if (!response.ok) {
       const body = await response.text();
-      throw new Error(`TikTok Events API returned ${response.status}: ${body}`);
+      throw new AppException(AppErrorCode.TRACKING_TIKTOK_API_FAILED, { status: response.status, body });
     }
   }
 }

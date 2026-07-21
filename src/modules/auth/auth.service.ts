@@ -1,4 +1,6 @@
-import { Injectable, UnauthorizedException, ConflictException, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { AppException } from '../../common/errors/app-exception';
+import { AppErrorCode } from '../../common/errors/error-codes.enum';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { JwtService } from '@nestjs/jwt';
@@ -53,7 +55,7 @@ export class AuthService {
   async signup(dto: SignupDto) {
     const existing = await this.userModel.findOne({ email: dto.email.toLowerCase() });
     if (existing) {
-      throw new ConflictException('Email already registered');
+      throw new AppException(AppErrorCode.AUTH_EMAIL_ALREADY_REGISTERED);
     }
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
@@ -85,7 +87,9 @@ export class AuthService {
         categories: [],
       });
     } catch (err) {
-      this.logger.error(`Failed to auto-create store for ${user.email}: ${err instanceof Error ? err.message : err}`);
+      this.logger.error(
+        `Failed to auto-create store for ${user.email}: ${err instanceof Error ? err.stack || err.message : String(err)}`,
+      );
     }
 
     return {
@@ -110,12 +114,12 @@ export class AuthService {
 
     const user = await this.userModel.findOne(filter);
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new AppException(AppErrorCode.AUTH_INVALID_CREDENTIALS);
     }
 
     const isPasswordValid = await bcrypt.compare(dto.password, user.password);
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new AppException(AppErrorCode.AUTH_INVALID_CREDENTIALS);
     }
 
     await this.userModel.findByIdAndUpdate(user._id, {
@@ -146,7 +150,7 @@ export class AuthService {
     const tokenHash = crypto.createHash('sha256').update(dto.refreshToken).digest('hex');
     const user = await this.userModel.findOne({ refreshToken: tokenHash });
     if (!user) {
-      throw new UnauthorizedException('Invalid refresh token');
+      throw new AppException(AppErrorCode.AUTH_INVALID_REFRESH_TOKEN);
     }
 
     if (user.refreshTokenExpiresAt && user.refreshTokenExpiresAt < new Date()) {
@@ -154,7 +158,7 @@ export class AuthService {
         refreshToken: null,
         refreshTokenExpiresAt: null,
       });
-      throw new UnauthorizedException('Refresh token expired. Please log in again.');
+      throw new AppException(AppErrorCode.AUTH_REFRESH_TOKEN_EXPIRED);
     }
 
     const token = this.jwtService.sign({ sub: user._id, email: user.email, role: user.role });
@@ -205,15 +209,15 @@ export class AuthService {
     this.logger.log(`[RESET_PASSWORD] found in DB: ${resetToken ? `userId=${resetToken.userId} usedAt=${resetToken.usedAt} expiresAt=${resetToken.expiresAt}` : 'NONE'}`);
 
     if (!resetToken) {
-      throw new BadRequestException('Invalid or expired reset token');
+      throw new AppException(AppErrorCode.AUTH_RESET_TOKEN_INVALID);
     }
 
     if (resetToken.usedAt) {
-      throw new BadRequestException('Reset token has already been used');
+      throw new AppException(AppErrorCode.AUTH_RESET_TOKEN_USED);
     }
 
     if (resetToken.expiresAt < new Date()) {
-      throw new BadRequestException('Reset token has expired');
+      throw new AppException(AppErrorCode.AUTH_RESET_TOKEN_EXPIRED);
     }
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
@@ -230,7 +234,7 @@ export class AuthService {
   async customerRegister(dto: CustomerSignupDto) {
     const existing = await this.userModel.findOne({ phoneNumber: dto.phoneNumber });
     if (existing) {
-      throw new ConflictException('Phone number already registered');
+      throw new AppException(AppErrorCode.AUTH_PHONE_ALREADY_REGISTERED);
     }
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
@@ -305,15 +309,15 @@ export class AuthService {
     });
 
     if (!otp) {
-      throw new BadRequestException('Invalid OTP code');
+      throw new AppException(AppErrorCode.AUTH_OTP_INVALID);
     }
 
     if (otp.expiresAt < new Date()) {
-      throw new BadRequestException('OTP has expired');
+      throw new AppException(AppErrorCode.AUTH_OTP_EXPIRED);
     }
 
     if (otp.attempts >= 5) {
-      throw new BadRequestException('Too many failed attempts. Request a new OTP.');
+      throw new AppException(AppErrorCode.AUTH_OTP_ATTEMPTS_EXCEEDED);
     }
 
     await this.otpModel.findByIdAndUpdate(otp._id, { verifiedAt: new Date() });
@@ -331,17 +335,17 @@ export class AuthService {
     try {
       payload = this.jwtService.verify(dto.otpVerificationToken);
     } catch {
-      throw new BadRequestException('Invalid or expired verification token');
+      throw new AppException(AppErrorCode.AUTH_VERIFICATION_TOKEN_INVALID);
     }
 
     if (payload.type !== 'otp_verification') {
-      throw new BadRequestException('Invalid token type');
+      throw new AppException(AppErrorCode.AUTH_VERIFICATION_TOKEN_TYPE_INVALID);
     }
 
     const phoneNumber = payload.sub;
     const user = await this.userModel.findOne({ phoneNumber });
     if (!user) {
-      throw new BadRequestException('User not found');
+      throw new AppException(AppErrorCode.AUTH_USER_NOT_FOUND);
     }
 
     const hashedPassword = await bcrypt.hash(dto.newPassword, 10);

@@ -1,4 +1,6 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { AppException } from '../../common/errors/app-exception';
+import { AppErrorCode } from '../../common/errors/error-codes.enum';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Store, StoreDocument } from './schemas/store.schema';
@@ -35,12 +37,12 @@ export class StoresService {
   async create(createStoreDto: CreateStoreDto): Promise<Store> {
     const vendorEmail = createStoreDto.vendorEmail?.toLowerCase();
     if (!vendorEmail) {
-      throw new BadRequestException('vendorEmail is required');
+      throw new AppException(AppErrorCode.STORE_VENDOR_EMAIL_REQUIRED);
     }
 
     const existingVendor = await this.storeModel.findOne({ vendorEmail }).exec();
     if (existingVendor) {
-      throw new ConflictException('A store already exists for this vendor email');
+      throw new AppException(AppErrorCode.STORE_ALREADY_EXISTS);
     }
 
     let storeSlug = createStoreDto.storeSlug || this.slugify(createStoreDto.storeName);
@@ -142,33 +144,49 @@ export class StoresService {
     return { stores: items as Store[], nextCursor, hasMore };
   }
 
-  async findOne(id: string): Promise<Store> {
+  async findOne(id: string, opts?: { skipStatusCheck?: boolean }): Promise<Store> {
     const store = await this.storeModel.findById(id).exec();
-    if (!store) throw new NotFoundException(`Store ${id} not found`);
+    if (!store) throw new AppException(AppErrorCode.STORE_NOT_FOUND, { id });
+    if (!opts?.skipStatusCheck) {
+      if (!store.isActive) throw new AppException(AppErrorCode.STORE_NOT_ACTIVE, { id });
+      if (!store.isVerified) throw new AppException(AppErrorCode.STORE_NOT_VERIFIED, { id });
+    }
     return store;
   }
 
-  async findBySlug(slug: string): Promise<Store> {
+  async findBySlug(slug: string, opts?: { skipStatusCheck?: boolean }): Promise<Store> {
     const store = await this.storeModel.findOne({ storeSlug: slug }).exec();
-    if (!store) throw new NotFoundException(`Store with slug "${slug}" not found`);
+    if (!store) throw new AppException(AppErrorCode.STORE_SLUG_NOT_FOUND, { slug });
+    if (!opts?.skipStatusCheck) {
+      if (!store.isActive) throw new AppException(AppErrorCode.STORE_NOT_ACTIVE, { slug });
+      if (!store.isVerified) throw new AppException(AppErrorCode.STORE_NOT_VERIFIED, { slug });
+    }
     return store;
   }
 
-  async findByVendor(vendorId: string): Promise<Store> {
+  async findByVendor(vendorId: string, opts?: { skipStatusCheck?: boolean }): Promise<Store> {
     const store = await this.storeModel.findOne({ vendorId }).exec();
-    if (!store) throw new NotFoundException(`Store for vendor ${vendorId} not found`);
+    if (!store) throw new AppException(AppErrorCode.STORE_VENDOR_NOT_FOUND, { vendorId });
+    if (!opts?.skipStatusCheck) {
+      if (!store.isActive) throw new AppException(AppErrorCode.STORE_NOT_ACTIVE, { vendorId });
+      if (!store.isVerified) throw new AppException(AppErrorCode.STORE_NOT_VERIFIED, { vendorId });
+    }
     return store;
   }
 
-  async findByEmail(email: string): Promise<Store> {
+  async findByEmail(email: string, opts?: { skipStatusCheck?: boolean }): Promise<Store> {
     const store = await this.storeModel.findOne({ vendorEmail: email.toLowerCase() }).exec();
-    if (!store) throw new NotFoundException(`Store for vendor ${email} not found`);
+    if (!store) throw new AppException(AppErrorCode.STORE_EMAIL_NOT_FOUND, { email });
+    if (!opts?.skipStatusCheck) {
+      if (!store.isActive) throw new AppException(AppErrorCode.STORE_NOT_ACTIVE, { email });
+      if (!store.isVerified) throw new AppException(AppErrorCode.STORE_NOT_VERIFIED, { email });
+    }
     return store;
   }
 
   async update(id: string, updateStoreDto: UpdateStoreDto): Promise<Store> {
     const existing = await this.storeModel.findById(id).exec();
-    if (!existing) throw new NotFoundException(`Store ${id} not found`);
+    if (!existing) throw new AppException(AppErrorCode.STORE_NOT_FOUND, { id });
 
     const updateData: Record<string, any> = {};
 
@@ -204,13 +222,13 @@ export class StoresService {
       .findByIdAndUpdate(id, updateData, { returnDocument: 'after' })
       .exec();
 
-    if (!updated) throw new NotFoundException(`Store ${id} not found`);
+    if (!updated) throw new AppException(AppErrorCode.STORE_NOT_FOUND, { id });
     return updated;
   }
 
   async toggleStatus(id: string): Promise<Store> {
     const store = await this.storeModel.findById(id).exec();
-    if (!store) throw new NotFoundException(`Store ${id} not found`);
+    if (!store) throw new AppException(AppErrorCode.STORE_NOT_FOUND, { id });
 
     store.status = store.status === 'Active' ? 'Paused' : 'Active';
     return store.save();
@@ -222,6 +240,6 @@ export class StoresService {
 
   async remove(id: string): Promise<void> {
     const result = await this.storeModel.findByIdAndDelete(id).exec();
-    if (!result) throw new NotFoundException(`Store ${id} not found`);
+    if (!result) throw new AppException(AppErrorCode.STORE_NOT_FOUND, { id });
   }
 }

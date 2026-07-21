@@ -1,4 +1,6 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { AppException } from '../../../common/errors/app-exception';
+import { AppErrorCode } from '../../../common/errors/error-codes.enum';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
@@ -25,8 +27,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     const user = await this.userModel.findById(payload.sub);
-    if (!user || !user.isActive) {
-      throw new UnauthorizedException();
+    if (!user) {
+      throw new AppException(AppErrorCode.AUTH_USER_NOT_FOUND);
+    }
+    if (!user.isActive) {
+      throw new AppException(AppErrorCode.AUTH_ACCOUNT_DISABLED);
     }
     return { id: user._id, email: user.email, role: user.role, fullName: user.fullName, phoneNumber: user.phoneNumber };
   }

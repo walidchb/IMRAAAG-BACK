@@ -26,9 +26,15 @@ async function bootstrap() {
   // Enable CORS
   const corsOrigins = process.env.CORS_ORIGINS
     ? process.env.CORS_ORIGINS.split(',')
-    : ['http://localhost:3002', 'http://localhost:3001', 'http://localhost:3000'];
+    : ['http://localhost:3002', 'http://localhost:3001', 'http://localhost:3000', 'http://127.0.0.1:3002', 'http://127.0.0.1:3001', 'http://127.0.0.1:3000'];
   app.enableCors({
-    origin: corsOrigins,
+    origin: (origin, callback) => {
+      if (!origin || corsOrigins.includes(origin) || /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+        callback(null, true);
+      } else {
+        callback(null, false);
+      }
+    },
     credentials: true,
   });
 

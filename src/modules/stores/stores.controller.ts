@@ -42,7 +42,7 @@ export class StoresController {
   @ApiResponse({ status: 404, description: 'Store not found' })
   findMine(@Req() req: any) {
     const user = req.user as { email: string };
-    return this.storesService.findByEmail(user.email);
+    return this.storesService.findByEmail(user.email, { skipStatusCheck: true });
   }
 
   @Roles(Role.VENDOR)
@@ -52,7 +52,7 @@ export class StoresController {
   @ApiResponse({ status: 404, description: 'Store not found' })
   async updateMine(@Body() updateStoreDto: UpdateStoreDto, @Req() req: any) {
     const user = req.user as { email: string };
-    const store = await this.storesService.findByEmail(user.email) as any;
+    const store = await this.storesService.findByEmail(user.email, { skipStatusCheck: true }) as any;
     return this.storesService.update(store._id.toString(), updateStoreDto);
   }
 
@@ -63,7 +63,7 @@ export class StoresController {
   @ApiResponse({ status: 404, description: 'Store not found' })
   async toggleStatus(@Req() req: any) {
     const user = req.user as { email: string };
-    const store = await this.storesService.findByEmail(user.email) as any;
+    const store = await this.storesService.findByEmail(user.email, { skipStatusCheck: true }) as any;
     return this.storesService.toggleStatus(store._id.toString());
   }
 

@@ -1,4 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { AppException } from '../../common/errors/app-exception';
+import { AppErrorCode } from '../../common/errors/error-codes.enum';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Category, CategoryDocument } from './schemas/category.schema';
@@ -194,7 +196,7 @@ export class CategoriesService {
   async findOne(id: string): Promise<{ category: Category; subCategories: SubCategory[] }> {
     const filter = Types.ObjectId.isValid(id) ? { _id: id } : { slug: id };
     const category = await this.categoryModel.findOne(filter).exec();
-    if (!category) throw new NotFoundException(`Category ${id} not found`);
+    if (!category) throw new AppException(AppErrorCode.CATEGORY_NOT_FOUND, { id });
     const subCategories = await this.subCategoryModel.find({ categoryId: category._id }).exec();
     return { category, subCategories };
   }
@@ -202,7 +204,22 @@ export class CategoriesService {
   async remove(id: string): Promise<void> {
     const filter = Types.ObjectId.isValid(id) ? { _id: id } : { slug: id };
     const category = await this.categoryModel.findOne(filter).exec();
-    if (!category) throw new NotFoundException(`Category ${id} not found`);
+    if (!category) throw new AppException(AppErrorCode.CATEGORY_NOT_FOUND, { id });
+
+    const subCategories = await this.subCategoryModel.find({ categoryId: category._id }).exec();
+    const subCategoryIds = subCategories.map(s => String(s._id));
+
+    const productCount = await this.productModel.countDocuments({
+      $or: [
+        { category: String(category._id) },
+        { subCategory: { $in: subCategoryIds } },
+      ],
+    }).exec();
+
+    if (productCount > 0) {
+      throw new AppException(AppErrorCode.CATEGORY_HAS_PRODUCTS, { id, count: productCount });
+    }
+
     await this.subCategoryModel.deleteMany({ categoryId: category._id }).exec();
     await this.categoryModel.deleteOne({ _id: category._id }).exec();
     this.cacheService.clear('categories:');

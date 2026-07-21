@@ -1,4 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { AppException } from '../../../../common/errors/app-exception';
+import { AppErrorCode } from '../../../../common/errors/error-codes.enum';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { DeliveryCompanyHandler, BulkOrderResult } from '../interfaces/delivery-company-handler.interface';
@@ -46,10 +48,10 @@ export class DhdHandler implements DeliveryCompanyHandler {
     private communeModel: Model<CommuneDocument>,
   ) {}
 
-  async createOrder(order: Order): Promise<{ parcelId?: string; error?: string }> {
+  async createOrder(order: Order): Promise<{ parcelId: string }> {
     const apiToken = await this.getApiToken(order.vendorEmail);
     if (!apiToken) {
-      return { error: 'DHD API token not configured for this vendor' };
+      throw new AppException(AppErrorCode.DELIVERY_CREDENTIALS_NOT_CONFIGURED, { company: 'DHD', vendor: order.vendorEmail });
     }
 
     const communeName = await this.resolveCommuneName(order.customer.wilaya, order.customer.commune);
@@ -97,11 +99,12 @@ export class DhdHandler implements DeliveryCompanyHandler {
       }
 
       const msg = body.message || body.error || text;
-      return { error: `DHD API error: ${msg}` };
+      throw new AppException(AppErrorCode.DELIVERY_API_ERROR, { company: 'DHD', status: response.status, text: msg });
     } catch (err) {
+      if (err instanceof AppException) throw err;
       const message = err instanceof Error ? err.message : 'Unknown error';
       this.logger.error(`DHD create order failed for ${order.orderNo}: ${message}`);
-      return { error: message };
+      throw new AppException(AppErrorCode.DELIVERY_UNKNOWN_ERROR, { company: 'DHD', orderNo: order.orderNo, message });
     }
   }
 

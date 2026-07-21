@@ -1,4 +1,6 @@
-import { Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { AppException } from '../../common/errors/app-exception';
+import { AppErrorCode } from '../../common/errors/error-codes.enum';
 import { ConfigService } from '@nestjs/config';
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { randomUUID } from 'crypto';
@@ -90,14 +92,9 @@ export class UploadService {
       this.logger.error(`Failed to upload file to R2: ${error.message}`);
       const msg = error.message || '';
       if (msg.includes('Access Denied')) {
-        throw new BadRequestException(
-          'R2 Access Denied. Make sure:\n' +
-          '1. The bucket "imraaah" exists in your R2 dashboard\n' +
-          '2. Your R2 API token has "Object Read & Write" permission\n' +
-          '3. The token is applied to the correct bucket',
-        );
+        throw new AppException(AppErrorCode.UPLOAD_R2_ACCESS_DENIED);
       }
-      throw new BadRequestException('Failed to upload image. Please try again.');
+      throw new AppException(AppErrorCode.UPLOAD_FAILED);
     }
   }
 
@@ -117,7 +114,8 @@ export class UploadService {
       clearTimeout(timeoutId);
       this.logger.log(`File deleted: ${key}`);
     } catch (error) {
-      this.logger.error(`Failed to delete file from R2: ${error.message}`);
+      this.logger.error(`Failed to delete file from R2: ${error instanceof Error ? error.stack || error.message : String(error)}`);
+      throw new AppException(AppErrorCode.UPLOAD_DELETE_FAILED, { key });
     }
   }
 
@@ -142,15 +140,11 @@ export class UploadService {
     const maxSize = 10 * 1024 * 1024; // 10MB
 
     if (!allowedMimes.includes(file.mimetype)) {
-      throw new BadRequestException(
-        `Invalid file type "${file.mimetype}". Allowed: JPEG, PNG, WebP, GIF, AVIF`,
-      );
+      throw new AppException(AppErrorCode.UPLOAD_INVALID_FILE_TYPE, { mime: file.mimetype });
     }
 
     if (file.size > maxSize) {
-      throw new BadRequestException(
-        `File too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Max: 10MB`,
-      );
+      throw new AppException(AppErrorCode.UPLOAD_FILE_TOO_LARGE, { size: (file.size / 1024 / 1024).toFixed(1) });
     }
   }
 }

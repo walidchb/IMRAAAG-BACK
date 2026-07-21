@@ -1,4 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { AppException } from '../../../../common/errors/app-exception';
+import { AppErrorCode } from '../../../../common/errors/error-codes.enum';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { DeliveryCompanyHandler, BulkOrderResult } from '../interfaces/delivery-company-handler.interface';
@@ -46,7 +48,7 @@ export class NoestHandler implements DeliveryCompanyHandler {
     private communeModel: Model<CommuneDocument>,
   ) {}
 
-  async createOrder(order: Order): Promise<{ parcelId?: string; error?: string }> {
+  async createOrder(order: Order): Promise<{ parcelId: string }> {
     const config = await this.configModel.findOne({ vendorEmail: order.vendorEmail }).exec();
     const creds = config?.companies?.['noest']?.credentials || {};
 
@@ -54,9 +56,7 @@ export class NoestHandler implements DeliveryCompanyHandler {
     const userGuid: string | undefined = creds.guid;
 
     if (!apiToken || !userGuid) {
-      const msg = `Noest credentials not configured for vendor ${order.vendorEmail}`;
-      this.logger.error(msg);
-      return { error: msg };
+      throw new AppException(AppErrorCode.DELIVERY_CREDENTIALS_NOT_CONFIGURED, { company: 'Noest', vendor: order.vendorEmail });
     }
 
     const communeName = await this.resolveCommuneName(order.customer.wilaya, order.customer.commune);
@@ -64,9 +64,7 @@ export class NoestHandler implements DeliveryCompanyHandler {
     const payload = this.buildNoestPayload(order, userGuid, communeName);
 
     if (payload.wilaya_id < 1 || payload.wilaya_id > 58) {
-      const msg = `Invalid wilaya_id ${payload.wilaya_id} for order ${order.orderNo}`;
-      this.logger.error(msg);
-      return { error: msg };
+      throw new AppException(AppErrorCode.DELIVERY_INVALID_WILAYA, { wilaya: payload.wilaya_id, orderNo: order.orderNo });
     }
 
     try {
@@ -93,18 +91,21 @@ export class NoestHandler implements DeliveryCompanyHandler {
       this.logger.log(`Noest response for ${order.orderNo} (${response.status}): ${JSON.stringify(body)}`);
 
       if (!response.ok || body.success !== true) {
-        const msg = `Noest API error (${response.status}): ${responseText}`;
-        this.logger.error(`Noest create order failed for ${order.orderNo}: ${msg}`);
-        return { error: msg };
+        throw new AppException(AppErrorCode.DELIVERY_API_ERROR, { company: 'Noest', status: response.status, text: responseText });
       }
 
       const tracking = body.tracking as string | undefined;
+      if (!tracking) {
+        throw new AppException(AppErrorCode.DELIVERY_ORDER_NOT_IN_RESPONSE, { orderNo: order.orderNo, company: 'Noest' });
+      }
+
       this.logger.log(`Noest order created: ${tracking} for order ${order.orderNo}`);
       return { parcelId: tracking };
     } catch (err) {
+      if (err instanceof AppException) throw err;
       const message = err instanceof Error ? err.message : 'Unknown error';
       this.logger.error(`Noest API call failed for order ${order.orderNo}: ${message}`);
-      return { error: message };
+      throw new AppException(AppErrorCode.DELIVERY_UNKNOWN_ERROR, { company: 'Noest', orderNo: order.orderNo, message });
     }
   }
 

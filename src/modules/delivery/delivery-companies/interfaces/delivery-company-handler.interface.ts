@@ -9,6 +9,6 @@ export interface BulkOrderResult {
 
 export interface DeliveryCompanyHandler {
   readonly companyId: string;
-  createOrder(order: Order): Promise<{ parcelId?: string; error?: string }>;
+  createOrder(order: Order): Promise<{ parcelId: string }>;
   createBulkOrders?(orders: Order[]): Promise<BulkOrderResult[]>;
 }

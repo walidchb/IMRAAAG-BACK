@@ -1,4 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { AppException } from '../../../../common/errors/app-exception';
+import { AppErrorCode } from '../../../../common/errors/error-codes.enum';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { DeliveryCompanyHandler, BulkOrderResult } from '../interfaces/delivery-company-handler.interface';
@@ -49,22 +51,22 @@ export class ZrExpressHandler implements DeliveryCompanyHandler {
     private communeModel: Model<CommuneDocument>,
   ) {}
 
-  async createOrder(order: Order): Promise<{ parcelId?: string; error?: string }> {
+  async createOrder(order: Order): Promise<{ parcelId: string }> {
     const config = await this.configModel.findOne({ vendorEmail: order.vendorEmail }).exec();
     const { apiKey, tenantId } = this.getCredentials(config);
 
     if (!apiKey || !tenantId) {
-      return { error: 'ZR Express credentials not configured' };
+      throw new AppException(AppErrorCode.DELIVERY_CREDENTIALS_NOT_CONFIGURED, { company: 'ZR Express', vendor: order.vendorEmail });
     }
 
     const cityTerritoryId = await this.resolveCityTerritoryId(order.customer.wilaya);
     if (!cityTerritoryId) {
-      return { error: `ZR Express territory ID not found for wilaya "${order.customer.wilaya}". Run territory sync first.` };
+      throw new AppException(AppErrorCode.DELIVERY_TERRITORY_NOT_SYNCED, { type: 'wilaya', code: order.customer.wilaya, company: 'ZR Express' });
     }
 
     const districtTerritoryId = await this.resolveDistrictTerritoryId(order.customer.wilaya, order.customer.commune);
     if (!districtTerritoryId) {
-      return { error: `ZR Express territory ID not found for commune "${order.customer.commune}". Run territory sync first.` };
+      throw new AppException(AppErrorCode.DELIVERY_TERRITORY_NOT_SYNCED, { type: 'commune', code: order.customer.commune, company: 'ZR Express' });
     }
 
     const payload = await this.buildZrPayload(order, cityTerritoryId, districtTerritoryId);
@@ -96,7 +98,7 @@ export class ZrExpressHandler implements DeliveryCompanyHandler {
 
       if (!response.ok) {
         this.logger.error(`ZR Express API error (${responseStatus}): ${errorBody}`);
-        return { error: `ZR Express API returned ${responseStatus}: ${errorBody}` };
+        throw new AppException(AppErrorCode.DELIVERY_API_ERROR, { company: 'ZR Express', status: responseStatus, text: errorBody });
       }
 
       let result: { id: string };
@@ -104,15 +106,16 @@ export class ZrExpressHandler implements DeliveryCompanyHandler {
         result = JSON.parse(errorBody) as { id: string };
       } catch {
         this.logger.error(`ZR Express response for ${order.orderNo} is not valid JSON: ${errorBody}`);
-        return { error: `ZR Express returned invalid JSON: ${errorBody}` };
+        throw new AppException(AppErrorCode.DELIVERY_API_ERROR, { company: 'ZR Express', status: responseStatus, text: 'Invalid JSON response' });
       }
 
       this.logger.log(`ZR Express parcel created: ${result.id} for order ${order.orderNo}`);
       return { parcelId: result.id };
     } catch (err) {
+      if (err instanceof AppException) throw err;
       const message = err instanceof Error ? err.message : 'Unknown error';
       this.logger.error(`ZR Express API call failed for order ${order.orderNo}: ${message}`);
-      return { error: message };
+      throw new AppException(AppErrorCode.DELIVERY_UNKNOWN_ERROR, { company: 'ZR Express', orderNo: order.orderNo, message });
     }
   }
 

@@ -65,3 +65,62 @@ export class ProductQueryDto {
   @IsIn(['price_asc', 'price_desc', 'newest', 'name'])
   sortBy?: string;
 }
+
+export class VendorProductQueryDto {
+  @ApiPropertyOptional({ default: 20 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit?: number = 20;
+
+  @ApiPropertyOptional({ description: 'JSON stringified cursor object { createdAt, _id }' })
+  @IsOptional()
+  @IsString()
+  cursor?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  search?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  category?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  subCategory?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  minPrice?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  maxPrice?: number;
+
+  @ApiPropertyOptional({ enum: ['price_asc', 'price_desc', 'newest', 'name'] })
+  @IsOptional()
+  @IsIn(['price_asc', 'price_desc', 'newest', 'name'])
+  sortBy?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  published?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  status?: string;
+}

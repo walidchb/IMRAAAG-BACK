@@ -1,4 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { AppException } from '../../../../common/errors/app-exception';
+import { AppErrorCode } from '../../../../common/errors/error-codes.enum';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { DeliveryCompanyHandler, BulkOrderResult } from '../interfaces/delivery-company-handler.interface';
@@ -52,11 +54,12 @@ export class EcomHandler implements DeliveryCompanyHandler {
     private communeModel: Model<CommuneDocument>,
   ) {}
 
-  async createOrder(order: Order): Promise<{ parcelId?: string; error?: string }> {
+  async createOrder(order: Order): Promise<{ parcelId: string }> {
     const results = await this.createBulkOrders([order]);
-    return results[0]?.success
-      ? { parcelId: results[0].parcelId }
-      : { error: results[0]?.error || 'Unknown error' };
+    if (results[0]?.success && results[0].parcelId) {
+      return { parcelId: results[0].parcelId };
+    }
+    throw new AppException(AppErrorCode.DELIVERY_API_ERROR, { company: 'Ecom', orderNo: order.orderNo, error: results[0]?.error || 'Unknown error' });
   }
 
   async createBulkOrders(orders: Order[]): Promise<BulkOrderResult[]> {

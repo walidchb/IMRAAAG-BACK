@@ -1,9 +1,6 @@
-import {
-  Injectable,
-  NotFoundException,
-  ConflictException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { AppException } from '../../common/errors/app-exception';
+import { AppErrorCode } from '../../common/errors/error-codes.enum';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
@@ -19,13 +16,13 @@ export class ProfileService {
 
   async getProfile(userId: string) {
     const user = await this.userModel.findById(userId).exec();
-    if (!user) throw new NotFoundException('User not found');
+    if (!user) throw new AppException(AppErrorCode.USER_NOT_FOUND);
     return this.sanitizeUser(user);
   }
 
   async updateProfile(userId: string, dto: UpdateProfileDto) {
     const user = await this.userModel.findById(userId).exec();
-    if (!user) throw new NotFoundException('User not found');
+    if (!user) throw new AppException(AppErrorCode.USER_NOT_FOUND);
 
     const updateData: Record<string, unknown> = {};
 
@@ -41,7 +38,7 @@ export class ProfileService {
         _id: { $ne: userId },
       }).exec();
       if (existingEmail) {
-        throw new ConflictException('Email is already in use');
+        throw new AppException(AppErrorCode.USER_EMAIL_ALREADY_EXISTS);
       }
       updateData.email = normalizedEmail;
       updateData.isEmailVerified = false;
@@ -54,7 +51,7 @@ export class ProfileService {
         _id: { $ne: userId },
       }).exec();
       if (existingPhone) {
-        throw new ConflictException('Phone number is already in use');
+        throw new AppException(AppErrorCode.USER_PHONE_ALREADY_EXISTS);
       }
       updateData.phoneNumber = normalizedPhone;
     }
@@ -71,21 +68,21 @@ export class ProfileService {
       .findByIdAndUpdate(userId, { $set: updateData }, { returnDocument: 'after' })
       .exec();
 
-    if (!updated) throw new NotFoundException('User not found');
+    if (!updated) throw new AppException(AppErrorCode.USER_NOT_FOUND);
     return this.sanitizeUser(updated);
   }
 
   async changePassword(userId: string, dto: ChangePasswordDto) {
     if (dto.newPassword !== dto.confirmPassword) {
-      throw new BadRequestException('Passwords do not match');
+      throw new AppException(AppErrorCode.USER_PASSWORDS_DO_NOT_MATCH);
     }
 
     const user = await this.userModel.findById(userId).exec();
-    if (!user) throw new NotFoundException('User not found');
+    if (!user) throw new AppException(AppErrorCode.USER_NOT_FOUND);
 
     const isMatch = await bcrypt.compare(dto.currentPassword, user.password);
     if (!isMatch) {
-      throw new BadRequestException('Current password is incorrect');
+      throw new AppException(AppErrorCode.USER_CURRENT_PASSWORD_INCORRECT);
     }
 
     const hashedPassword = await bcrypt.hash(dto.newPassword, 10);

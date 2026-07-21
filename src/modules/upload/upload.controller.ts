@@ -6,12 +6,13 @@ import {
   UseInterceptors,
   UploadedFile,
   UploadedFiles,
-  BadRequestException,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import { AppException } from '../../common/errors/app-exception';
+import { AppErrorCode } from '../../common/errors/error-codes.enum';
 import { UploadService, UploadFolder } from './upload.service';
 
 @ApiTags('Upload')
@@ -37,7 +38,7 @@ export class UploadController {
     },
   })
   async uploadProductImage(@UploadedFile() file: Express.Multer.File) {
-    if (!file) throw new BadRequestException('No file provided');
+    if (!file) throw new AppException(AppErrorCode.UPLOAD_NO_FILE_PROVIDED);
     const result = await this.uploadService.uploadFile(file, 'products');
     return result;
   }
@@ -61,9 +62,9 @@ export class UploadController {
   })
   async uploadProductImages(@UploadedFiles() files: Express.Multer.File[]) {
     if (!files || files.length === 0)
-      throw new BadRequestException('No files provided');
+      throw new AppException(AppErrorCode.UPLOAD_NO_FILE_PROVIDED);
     if (files.length > 10)
-      throw new BadRequestException('Maximum 10 files allowed');
+      throw new AppException(AppErrorCode.UPLOAD_MAX_FILES_EXCEEDED);
     const results = await this.uploadService.uploadMultipleFiles(
       files,
       'products',
@@ -88,7 +89,7 @@ export class UploadController {
     },
   })
   async uploadStoreLogo(@UploadedFile() file: Express.Multer.File) {
-    if (!file) throw new BadRequestException('No file provided');
+    if (!file) throw new AppException(AppErrorCode.UPLOAD_NO_FILE_PROVIDED);
     const result = await this.uploadService.uploadFile(file, 'stores');
     return result;
   }
@@ -110,7 +111,7 @@ export class UploadController {
     },
   })
   async uploadStoreCover(@UploadedFile() file: Express.Multer.File) {
-    if (!file) throw new BadRequestException('No file provided');
+    if (!file) throw new AppException(AppErrorCode.UPLOAD_NO_FILE_PROVIDED);
     const result = await this.uploadService.uploadFile(file, 'stores');
     return result;
   }
@@ -119,7 +120,7 @@ export class UploadController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Delete an uploaded image by key' })
   async deleteFile(@Body('key') key: string) {
-    if (!key) throw new BadRequestException('No key provided');
+    if (!key) throw new AppException(AppErrorCode.UPLOAD_NO_KEY_PROVIDED);
     await this.uploadService.deleteFile(key);
     return { message: 'File deleted' };
   }

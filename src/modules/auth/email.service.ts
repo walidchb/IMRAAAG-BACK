@@ -35,7 +35,7 @@ export class EmailService {
         await this.transporter.sendMail({ from, to, subject, html });
         this.logger.log(`Password reset email sent to ${to}`);
       } catch (err) {
-        this.logger.error(`Failed to send email to ${to}: ${err instanceof Error ? err.message : err}`);
+        this.logger.error(`Failed to send email to ${to}: ${err instanceof Error ? err.stack || err.message : String(err)}`);
         this.logger.log(`[EMAIL FALLBACK] To: ${to} | Reset URL: ${resetUrl}`);
       }
     } else {

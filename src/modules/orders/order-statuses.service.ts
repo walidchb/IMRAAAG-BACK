@@ -1,4 +1,6 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { AppException } from '../../common/errors/app-exception';
+import { AppErrorCode } from '../../common/errors/error-codes.enum';
 import { ORDER_STATUSES, ORDER_STATUS_TRANSITIONS, ORDER_STATUS_VALUES, StatusConfig } from '../../common/constants/order-statuses.const';
 
 @Injectable()
@@ -32,9 +34,7 @@ export class OrderStatusesService {
   validateTransition(currentSlug: string, nextSlug: string): void {
     const allowed = ORDER_STATUS_TRANSITIONS[currentSlug];
     if (!allowed || !allowed.includes(nextSlug)) {
-      throw new BadRequestException(
-        `Cannot transition order from '${currentSlug}' to '${nextSlug}'. Allowed transitions: ${(allowed || []).join(', ') || 'none'}`,
-      );
+      throw new AppException(AppErrorCode.ORDER_CANNOT_TRANSITION, { current: currentSlug, next: nextSlug });
     }
   }
 }

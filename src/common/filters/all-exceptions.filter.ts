@@ -22,6 +22,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
     let status: number;
     let message: string;
     let error: string;
+    let code: string | undefined;
+    let params: Record<string, unknown> | undefined;
     let errors: Record<string, string[]> | undefined;
 
     if (exception instanceof HttpException) {
@@ -33,19 +35,29 @@ export class AllExceptionsFilter implements ExceptionFilter {
         error = exception.name;
       } else if (typeof exceptionResponse === 'object') {
         const resp = exceptionResponse as Record<string, unknown>;
-        message = (resp.message as string) || exception.message;
-        error = (resp.error as string) || exception.name;
 
-        if (Array.isArray(resp.message)) {
-          const msgs = resp.message as string[];
-          error = 'Validation Failed';
-          message = 'Validation failed';
-          errors = {};
-          for (const msg of msgs) {
-            const parts = msg.split(' ', 1);
-            const field = parts[0]?.toLowerCase() || 'unknown';
-            if (!errors[field]) errors[field] = [];
-            errors[field].push(msg);
+        // Detect AppException by presence of 'code' field
+        if (resp.code && typeof resp.code === 'string') {
+          code = resp.code;
+          params = (resp.params as Record<string, unknown>) ?? {};
+          message = (resp.message as string) || code;
+          error = exception.name;
+          status = (resp.statusCode as number) || status;
+        } else {
+          message = (resp.message as string) || exception.message;
+          error = (resp.error as string) || exception.name;
+
+          if (Array.isArray(resp.message)) {
+            const msgs = resp.message as string[];
+            error = 'Validation Failed';
+            message = 'Validation failed';
+            errors = {};
+            for (const msg of msgs) {
+              const parts = msg.split(' ', 1);
+              const field = parts[0]?.toLowerCase() || 'unknown';
+              if (!errors[field]) errors[field] = [];
+              errors[field].push(msg);
+            }
           }
         }
       } else {
@@ -85,6 +97,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
             ? 'Internal server error'
             : exception.message;
         error = 'Internal Server Error';
+        code = 'INTERNAL_SERVER_ERROR';
         this.logger.error(
           `Unhandled error: ${exception.message}`,
           exception.stack,
@@ -104,6 +117,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
       path: request.url,
     };
 
+    if (code) body.code = code;
+    if (params) body.params = params;
     if (errors) body.errors = errors;
 
     response.status(status).json(body);

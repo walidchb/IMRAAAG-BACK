@@ -13,7 +13,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { ProductQueryDto } from './dto/product-query.dto';
+import { ProductQueryDto, VendorProductQueryDto } from './dto/product-query.dto';
 import { Product } from './schemas/product.schema';
 import { Public } from '../auth/decorators/public.decorator';
 
@@ -45,6 +45,24 @@ export class ProductsController {
   @ApiResponse({ status: 200, description: 'Products with cursor pagination' })
   findAll(@Query() query: ProductQueryDto) {
     return this.productsService.findAll(query);
+  }
+
+  @Get('vendor')
+  @ApiOperation({ summary: 'List vendor\'s own products (protected, cursor-based pagination)' })
+  @ApiQuery({ name: 'limit', required: false })
+  @ApiQuery({ name: 'cursor', required: false })
+  @ApiQuery({ name: 'search', required: false })
+  @ApiQuery({ name: 'category', required: false })
+  @ApiQuery({ name: 'subCategory', required: false })
+  @ApiQuery({ name: 'minPrice', required: false })
+  @ApiQuery({ name: 'maxPrice', required: false })
+  @ApiQuery({ name: 'sortBy', required: false, enum: ['price_asc', 'price_desc', 'newest', 'name'] })
+  @ApiQuery({ name: 'published', required: false })
+  @ApiQuery({ name: 'status', required: false })
+  @ApiResponse({ status: 200, description: 'Vendor products with cursor pagination' })
+  findVendorProducts(@Query() query: VendorProductQueryDto, @Req() req: any) {
+    const user = req.user as { email: string };
+    return this.productsService.findVendorProducts(user.email, query);
   }
 
   @Public()

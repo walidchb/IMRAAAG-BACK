@@ -4,5 +4,7 @@ export interface ErrorResponse {
   error: string;
   timestamp: string;
   path: string;
+  code?: string;
+  params?: Record<string, unknown>;
   errors?: Record<string, string[]>;
 }
