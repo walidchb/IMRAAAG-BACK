@@ -122,7 +122,7 @@ export class SearchController {
           { 'address.street': regex },
           { wilaya: regex },
         ],
-        isActive: true,
+        status: 'Active',
       };
 
       if (query.minPrice !== undefined || query.maxPrice !== undefined) {

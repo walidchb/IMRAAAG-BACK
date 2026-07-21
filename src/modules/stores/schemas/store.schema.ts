@@ -70,12 +70,6 @@ export class Store {
     postalCode?: string;
   };
 
-  @Prop({ default: true })
-  isActive: boolean;
-
-  @Prop({ default: false })
-  isVerified: boolean;
-
   @Prop({ default: 0 })
   totalProducts: number;
 
@@ -89,4 +83,3 @@ export const StoreSchema = SchemaFactory.createForClass(Store);
 StoreSchema.index({ storeName: 'text', description: 'text' });
 StoreSchema.index({ storeSlug: 1 });
 StoreSchema.index({ vendorEmail: 1 });
-StoreSchema.index({ isActive: 1, isVerified: 1 });

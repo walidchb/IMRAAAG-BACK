@@ -41,7 +41,6 @@ export class ProfileService {
         throw new AppException(AppErrorCode.USER_EMAIL_ALREADY_EXISTS);
       }
       updateData.email = normalizedEmail;
-      updateData.isEmailVerified = false;
     }
 
     if (dto.phoneNumber !== undefined) {
@@ -100,7 +99,6 @@ export class ProfileService {
       role: user.role,
       gender: user.gender || null,
       profileImage: user.profileImage || null,
-      isEmailVerified: user.isEmailVerified,
       createdAt: (user as any).createdAt,
       savedProductIds: (user.savedProductIds || []).map((id) => id.toString()),
     };

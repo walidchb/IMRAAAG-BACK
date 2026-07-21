@@ -1,7 +1,6 @@
 import {
   IsString,
   IsOptional,
-  IsBoolean,
   IsEmail,
   IsArray,
   ArrayMaxSize,
@@ -131,14 +130,4 @@ export class UpdateStoreDto {
   @ValidateNested()
   @Type(() => UpdateAddressDto)
   address?: UpdateAddressDto;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsBoolean()
-  isActive?: boolean;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsBoolean()
-  isVerified?: boolean;
 }

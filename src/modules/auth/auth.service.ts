@@ -70,13 +70,15 @@ export class AuthService {
       role: Role.VENDOR,
     });
     const user = created.toObject();
+    const userId = user._id.toString();
 
-    const token = this.jwtService.sign({ sub: user._id.toString(), email: user.email, role: user.role });
-    const refreshToken = await this.storeRefreshToken(user._id.toString());
+    const token = this.jwtService.sign({ sub: userId, email: user.email, role: user.role });
+    const refreshToken = await this.storeRefreshToken(userId);
 
     try {
       await this.storesService.create({
         vendorEmail: user.email,
+        vendorId: user._id.toString(),
         storeName: `${user.fullName} Store`,
         description: `Welcome to ${user.fullName}'s artisan store.`,
         contactEmail: user.email,
@@ -87,9 +89,9 @@ export class AuthService {
         categories: [],
       });
     } catch (err) {
-      this.logger.error(
-        `Failed to auto-create store for ${user.email}: ${err instanceof Error ? err.stack || err.message : String(err)}`,
-      );
+      // Rollback user creation if store creation fails
+      await this.userModel.findByIdAndDelete(userId).exec();
+      throw err;
     }
 
     return {

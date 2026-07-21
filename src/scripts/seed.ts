@@ -30,7 +30,6 @@ async function bootstrap() {
         lastName: 'Admin',
         role: Role.ADMIN,
         isActive: true,
-        isEmailVerified: true,
       });
       await newAdmin.save();
       console.log('Admin user created successfully!');

@@ -61,16 +61,11 @@ export class StoresService {
   }
 
   async findAll(query: {
-    isActive?: string;
-    isVerified?: string;
     search?: string;
     limit?: number;
     cursor?: string;
   }): Promise<CursorPaginatedStoresResult> {
-    const filter: Record<string, any> = {};
-
-    if (query.isActive !== undefined) filter.isActive = query.isActive === 'true';
-    if (query.isVerified !== undefined) filter.isVerified = query.isVerified === 'true';
+    const filter: Record<string, any> = { status: 'Active' };
 
     const limit = query.limit || 10;
 
@@ -147,9 +142,8 @@ export class StoresService {
   async findOne(id: string, opts?: { skipStatusCheck?: boolean }): Promise<Store> {
     const store = await this.storeModel.findById(id).exec();
     if (!store) throw new AppException(AppErrorCode.STORE_NOT_FOUND, { id });
-    if (!opts?.skipStatusCheck) {
-      if (!store.isActive) throw new AppException(AppErrorCode.STORE_NOT_ACTIVE, { id });
-      if (!store.isVerified) throw new AppException(AppErrorCode.STORE_NOT_VERIFIED, { id });
+    if (!opts?.skipStatusCheck && store.status !== 'Active') {
+      throw new AppException(AppErrorCode.STORE_NOT_ACTIVE, { id });
     }
     return store;
   }
@@ -157,9 +151,8 @@ export class StoresService {
   async findBySlug(slug: string, opts?: { skipStatusCheck?: boolean }): Promise<Store> {
     const store = await this.storeModel.findOne({ storeSlug: slug }).exec();
     if (!store) throw new AppException(AppErrorCode.STORE_SLUG_NOT_FOUND, { slug });
-    if (!opts?.skipStatusCheck) {
-      if (!store.isActive) throw new AppException(AppErrorCode.STORE_NOT_ACTIVE, { slug });
-      if (!store.isVerified) throw new AppException(AppErrorCode.STORE_NOT_VERIFIED, { slug });
+    if (!opts?.skipStatusCheck && store.status !== 'Active') {
+      throw new AppException(AppErrorCode.STORE_NOT_ACTIVE, { slug });
     }
     return store;
   }
@@ -167,9 +160,8 @@ export class StoresService {
   async findByVendor(vendorId: string, opts?: { skipStatusCheck?: boolean }): Promise<Store> {
     const store = await this.storeModel.findOne({ vendorId }).exec();
     if (!store) throw new AppException(AppErrorCode.STORE_VENDOR_NOT_FOUND, { vendorId });
-    if (!opts?.skipStatusCheck) {
-      if (!store.isActive) throw new AppException(AppErrorCode.STORE_NOT_ACTIVE, { vendorId });
-      if (!store.isVerified) throw new AppException(AppErrorCode.STORE_NOT_VERIFIED, { vendorId });
+    if (!opts?.skipStatusCheck && store.status !== 'Active') {
+      throw new AppException(AppErrorCode.STORE_NOT_ACTIVE, { vendorId });
     }
     return store;
   }
@@ -177,9 +169,8 @@ export class StoresService {
   async findByEmail(email: string, opts?: { skipStatusCheck?: boolean }): Promise<Store> {
     const store = await this.storeModel.findOne({ vendorEmail: email.toLowerCase() }).exec();
     if (!store) throw new AppException(AppErrorCode.STORE_EMAIL_NOT_FOUND, { email });
-    if (!opts?.skipStatusCheck) {
-      if (!store.isActive) throw new AppException(AppErrorCode.STORE_NOT_ACTIVE, { email });
-      if (!store.isVerified) throw new AppException(AppErrorCode.STORE_NOT_VERIFIED, { email });
+    if (!opts?.skipStatusCheck && store.status !== 'Active') {
+      throw new AppException(AppErrorCode.STORE_NOT_ACTIVE, { email });
     }
     return store;
   }
@@ -203,8 +194,6 @@ export class StoresService {
     if (updateStoreDto.wilaya !== undefined) updateData.wilaya = updateStoreDto.wilaya;
     if (updateStoreDto.categories !== undefined) updateData.categories = updateStoreDto.categories;
     if (updateStoreDto.tagline !== undefined) updateData.tagline = updateStoreDto.tagline;
-    if (updateStoreDto.isActive !== undefined) updateData.isActive = updateStoreDto.isActive;
-    if (updateStoreDto.isVerified !== undefined) updateData.isVerified = updateStoreDto.isVerified;
 
     if (updateStoreDto.storeName) {
       let storeSlug = this.slugify(updateStoreDto.storeName);

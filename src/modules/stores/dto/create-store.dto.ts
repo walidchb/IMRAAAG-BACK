@@ -2,7 +2,6 @@ import {
   IsString,
   IsNotEmpty,
   IsOptional,
-  IsBoolean,
   IsEmail,
   IsArray,
   ArrayMaxSize,
@@ -61,6 +60,11 @@ export class CreateStoreDto {
   @IsEmail()
   @IsNotEmpty()
   vendorEmail: string;
+
+  @ApiPropertyOptional({ description: 'Vendor user ID' })
+  @IsOptional()
+  @IsString()
+  vendorId?: string;
 
   @ApiProperty({ description: 'Store name' })
   @IsString()
@@ -142,9 +146,4 @@ export class CreateStoreDto {
   @ValidateNested()
   @Type(() => AddressDto)
   address?: AddressDto;
-
-  @ApiPropertyOptional({ description: 'Is active', default: true })
-  @IsOptional()
-  @IsBoolean()
-  isActive?: boolean;
 }

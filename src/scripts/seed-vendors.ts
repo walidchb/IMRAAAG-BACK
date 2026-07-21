@@ -66,7 +66,6 @@ async function bootstrap() {
         phoneNumber: '',
         role: Role.VENDOR,
         isActive: true,
-        isEmailVerified: true,
       });
       console.log(`    User created: ${user._id}`);
 
@@ -89,15 +88,11 @@ async function bootstrap() {
         categories: v.categories,
         tagline: v.tagline,
         socialMedia: { instagram: '', facebook: '', tiktok: '' },
-        isActive: true,
-        isVerified: true,
         status: 'Active',
         totalProducts: 0,
         totalOrders: 0,
       });
       console.log(`    Store created: ${store.storeName} (${store._id})`);
-
-      await userModel.findByIdAndUpdate(user._id, { storeId: store._id });
 
       results.push({ email, password, fullName: v.fullName, storeName: v.storeName });
     }

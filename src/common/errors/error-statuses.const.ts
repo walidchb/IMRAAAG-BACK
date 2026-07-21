@@ -24,7 +24,6 @@ export const ERROR_HTTP_STATUS: Record<string, number> = {
   [AppErrorCode.AUTH_ACCOUNT_DISABLED]: HttpStatus.FORBIDDEN,
   [AppErrorCode.AUTH_ACCOUNT_LOCKED]: HttpStatus.LOCKED,
   [AppErrorCode.AUTH_ACCOUNT_SUSPENDED]: HttpStatus.FORBIDDEN,
-  [AppErrorCode.AUTH_EMAIL_NOT_VERIFIED]: HttpStatus.FORBIDDEN,
 
   // ─── Authorization ───
   [AppErrorCode.AUTH_UNAUTHORIZED]: HttpStatus.UNAUTHORIZED,
@@ -53,7 +52,6 @@ export const ERROR_HTTP_STATUS: Record<string, number> = {
   [AppErrorCode.STORE_VENDOR_EMAIL_REQUIRED]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.STORE_ALREADY_EXISTS]: HttpStatus.CONFLICT,
   [AppErrorCode.STORE_NOT_ACTIVE]: HttpStatus.FORBIDDEN,
-  [AppErrorCode.STORE_NOT_VERIFIED]: HttpStatus.FORBIDDEN,
   [AppErrorCode.STORE_CATEGORY_LIMIT_EXCEEDED]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.STORE_HAS_PRODUCTS]: HttpStatus.CONFLICT,
   [AppErrorCode.STORE_CANNOT_PUBLISH_EMPTY]: HttpStatus.BAD_REQUEST,
