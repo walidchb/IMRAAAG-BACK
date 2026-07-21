@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 import { OrderStatus, ORDER_STATUS_VALUES } from '../../../common/constants/order-statuses.const';
+import type { StatusConfig } from '../../../common/constants/order-statuses.const';
 
 export type OrderDocument = Order & Document;
 
@@ -74,8 +75,8 @@ export class Order {
   @Prop({ required: true })
   total: number;
 
-  @Prop({ type: String, enum: ORDER_STATUS_VALUES, required: true })
-  status: OrderStatus;
+  @Prop({ type: Object, required: true })
+  status: StatusConfig;
 
   @Prop({ default: 'COD' })
   paymentMethod: string;
@@ -113,5 +114,5 @@ export const OrderSchema = SchemaFactory.createForClass(Order);
 
 OrderSchema.index({ orderNo: 1 });
 OrderSchema.index({ vendorEmail: 1 });
-OrderSchema.index({ status: 1 });
+OrderSchema.index({ 'status.slug': 1 });
 OrderSchema.index({ createdAt: -1 });

@@ -10,7 +10,7 @@ import { BulkShipDto } from './dto/bulk-ship.dto';
 import { DeliveryService } from '../delivery/delivery.service';
 import { OrderStatusesService } from './order-statuses.service';
 import { BulkOrderResult } from '../delivery/delivery-companies/interfaces/delivery-company-handler.interface';
-import { ORDER_STATUS_TRANSITIONS, OrderStatus } from '../../common/constants/order-statuses.const';
+import { ORDER_STATUSES, ORDER_STATUS_TRANSITIONS, OrderStatus } from '../../common/constants/order-statuses.const';
 
 export interface PaginatedOrdersResult {
   data: Order[];
@@ -110,7 +110,7 @@ export class OrdersService {
       date: createOrderDto.date || now,
       createdAt: createOrderDto.createdAt || now,
       deliveryCompanyId: deliveryCompanyId || undefined,
-      status: 'placed',
+      status: ORDER_STATUSES.find(s => s.slug === 'placed'),
       history: [
         {
           status: 'placed',
@@ -134,7 +134,7 @@ export class OrdersService {
     if (query.vendorEmail) filter.vendorEmail = query.vendorEmail;
 
     if (query.orderStatus) {
-      filter.status = query.orderStatus;
+      filter['status.slug'] = query.orderStatus;
     }
 
     if (query.search) {
@@ -202,7 +202,7 @@ export class OrdersService {
       this.orderModel.countDocuments(filter).exec(),
       this.orderModel.aggregate([
         { $match: countFilter },
-        { $group: { _id: '$status', count: { $sum: 1 } } },
+        { $group: { _id: { $ifNull: ['$status.slug', '$status'] }, count: { $sum: 1 } } },
       ]).exec(),
     ]);
 
@@ -210,7 +210,11 @@ export class OrdersService {
     let allTotal = 0;
     for (const entry of statusCountsRaw) {
       const slug = entry._id ? String(entry._id) : undefined;
-      if (slug) {
+      const knownSlug = ORDER_STATUSES.find(s => s.slug === slug) ? slug : undefined;
+      if (knownSlug) {
+        statusCounts[knownSlug] = entry.count;
+        allTotal += entry.count;
+      } else if (slug && slug !== 'null') {
         statusCounts[slug] = entry.count;
         allTotal += entry.count;
       }
@@ -239,7 +243,7 @@ export class OrdersService {
   async findByCustomerPhone(phone: string, query: { page: number; limit: number; status?: string }) {
     const filter: any = { 'customer.phone': phone };
     if (query.status) {
-      filter.status = query.status;
+      filter['status.slug'] = query.status;
     }
     const total = await this.orderModel.countDocuments(filter);
     const items = await this.orderModel
@@ -251,21 +255,34 @@ export class OrdersService {
     return { items, total, page: query.page, pages: Math.ceil(total / query.limit) };
   }
 
+  private getStatusSlug(status: any): string {
+    if (!status) return 'placed';
+    if (typeof status === 'string') return status;
+    return (status as any).slug || 'placed';
+  }
+
   async update(id: string, updateOrderDto: UpdateOrderDto): Promise<Order> {
     const existing = await this.orderModel.findById(id).exec();
     if (!existing) throw new NotFoundException(`Order ${id} not found`);
 
-    const updateData: Record<string, any> = { ...updateOrderDto };
+    const { status: _, ...restDto } = updateOrderDto;
+    const updateData: Record<string, any> = { ...restDto };
 
-    if (updateOrderDto.status && updateOrderDto.status !== String(existing.status)) {
-      this.statusesService.validateTransition(String(existing.status), updateOrderDto.status);
+    const existingSlug = this.getStatusSlug(existing.status);
 
-      if (updateOrderDto.status === 'confirmed' && String(existing.status) !== 'confirmed') {
+    if (updateOrderDto.status && updateOrderDto.status !== existingSlug) {
+      this.statusesService.validateTransition(existingSlug, updateOrderDto.status);
+
+      const statusConfig = this.statusesService.getBySlug(updateOrderDto.status);
+      if (!statusConfig) throw new BadRequestException(`Invalid status: ${updateOrderDto.status}`);
+      updateData.status = statusConfig;
+
+      if (updateOrderDto.status === 'confirmed' && existingSlug !== 'confirmed') {
         updateData.confirmedAt = new Date();
         updateData.confirmedBy = updateOrderDto.createdBy || 'Vendor';
       }
 
-      if (updateOrderDto.status === 'dispatched' && String(existing.status) !== 'dispatched') {
+      if (updateOrderDto.status === 'dispatched' && existingSlug !== 'dispatched') {
         updateData.dispatchedAt = new Date();
       }
 
@@ -308,7 +325,7 @@ export class OrdersService {
       updateData.deliveryCompanyId = resolved || undefined;
     }
 
-    const isBecomingDispatched = updateOrderDto.status === 'dispatched' && String(existing.status) !== 'dispatched';
+    const isBecomingDispatched = updateOrderDto.status === 'dispatched' && existingSlug !== 'dispatched';
 
     if (isBecomingDispatched) {
       const { parcelId, error } = await this.deliveryService.createDeliveryForOrder(existing);
@@ -349,13 +366,15 @@ export class OrdersService {
     const orders = await this.orderModel.find({ _id: { $in: ids } }).exec();
     const errors: string[] = [];
 
+    const targetStatusConfig = this.statusesService.getBySlug(targetSlug);
+
     const bulkOps = orders
       .filter((order) => {
         try {
-          this.statusesService.validateTransition(String(order.status), targetSlug);
+          this.statusesService.validateTransition(this.getStatusSlug(order.status), targetSlug);
           return true;
         } catch {
-          errors.push(`Order ${order.orderNo}: Cannot transition from '${String(order.status)}' to '${targetSlug}'`);
+          errors.push(`Order ${order.orderNo}: Cannot transition from '${this.getStatusSlug(order.status)}' to '${targetSlug}'`);
           return false;
         }
       })
@@ -364,7 +383,7 @@ export class OrdersService {
           filter: { _id: order._id },
           update: {
             $set: {
-              status: targetSlug,
+              status: targetStatusConfig,
               ...(targetSlug === OrderStatus.CONFIRMED ? { confirmedAt: now, confirmedBy: 'Vendor' } : {}),
             },
             $push: {
@@ -394,7 +413,7 @@ export class OrdersService {
       return [];
     }
 
-    const nonConfirmable = orders.filter(o => String(o.status) !== OrderStatus.CONFIRMED);
+    const nonConfirmable = orders.filter(o => this.getStatusSlug(o.status) !== OrderStatus.CONFIRMED);
     if (nonConfirmable.length > 0) {
       const orderNos = nonConfirmable.map(o => o.orderNo).join(', ');
       throw new BadRequestException(
@@ -404,6 +423,7 @@ export class OrdersService {
 
     const results = await this.deliveryService.createBulkDeliveriesForOrders(orders);
 
+    const dispatchedStatus = this.statusesService.getBySlug(OrderStatus.DISPATCHED);
     const now = new Date();
     const user = orders[0]?.createdBy || 'Vendor';
 
@@ -413,7 +433,7 @@ export class OrdersService {
           { orderNo: result.orderNo },
           {
             $set: {
-              status: OrderStatus.DISPATCHED,
+              status: dispatchedStatus,
               deliveryParcelId: result.parcelId,
               deliveryError: undefined,
               dispatchedAt: now,

@@ -11,16 +11,16 @@ export class OrderStatusesService {
     return ORDER_STATUSES.find(s => s.slug === slug);
   }
 
-  getById(_id: string): StatusConfig | undefined {
-    return ORDER_STATUSES.find(s => s.slug === _id);
+  getById(id: string): StatusConfig | undefined {
+    return ORDER_STATUSES.find(s => s._id === id || s.slug === id);
   }
 
   getAllAsMap(): { slugToId: Map<string, string>; idToSlug: Map<string, string> } {
     const slugToId = new Map<string, string>();
     const idToSlug = new Map<string, string>();
     for (const s of ORDER_STATUSES) {
-      slugToId.set(s.slug, s.slug);
-      idToSlug.set(s.slug, s.slug);
+      slugToId.set(s.slug, s._id);
+      idToSlug.set(s._id, s.slug);
     }
     return { slugToId, idToSlug };
   }
