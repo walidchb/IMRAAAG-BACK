@@ -22,6 +22,7 @@ export class ValidationPipe extends NestValidationPipe {
   constructor() {
     super({
       whitelist: true,
+      forbidNonWhitelisted: true,
       transform: true,
       exceptionFactory: (validationErrors: ValidationError[]) => {
         const errors: Record<string, string[]> = {};

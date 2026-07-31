@@ -3,7 +3,8 @@ import { AppModule } from '../app.module';
 import { getModelToken } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from '../modules/users/schemas/user.schema';
-import { Store } from '../modules/stores/schemas/store.schema';
+import { Store, StoreDocument } from '../modules/stores/schemas/store.schema';
+import { StoreStatus } from '../modules/stores/schemas/store-status.enum';
 import { Product } from '../modules/products/schemas/product.schema';
 import { Role } from '../common/constants/roles.enum';
 import * as bcrypt from 'bcrypt';
@@ -61,8 +62,6 @@ async function bootstrap() {
         email,
         password: hashedPassword,
         fullName: v.fullName,
-        firstName: v.fullName,
-        lastName: '',
         phoneNumber: '',
         role: Role.VENDOR,
         isActive: true,
@@ -88,10 +87,10 @@ async function bootstrap() {
         categories: v.categories,
         tagline: v.tagline,
         socialMedia: { instagram: '', facebook: '', tiktok: '' },
-        status: 'Active',
+        status: StoreStatus.ACTIVE,
         totalProducts: 0,
         totalOrders: 0,
-      });
+      }) as StoreDocument;
       console.log(`    Store created: ${store.storeName} (${store._id})`);
 
       results.push({ email, password, fullName: v.fullName, storeName: v.storeName });

@@ -15,6 +15,7 @@ export default () => ({
   },
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3001',
   environment: process.env.NODE_ENV || 'development',
+  deliveryEncryptionKey: process.env.DELIVERY_ENCRYPTION_KEY || '',
   r2: {
     endpoint: process.env.R2_ENDPOINT || '',
     accessKeyId: process.env.R2_ACCESS_KEY_ID || '',

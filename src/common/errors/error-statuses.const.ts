@@ -41,14 +41,12 @@ export const ERROR_HTTP_STATUS: Record<string, number> = {
   [AppErrorCode.USER_PHONE_ALREADY_EXISTS]: HttpStatus.CONFLICT,
   [AppErrorCode.USER_PASSWORDS_DO_NOT_MATCH]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.USER_CURRENT_PASSWORD_INCORRECT]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.USER_PASSWORD_SAME_AS_OLD]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.USER_PROFILE_NOT_FOUND]: HttpStatus.NOT_FOUND,
   [AppErrorCode.USER_ALREADY_HAS_STORE]: HttpStatus.CONFLICT,
 
   // ─── Store ───
   [AppErrorCode.STORE_NOT_FOUND]: HttpStatus.NOT_FOUND,
-  [AppErrorCode.STORE_SLUG_NOT_FOUND]: HttpStatus.NOT_FOUND,
-  [AppErrorCode.STORE_VENDOR_NOT_FOUND]: HttpStatus.NOT_FOUND,
-  [AppErrorCode.STORE_EMAIL_NOT_FOUND]: HttpStatus.NOT_FOUND,
   [AppErrorCode.STORE_VENDOR_EMAIL_REQUIRED]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.STORE_ALREADY_EXISTS]: HttpStatus.CONFLICT,
   [AppErrorCode.STORE_NOT_ACTIVE]: HttpStatus.FORBIDDEN,
@@ -59,16 +57,8 @@ export const ERROR_HTTP_STATUS: Record<string, number> = {
   // ─── Product ───
   [AppErrorCode.PRODUCT_NOT_FOUND]: HttpStatus.NOT_FOUND,
   [AppErrorCode.PRODUCT_ACCESS_DENIED]: HttpStatus.FORBIDDEN,
-  [AppErrorCode.PRODUCT_OUT_OF_STOCK]: HttpStatus.BAD_REQUEST,
-  [AppErrorCode.PRODUCT_ARCHIVED]: HttpStatus.GONE,
-  [AppErrorCode.PRODUCT_HIDDEN]: HttpStatus.NOT_FOUND,
-  [AppErrorCode.PRODUCT_NOT_APPROVED]: HttpStatus.FORBIDDEN,
-  [AppErrorCode.PRODUCT_VARIANT_REQUIRED]: HttpStatus.BAD_REQUEST,
-  [AppErrorCode.PRODUCT_ALREADY_EXISTS]: HttpStatus.CONFLICT,
   [AppErrorCode.PRODUCT_CANNOT_DELETE_HAS_ORDERS]: HttpStatus.CONFLICT,
-  [AppErrorCode.PRODUCT_PRICE_INVALID]: HttpStatus.BAD_REQUEST,
-  [AppErrorCode.PRODUCT_IMAGE_REQUIRED]: HttpStatus.BAD_REQUEST,
-  [AppErrorCode.PRODUCT_NAME_REQUIRED]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.PRODUCT_INSUFFICIENT_STOCK]: HttpStatus.BAD_REQUEST,
 
   // ─── Category ───
   [AppErrorCode.CATEGORY_NOT_FOUND]: HttpStatus.NOT_FOUND,
@@ -91,6 +81,8 @@ export const ERROR_HTTP_STATUS: Record<string, number> = {
   [AppErrorCode.ORDER_ALREADY_CANCELLED]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.ORDER_ALREADY_DELIVERED]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.ORDER_ALREADY_REFUNDED]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.ORDER_ALREADY_DELETED]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.ORDER_CONFLICT]: HttpStatus.CONFLICT,
   [AppErrorCode.ORDER_CANNOT_CANCEL_AFTER_SHIPPED]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.ORDER_CANNOT_PURCHASE_OWN_PRODUCT]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.ORDER_CANNOT_REVIEW_TWICE]: HttpStatus.BAD_REQUEST,

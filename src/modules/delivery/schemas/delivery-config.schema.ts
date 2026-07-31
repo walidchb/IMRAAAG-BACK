@@ -1,10 +1,13 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
 export type DeliveryConfigDocument = DeliveryConfig & Document;
 
 @Schema({ timestamps: true })
 export class DeliveryConfig {
+  @Prop({ type: Types.ObjectId, ref: 'User' })
+  vendorId: Types.ObjectId;
+
   @Prop({ required: true, unique: true })
   vendorEmail: string;
 
@@ -17,3 +20,5 @@ export class DeliveryConfig {
 }
 
 export const DeliveryConfigSchema = SchemaFactory.createForClass(DeliveryConfig);
+
+DeliveryConfigSchema.index({ vendorId: 1 });

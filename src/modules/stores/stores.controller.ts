@@ -9,6 +9,7 @@ import {
   Query,
   Req,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 import { StoresService } from './stores.service';
 import { CreateStoreDto } from './dto/create-store.dto';
@@ -25,6 +26,7 @@ export class StoresController {
   constructor(private readonly storesService: StoresService) {}
 
   @Roles(Role.VENDOR)
+  @Throttle({ default: { limit: 5, ttl: 3600000 } })
   @Post('mine')
   @ApiOperation({ summary: 'Create own store' })
   @ApiResponse({ status: 201, description: 'Store created', type: Store })
@@ -46,6 +48,7 @@ export class StoresController {
   }
 
   @Roles(Role.VENDOR)
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
   @Patch('mine')
   @ApiOperation({ summary: 'Update own store' })
   @ApiResponse({ status: 200, description: 'Store updated', type: Store })
@@ -57,6 +60,7 @@ export class StoresController {
   }
 
   @Roles(Role.VENDOR)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Patch('mine/toggle-status')
   @ApiOperation({ summary: 'Toggle own store status Active/Paused' })
   @ApiResponse({ status: 200, description: 'Status toggled', type: Store })
@@ -67,6 +71,7 @@ export class StoresController {
     return this.storesService.toggleStatus(store._id.toString());
   }
 
+  @Throttle({ default: { limit: 5, ttl: 3600000 } })
   @Post()
   @ApiOperation({ summary: 'Create a new store' })
   @ApiResponse({ status: 201, description: 'Store created', type: Store })
@@ -127,16 +132,20 @@ export class StoresController {
     return this.storesService.findBySlug(id);
   }
 
+  @Roles(Role.ADMIN)
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
   @Patch(':id')
-  @ApiOperation({ summary: 'Update store by ID' })
+  @ApiOperation({ summary: 'Update store by ID (Admin only)' })
   @ApiResponse({ status: 200, description: 'Store updated', type: Store })
   @ApiResponse({ status: 404, description: 'Store not found' })
   update(@Param('id') id: string, @Body() updateStoreDto: UpdateStoreDto) {
     return this.storesService.update(id, updateStoreDto);
   }
 
+  @Roles(Role.ADMIN)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Delete(':id')
-  @ApiOperation({ summary: 'Delete store by ID' })
+  @ApiOperation({ summary: 'Delete store by ID (Admin only)' })
   @ApiResponse({ status: 200, description: 'Store deleted' })
   @ApiResponse({ status: 404, description: 'Store not found' })
   remove(@Param('id') id: string) {

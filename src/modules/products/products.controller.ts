@@ -9,6 +9,7 @@ import {
   Query,
   Req,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -22,11 +23,13 @@ import { Public } from '../auth/decorators/public.decorator';
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
+  @Throttle({ default: { limit: 10, ttl: 3600000 } })
   @Post()
   @ApiOperation({ summary: 'Create a new product' })
   @ApiResponse({ status: 201, description: 'Product created', type: Product })
   create(@Body() createProductDto: CreateProductDto, @Req() req: any) {
-    const user = req.user as { email: string };
+    const user = req.user as { email: string; sub: string };
+    createProductDto.vendorId = user.sub;
     return this.productsService.create(createProductDto, user.email);
   }
 
@@ -66,6 +69,15 @@ export class ProductsController {
   }
 
   @Public()
+  @Get('slug-id/:slugId')
+  @ApiOperation({ summary: 'Get product by slug-ID (public)' })
+  @ApiResponse({ status: 200, description: 'Product found', type: Product })
+  @ApiResponse({ status: 404, description: 'Product not found' })
+  findBySlugId(@Param('slugId') slugId: string) {
+    return this.productsService.findBySlugId(slugId);
+  }
+
+  @Public()
   @Get(':id')
   @ApiOperation({ summary: 'Get product by ID (public)' })
   @ApiResponse({ status: 200, description: 'Product found', type: Product })
@@ -74,6 +86,7 @@ export class ProductsController {
     return this.productsService.findOne(id);
   }
 
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
   @Patch(':id')
   @ApiOperation({ summary: 'Update product by ID' })
   @ApiResponse({ status: 200, description: 'Product updated', type: Product })
@@ -83,6 +96,7 @@ export class ProductsController {
     return this.productsService.update(id, updateProductDto, user.email);
   }
 
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Delete(':id')
   @ApiOperation({ summary: 'Delete product by ID' })
   @ApiResponse({ status: 200, description: 'Product deleted' })
@@ -90,5 +104,15 @@ export class ProductsController {
   remove(@Param('id') id: string, @Req() req: any) {
     const user = req.user as { email: string };
     return this.productsService.remove(id, user.email);
+  }
+
+  @Throttle({ default: { limit: 10, ttl: 3600000 } })
+  @Post(':id/duplicate')
+  @ApiOperation({ summary: 'Duplicate a product' })
+  @ApiResponse({ status: 201, description: 'Product duplicated', type: Product })
+  @ApiResponse({ status: 404, description: 'Product not found' })
+  duplicate(@Param('id') id: string, @Req() req: any) {
+    const user = req.user as { email: string };
+    return this.productsService.duplicate(id, user.email);
   }
 }

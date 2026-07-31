@@ -9,17 +9,11 @@ export class User {
   @Prop({ required: true, unique: true, lowercase: true, trim: true })
   email: string;
 
-  @Prop({ required: true })
+  @Prop({ required: true, select: false })
   password: string;
 
   @Prop({ required: true, trim: true })
   fullName: string;
-
-  @Prop({ trim: true })
-  firstName: string;
-
-  @Prop({ trim: true })
-  lastName: string;
 
   @Prop({ type: String, enum: Role, default: Role.CUSTOMER })
   role: Role;
@@ -77,3 +71,10 @@ export const UserSchema = SchemaFactory.createForClass(User);
 // Indexes
 UserSchema.index({ email: 1 });
 UserSchema.index({ role: 1 });
+UserSchema.index({ phoneNumber: 1 });
+UserSchema.index(
+  { phoneNumber: 1 },
+  { unique: true, partialFilterExpression: { phoneNumber: { $exists: true, $nin: ['', null] } } }
+);
+UserSchema.index({ refreshToken: 1 });
+UserSchema.index({ refreshTokenExpiresAt: 1 }, { expireAfterSeconds: 0 });

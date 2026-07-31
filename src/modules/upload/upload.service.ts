@@ -4,10 +4,30 @@ import { AppErrorCode } from '../../common/errors/error-codes.enum';
 import { ConfigService } from '@nestjs/config';
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { randomUUID } from 'crypto';
-import * as path from 'path';
 import sharp from 'sharp';
+import { IMAGE_CONFIG } from './image.config';
 
-export type UploadFolder = 'products' | 'stores';
+type VariantDef = {
+  suffix: string;
+  width: number;
+  height: number;
+  fit: 'cover' | 'inside';
+};
+
+type ImageFolder = keyof typeof IMAGE_CONFIG.folders;
+
+export type UploadResult = {
+  url: string;
+  key: string;
+  thumbnail: string;
+  thumbnailKey: string;
+  medium: string;
+  mediumKey: string;
+  large: string;
+  largeKey: string;
+};
+
+export type MultiUploadResult = UploadResult[];
 
 @Injectable()
 export class UploadService {
@@ -22,79 +42,113 @@ export class UploadService {
 
     const endpoint = this.configService.get<string>('r2.endpoint') || '';
     const accessKeyId = this.configService.get<string>('r2.accessKeyId') || '';
-    const secretAccessKey =
-      this.configService.get<string>('r2.secretAccessKey') || '';
+    const secretAccessKey = this.configService.get<string>('r2.secretAccessKey') || '';
 
     this.s3 = new S3Client({
       region: 'auto',
       endpoint,
-      credentials: {
-        accessKeyId,
-        secretAccessKey,
-      },
+      credentials: { accessKeyId, secretAccessKey },
       forcePathStyle: true,
     });
   }
 
-  async uploadFile(
-    file: Express.Multer.File,
-    folder: UploadFolder,
-  ): Promise<{ url: string; key: string; thumbUrl: string; thumbKey: string }> {
+  async uploadProductImage(file: Express.Multer.File): Promise<UploadResult> {
     this.validateFile(file);
+    const folder = IMAGE_CONFIG.folders.product;
+    const variants = IMAGE_CONFIG.variants.product;
+    const maxWidth = IMAGE_CONFIG.maxWidths.product;
+    return this.processUpload(file, folder, variants, maxWidth);
+  }
 
-    const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
-    const baseName = `${folder}/${randomUUID()}`;
-    const key = `${baseName}${ext}`;
-    const thumbKey = `${baseName}-thumb.webp`;
+  async uploadProductImages(files: Express.Multer.File[]): Promise<MultiUploadResult> {
+    return Promise.all(files.map((f) => this.uploadProductImage(f)));
+  }
 
+  async uploadStoreLogo(file: Express.Multer.File): Promise<UploadResult> {
+    this.validateFile(file);
+    const folder = IMAGE_CONFIG.folders.storeLogo;
+    const variants = IMAGE_CONFIG.variants.storeLogo;
+    const maxWidth = IMAGE_CONFIG.maxWidths.storeLogo;
+    return this.processUpload(file, folder, variants, maxWidth);
+  }
+
+  async uploadStoreCover(file: Express.Multer.File): Promise<UploadResult> {
+    this.validateFile(file);
+    const folder = IMAGE_CONFIG.folders.storeCover;
+    const variants = IMAGE_CONFIG.variants.storeCover;
+    const maxWidth = IMAGE_CONFIG.maxWidths.storeCover;
+    return this.processUpload(file, folder, variants, maxWidth);
+  }
+
+  private async processUpload(
+    file: Express.Multer.File,
+    folder: string,
+    variants: readonly VariantDef[],
+    maxWidth: number,
+  ): Promise<UploadResult> {
+    const id = randomUUID();
+    const baseKey = `${folder}/${id}`;
     const baseUrl = this.publicUrl.replace(/\/+$/, '');
-    const url = baseUrl ? `${baseUrl}/${key}` : key;
-    const thumbUrl = baseUrl ? `${baseUrl}/${thumbKey}` : thumbKey;
+
+    let pipeline = sharp(file.buffer).rotate();
+
+    const metadata = await sharp(file.buffer).metadata();
+    if (metadata.width && metadata.width > maxWidth) {
+      pipeline = pipeline.resize({ width: maxWidth, withoutEnlargement: true });
+    }
+
+    const mainBuffer = await pipeline.webp({ quality: IMAGE_CONFIG.quality }).toBuffer();
+    const mainKey = `${baseKey}.webp`;
+    const mainUrl = baseUrl ? `${baseUrl}/${mainKey}` : mainKey;
+
+    const results: Record<string, { url: string; key: string }> = {};
+
+    const uploadPromises = variants.map(async (v) => {
+      const buf = await sharp(file.buffer)
+        .rotate()
+        .resize(v.width, v.height, { fit: v.fit, withoutEnlargement: true })
+        .webp({ quality: IMAGE_CONFIG.quality })
+        .toBuffer();
+
+      const key = `${baseKey}-${v.suffix}.webp`;
+      const url = baseUrl ? `${baseUrl}/${key}` : key;
+
+      await this.uploadToR2(key, buf, 'image/webp');
+      results[v.suffix] = { url, key };
+    });
+
+    await Promise.all([this.uploadToR2(mainKey, mainBuffer, 'image/webp'), ...uploadPromises]);
+
+    this.logger.log(`Images uploaded: ${mainKey}`);
+    return {
+      url: mainUrl,
+      key: mainKey,
+      thumbnail: results['thumb']?.url || mainUrl,
+      thumbnailKey: results['thumb']?.key || mainKey,
+      medium: results['medium']?.url || mainUrl,
+      mediumKey: results['medium']?.key || mainKey,
+      large: results['large']?.url || mainUrl,
+      largeKey: results['large']?.key || mainKey,
+    };
+  }
+
+  private async uploadToR2(key: string, body: Buffer, contentType: string): Promise<void> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
 
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 60000);
-
-      // Upload original
       await this.s3.send(
         new PutObjectCommand({
           Bucket: this.bucket,
           Key: key,
-          Body: file.buffer,
-          ContentType: file.mimetype,
-          CacheControl: 'public, max-age=31536000',
+          Body: body,
+          ContentType: contentType,
+          CacheControl: 'public, max-age=31536000, immutable',
         }),
         { abortSignal: controller.signal },
       );
-
-      // Generate and upload thumbnail
-      const thumbBuffer = await sharp(file.buffer)
-        .resize(400, 400, { fit: 'cover', position: 'centre' })
-        .webp({ quality: 80 })
-        .toBuffer();
-
-      await this.s3.send(
-        new PutObjectCommand({
-          Bucket: this.bucket,
-          Key: thumbKey,
-          Body: thumbBuffer,
-          ContentType: 'image/webp',
-          CacheControl: 'public, max-age=31536000',
-        }),
-        { abortSignal: controller.signal },
-      );
-
+    } finally {
       clearTimeout(timeoutId);
-
-      this.logger.log(`File uploaded: ${url}`);
-      return { url, key, thumbUrl, thumbKey };
-    } catch (error) {
-      this.logger.error(`Failed to upload file to R2: ${error.message}`);
-      const msg = error.message || '';
-      if (msg.includes('Access Denied')) {
-        throw new AppException(AppErrorCode.UPLOAD_R2_ACCESS_DENIED);
-      }
-      throw new AppException(AppErrorCode.UPLOAD_FAILED);
     }
   }
 
@@ -104,10 +158,7 @@ export class UploadService {
       const timeoutId = setTimeout(() => controller.abort(), 30000);
 
       await this.s3.send(
-        new DeleteObjectCommand({
-          Bucket: this.bucket,
-          Key: key,
-        }),
+        new DeleteObjectCommand({ Bucket: this.bucket, Key: key }),
         { abortSignal: controller.signal },
       );
 
@@ -119,32 +170,45 @@ export class UploadService {
     }
   }
 
-  async uploadMultipleFiles(
-    files: Express.Multer.File[],
-    folder: UploadFolder,
-  ): Promise<{ url: string; key: string; thumbUrl: string; thumbKey: string }[]> {
-    const results = await Promise.all(
-      files.map((file) => this.uploadFile(file, folder)),
-    );
-    return results;
+  async deleteFiles(keys: string[]): Promise<void> {
+    await Promise.all(keys.map((key) => this.deleteFile(key).catch((err) => {
+      this.logger.warn(`Failed to delete ${key}: ${err.message}`);
+    })));
+  }
+
+  async deleteProductImages(mainKey: string): Promise<void> {
+    const base = mainKey.replace(/\.webp$/, '');
+    const keys = [
+      mainKey,
+      `${base}-thumb.webp`,
+      `${base}-medium.webp`,
+      `${base}-large.webp`,
+    ];
+    await this.deleteFiles(keys);
+  }
+
+  extractKeyFromUrl(url: string): string | null {
+    if (!url) return null;
+    if (this.publicUrl && url.startsWith(this.publicUrl)) {
+      return url.slice(this.publicUrl.length).replace(/^\//, '');
+    }
+    if (!url.startsWith('http')) return url;
+    return null;
   }
 
   private validateFile(file: Express.Multer.File): void {
-    const allowedMimes = [
-      'image/jpeg',
-      'image/png',
-      'image/webp',
-      'image/gif',
-      'image/avif',
-    ];
-    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (!file.buffer || file.buffer.length === 0) {
+      throw new AppException(AppErrorCode.UPLOAD_NO_FILE_PROVIDED);
+    }
 
-    if (!allowedMimes.includes(file.mimetype)) {
+    if (!IMAGE_CONFIG.allowedMimeTypes.includes(file.mimetype as any)) {
       throw new AppException(AppErrorCode.UPLOAD_INVALID_FILE_TYPE, { mime: file.mimetype });
     }
 
-    if (file.size > maxSize) {
-      throw new AppException(AppErrorCode.UPLOAD_FILE_TOO_LARGE, { size: (file.size / 1024 / 1024).toFixed(1) });
+    if (file.size > IMAGE_CONFIG.maxFileSize) {
+      throw new AppException(AppErrorCode.UPLOAD_FILE_TOO_LARGE, {
+        size: (file.size / 1024 / 1024).toFixed(1),
+      });
     }
   }
 }

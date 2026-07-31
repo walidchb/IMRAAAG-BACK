@@ -33,14 +33,16 @@ export class Order {
   @Prop()
   statusConfirmation: string;
 
-  @Prop([{
-    productId: { type: String },
-    productName: { type: String, required: true },
-    quantity: { type: Number, required: true },
-    price: { type: Number, required: true },
-    variantDetails: { type: String },
-    weight: { type: Number }
-  }])
+  @Prop([
+    {
+      productId: { type: String },
+      productName: { type: String, required: true },
+      quantity: { type: Number, required: true },
+      price: { type: Number, required: true },
+      variantDetails: { type: String },
+      weight: { type: Number },
+    },
+  ])
   items: Array<{
     productId: string;
     productName: string;
@@ -58,8 +60,8 @@ export class Order {
       wilaya: { type: String, required: true },
       commune: { type: String, required: true },
       address: { type: String },
-      note: { type: String }
-    }
+      note: { type: String },
+    },
   })
   customer: {
     name: string;
@@ -101,11 +103,22 @@ export class Order {
   @Prop()
   stopDeskCode: string;
 
-  @Prop([{
-    status: { type: Object },
-    date: { type: Date },
-    user: { type: String }
-  }])
+  @Prop({ type: Date })
+  updatedAt: Date;
+
+  @Prop({ type: Boolean, default: false })
+  isDeleted: boolean;
+
+  @Prop({ type: Date })
+  deletedAt: Date;
+
+  @Prop([
+    {
+      status: { type: Object },
+      date: { type: Date },
+      user: { type: String },
+    },
+  ])
   history: Array<{ status: StatusConfig; date: Date; user: string }>;
 }
 
@@ -115,3 +128,5 @@ OrderSchema.index({ orderNo: 1 });
 OrderSchema.index({ vendorEmail: 1 });
 OrderSchema.index({ 'status.slug': 1 });
 OrderSchema.index({ createdAt: -1 });
+OrderSchema.index({ isDeleted: 1 });
+OrderSchema.index({ 'customer.phone': 1 });

@@ -37,10 +37,12 @@ import { SearchModule } from './modules/search/search.module';
       }),
       inject: [ConfigService],
     }),
-    ThrottlerModule.forRoot([{
-      ttl: 60000,
-      limit: 60,
-    }]),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 60,
+      },
+    ]),
     AuthModule,
     UsersModule,
     StoresModule,
@@ -58,10 +60,6 @@ import { SearchModule } from './modules/search/search.module';
     SearchModule,
   ],
   controllers: [AppController],
-  providers: [
-    AppService,
-    CacheService,
-    { provide: APP_GUARD, useClass: AppThrottlerGuard },
-  ],
+  providers: [AppService, CacheService, { provide: APP_GUARD, useClass: AppThrottlerGuard }],
 })
 export class AppModule {}

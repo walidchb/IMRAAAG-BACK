@@ -7,6 +7,8 @@ import { Order, OrderSchema } from '../orders/schemas/order.schema';
 import { ProductsController } from './products.controller';
 import { ProductsService } from './products.service';
 import { CacheService } from '../../common/cache.service';
+import { StoresModule } from '../stores/stores.module';
+import { UploadModule } from '../upload/upload.module';
 
 @Module({
   imports: [
@@ -15,7 +17,9 @@ import { CacheService } from '../../common/cache.service';
       { name: Category.name, schema: CategorySchema },
       { name: SubCategory.name, schema: SubCategorySchema },
       { name: Order.name, schema: OrderSchema },
-    ])
+    ]),
+    StoresModule,
+    UploadModule,
   ],
   controllers: [ProductsController],
   providers: [ProductsService, CacheService],

@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
+import { StoreStatus } from './store-status.enum';
 
 export type StoreDocument = Store & Document;
 
@@ -50,9 +51,10 @@ export class Store {
   @Prop({ type: Object, default: {} })
   socialMedia: Record<string, string>;
 
-  @Prop({ default: 'Active' })
-  status: string;
+  @Prop({ default: StoreStatus.ACTIVE, enum: StoreStatus })
+  status: StoreStatus;
 
+  /** @deprecated Use `wilaya` and `commune` root-level fields instead */
   @Prop({
     type: {
       street: String,
@@ -81,5 +83,8 @@ export const StoreSchema = SchemaFactory.createForClass(Store);
 
 // Indexes
 StoreSchema.index({ storeName: 'text', description: 'text' });
+StoreSchema.index({ storeName: 1 });
 StoreSchema.index({ storeSlug: 1 });
 StoreSchema.index({ vendorEmail: 1 });
+StoreSchema.index({ vendorId: 1 });
+StoreSchema.index({ status: 1 });

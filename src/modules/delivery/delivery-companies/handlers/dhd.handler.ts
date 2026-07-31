@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { AppException } from '../../../../common/errors/app-exception';
 import { AppErrorCode } from '../../../../common/errors/error-codes.enum';
 import { InjectModel } from '@nestjs/mongoose';
@@ -7,6 +8,8 @@ import { DeliveryCompanyHandler, BulkOrderResult } from '../interfaces/delivery-
 import { DeliveryConfig, DeliveryConfigDocument } from '../../schemas/delivery-config.schema';
 import { Commune, CommuneDocument } from '../../../territories/schemas/commune.schema';
 import { Order } from '../../../orders/schemas/order.schema';
+import { decryptRecord } from '../../../../common/encryption.util';
+import { fetchWithRetry } from '../../../../common/fetch-with-retry';
 
 interface DhdOrderPayload {
   reference?: string;
@@ -46,7 +49,12 @@ export class DhdHandler implements DeliveryCompanyHandler {
     private configModel: Model<DeliveryConfigDocument>,
     @InjectModel(Commune.name)
     private communeModel: Model<CommuneDocument>,
+    private readonly configService: ConfigService,
   ) {}
+
+  private get encryptionKey(): string {
+    return this.configService.get<string>('deliveryEncryptionKey') || '';
+  }
 
   async createOrder(order: Order): Promise<{ parcelId: string }> {
     const apiToken = await this.getApiToken(order.vendorEmail);
@@ -76,13 +84,21 @@ export class DhdHandler implements DeliveryCompanyHandler {
       const url = `${this.apiBase}/api/v1/create/order?${params.toString()}`;
       this.logger.log(`DHD order URL (truncated): ${url.slice(0, 300)}...`);
 
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiToken}`,
-          'Accept': 'application/json',
+      const response = await fetchWithRetry(
+        url,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${apiToken}`,
+            Accept: 'application/json',
+          },
+          timeout: 10000,
         },
-      });
+        {
+          circuitBreakerName: 'dhd',
+          onRetry: (attempt, err) => this.logger.warn(`DHD create order retry ${attempt}: ${err instanceof Error ? err.message : 'HTTP ' + err.status}`),
+        },
+      );
 
       const text = await response.text();
       this.logger.log(`DHD create order response (${response.status}): ${text}`);
@@ -111,12 +127,12 @@ export class DhdHandler implements DeliveryCompanyHandler {
   async createBulkOrders(orders: Order[]): Promise<BulkOrderResult[]> {
     if (orders.length === 0) return [];
     if (orders.length > 100) {
-      return orders.map(o => ({ orderNo: o.orderNo, success: false, error: 'Max 100 orders per bulk request' }));
+      return orders.map((o) => ({ orderNo: o.orderNo, success: false, error: 'Max 100 orders per bulk request' }));
     }
 
     const apiToken = await this.getApiToken(orders[0].vendorEmail);
     if (!apiToken) {
-      return orders.map(o => ({ orderNo: o.orderNo, success: false, error: 'DHD API token not configured' }));
+      return orders.map((o) => ({ orderNo: o.orderNo, success: false, error: 'DHD API token not configured' }));
     }
 
     const ordersPayload: Record<string, DhdOrderPayload> = {};
@@ -128,15 +144,23 @@ export class DhdHandler implements DeliveryCompanyHandler {
     try {
       this.logger.log(`DHD bulk payload for ${orders.length} orders`);
 
-      const response = await fetch(`${this.apiBase}/api/v1/create/orders`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiToken}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
+      const response = await fetchWithRetry(
+        `${this.apiBase}/api/v1/create/orders`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${apiToken}`,
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          body: JSON.stringify({ orders: ordersPayload }),
+          timeout: 15000,
         },
-        body: JSON.stringify({ orders: ordersPayload }),
-      });
+        {
+          circuitBreakerName: 'dhd',
+          onRetry: (attempt, err) => this.logger.warn(`DHD bulk create retry ${attempt}: ${err instanceof Error ? err.message : 'HTTP ' + err.status}`),
+        },
+      );
 
       const responseText = await response.text();
       let body: DhdBulkResponse;
@@ -176,25 +200,26 @@ export class DhdHandler implements DeliveryCompanyHandler {
           }
         }
       } else {
-        return orders.map(o => ({ orderNo: o.orderNo, success: false, error: 'Unexpected DHD API response format' }));
+        return orders.map((o) => ({ orderNo: o.orderNo, success: false, error: 'Unexpected DHD API response format' }));
       }
 
       return results;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       this.logger.error(`DHD bulk API call failed: ${message}`);
-      return orders.map(o => ({ orderNo: o.orderNo, success: false, error: message }));
+      return orders.map((o) => ({ orderNo: o.orderNo, success: false, error: message }));
     }
   }
 
   private buildPayload(order: Order, communeName: string): DhdOrderPayload {
     const isStopDesk = order.shippingMethod === 'stopdesk';
 
-    const produit = order.items
-      ?.map((item) => item.productName || `Product ${item.productId || ''}`)
-      .filter(Boolean)
-      .join(', ')
-      .slice(0, 255) || `Order ${order.orderNo}`;
+    const produit =
+      order.items
+        ?.map((item) => item.productName || `Product ${item.productId || ''}`)
+        .filter(Boolean)
+        .join(', ')
+        .slice(0, 255) || `Order ${order.orderNo}`;
 
     const weight = order.items?.reduce((sum, item) => sum + (item.weight || 0) * (item.quantity || 1), 0) || 0;
 
@@ -252,7 +277,9 @@ export class DhdHandler implements DeliveryCompanyHandler {
   private async getApiToken(vendorEmail: string): Promise<string | null> {
     try {
       const config = await this.configModel.findOne({ vendorEmail }).lean().exec();
-      return config?.companies?.['dhd']?.credentials?.apiToken || null;
+      const rawCreds = config?.companies?.['dhd']?.credentials || {};
+      const creds = decryptRecord(rawCreds, this.encryptionKey);
+      return creds.apiToken || null;
     } catch {
       return null;
     }

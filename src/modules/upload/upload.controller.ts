@@ -13,7 +13,7 @@ import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { AppException } from '../../common/errors/app-exception';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
-import { UploadService, UploadFolder } from './upload.service';
+import { UploadService } from './upload.service';
 
 @ApiTags('Upload')
 @Controller('upload')
@@ -25,22 +25,9 @@ export class UploadController {
   @UseInterceptors(FileInterceptor('file'))
   @ApiOperation({ summary: 'Upload a single product image' })
   @ApiConsumes('multipart/form-data')
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        file: {
-          type: 'string',
-          format: 'binary',
-          description: 'Image file (JPEG, PNG, WebP, GIF, AVIF)',
-        },
-      },
-    },
-  })
   async uploadProductImage(@UploadedFile() file: Express.Multer.File) {
     if (!file) throw new AppException(AppErrorCode.UPLOAD_NO_FILE_PROVIDED);
-    const result = await this.uploadService.uploadFile(file, 'products');
-    return result;
+    return this.uploadService.uploadProductImage(file);
   }
 
   @Post('product-images')
@@ -48,27 +35,12 @@ export class UploadController {
   @UseInterceptors(FilesInterceptor('files', 10))
   @ApiOperation({ summary: 'Upload multiple product images (max 10)' })
   @ApiConsumes('multipart/form-data')
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        files: {
-          type: 'array',
-          items: { type: 'string', format: 'binary' },
-          description: 'Image files (max 10)',
-        },
-      },
-    },
-  })
   async uploadProductImages(@UploadedFiles() files: Express.Multer.File[]) {
     if (!files || files.length === 0)
       throw new AppException(AppErrorCode.UPLOAD_NO_FILE_PROVIDED);
     if (files.length > 10)
       throw new AppException(AppErrorCode.UPLOAD_MAX_FILES_EXCEEDED);
-    const results = await this.uploadService.uploadMultipleFiles(
-      files,
-      'products',
-    );
+    const results = await this.uploadService.uploadProductImages(files);
     return { images: results };
   }
 
@@ -77,21 +49,9 @@ export class UploadController {
   @UseInterceptors(FileInterceptor('file'))
   @ApiOperation({ summary: 'Upload a store logo' })
   @ApiConsumes('multipart/form-data')
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        file: {
-          type: 'string',
-          format: 'binary',
-        },
-      },
-    },
-  })
   async uploadStoreLogo(@UploadedFile() file: Express.Multer.File) {
     if (!file) throw new AppException(AppErrorCode.UPLOAD_NO_FILE_PROVIDED);
-    const result = await this.uploadService.uploadFile(file, 'stores');
-    return result;
+    return this.uploadService.uploadStoreLogo(file);
   }
 
   @Post('store-cover')
@@ -99,21 +59,9 @@ export class UploadController {
   @UseInterceptors(FileInterceptor('file'))
   @ApiOperation({ summary: 'Upload a store cover image' })
   @ApiConsumes('multipart/form-data')
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        file: {
-          type: 'string',
-          format: 'binary',
-        },
-      },
-    },
-  })
   async uploadStoreCover(@UploadedFile() file: Express.Multer.File) {
     if (!file) throw new AppException(AppErrorCode.UPLOAD_NO_FILE_PROVIDED);
-    const result = await this.uploadService.uploadFile(file, 'stores');
-    return result;
+    return this.uploadService.uploadStoreCover(file);
   }
 
   @Delete()

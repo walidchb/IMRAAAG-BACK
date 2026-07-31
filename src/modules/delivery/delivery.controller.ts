@@ -1,11 +1,15 @@
-import { Controller, Get, Post, Patch, Body, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { Controller, Get, Post, Patch, Body, Query, Req, Param } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
+import { ApiTags, ApiOperation, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 import { DeliveryService } from './delivery.service';
 import { DeliveryCompaniesService } from './delivery-companies.service';
 import { SaveDeliveryConfigDto, SaveAttributionsDto } from './dto/save-delivery-config.dto';
 import { Public } from '../auth/decorators/public.decorator';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Role } from '../../common/constants/roles.enum';
 
 @ApiTags('Delivery')
+@ApiBearerAuth()
 @Controller('delivery')
 export class DeliveryController {
   constructor(
@@ -20,29 +24,39 @@ export class DeliveryController {
     return this.deliveryCompaniesService.getAll();
   }
 
+  @Roles(Role.VENDOR)
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
   @Get('configs')
-  @ApiOperation({ summary: 'Get delivery configs for a vendor' })
-  @ApiQuery({ name: 'vendorEmail', required: true })
-  getConfigs(@Query('vendorEmail') vendorEmail: string) {
+  @ApiOperation({ summary: 'Get delivery configs for current vendor' })
+  getConfigs(@Req() req: any) {
+    const vendorEmail = req.user.email;
     return this.deliveryService.getConfigs(vendorEmail);
   }
 
+  @Roles(Role.VENDOR)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Patch('configs')
   @ApiOperation({ summary: 'Save delivery config for a company' })
-  saveConfig(@Query('vendorEmail') vendorEmail: string, @Body() dto: SaveDeliveryConfigDto) {
+  saveConfig(@Req() req: any, @Body() dto: SaveDeliveryConfigDto) {
+    const vendorEmail = req.user.email;
     return this.deliveryService.saveConfig(vendorEmail, dto);
   }
 
+  @Roles(Role.VENDOR)
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
   @Get('attributions')
-  @ApiOperation({ summary: 'Get wilaya-to-company attributions' })
-  @ApiQuery({ name: 'vendorEmail', required: true })
-  getAttributions(@Query('vendorEmail') vendorEmail: string) {
+  @ApiOperation({ summary: 'Get wilaya-to-company attributions for current vendor' })
+  getAttributions(@Req() req: any) {
+    const vendorEmail = req.user.email;
     return this.deliveryService.getAttributions(vendorEmail);
   }
 
+  @Roles(Role.VENDOR)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Patch('attributions')
   @ApiOperation({ summary: 'Save wilaya-to-company attributions' })
-  saveAttributions(@Query('vendorEmail') vendorEmail: string, @Body() dto: SaveAttributionsDto) {
+  saveAttributions(@Req() req: any, @Body() dto: SaveAttributionsDto) {
+    const vendorEmail = req.user.email;
     return this.deliveryService.saveAttributions(vendorEmail, dto);
   }
 
@@ -54,10 +68,12 @@ export class DeliveryController {
     return this.deliveryService.getNoestDesks(wilayaCode);
   }
 
+  @Roles(Role.VENDOR)
+  @Throttle({ default: { limit: 2, ttl: 60000 } })
   @Post('noest-desks/sync')
   @ApiOperation({ summary: 'Sync Noest stop desks from API' })
-  @ApiQuery({ name: 'vendorEmail', required: true })
-  syncNoestDesks(@Query('vendorEmail') vendorEmail: string) {
+  syncNoestDesks(@Req() req: any) {
+    const vendorEmail = req.user.email;
     return this.deliveryService.syncNoestDesks(vendorEmail);
   }
 
@@ -69,10 +85,12 @@ export class DeliveryController {
     return this.deliveryService.getEcomDesks(wilayaCode);
   }
 
+  @Roles(Role.VENDOR)
+  @Throttle({ default: { limit: 2, ttl: 60000 } })
   @Post('ecom-desks/sync')
   @ApiOperation({ summary: 'Sync Ecom Delivery stop desks from API' })
-  @ApiQuery({ name: 'vendorEmail', required: true })
-  syncEcomDesks(@Query('vendorEmail') vendorEmail: string) {
+  syncEcomDesks(@Req() req: any) {
+    const vendorEmail = req.user.email;
     return this.deliveryService.syncEcomDesks(vendorEmail);
   }
 
@@ -92,24 +110,46 @@ export class DeliveryController {
     return this.deliveryService.getZRHubs(wilayaCode);
   }
 
+  @Roles(Role.VENDOR)
+  @Throttle({ default: { limit: 2, ttl: 60000 } })
   @Post('zr-hubs/sync')
   @ApiOperation({ summary: 'Sync ZR Express hubs from API' })
-  @ApiQuery({ name: 'vendorEmail', required: true })
-  syncZRHubs(@Query('vendorEmail') vendorEmail: string) {
+  syncZRHubs(@Req() req: any) {
+    const vendorEmail = req.user.email;
     return this.deliveryService.syncZRHubs(vendorEmail);
   }
 
+  @Roles(Role.VENDOR)
+  @Throttle({ default: { limit: 2, ttl: 60000 } })
   @Post('zr-territories/sync')
   @ApiOperation({ summary: 'Sync ZR Express territories and update Wilaya/Commune UUIDs' })
-  @ApiQuery({ name: 'vendorEmail', required: true })
-  syncZRTerritories(@Query('vendorEmail') vendorEmail: string) {
+  syncZRTerritories(@Req() req: any) {
+    const vendorEmail = req.user.email;
     return this.deliveryService.syncZRTerritories(vendorEmail);
   }
 
+  @Roles(Role.VENDOR)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Get('zr-territories')
   @ApiOperation({ summary: 'Fetch ZR Express territories' })
-  @ApiQuery({ name: 'vendorEmail', required: true })
-  getZRTerritories(@Query('vendorEmail') vendorEmail: string) {
+  getZRTerritories(@Req() req: any) {
+    const vendorEmail = req.user.email;
     return this.deliveryService.getTerritories(vendorEmail);
+  }
+
+  @Public()
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
+  @Get('public/attributions/:vendorEmail')
+  @ApiOperation({ summary: 'Get wilaya-to-company attributions for a vendor (public)' })
+  getPublicAttributions(@Param('vendorEmail') vendorEmail: string) {
+    return this.deliveryService.getAttributions(vendorEmail);
+  }
+
+  @Public()
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
+  @Get('public/configs/:vendorEmail')
+  @ApiOperation({ summary: 'Get delivery configs for a vendor (public)' })
+  getPublicConfigs(@Param('vendorEmail') vendorEmail: string) {
+    return this.deliveryService.getConfigs(vendorEmail);
   }
 }

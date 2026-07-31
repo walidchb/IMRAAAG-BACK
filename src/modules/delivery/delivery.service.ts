@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { AppException } from '../../common/errors/app-exception';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
 import { InjectModel } from '@nestjs/mongoose';
@@ -13,10 +14,13 @@ import { ZrHub, ZrHubDocument } from './schemas/zr-hub.schema';
 import { DhdDesk, DhdDeskDocument } from './schemas/dhd-desk.schema';
 import { SaveDeliveryConfigDto, SaveAttributionsDto } from './dto/save-delivery-config.dto';
 import { DeliveryCompanyRegistry } from './delivery-companies/delivery-company-registry.service';
+import { DeliveryCompaniesService } from './delivery-companies.service';
 import { BulkOrderResult } from './delivery-companies/interfaces/delivery-company-handler.interface';
 import { Order } from '../orders/schemas/order.schema';
 import { Wilaya, WilayaDocument } from '../territories/schemas/wilaya.schema';
 import { Commune, CommuneDocument } from '../territories/schemas/commune.schema';
+import { encryptRecord, decryptRecord } from '../../common/encryption.util';
+import { fetchWithRetry } from '../../common/fetch-with-retry';
 
 interface NoestDeskRaw {
   code: string;
@@ -87,13 +91,16 @@ export class DeliveryService {
     @InjectModel(Commune.name)
     private communeModel: Model<CommuneDocument>,
     private readonly deliveryCompanyRegistry: DeliveryCompanyRegistry,
+    private readonly deliveryCompaniesService: DeliveryCompaniesService,
+    private readonly configService: ConfigService,
   ) {}
 
+  private get encryptionKey(): string {
+    return this.configService.get<string>('deliveryEncryptionKey') || '';
+  }
+
   async resolveCompanyForWilaya(vendorEmail: string, wilayaCode: string): Promise<string | null> {
-    const [attribution, config] = await Promise.all([
-      this.attributionModel.findOne({ vendorEmail }).lean().exec(),
-      this.configModel.findOne({ vendorEmail }).lean().exec(),
-    ]);
+    const [attribution, config] = await Promise.all([this.attributionModel.findOne({ vendorEmail }).lean().exec(), this.configModel.findOne({ vendorEmail }).lean().exec()]);
 
     if (attribution?.attributions?.[wilayaCode]) {
       this.logger.log(`Resolved company "${attribution.attributions[wilayaCode]}" for wilaya ${wilayaCode} from attributions`);
@@ -176,7 +183,9 @@ export class DeliveryService {
 
   async syncNoestDesks(vendorEmail: string): Promise<{ inserted: number }> {
     const config = await this.configModel.findOne({ vendorEmail }).lean().exec();
-    const creds = config?.companies?.['noest']?.credentials || {};
+    const rawCreds = config?.companies?.['noest']?.credentials || {};
+    const key = this.encryptionKey;
+    const creds = decryptRecord(rawCreds, key);
     const apiToken: string | undefined = creds.apiToken;
 
     if (!apiToken) {
@@ -185,26 +194,28 @@ export class DeliveryService {
 
     this.logger.log(`Fetching Noest desks from ${this.noestApiBase}/api/public/desks`);
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
     let response: Response;
     try {
-      response = await fetch(`${this.noestApiBase}/api/public/desks`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${apiToken}`,
-          'Accept': 'application/json',
+      response = await fetchWithRetry(
+        `${this.noestApiBase}/api/public/desks`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${apiToken}`,
+            Accept: 'application/json',
+          },
+          timeout: 10000,
         },
-        signal: controller.signal,
-      });
+        {
+          onRetry: (attempt, err) => this.logger.warn(`Noest desks API retry ${attempt}: ${err instanceof Error ? err.message : 'HTTP ' + err.status}`),
+        },
+      );
     } catch (err: unknown) {
-      clearTimeout(timeoutId);
-      if (err instanceof DOMException && err.name === 'AbortError') {
+      if (err instanceof Error && err.message.includes('timed out')) {
         throw new AppException(AppErrorCode.DELIVERY_API_TIMEOUT, { company: 'Noest' });
       }
       throw new AppException(AppErrorCode.DELIVERY_API_ERROR, { company: 'Noest', message: String(err) });
     }
-    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const text = await response.text();
@@ -212,7 +223,7 @@ export class DeliveryService {
       throw new AppException(AppErrorCode.DELIVERY_API_ERROR, { company: 'Noest', status: response.status, text });
     }
 
-    const raw = await response.json() as Record<string, NoestDeskRaw>;
+    const raw = (await response.json()) as Record<string, NoestDeskRaw>;
     this.logger.log(`Noest API returned ${Object.keys(raw).length} raw desks, sample keys: ${Object.keys(raw).slice(0, 5).join(', ')}`);
 
     const desks = Object.values(raw).map((d) => {
@@ -271,7 +282,9 @@ export class DeliveryService {
 
   async syncEcomDesks(vendorEmail: string): Promise<{ inserted: number }> {
     const config = await this.configModel.findOne({ vendorEmail }).lean().exec();
-    const creds = config?.companies?.['ecom-delivery']?.credentials || {};
+    const rawCreds = config?.companies?.['ecom-delivery']?.credentials || {};
+    const key = this.encryptionKey;
+    const creds = decryptRecord(rawCreds, key);
     const apiKey: string | undefined = creds.key;
     const apiToken: string | undefined = creds.token;
 
@@ -281,27 +294,29 @@ export class DeliveryService {
 
     this.logger.log('Syncing Ecom Delivery stop desks from API');
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
     let response: Response;
     try {
-      response = await fetch('https://ecom-dz.com/api_v2/bureaux', {
-        method: 'GET',
-        headers: {
-          'X-API-Key': apiKey,
-          'X-API-Token': apiToken,
-          'Accept': 'application/json',
+      response = await fetchWithRetry(
+        'https://ecom-dz.com/api_v2/bureaux',
+        {
+          method: 'GET',
+          headers: {
+            'X-API-Key': apiKey,
+            'X-API-Token': apiToken,
+            Accept: 'application/json',
+          },
+          timeout: 10000,
         },
-        signal: controller.signal,
-      });
+        {
+          onRetry: (attempt, err) => this.logger.warn(`Ecom desks API retry ${attempt}: ${err instanceof Error ? err.message : 'HTTP ' + err.status}`),
+        },
+      );
     } catch (err: unknown) {
-      clearTimeout(timeoutId);
-      if (err instanceof DOMException && err.name === 'AbortError') {
+      if (err instanceof Error && err.message.includes('timed out')) {
         throw new AppException(AppErrorCode.DELIVERY_API_TIMEOUT, { company: 'Ecom' });
       }
       throw new AppException(AppErrorCode.DELIVERY_API_ERROR, { company: 'Ecom', message: String(err) });
     }
-    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const text = await response.text();
@@ -309,7 +324,7 @@ export class DeliveryService {
       throw new AppException(AppErrorCode.DELIVERY_API_ERROR, { company: 'Ecom', status: response.status, text });
     }
 
-    const raw = await response.json() as Array<Record<string, unknown>>;
+    const raw = (await response.json()) as Array<Record<string, unknown>>;
     this.logger.log(`Ecom API returned ${raw.length} bureaux`);
 
     if (raw.length === 0) return { inserted: 0 };
@@ -322,7 +337,7 @@ export class DeliveryService {
       adresse: String(item.adresse || item.address || item.adress || ''),
       adresse_maps: String(item.adresse_maps || item.google_maps || item.maps || ''),
       tel_contact: String(item.tel_contact || item.tel || item.phone || item.telephone || ''),
-      ecomId: typeof item.id === 'number' ? item.id : (typeof item.ecomId === 'number' ? item.ecomId : 0),
+      ecomId: typeof item.id === 'number' ? item.id : typeof item.ecomId === 'number' ? item.ecomId : 0,
     }));
 
     await this.ecomDeskModel.deleteMany({});
@@ -355,18 +370,12 @@ export class DeliveryService {
     let updated = 0;
 
     for (const w of wilayas) {
-      const result = await this.wilayaModel.updateOne(
-        { code: String(w.code) },
-        { $set: { zrexpress_uuid: w.id } },
-      ).exec();
+      const result = await this.wilayaModel.updateOne({ code: String(w.code) }, { $set: { zrexpress_uuid: w.id } }).exec();
       if (result.modifiedCount > 0 || result.upsertedCount > 0) updated++;
     }
 
     for (const c of communes) {
-      const result = await this.communeModel.updateOne(
-        { post_code: c.postalCode },
-        { $set: { zrexpress_uuid: c.id } },
-      ).exec();
+      const result = await this.communeModel.updateOne({ post_code: c.postalCode }, { $set: { zrexpress_uuid: c.id } }).exec();
       if (result.modifiedCount > 0 || result.upsertedCount > 0) updated++;
     }
 
@@ -380,23 +389,36 @@ export class DeliveryService {
     let hasNext = true;
 
     while (hasNext) {
-      const response = await fetch(`${this.zrApiBase}.0/territories/search`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-Tenant': tenantId,
-          'X-Api-Key': apiKey,
-        },
-        body: JSON.stringify({ pageNumber: page, pageSize: 1000, orderBy: ['code asc'] }),
-      });
+      let response: Response;
+      try {
+        response = await fetchWithRetry(
+          `${this.zrApiBase}.0/territories/search`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+              'X-Tenant': tenantId,
+              'X-Api-Key': apiKey,
+            },
+            body: JSON.stringify({ pageNumber: page, pageSize: 1000, orderBy: ['code asc'] }),
+            timeout: 10000,
+          },
+          {
+            onRetry: (attempt, err) => this.logger.warn(`ZR territories retry ${attempt} page ${page}: ${err instanceof Error ? err.message : 'HTTP ' + err.status}`),
+          },
+        );
+      } catch (err) {
+        this.logger.error(`ZR territories/search error page ${page}: ${err instanceof Error ? err.message : String(err)}`);
+        break;
+      }
 
       if (!response.ok) {
         this.logger.error(`ZR territories/search error page ${page}: ${response.status}`);
         break;
       }
 
-      const data = await response.json() as { items: ZrTerritoryRaw[]; hasNext: boolean; totalCount: number };
+      const data = (await response.json()) as { items: ZrTerritoryRaw[]; hasNext: boolean; totalCount: number };
       const items = data.items || [];
       all.push(...items);
       this.logger.log(`ZR territories page ${page}: ${items.length} items (total ${all.length}/${data.totalCount || '?'})`);
@@ -414,24 +436,24 @@ export class DeliveryService {
     const allHubs = await this.fetchAllZRHubs(apiKey, tenantId);
     this.logger.log(`ZR hubs sync: fetched ${allHubs.length} hubs`);
 
-    const territoryIds = [...new Set(
-      allHubs.map(h => h.address?.cityTerritoryId).filter(Boolean) as string[],
-    )];
+    const territoryIds = [...new Set(allHubs.map((h) => h.address?.cityTerritoryId).filter(Boolean) as string[])];
 
-    const wilayas = territoryIds.length > 0
-      ? await this.wilayaModel.find({ zrexpress_uuid: { $in: territoryIds } }).lean().exec()
-      : [];
+    const wilayas =
+      territoryIds.length > 0
+        ? await this.wilayaModel
+            .find({ zrexpress_uuid: { $in: territoryIds } })
+            .lean()
+            .exec()
+        : [];
 
     const territoryToWilaya = new Map<string, string>();
-    wilayas.forEach(w => {
+    wilayas.forEach((w) => {
       if (w.zrexpress_uuid) territoryToWilaya.set(w.zrexpress_uuid, w.code);
     });
 
     const hubDocs = allHubs.map((h) => {
       const addressParts = [h.address?.street, h.address?.city, h.address?.district].filter(Boolean);
-      const wilayaCode = h.address?.cityTerritoryId
-        ? (territoryToWilaya.get(h.address.cityTerritoryId) || '')
-        : '';
+      const wilayaCode = h.address?.cityTerritoryId ? territoryToWilaya.get(h.address.cityTerritoryId) || '' : '';
 
       return {
         hubId: h.id,
@@ -478,23 +500,36 @@ export class DeliveryService {
     let hasNext = true;
 
     while (hasNext) {
-      const response = await fetch(`${this.zrApiBase}/hubs/search`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-Tenant': tenantId,
-          'X-Api-Key': apiKey,
-        },
-        body: JSON.stringify({ pageNumber: page, pageSize: 100, orderBy: ['name asc'] }),
-      });
+      let response: Response;
+      try {
+        response = await fetchWithRetry(
+          `${this.zrApiBase}/hubs/search`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+              'X-Tenant': tenantId,
+              'X-Api-Key': apiKey,
+            },
+            body: JSON.stringify({ pageNumber: page, pageSize: 100, orderBy: ['name asc'] }),
+            timeout: 10000,
+          },
+          {
+            onRetry: (attempt, err) => this.logger.warn(`ZR hubs retry ${attempt} page ${page}: ${err instanceof Error ? err.message : 'HTTP ' + err.status}`),
+          },
+        );
+      } catch (err) {
+        this.logger.error(`ZR hubs/search error page ${page}: ${err instanceof Error ? err.message : String(err)}`);
+        break;
+      }
 
       if (!response.ok) {
         this.logger.error(`ZR hubs/search error page ${page}: ${response.status}`);
         break;
       }
 
-      const body = await response.json() as { items: ZrHubRaw[]; hasNext: boolean; totalCount: number };
+      const body = (await response.json()) as { items: ZrHubRaw[]; hasNext: boolean; totalCount: number };
       const items = body.items || [];
 
       this.logger.log(`ZR hubs page ${page}: ${items.length} hubs (total ${all.length + items.length}/${body.totalCount || '?'})`);
@@ -519,14 +554,24 @@ export class DeliveryService {
   }
 
   async getConfigs(vendorEmail: string): Promise<DeliveryConfig | null> {
-    return this.configModel.findOne({ vendorEmail }).exec();
+    const config = await this.configModel.findOne({ vendorEmail }).lean().exec();
+    if (config?.companies) {
+      const key = this.encryptionKey;
+      for (const company of Object.values(config.companies)) {
+        if (company.credentials) {
+          company.credentials = decryptRecord(company.credentials, key);
+        }
+      }
+    }
+    return config;
   }
 
   async saveConfig(vendorEmail: string, dto: SaveDeliveryConfigDto): Promise<DeliveryConfig> {
     const setPaths: Record<string, unknown> = {};
 
     if (dto.credentials !== undefined) {
-      setPaths[`companies.${dto.companyId}.credentials`] = dto.credentials;
+      const key = this.encryptionKey;
+      setPaths[`companies.${dto.companyId}.credentials`] = encryptRecord(dto.credentials, key);
     }
     if (dto.status !== undefined) {
       setPaths[`companies.${dto.companyId}.status`] = dto.status;
@@ -546,61 +591,50 @@ export class DeliveryService {
       setPaths[`companies.${dto.companyId}.isDefault`] = false;
     }
 
-    return this.configModel.findOneAndUpdate(
-      { vendorEmail },
-      { $set: setPaths },
-      { upsert: true, new: true },
-    ).exec();
+    return this.configModel.findOneAndUpdate({ vendorEmail }, { $set: setPaths }, { upsert: true, new: true }).exec();
   }
 
   async getAttributions(vendorEmail: string): Promise<DeliveryAttribution | null> {
     return this.attributionModel.findOne({ vendorEmail }).exec();
   }
   async saveAttributions(vendorEmail: string, dto: SaveAttributionsDto): Promise<DeliveryAttribution> {
-    const result = await this.attributionModel.findOneAndUpdate(
-      { vendorEmail },
-      { $set: { vendorEmail, attributions: dto.attributions } },
-      { upsert: true, new: true },
-    ).exec();
+    const entries = Object.entries(dto.attributions);
+    if (entries.length === 0) {
+      return this.attributionModel.findOneAndUpdate({ vendorEmail }, { $set: { vendorEmail, attributions: dto.attributions } }, { upsert: true, new: true }).exec();
+    }
+
+    const wilayaCodes = [...new Set(entries.map(([k]) => k))];
+    const companySlugs = [...new Set(entries.map(([, v]) => v))];
+
+    const [foundWilayas, companies] = await Promise.all([
+      this.wilayaModel
+        .find({ code: { $in: wilayaCodes } })
+        .lean()
+        .exec(),
+      this.deliveryCompaniesService.getAll(),
+    ]);
+
+    const validWilayaCodes = new Set(foundWilayas.map((w) => w.code));
+    const validCompanySlugs = new Set(companies.map((c) => c.slug));
+
+    for (const [wilayaCode, companyId] of entries) {
+      if (!validWilayaCodes.has(wilayaCode)) {
+        throw new AppException(AppErrorCode.DELIVERY_INVALID_WILAYA, { wilayaCode });
+      }
+      if (!validCompanySlugs.has(companyId)) {
+        throw new AppException(AppErrorCode.VALIDATION_INVALID_VALUE, { field: 'attributions', value: companyId });
+      }
+    }
+
+    const result = await this.attributionModel.findOneAndUpdate({ vendorEmail }, { $set: { vendorEmail, attributions: dto.attributions } }, { upsert: true, new: true }).exec();
 
     return result;
   }
 
-  private async getHubId(apiKey: string, tenantId: string): Promise<string | null> {
-    try {
-      const response = await fetch(`${this.zrApiBase}/hubs/search`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-Tenant': tenantId,
-          'X-Api-Key': apiKey,
-        },
-        body: JSON.stringify({ pageSize: 10, pageNumber: 1 }),
-      });
-
-      const body = await response.json() as Record<string, unknown>;
-      this.logger.log(`ZR Express hubs/search response: ${JSON.stringify(body)}`);
-
-      if (response.ok) {
-        const hubs = (body.data as Array<{ id: string }> | undefined)
-          || (body.items as Array<{ id: string }> | undefined)
-          || [];
-        this.logger.log(`ZR Express hubs found: ${hubs.length}`);
-        if (hubs.length > 0) {
-          const selected = hubs[Math.floor(Math.random() * hubs.length)];
-          this.logger.log(`ZR Express selected hub: ${JSON.stringify(selected)}`);
-          return selected.id;
-        }
-      }
-    } catch (err) {
-      this.logger.error(`ZR Express hubs/search call failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
-    }
-    return null;
-  }
-
   private getZrCredentials(config: DeliveryConfig | null): { apiKey: string; tenantId: string } {
-    const creds = config?.companies?.['zr-express']?.credentials || {};
+    const rawCreds = config?.companies?.['zr-express']?.credentials || {};
+    const key = this.encryptionKey;
+    const creds = decryptRecord(rawCreds, key);
     return {
       apiKey: creds.apiKey || '',
       tenantId: creds.tenantId || '',
@@ -612,34 +646,43 @@ export class DeliveryService {
     const { apiKey, tenantId } = this.getZrCredentials(config);
 
     const doFetch = async (body: Record<string, unknown>) => {
-      const response = await fetch(`${this.zrApiBase}.0/territories/search`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-Tenant': tenantId,
-          'X-Api-Key': apiKey,
-        },
-        body: JSON.stringify(body),
-      });
-      if (!response.ok) {
-        this.logger.error(`ZR Express territories/search error: ${response.status}`);
+      try {
+        const response = await fetchWithRetry(
+          `${this.zrApiBase}.0/territories/search`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+              'X-Tenant': tenantId,
+              'X-Api-Key': apiKey,
+            },
+            body: JSON.stringify(body),
+            timeout: 10000,
+          },
+          {
+            onRetry: (attempt, err) => this.logger.warn(`ZR territories retry ${attempt}: ${err instanceof Error ? err.message : 'HTTP ' + err.status}`),
+          },
+        );
+
+        if (!response.ok) {
+          this.logger.error(`ZR Express territories/search error: ${response.status}`);
+          return null;
+        }
+        return response.json() as Promise<{ items: Array<Record<string, unknown>> }>;
+      } catch (err) {
+        this.logger.error(`ZR Express territories/search error: ${err instanceof Error ? err.message : String(err)}`);
         return null;
       }
-      return response.json() as Promise<{ items: Array<Record<string, unknown>> }>;
     };
 
     try {
       const all = await doFetch({ pageNumber: 1, pageSize: 1000, orderBy: ['code asc'] });
       if (!all?.items) return { error: 'No territories returned' };
 
-      const wilayas = all.items.filter(
-        (t: Record<string, unknown>) => t.level === 'wilaya',
-      ) as Array<Record<string, unknown>>;
+      const wilayas = all.items.filter((t: Record<string, unknown>) => t.level === 'wilaya');
 
-      const allCommunes = all.items.filter(
-        (t: Record<string, unknown>) => t.level === 'commune',
-      ) as Array<Record<string, unknown>>;
+      const allCommunes = all.items.filter((t: Record<string, unknown>) => t.level === 'commune');
 
       // this.logger.log(`ZR Express: ${wilayas.length} wilayas, ${allCommunes.length} communes`);
       // allCommunes.forEach(c => {
@@ -651,9 +694,9 @@ export class DeliveryService {
       this.logger.log(`ZR Express territories saved to ${outputPath}`);
 
       const wilayaMap = new Map<string, Record<string, unknown>>();
-      wilayas.forEach(w => {
+      wilayas.forEach((w) => {
         const id = w.id as string;
-        const communes = allCommunes.filter(c => (c as Record<string, unknown>).parentId === id);
+        const communes = allCommunes.filter((c) => c.parentId === id);
         wilayaMap.set(id, { ...w, communes });
       });
 
@@ -661,66 +704,6 @@ export class DeliveryService {
     } catch (err) {
       this.logger.error(`ZR Express territories/search failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
       return { error: err instanceof Error ? err.message : 'Unknown error' };
-    }
-  }
-
-  async createParcelWithZRExpress(order: Order): Promise<{ parcelId?: string; error?: string }> {
-    const config = await this.configModel.findOne({ vendorEmail: order.vendorEmail }).exec();
-    const { apiKey, tenantId } = this.getZrCredentials(config);
-    const hubId = await this.getHubId(apiKey, tenantId);
-
-    const payload: Record<string, unknown> = {
-      customer: {
-        customerId: crypto.randomUUID(),
-        name: order.customer.name || 'Client Test',
-        phone: { number1: '+213550050505' },
-      },
-      deliveryAddress: {
-        cityTerritoryId: '53c9e062-9c4e-4c77-8b71-55eabf887f83',
-        districtTerritoryId: '8d0b6cd9-7712-47d2-9ea4-460246494c32',
-        street: order.customer.address || 'Adresse test',
-      },
-      orderedProducts: order.items.map((item) => ({
-        productId: '80d318ff-55f2-445e-a3e5-3ad40be223c4',
-        productName: item.productName || 'Produit test',
-        productSku: `SKU-${item.productId || 'TEST'}`,
-        unitPrice: item.price || 100,
-        quantity: item.quantity || 1,
-        stockType: 'local',
-      })),
-      amount: order.total || 1000,
-      description: `Commande ${order.orderNo}`,
-      deliveryType: 'home',
-      hubId,
-      weight: { weight: 1 },
-      externalId: order.orderNo,
-    };
-
-    try {
-      const response = await fetch(`${this.zrApiBase}/parcels`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-Tenant': tenantId,
-          'X-Api-Key': apiKey,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const errorBody = await response.text();
-        this.logger.error(`ZR Express API error (${response.status}): ${errorBody}`);
-        return { error: `ZR Express API returned ${response.status}: ${errorBody}` };
-      }
-
-      const result = await response.json() as { id: string };
-      this.logger.log(`ZR Express parcel created: ${result.id} for order ${order.orderNo}`);
-      return { parcelId: result.id };
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      this.logger.error(`ZR Express API call failed: ${message}`);
-      return { error: message };
     }
   }
 }

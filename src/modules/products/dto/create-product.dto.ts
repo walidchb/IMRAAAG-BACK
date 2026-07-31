@@ -160,6 +160,11 @@ export class CreateProductDto {
   @IsBoolean()
   published?: boolean;
 
+  @ApiPropertyOptional({ description: 'Vendor user ID (auto-set from auth)' })
+  @IsOptional()
+  @IsString()
+  vendorId?: string;
+
   @ApiPropertyOptional({ type: [VariantDto] })
   @IsOptional()
   @IsArray()

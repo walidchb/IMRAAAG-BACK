@@ -4,6 +4,7 @@ import { AppErrorCode } from '../../common/errors/error-codes.enum';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Order, OrderDocument } from './schemas/order.schema';
+import { Counter, CounterDocument } from './schemas/counter.schema';
 import { Product, ProductDocument } from '../products/schemas/product.schema';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
@@ -12,7 +13,17 @@ import { BulkShipDto } from './dto/bulk-ship.dto';
 import { DeliveryService } from '../delivery/delivery.service';
 import { OrderStatusesService } from './order-statuses.service';
 import { BulkOrderResult } from '../delivery/delivery-companies/interfaces/delivery-company-handler.interface';
-import { ORDER_STATUSES, ORDER_STATUS_TRANSITIONS, OrderStatus } from '../../common/constants/order-statuses.const';
+import { ORDER_STATUS_VALUES, ORDER_STATUS_TRANSITIONS, OrderStatus } from '../../common/constants/order-statuses.const';
+import { Role } from '../../common/constants/roles.enum';
+import { StoresService } from '../stores/stores.service';
+
+export interface RequestUser {
+  id: string;
+  email: string;
+  role: string;
+  fullName: string;
+  phoneNumber?: string;
+}
 
 export interface PaginatedOrdersResult {
   data: Order[];
@@ -25,28 +36,54 @@ export interface PaginatedOrdersResult {
 
 @Injectable()
 export class OrdersService {
+  private readonly logger = new Logger(OrdersService.name);
+
   constructor(
     @InjectModel(Order.name) private orderModel: Model<OrderDocument>,
+    @InjectModel(Counter.name) private counterModel: Model<CounterDocument>,
     @InjectModel(Product.name) private productModel: Model<ProductDocument>,
     private readonly deliveryService: DeliveryService,
     private readonly statusesService: OrderStatusesService,
+    private readonly storesService: StoresService,
   ) {}
 
-  private async generateOrderNo(): Promise<string> {
-    const lastOrder = await this.orderModel
-      .findOne()
-      .sort({ createdAt: -1 })
-      .select('orderNo')
-      .lean()
-      .exec();
-    const nextNumber = lastOrder
-      ? String(Number(lastOrder.orderNo) + 1).padStart(6, '0')
-      : '000001';
-    return nextNumber;
+  private assertVendorOrAdmin(user: RequestUser): void {
+    if (user.role !== Role.VENDOR && user.role !== Role.ADMIN) {
+      throw new AppException(AppErrorCode.AUTH_VENDOR_ONLY);
+    }
   }
 
-  async create(createOrderDto: CreateOrderDto): Promise<Order> {
-    const nextNumber = await this.generateOrderNo();
+  private assertOrderOwnership(order: Order, user: RequestUser): void {
+    if (user.role === Role.ADMIN) return;
+    if (order.vendorEmail?.toLowerCase() !== user.email?.toLowerCase()) {
+      throw new AppException(AppErrorCode.AUTH_ORDER_OWNER_ONLY, { orderNo: order.orderNo });
+    }
+  }
+
+  private async generateOrderNo(): Promise<string> {
+    while (true) {
+      const result = await this.counterModel
+        .findOneAndUpdate(
+          { key: 'orderNo' },
+          { $inc: { seq: 1 } },
+          { new: true, upsert: true, setDefaultsOnInsert: true },
+        )
+        .exec();
+      const seq = (result as any)?.seq ?? 1;
+      const orderNo = String(seq).padStart(6, '0');
+      const exists = await this.orderModel.findOne({ orderNo }).select('_id').lean().exec();
+      if (!exists) return orderNo;
+    }
+  }
+
+  async create(createOrderDto: CreateOrderDto, user?: RequestUser): Promise<Order> {
+    if (user) {
+      this.assertVendorOrAdmin(user);
+      if (user.role === Role.VENDOR && createOrderDto.vendorEmail?.toLowerCase() !== user.email?.toLowerCase()) {
+        throw new AppException(AppErrorCode.AUTH_ORDER_OWNER_ONLY);
+      }
+    }
+
     const now = new Date();
 
     if (createOrderDto.shippingMethod === 'home') {
@@ -102,29 +139,67 @@ export class OrdersService {
       )) ?? undefined;
     }
 
-    const created = new this.orderModel({
-      ...createOrderDto,
-      items,
-      total,
-      orderNo: nextNumber,
-      date: createOrderDto.date || now,
-      createdAt: createOrderDto.createdAt || now,
-      deliveryCompanyId: deliveryCompanyId || undefined,
-      status: ORDER_STATUSES.find(s => s.slug === 'placed')!,
-    });
+    const placedStatus = (await this.statusesService.getBySlug('placed'))!;
 
-    return created.save();
+    let saved: OrderDocument;
+    let retries = 0;
+
+    while (true) {
+      const nextNumber = await this.generateOrderNo();
+
+      const created = new this.orderModel({
+        ...createOrderDto,
+        items,
+        total,
+        orderNo: nextNumber,
+        date: createOrderDto.date || now,
+        createdAt: createOrderDto.createdAt || now,
+        deliveryCompanyId: deliveryCompanyId || undefined,
+        status: placedStatus,
+        history: [{ status: placedStatus, date: now, user: createOrderDto.createdBy || (user ? 'Vendor' : 'Customer') }],
+        updatedAt: now,
+      });
+
+      try {
+        saved = await created.save();
+        if (createOrderDto.vendorEmail) {
+          await this.storesService.incrementOrderCount(createOrderDto.vendorEmail, 1);
+        }
+        break;
+      } catch (err: any) {
+        if (err.code === 11000 && retries < 3) {
+          retries++;
+          continue;
+        }
+        throw err;
+      }
+    }
+
+    return saved;
   }
 
-  async findAll(query: Record<string, string>): Promise<PaginatedOrdersResult> {
+  async findAll(query: Record<string, string>, user?: RequestUser): Promise<PaginatedOrdersResult> {
     const filter: Record<string, any> = {};
     const orConditions: Record<string, any>[] = [];
+
+    if (query.showDeleted !== 'true') {
+      filter.isDeleted = { $ne: true };
+    }
 
     const page = Math.max(1, parseInt(query.page, 10) || 1);
     const limit = Math.min(100, Math.max(1, parseInt(query.limit, 10) || 10));
     const skip = (page - 1) * limit;
 
-    if (query.vendorEmail) filter.vendorEmail = query.vendorEmail;
+    if (user) {
+      this.assertVendorOrAdmin(user);
+      if (user.role === Role.VENDOR) {
+        filter.vendorEmail = user.email;
+      } else if (query.vendorEmail) {
+        filter.vendorEmail = query.vendorEmail;
+      }
+    } else if (query.vendorEmail) {
+      filter.vendorEmail = query.vendorEmail;
+    }
 
     if (query.orderStatus) {
       filter['status.slug'] = query.orderStatus;
@@ -149,26 +224,40 @@ export class OrdersService {
     if (query.bureau) filter.bureau = { $regex: query.bureau.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' };
     if (query.phone) filter['customer.phone'] = { $regex: query.phone.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' };
     if (query.note) filter['customer.note'] = { $regex: query.note.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' };
+    if (query.deliveryCompanyId) filter.deliveryCompanyId = query.deliveryCompanyId;
+    if (query.productId) filter['items.productId'] = query.productId;
     if (query.createdAt) {
-      const term = query.createdAt.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      orConditions.push(
-        { $expr: { $regexMatch: { input: { $toString: '$createdAt' }, regex: term, options: 'i' } } },
-        { $expr: { $regexMatch: { input: { $toString: '$date' }, regex: term, options: 'i' } } },
-      );
+      const date = new Date(query.createdAt);
+      const next = new Date(date);
+      next.setDate(next.getDate() + 1);
+      orConditions.push({ createdAt: { $gte: date, $lt: next } });
+    } else if (query.createdAtFrom || query.createdAtTo) {
+      const dateFilter: Record<string, any> = {};
+      if (query.createdAtFrom) dateFilter.$gte = new Date(query.createdAtFrom);
+      if (query.createdAtTo) dateFilter.$lte = new Date(query.createdAtTo);
+      orConditions.push({ createdAt: dateFilter });
     }
-    const dateExprs: Record<string, any>[] = [];
     if (query.confirmedAt) {
-      dateExprs.push({
-        $expr: { $regexMatch: { input: { $toString: '$confirmedAt' }, regex: query.confirmedAt.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), options: 'i' } },
-      });
+      const date = new Date(query.confirmedAt);
+      const next = new Date(date);
+      next.setDate(next.getDate() + 1);
+      filter.confirmedAt = { $gte: date, $lt: next };
+    } else if (query.confirmedAtFrom || query.confirmedAtTo) {
+      const dateFilter: Record<string, any> = {};
+      if (query.confirmedAtFrom) dateFilter.$gte = new Date(query.confirmedAtFrom);
+      if (query.confirmedAtTo) dateFilter.$lte = new Date(query.confirmedAtTo);
+      filter.confirmedAt = dateFilter;
     }
     if (query.dispatchedAt) {
-      dateExprs.push({
-        $expr: { $regexMatch: { input: { $toString: '$dispatchedAt' }, regex: query.dispatchedAt.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), options: 'i' } },
-      });
-    }
-    if (dateExprs.length > 0) {
-      filter.$and = dateExprs;
+      const date = new Date(query.dispatchedAt);
+      const next = new Date(date);
+      next.setDate(next.getDate() + 1);
+      filter.dispatchedAt = { $gte: date, $lt: next };
+    } else if (query.dispatchedAtFrom || query.dispatchedAtTo) {
+      const dateFilter: Record<string, any> = {};
+      if (query.dispatchedAtFrom) dateFilter.$gte = new Date(query.dispatchedAtFrom);
+      if (query.dispatchedAtTo) dateFilter.$lte = new Date(query.dispatchedAtTo);
+      filter.dispatchedAt = dateFilter;
     }
     if (query.statusConfirmation) {
       const term = query.statusConfirmation.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -188,13 +277,17 @@ export class OrdersService {
       filter.$or = orConditions;
     }
 
-    const countFilter = query.vendorEmail ? { vendorEmail: query.vendorEmail } : {};
+    const statusCountsFilter = { ...filter };
+    delete statusCountsFilter['status.slug'];
 
+    const allowedSortFields = ['createdAt', 'updatedAt', 'orderNo', 'total', 'date', 'customer.name', 'customer.phone', 'customer.wilaya', 'shippingMethod'];
+    const sortField = allowedSortFields.includes(query.sortBy) ? query.sortBy : 'createdAt';
+    const sortOrder = query.order === 'asc' ? 1 : -1;
     const [data, total, statusCountsRaw] = await Promise.all([
-      this.orderModel.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).exec(),
+      this.orderModel.find(filter).sort({ [sortField]: sortOrder }).skip(skip).limit(limit).exec(),
       this.orderModel.countDocuments(filter).exec(),
       this.orderModel.aggregate([
-        { $match: countFilter },
+        { $match: statusCountsFilter },
         { $group: { _id: { $ifNull: ['$status.slug', '$status'] }, count: { $sum: 1 } } },
       ]).exec(),
     ]);
@@ -203,7 +296,7 @@ export class OrdersService {
     let allTotal = 0;
     for (const entry of statusCountsRaw) {
       const slug = entry._id ? String(entry._id) : undefined;
-      const knownSlug = ORDER_STATUSES.find(s => s.slug === slug) ? slug : undefined;
+      const knownSlug = slug && ORDER_STATUS_VALUES.includes(slug) ? slug : undefined;
       if (knownSlug) {
         statusCounts[knownSlug] = entry.count;
         allTotal += entry.count;
@@ -227,9 +320,16 @@ export class OrdersService {
     };
   }
 
-  async findOne(id: string): Promise<Order> {
+  async findOne(id: string, user?: RequestUser, allowDeleted?: boolean): Promise<Order> {
     const order = await this.orderModel.findById(id).exec();
     if (!order) throw new AppException(AppErrorCode.ORDER_NOT_FOUND, { id });
+    if (!allowDeleted && order.isDeleted) {
+      throw new AppException(AppErrorCode.ORDER_NOT_FOUND, { id });
+    }
+    if (user) {
+      this.assertVendorOrAdmin(user);
+      this.assertOrderOwnership(order, user);
+    }
     return order;
   }
 
@@ -248,18 +348,51 @@ export class OrdersService {
     return { items, total, page: query.page, pages: Math.ceil(total / query.limit) };
   }
 
+  async findByOrderNo(orderNo: string, phone: string): Promise<Order> {
+    const order = await this.orderModel.findOne({ orderNo }).exec();
+    if (!order) throw new AppException(AppErrorCode.ORDER_NOT_FOUND, { orderNo });
+    if (order.customer.phone !== phone) {
+      throw new AppException(AppErrorCode.ORDER_NOT_FOUND, { orderNo });
+    }
+    return order;
+  }
+
+  async findOneByCustomer(id: string, phone: string): Promise<Order> {
+    const order = await this.orderModel.findById(id).exec();
+    if (!order) throw new AppException(AppErrorCode.ORDER_NOT_FOUND, { id });
+    if (order.customer.phone !== phone) {
+      throw new AppException(AppErrorCode.ORDER_NOT_FOUND, { id });
+    }
+    return order;
+  }
+
   private getStatusSlug(status: any): string {
     if (!status) return 'placed';
     if (typeof status === 'string') return status;
     return (status as any).slug || 'placed';
   }
 
-  async update(id: string, updateOrderDto: UpdateOrderDto): Promise<Order> {
+  async update(id: string, updateOrderDto: UpdateOrderDto, user?: RequestUser): Promise<Order> {
+    if (user) {
+      this.assertVendorOrAdmin(user);
+    }
+
     const existing = await this.orderModel.findById(id).exec();
     if (!existing) throw new AppException(AppErrorCode.ORDER_NOT_FOUND, { id });
+    if (user) {
+      this.assertOrderOwnership(existing, user);
+    }
 
-    const { status: _, ...restDto } = updateOrderDto;
-    const updateData: Record<string, any> = { ...restDto };
+    if (updateOrderDto.expectedUpdatedAt && existing.updatedAt) {
+      const expected = new Date(updateOrderDto.expectedUpdatedAt).getTime();
+      const actual = new Date(existing.updatedAt).getTime();
+      if (Math.abs(expected - actual) > 1000) {
+        this.logger.warn(`Order ${id} conflict — expected ${expected} vs actual ${actual}`);
+      }
+    }
+
+    const { status: _, expectedUpdatedAt: __, history: _history, ...restDto } = updateOrderDto;
+    const updateData: Record<string, any> = { ...restDto, updatedAt: new Date() };
 
     const existingSlug = this.getStatusSlug(existing.status);
 
@@ -272,18 +405,25 @@ export class OrdersService {
       }
       this.statusesService.validateTransition(existingSlug, updateOrderDto.status);
 
-      const statusConfig = this.statusesService.getBySlug(updateOrderDto.status);
+      const statusConfig = await this.statusesService.getBySlug(updateOrderDto.status);
       if (!statusConfig) throw new AppException(AppErrorCode.ORDER_INVALID_STATUS, { status: updateOrderDto.status });
       updateData.status = statusConfig;
 
-      if (updateOrderDto.status === 'confirmed' && existingSlug !== 'confirmed') {
+      if (updateOrderDto.status === 'confirmed') {
         updateData.confirmedAt = new Date();
         updateData.confirmedBy = updateOrderDto.createdBy || 'Vendor';
       }
 
-      if (updateOrderDto.status === 'dispatched' && existingSlug !== 'dispatched') {
+      if (updateOrderDto.status === 'dispatched') {
         updateData.dispatchedAt = new Date();
       }
+
+      const newHistoryEntry = {
+        status: updateData.status,
+        date: new Date(),
+        user: updateOrderDto.createdBy || user?.email || 'Vendor',
+      };
+      updateData.$push = { history: newHistoryEntry };
     }
 
     const effectiveShippingMethod = updateOrderDto.shippingMethod || existing.shippingMethod;
@@ -292,7 +432,6 @@ export class OrdersService {
       const commune = updateOrderDto.customer?.commune || existing.customer?.commune;
       if (!wilaya || !commune) throw new AppException(AppErrorCode.ORDER_WILAYA_COMMUNE_REQUIRED);
     }
-
 
     if (updateOrderDto.total !== undefined || updateOrderDto.items) {
       const items = updateOrderDto.items || (existing.items as any[]);
@@ -329,27 +468,55 @@ export class OrdersService {
     return updated;
   }
 
-  async remove(id: string): Promise<{ id: string; deleted: true }> {
-    const result = await this.orderModel.findByIdAndDelete(id).exec();
-    if (!result) throw new AppException(AppErrorCode.ORDER_NOT_FOUND, { id });
-    return { id: String(result._id), deleted: true };
+  async remove(id: string, user?: RequestUser): Promise<{ id: string; deleted: true }> {
+    if (user) {
+      this.assertVendorOrAdmin(user);
+    }
+
+    const existing = await this.orderModel.findById(id).exec();
+    if (!existing) throw new AppException(AppErrorCode.ORDER_NOT_FOUND, { id });
+    if (user) {
+      this.assertOrderOwnership(existing, user);
+    }
+
+    if (existing.isDeleted) {
+      throw new AppException(AppErrorCode.ORDER_ALREADY_DELETED, { id });
+    }
+
+    await this.orderModel.findByIdAndUpdate(id, {
+      $set: { isDeleted: true, deletedAt: new Date() },
+    }).exec();
+
+    return { id, deleted: true };
   }
 
-  async bulkAction(bulkActionDto: BulkActionDto): Promise<{ modifiedCount: number; errors?: string[] }> {
+  async bulkAction(bulkActionDto: BulkActionDto, user?: RequestUser): Promise<{ modifiedCount: number; errors?: string[] }> {
     const { ids, action } = bulkActionDto;
 
+    const baseFilter: Record<string, any> = { _id: { $in: ids } };
+    if (user) {
+      this.assertVendorOrAdmin(user);
+      if (user.role === Role.VENDOR) {
+        baseFilter.vendorEmail = user.email;
+      }
+    }
+
     if (action === 'delete') {
-      const result = await this.orderModel.deleteMany({ _id: { $in: ids } }).exec();
-      return { modifiedCount: result.deletedCount || 0 };
+      const now = new Date();
+      const result = await this.orderModel.updateMany(
+        { ...baseFilter, isDeleted: { $ne: true } },
+        { $set: { isDeleted: true, deletedAt: now } },
+      ).exec();
+      return { modifiedCount: result.modifiedCount || 0 };
     }
 
     const targetSlug: OrderStatus = action === 'confirm' ? OrderStatus.CONFIRMED : OrderStatus.CANCELLED;
     const now = new Date();
 
-    const orders = await this.orderModel.find({ _id: { $in: ids } }).exec();
+    const orders = await this.orderModel.find(baseFilter).exec();
     const errors: string[] = [];
 
-    const targetStatusConfig = this.statusesService.getBySlug(targetSlug)!;
+    const targetStatusConfig = (await this.statusesService.getBySlug(targetSlug))!;
 
     const bulkOps = orders
       .filter((order) => {
@@ -376,7 +543,15 @@ export class OrdersService {
           update: {
             $set: {
               status: targetStatusConfig,
-              ...(targetSlug === OrderStatus.CONFIRMED ? { confirmedAt: now, confirmedBy: 'Vendor' } : {}),
+              updatedAt: now,
+              ...(targetSlug === OrderStatus.CONFIRMED ? { confirmedAt: now, confirmedBy: user?.email || 'Vendor' } : {}),
+            },
+            $push: {
+              history: {
+                status: targetStatusConfig,
+                date: now,
+                user: user?.email || 'Vendor',
+              },
             },
           },
         },
@@ -393,10 +568,18 @@ export class OrdersService {
     return response;
   }
 
-  async bulkShip(bulkShipDto: BulkShipDto): Promise<BulkOrderResult[]> {
+  async bulkShip(bulkShipDto: BulkShipDto, user?: RequestUser): Promise<BulkOrderResult[]> {
     const { ids } = bulkShipDto;
 
-    const orders = await this.orderModel.find({ _id: { $in: ids } }).exec();
+    const baseFilter: Record<string, any> = { _id: { $in: ids } };
+    if (user) {
+      this.assertVendorOrAdmin(user);
+      if (user.role === Role.VENDOR) {
+        baseFilter.vendorEmail = user.email;
+      }
+    }
+
+    const orders = await this.orderModel.find(baseFilter).exec();
 
     if (orders.length === 0) {
       return [];
@@ -410,9 +593,9 @@ export class OrdersService {
 
     const results = await this.deliveryService.createBulkDeliveriesForOrders(orders);
 
-    const dispatchedStatus = this.statusesService.getBySlug(OrderStatus.DISPATCHED)!;
+    const dispatchedStatus = (await this.statusesService.getBySlug(OrderStatus.DISPATCHED))!;
     const now = new Date();
-    const user = orders[0]?.createdBy || 'Vendor';
+    const dispatchedBy = orders[0]?.createdBy || 'Vendor';
 
     for (const result of results) {
       if (result.success && result.parcelId) {
@@ -424,6 +607,14 @@ export class OrdersService {
               deliveryParcelId: result.parcelId,
               deliveryError: undefined,
               dispatchedAt: now,
+              updatedAt: now,
+            },
+            $push: {
+              history: {
+                status: dispatchedStatus,
+                date: now,
+                user: user?.email || 'Vendor',
+              },
             },
           },
         ).exec();

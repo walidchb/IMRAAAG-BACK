@@ -1,4 +1,5 @@
 import {
+  Allow,
   IsString,
   IsOptional,
   IsNumber,
@@ -8,12 +9,17 @@ import {
   IsArray,
   IsNotEmpty,
   ArrayMinSize,
+  Matches,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { ORDER_STATUS_VALUES } from '../../../common/constants/order-statuses.const';
+import { ALGERIAN_PHONE_REGEX, ALGERIAN_PHONE_MESSAGE } from '../../../common/constants/regex.const';
 
 class UpdateOrderItemDto {
+  @ApiPropertyOptional() @Allow()
+  _id?: string;
+
   @ApiPropertyOptional() @IsOptional() @IsString()
   productId?: string;
 
@@ -34,10 +40,13 @@ class UpdateOrderItemDto {
 }
 
 class UpdateCustomerDto {
+  @ApiPropertyOptional() @Allow()
+  _id?: string;
+
   @ApiPropertyOptional() @IsOptional() @IsString() @IsNotEmpty()
   name?: string;
 
-  @ApiPropertyOptional() @IsOptional() @IsString() @IsNotEmpty()
+  @ApiPropertyOptional() @IsOptional() @IsString() @IsNotEmpty() @Matches(ALGERIAN_PHONE_REGEX, { message: ALGERIAN_PHONE_MESSAGE })
   phone?: string;
 
   @ApiPropertyOptional() @IsOptional() @IsString()
@@ -122,4 +131,9 @@ export class UpdateOrderDto {
   @IsOptional()
   @IsString()
   stopDeskCode?: string;
+
+  @ApiPropertyOptional({ description: 'Expected updatedAt timestamp for conflict detection' })
+  @IsOptional()
+  @IsString()
+  expectedUpdatedAt?: string;
 }

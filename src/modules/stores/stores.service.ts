@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { AppException } from '../../common/errors/app-exception';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
 import { InjectModel } from '@nestjs/mongoose';
@@ -6,6 +6,8 @@ import { Model, Types } from 'mongoose';
 import { Store, StoreDocument } from './schemas/store.schema';
 import { CreateStoreDto } from './dto/create-store.dto';
 import { UpdateStoreDto } from './dto/update-store.dto';
+import { StoreStatus } from './schemas/store-status.enum';
+import { UploadService } from '../upload/upload.service';
 
 export interface CursorDto {
   createdAt: string;
@@ -20,18 +22,24 @@ export interface CursorPaginatedStoresResult {
 
 @Injectable()
 export class StoresService {
+  private readonly logger = new Logger(StoresService.name);
   constructor(
     @InjectModel(Store.name) private storeModel: Model<StoreDocument>,
+    private readonly uploadService: UploadService,
   ) {}
 
   private slugify(name: string): string {
-    return name
+    let slug = name
       .toLowerCase()
       .trim()
       .replace(/[^\w\s-]/g, '')
       .replace(/[\s_]+/g, '-')
       .replace(/-+/g, '-')
       .replace(/^-|-$/g, '');
+    if (!slug) {
+      slug = `store-${Date.now()}`;
+    }
+    return slug;
   }
 
   async create(createStoreDto: CreateStoreDto): Promise<Store> {
@@ -65,7 +73,7 @@ export class StoresService {
     limit?: number;
     cursor?: string;
   }): Promise<CursorPaginatedStoresResult> {
-    const filter: Record<string, any> = { status: 'Active' };
+    const filter: Record<string, any> = { status: StoreStatus.ACTIVE };
 
     const limit = query.limit || 10;
 
@@ -89,8 +97,6 @@ export class StoresService {
         { contactEmail: regex },
         { contactPhone: regex },
         { wilaya: regex },
-        { 'address.city': regex },
-        { 'address.street': regex },
       ];
 
       const andConditions: Record<string, any>[] = [filter, { $or: orConditions }];
@@ -142,7 +148,7 @@ export class StoresService {
   async findOne(id: string, opts?: { skipStatusCheck?: boolean }): Promise<Store> {
     const store = await this.storeModel.findById(id).exec();
     if (!store) throw new AppException(AppErrorCode.STORE_NOT_FOUND, { id });
-    if (!opts?.skipStatusCheck && store.status !== 'Active') {
+    if (!opts?.skipStatusCheck && store.status !== StoreStatus.ACTIVE) {
       throw new AppException(AppErrorCode.STORE_NOT_ACTIVE, { id });
     }
     return store;
@@ -150,8 +156,8 @@ export class StoresService {
 
   async findBySlug(slug: string, opts?: { skipStatusCheck?: boolean }): Promise<Store> {
     const store = await this.storeModel.findOne({ storeSlug: slug }).exec();
-    if (!store) throw new AppException(AppErrorCode.STORE_SLUG_NOT_FOUND, { slug });
-    if (!opts?.skipStatusCheck && store.status !== 'Active') {
+    if (!store) throw new AppException(AppErrorCode.STORE_NOT_FOUND, { field: 'slug', value: slug });
+    if (!opts?.skipStatusCheck && store.status !== StoreStatus.ACTIVE) {
       throw new AppException(AppErrorCode.STORE_NOT_ACTIVE, { slug });
     }
     return store;
@@ -159,8 +165,8 @@ export class StoresService {
 
   async findByVendor(vendorId: string, opts?: { skipStatusCheck?: boolean }): Promise<Store> {
     const store = await this.storeModel.findOne({ vendorId }).exec();
-    if (!store) throw new AppException(AppErrorCode.STORE_VENDOR_NOT_FOUND, { vendorId });
-    if (!opts?.skipStatusCheck && store.status !== 'Active') {
+    if (!store) throw new AppException(AppErrorCode.STORE_NOT_FOUND, { field: 'vendorId', value: vendorId });
+    if (!opts?.skipStatusCheck && store.status !== StoreStatus.ACTIVE) {
       throw new AppException(AppErrorCode.STORE_NOT_ACTIVE, { vendorId });
     }
     return store;
@@ -168,8 +174,8 @@ export class StoresService {
 
   async findByEmail(email: string, opts?: { skipStatusCheck?: boolean }): Promise<Store> {
     const store = await this.storeModel.findOne({ vendorEmail: email.toLowerCase() }).exec();
-    if (!store) throw new AppException(AppErrorCode.STORE_EMAIL_NOT_FOUND, { email });
-    if (!opts?.skipStatusCheck && store.status !== 'Active') {
+    if (!store) throw new AppException(AppErrorCode.STORE_NOT_FOUND, { field: 'email', value: email });
+    if (!opts?.skipStatusCheck && store.status !== StoreStatus.ACTIVE) {
       throw new AppException(AppErrorCode.STORE_NOT_ACTIVE, { email });
     }
     return store;
@@ -212,6 +218,25 @@ export class StoresService {
       .exec();
 
     if (!updated) throw new AppException(AppErrorCode.STORE_NOT_FOUND, { id });
+
+    // Clean up old images from R2 when replaced
+    if (updateStoreDto.storeLogo !== undefined && existing.storeLogo && existing.storeLogo !== updateStoreDto.storeLogo) {
+      const oldKey = this.uploadService.extractKeyFromUrl(existing.storeLogo);
+      if (oldKey) {
+        await this.uploadService.deleteFile(oldKey).catch((err) =>
+          this.logger.warn(`Failed to delete old store logo: ${err.message}`),
+        );
+      }
+    }
+    if (updateStoreDto.coverImage !== undefined && existing.coverImage && existing.coverImage !== updateStoreDto.coverImage) {
+      const oldKey = this.uploadService.extractKeyFromUrl(existing.coverImage);
+      if (oldKey) {
+        await this.uploadService.deleteFile(oldKey).catch((err) =>
+          this.logger.warn(`Failed to delete old store cover: ${err.message}`),
+        );
+      }
+    }
+
     return updated;
   }
 
@@ -219,16 +244,47 @@ export class StoresService {
     const store = await this.storeModel.findById(id).exec();
     if (!store) throw new AppException(AppErrorCode.STORE_NOT_FOUND, { id });
 
-    store.status = store.status === 'Active' ? 'Paused' : 'Active';
-    return store.save();
+    const newStatus = store.status === StoreStatus.ACTIVE ? StoreStatus.PAUSED : StoreStatus.ACTIVE;
+    const updated = await this.storeModel.findByIdAndUpdate(
+      id,
+      { status: newStatus },
+      { returnDocument: 'after' }
+    ).exec();
+
+    if (!updated) throw new AppException(AppErrorCode.STORE_NOT_FOUND, { id });
+    return updated;
   }
 
   async findAllRaw(filter: Record<string, any>): Promise<Store[]> {
     return this.storeModel.find(filter).sort({ createdAt: -1 }).limit(50).exec();
   }
 
+  async incrementProductCount(vendorEmail: string, delta = 1): Promise<void> {
+    await this.storeModel.updateOne(
+      { vendorEmail: vendorEmail.toLowerCase() },
+      { $inc: { totalProducts: delta } },
+    ).exec();
+  }
+
+  async incrementOrderCount(vendorEmail: string, delta = 1): Promise<void> {
+    await this.storeModel.updateOne(
+      { vendorEmail: vendorEmail.toLowerCase() },
+      { $inc: { totalOrders: delta } },
+    ).exec();
+  }
+
   async remove(id: string): Promise<void> {
     const result = await this.storeModel.findByIdAndDelete(id).exec();
     if (!result) throw new AppException(AppErrorCode.STORE_NOT_FOUND, { id });
+
+    // Clean up store images from R2
+    const imageKeys = [result.storeLogo, result.coverImage]
+      .map((u) => this.uploadService.extractKeyFromUrl(u))
+      .filter(Boolean) as string[];
+    if (imageKeys.length > 0) {
+      await this.uploadService.deleteFiles(imageKeys).catch((err) => {
+        this.logger.warn(`Failed to delete store images: ${err.message}`);
+      });
+    }
   }
 }

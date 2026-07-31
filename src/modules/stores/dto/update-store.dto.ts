@@ -1,3 +1,4 @@
+import { StoreStatus } from '../schemas/store-status.enum';
 import {
   IsString,
   IsOptional,
@@ -6,6 +7,8 @@ import {
   ArrayMaxSize,
   ValidateNested,
   IsIn,
+  MaxLength,
+  IsUrl,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
@@ -13,17 +16,20 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 export class SocialMediaDto {
   @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
+  @IsUrl()
+  @MaxLength(2048)
   instagram?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
+  @IsUrl()
+  @MaxLength(2048)
   facebook?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
+  @IsUrl()
+  @MaxLength(2048)
   tiktok?: string;
 }
 
@@ -58,11 +64,13 @@ export class UpdateStoreDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
+  @MaxLength(80)
   storeName?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
+  @MaxLength(2000)
   description?: string;
 
   @ApiPropertyOptional()
@@ -73,6 +81,7 @@ export class UpdateStoreDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
+  @MaxLength(20)
   contactPhone?: string;
 
   @ApiPropertyOptional()
@@ -84,6 +93,7 @@ export class UpdateStoreDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
+  @MaxLength(60)
   commune?: string;
 
   @ApiPropertyOptional()
@@ -92,25 +102,28 @@ export class UpdateStoreDto {
   @Type(() => SocialMediaDto)
   socialMedia?: SocialMediaDto;
 
-  @ApiPropertyOptional({ enum: ['Active', 'Paused'] })
+  @ApiPropertyOptional({ enum: StoreStatus })
   @IsOptional()
   @IsString()
-  @IsIn(['Active', 'Paused'])
+  @IsIn(Object.values(StoreStatus))
   status?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
+  @IsUrl()
+  @MaxLength(2048)
   storeLogo?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
+  @IsUrl()
+  @MaxLength(2048)
   coverImage?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
+  @MaxLength(60)
   wilaya?: string;
 
   @ApiPropertyOptional({ description: 'Store categories (max 3)' })
@@ -123,6 +136,7 @@ export class UpdateStoreDto {
   @ApiPropertyOptional({ description: 'Store tagline (one phrase)' })
   @IsOptional()
   @IsString()
+  @MaxLength(120)
   tagline?: string;
 
   @ApiPropertyOptional()

@@ -1,3 +1,5 @@
+import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -23,10 +25,19 @@ async function bootstrap() {
   // Set prefix for API routes
   app.setGlobalPrefix('api');
 
+  // Security headers
+  app.use(helmet());
+
+  // Cookie parser (for reading JWT from cookies)
+  app.use(cookieParser());
+
   // Enable CORS
+  const environment = process.env.NODE_ENV || 'development';
   const corsOrigins = process.env.CORS_ORIGINS
     ? process.env.CORS_ORIGINS.split(',')
-    : ['http://localhost:3002', 'http://localhost:3001', 'http://localhost:3000', 'http://127.0.0.1:3002', 'http://127.0.0.1:3001', 'http://127.0.0.1:3000'];
+    : environment === 'production'
+      ? (() => { throw new Error('FATAL: CORS_ORIGINS environment variable is required in production. Set it to comma-separated allowed origins (e.g. https://imraaah.ma,https://admin.imraaah.ma)'); })()
+      : ['http://localhost:3002', 'http://localhost:3001', 'http://localhost:3000', 'http://127.0.0.1:3002', 'http://127.0.0.1:3001', 'http://127.0.0.1:3000'];
   app.enableCors({
     origin: (origin, callback) => {
       if (!origin || corsOrigins.includes(origin) || /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {

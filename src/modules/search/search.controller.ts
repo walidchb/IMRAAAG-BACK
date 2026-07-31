@@ -1,7 +1,9 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { ProductsService } from '../products/products.service';
+import { ProductQueryDto } from '../products/dto/product-query.dto';
 import { StoresService } from '../stores/stores.service';
+import { StoreStatus } from '../stores/schemas/store-status.enum';
 import { Public } from '../auth/decorators/public.decorator';
 import { IsOptional, IsString, IsIn, IsNumber, Min } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -37,6 +39,16 @@ export class SearchQueryDto {
   @IsOptional()
   @IsIn(['price_asc', 'price_desc', 'newest', 'name'])
   sortBy?: string;
+
+  @IsOptional()
+  @IsString()
+  cursor?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  limit?: number = 20;
 }
 
 @ApiTags('Search')
@@ -61,48 +73,20 @@ export class SearchController {
     const results: Record<string, unknown> = {};
 
     if (!query.type || query.type === 'products') {
-      const escaped = query.q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const regex = { $regex: escaped, $options: 'i' };
-
-      const filter: Record<string, any> = {
-        $or: [
-          { nameEn: regex },
-          { nameAr: regex },
-          { nameFr: regex },
-          { storyEn: regex },
-          { storyAr: regex },
-          { storyFr: regex },
-          { slug: regex },
-          { vendorEmail: regex },
-          { 'variants.nameEn': regex },
-          { 'variants.nameAr': regex },
-          { 'variants.nameFr': regex },
-          { 'variants.options.nameEn': regex },
-          { 'variants.options.nameAr': regex },
-          { 'variants.options.nameFr': regex },
-        ],
-        published: true,
-        status: 'Active',
+      const productQuery: ProductQueryDto = {
+        search: query.q,
+        category: query.category,
+        subCategory: query.subCategory,
+        minPrice: query.minPrice,
+        maxPrice: query.maxPrice,
+        sortBy: query.sortBy,
+        cursor: query.cursor,
+        limit: query.limit,
       };
-
-      if (query.category) filter.category = query.category;
-      if (query.subCategory) filter.subCategory = query.subCategory;
-      if (query.minPrice !== undefined || query.maxPrice !== undefined) {
-        filter.price = {};
-        if (query.minPrice !== undefined) filter.price.$gte = query.minPrice;
-        if (query.maxPrice !== undefined) filter.price.$lte = query.maxPrice;
-      }
-
-      const sortMapping: Record<string, any> = {
-        price_asc: { price: 1 },
-        price_desc: { price: -1 },
-        newest: { createdAt: -1 },
-        name: { nameEn: 1 },
-      };
-      const sortOption = sortMapping[query.sortBy || 'newest'] || { createdAt: -1 };
-
-      const items = await this.productsService.findAllRaw(filter, sortOption);
-      results.products = items;
+      const result = await this.productsService.findAll(productQuery);
+      results.products = result.products;
+      results.nextCursor = result.nextCursor;
+      results.hasMore = result.hasMore;
     }
 
     if (!query.type || query.type === 'stores') {
@@ -118,18 +102,10 @@ export class SearchController {
           { vendorEmail: regex },
           { contactEmail: regex },
           { contactPhone: regex },
-          { 'address.city': regex },
-          { 'address.street': regex },
           { wilaya: regex },
         ],
-        status: 'Active',
+        status: StoreStatus.ACTIVE,
       };
-
-      if (query.minPrice !== undefined || query.maxPrice !== undefined) {
-        filter.price = {};
-        if (query.minPrice !== undefined) filter.price.$gte = query.minPrice;
-        if (query.maxPrice !== undefined) filter.price.$lte = query.maxPrice;
-      }
 
       const items = await this.storesService.findAllRaw(filter);
       results.stores = items;

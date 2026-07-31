@@ -9,6 +9,7 @@ import {
 import { Request, Response } from 'express';
 import { ErrorResponse } from '../interfaces/error-response.interface';
 import { MulterError } from 'multer';
+import { Error as MongooseError } from 'mongoose';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -81,10 +82,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
           message = exception.message;
       }
     } else if (exception instanceof Error) {
-      const isCastError =
-        exception.name === 'CastError' ||
-        (exception.constructor && exception.constructor.name === 'CastError') ||
-        (exception.message && exception.message.startsWith('Cast to ObjectId failed'));
+      const isCastError = exception instanceof MongooseError.CastError;
 
       if (isCastError) {
         status = HttpStatus.BAD_REQUEST;

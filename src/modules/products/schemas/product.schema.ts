@@ -8,6 +8,9 @@ export class Product {
   @Prop({ required: true, trim: true })
   vendorEmail: string;
 
+  @Prop({ trim: true })
+  vendorId: string;
+
   @Prop({ required: true, trim: true })
   nameEn: string;
 
@@ -44,7 +47,7 @@ export class Product {
   @Prop({ required: true, min: 0, default: 0 })
   stock: number;
 
-  @Prop({ required: true, min: 0 })
+  @Prop({ required: true, min: 0, default: 1 })
   weight: number;
 
   @Prop()
@@ -91,6 +94,7 @@ export const ProductSchema = SchemaFactory.createForClass(Product);
 
 ProductSchema.index({ nameEn: 'text', nameAr: 'text', nameFr: 'text', storyEn: 'text', storyAr: 'text', storyFr: 'text' });
 ProductSchema.index({ vendorEmail: 1 });
+ProductSchema.index({ vendorId: 1 });
 ProductSchema.index({ category: 1, subCategory: 1 });
 ProductSchema.index({ price: 1 });
 ProductSchema.index({ status: 1 });

@@ -22,6 +22,15 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
 
   handleRequest(err: any, user: any, info: any, context: ExecutionContext, status?: any) {
     if (err || !user) {
+      if (!err && info) {
+        const msg = info.message || '';
+        if (msg.includes('expired') || info.name === 'TokenExpiredError') {
+          throw new AppException(AppErrorCode.AUTH_TOKEN_EXPIRED);
+        }
+        if (msg.includes('malformed') || msg.includes('signature') || info.name === 'JsonWebTokenError') {
+          throw new AppException(AppErrorCode.AUTH_TOKEN_INVALID);
+        }
+      }
       throw err || new AppException(AppErrorCode.AUTH_UNAUTHORIZED);
     }
     return user;

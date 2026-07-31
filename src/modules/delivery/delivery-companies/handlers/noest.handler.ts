@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { AppException } from '../../../../common/errors/app-exception';
 import { AppErrorCode } from '../../../../common/errors/error-codes.enum';
 import { InjectModel } from '@nestjs/mongoose';
@@ -7,6 +8,8 @@ import { DeliveryCompanyHandler, BulkOrderResult } from '../interfaces/delivery-
 import { DeliveryConfig, DeliveryConfigDocument } from '../../schemas/delivery-config.schema';
 import { Commune, CommuneDocument } from '../../../territories/schemas/commune.schema';
 import { Order } from '../../../orders/schemas/order.schema';
+import { decryptRecord } from '../../../../common/encryption.util';
+import { fetchWithRetry } from '../../../../common/fetch-with-retry';
 
 interface NoestCreateOrderPayload {
   user_guid: string;
@@ -46,11 +49,17 @@ export class NoestHandler implements DeliveryCompanyHandler {
     private configModel: Model<DeliveryConfigDocument>,
     @InjectModel(Commune.name)
     private communeModel: Model<CommuneDocument>,
+    private readonly configService: ConfigService,
   ) {}
+
+  private get encryptionKey(): string {
+    return this.configService.get<string>('deliveryEncryptionKey') || '';
+  }
 
   async createOrder(order: Order): Promise<{ parcelId: string }> {
     const config = await this.configModel.findOne({ vendorEmail: order.vendorEmail }).exec();
-    const creds = config?.companies?.['noest']?.credentials || {};
+    const rawCreds = config?.companies?.['noest']?.credentials || {};
+    const creds = decryptRecord(rawCreds, this.encryptionKey);
 
     const apiToken: string | undefined = creds.apiToken;
     const userGuid: string | undefined = creds.guid;
@@ -70,15 +79,23 @@ export class NoestHandler implements DeliveryCompanyHandler {
     try {
       this.logger.log(`Noest payload for ${order.orderNo}: ${JSON.stringify(payload)}`);
 
-      const response = await fetch(`${this.apiBase}/api/public/create/order`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiToken}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
+      const response = await fetchWithRetry(
+        `${this.apiBase}/api/public/create/order`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${apiToken}`,
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          body: JSON.stringify(payload),
+          timeout: 10000,
         },
-        body: JSON.stringify(payload),
-      });
+        {
+          circuitBreakerName: 'noest',
+          onRetry: (attempt, err) => this.logger.warn(`Noest create order retry ${attempt}: ${err instanceof Error ? err.message : 'HTTP ' + err.status}`),
+        },
+      );
 
       const responseText = await response.text();
       let body: Record<string, unknown>;
@@ -112,16 +129,17 @@ export class NoestHandler implements DeliveryCompanyHandler {
   async createBulkOrders(orders: Order[]): Promise<BulkOrderResult[]> {
     if (orders.length === 0) return [];
     if (orders.length > 100) {
-      return orders.map(o => ({ orderNo: o.orderNo, success: false, error: 'Max 100 orders per bulk request' }));
+      return orders.map((o) => ({ orderNo: o.orderNo, success: false, error: 'Max 100 orders per bulk request' }));
     }
 
     const config = await this.configModel.findOne({ vendorEmail: orders[0].vendorEmail }).exec();
-    const creds = config?.companies?.['noest']?.credentials || {};
+    const rawCreds = config?.companies?.['noest']?.credentials || {};
+    const creds = decryptRecord(rawCreds, this.encryptionKey);
     const apiToken = creds.apiToken;
     const userGuid = creds.guid;
 
     if (!apiToken || !userGuid) {
-      return orders.map(o => ({ orderNo: o.orderNo, success: false, error: 'Noest credentials not configured' }));
+      return orders.map((o) => ({ orderNo: o.orderNo, success: false, error: 'Noest credentials not configured' }));
     }
 
     const orderPayloads: NoestCreateOrderPayload[] = [];
@@ -130,7 +148,7 @@ export class NoestHandler implements DeliveryCompanyHandler {
       const payload = this.buildNoestPayload(order, userGuid, communeName);
 
       if (payload.wilaya_id < 1 || payload.wilaya_id > 58) {
-        return orders.map(o => ({ orderNo: o.orderNo, success: false, error: `Invalid wilaya_id ${payload.wilaya_id} for order ${order.orderNo}` }));
+        return orders.map((o) => ({ orderNo: o.orderNo, success: false, error: `Invalid wilaya_id ${payload.wilaya_id} for order ${order.orderNo}` }));
       }
 
       orderPayloads.push(payload);
@@ -139,15 +157,23 @@ export class NoestHandler implements DeliveryCompanyHandler {
     try {
       this.logger.log(`Noest bulk payload for ${orders.length} orders`);
 
-      const response = await fetch(`${this.apiBase}/api/public/create/orders`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiToken}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
+      const response = await fetchWithRetry(
+        `${this.apiBase}/api/public/create/orders`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${apiToken}`,
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          body: JSON.stringify({ user_guid: userGuid, orders: orderPayloads }),
+          timeout: 15000,
         },
-        body: JSON.stringify({ user_guid: userGuid, orders: orderPayloads }),
-      });
+        {
+          circuitBreakerName: 'noest',
+          onRetry: (attempt, err) => this.logger.warn(`Noest bulk create retry ${attempt}: ${err instanceof Error ? err.message : 'HTTP ' + err.status}`),
+        },
+      );
 
       const responseText = await response.text();
       let body: Record<string, unknown>;
@@ -183,7 +209,7 @@ export class NoestHandler implements DeliveryCompanyHandler {
         }
       }
 
-      const returnedOrderNos = new Set(results.map(r => r.orderNo));
+      const returnedOrderNos = new Set(results.map((r) => r.orderNo));
       for (const order of orders) {
         if (!returnedOrderNos.has(order.orderNo)) {
           results.push({ orderNo: order.orderNo, success: false, error: 'Order not included in API response' });
@@ -194,17 +220,18 @@ export class NoestHandler implements DeliveryCompanyHandler {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       this.logger.error(`Noest bulk API call failed: ${message}`);
-      return orders.map(o => ({ orderNo: o.orderNo, success: false, error: message }));
+      return orders.map((o) => ({ orderNo: o.orderNo, success: false, error: message }));
     }
   }
 
   private buildNoestPayload(order: Order, userGuid: string, communeName: string): NoestCreateOrderPayload {
     const weight = order.items?.reduce((sum, item) => sum + (item.weight || 0) * (item.quantity || 1), 0) || 1;
 
-    const produit = order.items
-      ?.map((item) => item.productName || `Product ${item.productId || ''}`)
-      .filter(Boolean)
-      .join(', ') || `Order ${order.orderNo}`;
+    const produit =
+      order.items
+        ?.map((item) => item.productName || `Product ${item.productId || ''}`)
+        .filter(Boolean)
+        .join(', ') || `Order ${order.orderNo}`;
 
     const isStopDesk = order.shippingMethod === 'stopdesk';
 
@@ -272,5 +299,4 @@ export class NoestHandler implements DeliveryCompanyHandler {
   private cleanPhone(phone: string): string {
     return phone.replace(/[^0-9]/g, '').slice(0, 10);
   }
-
 }

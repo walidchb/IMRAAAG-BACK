@@ -23,6 +23,14 @@ import { RefreshDto } from './dto/refresh.dto';
 import { EmailService } from './email.service';
 import { StoresService } from '../stores/stores.service';
 
+const FAKE_EMAIL_SUFFIX = '@customer.imraaah';
+
+function sanitizeEmail(email?: string): string | null {
+  if (!email) return null;
+  if (email.endsWith(FAKE_EMAIL_SUFFIX)) return null;
+  return email;
+}
+
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
@@ -62,8 +70,6 @@ export class AuthService {
 
     const created = await this.userModel.create({
       fullName: dto.fullName,
-      firstName: dto.fullName,
-      lastName: '',
       email: dto.email.toLowerCase(),
       phoneNumber: dto.phoneNumber || '',
       password: hashedPassword,
@@ -83,8 +89,8 @@ export class AuthService {
         description: `Welcome to ${user.fullName}'s artisan store.`,
         contactEmail: user.email,
         contactPhone: user.phoneNumber || '',
-        storeLogo: '',
-        coverImage: '',
+        storeLogo: undefined,
+        coverImage: undefined,
         wilaya: '',
         categories: [],
       });
@@ -100,10 +106,13 @@ export class AuthService {
       user: {
         id: user._id.toString(),
         fullName: user.fullName,
-        email: user.email,
+        email: sanitizeEmail(user.email),
         phoneNumber: user.phoneNumber,
         role: user.role,
-        gender: user.gender || null,
+        gender: user.gender ? user.gender.toLowerCase() : null,
+        address: user.address || null,
+        savedProductIds: (user.savedProductIds || []).map((id) => id.toString()),
+        profileImage: user.profileImage || null,
       },
     };
   }
@@ -114,9 +123,13 @@ export class AuthService {
       ? { email: dto.identifier.toLowerCase() }
       : { phoneNumber: dto.identifier };
 
-    const user = await this.userModel.findOne(filter);
+    const user = await this.userModel.findOne(filter).select('+password');
     if (!user) {
       throw new AppException(AppErrorCode.AUTH_INVALID_CREDENTIALS);
+    }
+
+    if (!user.isActive) {
+      throw new AppException(AppErrorCode.AUTH_ACCOUNT_DISABLED);
     }
 
     const isPasswordValid = await bcrypt.compare(dto.password, user.password);
@@ -140,10 +153,13 @@ export class AuthService {
       user: {
         id: user._id,
         fullName: user.fullName,
-        email: user.email,
+        email: sanitizeEmail(user.email),
         phoneNumber: user.phoneNumber,
         role: user.role,
-        gender: user.gender || null,
+        gender: user.gender ? user.gender.toLowerCase() : null,
+        address: user.address || null,
+        savedProductIds: (user.savedProductIds || []).map((id) => id.toString()),
+        profileImage: user.profileImage || null,
       },
     };
   }
@@ -243,8 +259,6 @@ export class AuthService {
 
     const created = await this.userModel.create({
       fullName: dto.fullName,
-      firstName: dto.fullName,
-      lastName: '',
       email: `${dto.phoneNumber}@customer.imraaah`,
       phoneNumber: dto.phoneNumber,
       password: hashedPassword,
@@ -262,10 +276,13 @@ export class AuthService {
       user: {
         id: user._id.toString(),
         fullName: user.fullName,
-        email: user.email,
+        email: sanitizeEmail(user.email),
         phoneNumber: user.phoneNumber,
         role: user.role,
-        gender: user.gender || null,
+        gender: user.gender ? user.gender.toLowerCase() : null,
+        address: user.address || null,
+        savedProductIds: (user.savedProductIds || []).map((id) => id.toString()),
+        profileImage: user.profileImage || null,
       },
     };
   }
@@ -281,7 +298,7 @@ export class AuthService {
 
     await this.otpModel.deleteMany({ phoneNumber: dto.phoneNumber, verifiedAt: null, usedAt: null });
 
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const code = crypto.randomInt(100000, 999999).toString();
     const codeHash = crypto.createHash('sha256').update(code).digest('hex');
 
     await this.otpModel.create({
@@ -291,8 +308,6 @@ export class AuthService {
       expiresAt: new Date(Date.now() + 5 * 60 * 1000),
     });
 
-    this.logger.log(`[SEND_OTP] To ${dto.phoneNumber}: Your OTP code is ${code}`);
-
     const smsSender: SmsSender = new ConsoleSmsSender(this.logger);
     await smsSender.send(dto.phoneNumber, `Your Imraaah verification code is: ${code}. It expires in 5 minutes.`);
 
@@ -301,14 +316,17 @@ export class AuthService {
 
   async verifyOtp(dto: VerifyOtpDto) {
     const codeHash = crypto.createHash('sha256').update(dto.code).digest('hex');
-    this.logger.log(`[VERIFY_OTP] phone=${dto.phoneNumber} codeHash=${codeHash.substring(0, 16)}...`);
 
-    const otp = await this.otpModel.findOne({
-      phoneNumber: dto.phoneNumber,
-      code: codeHash,
-      verifiedAt: null,
-      usedAt: null,
-    });
+    // Atomically find the latest unverified OTP and increment attempts
+    const otp = await this.otpModel.findOneAndUpdate(
+      {
+        phoneNumber: dto.phoneNumber,
+        verifiedAt: null,
+        usedAt: null,
+      },
+      { $inc: { attempts: 1 } },
+      { new: true, sort: { createdAt: -1 } },
+    );
 
     if (!otp) {
       throw new AppException(AppErrorCode.AUTH_OTP_INVALID);
@@ -318,11 +336,15 @@ export class AuthService {
       throw new AppException(AppErrorCode.AUTH_OTP_EXPIRED);
     }
 
-    if (otp.attempts >= 5) {
+    if (otp.attempts > 5) {
       throw new AppException(AppErrorCode.AUTH_OTP_ATTEMPTS_EXCEEDED);
     }
 
-    await this.otpModel.findByIdAndUpdate(otp._id, { verifiedAt: new Date() });
+    if (otp.code !== codeHash) {
+      throw new AppException(AppErrorCode.AUTH_OTP_INVALID);
+    }
+
+    await this.otpModel.findByIdAndUpdate(otp._id, { verifiedAt: new Date(), attempts: 0 });
 
     const otpVerificationToken = this.jwtService.sign(
       { sub: dto.phoneNumber, type: 'otp_verification' },
@@ -351,7 +373,11 @@ export class AuthService {
     }
 
     const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
-    await this.userModel.findByIdAndUpdate(user._id, { password: hashedPassword });
+    await this.userModel.findByIdAndUpdate(user._id, {
+      password: hashedPassword,
+      refreshToken: null,
+      refreshTokenExpiresAt: null,
+    });
 
     await this.otpModel.updateMany(
       { phoneNumber, verifiedAt: { $ne: null }, usedAt: null },

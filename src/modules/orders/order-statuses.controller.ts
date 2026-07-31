@@ -14,4 +14,11 @@ export class OrderStatusesController {
   getAll() {
     return this.statusesService.getAll();
   }
+
+  @Public()
+  @Get('transitions')
+  @ApiOperation({ summary: 'Get order status transition map (public)' })
+  getTransitions() {
+    return this.statusesService.getTransitions();
+  }
 }

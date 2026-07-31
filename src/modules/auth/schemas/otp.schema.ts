@@ -28,3 +28,6 @@ export class Otp {
 }
 
 export const OtpSchema = SchemaFactory.createForClass(Otp);
+
+OtpSchema.index({ phoneNumber: 1, code: 1 });
+OtpSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });

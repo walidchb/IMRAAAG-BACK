@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { AppException } from '../../../../common/errors/app-exception';
 import { AppErrorCode } from '../../../../common/errors/error-codes.enum';
 import { InjectModel } from '@nestjs/mongoose';
@@ -8,6 +9,8 @@ import { DeliveryConfig, DeliveryConfigDocument } from '../../schemas/delivery-c
 import { Wilaya, WilayaDocument } from '../../../territories/schemas/wilaya.schema';
 import { Commune, CommuneDocument } from '../../../territories/schemas/commune.schema';
 import { Order } from '../../../orders/schemas/order.schema';
+import { decryptRecord } from '../../../../common/encryption.util';
+import { fetchWithRetry } from '../../../../common/fetch-with-retry';
 
 interface ZrCreateParcelPayload {
   customer: {
@@ -49,7 +52,12 @@ export class ZrExpressHandler implements DeliveryCompanyHandler {
     private wilayaModel: Model<WilayaDocument>,
     @InjectModel(Commune.name)
     private communeModel: Model<CommuneDocument>,
+    private readonly configService: ConfigService,
   ) {}
+
+  private get encryptionKey(): string {
+    return this.configService.get<string>('deliveryEncryptionKey') || '';
+  }
 
   async createOrder(order: Order): Promise<{ parcelId: string }> {
     const config = await this.configModel.findOne({ vendorEmail: order.vendorEmail }).exec();
@@ -76,20 +84,30 @@ export class ZrExpressHandler implements DeliveryCompanyHandler {
       this.logger.log(`ZR Express payload for ${order.orderNo}: ${JSON.stringify(payload)}`);
       this.logger.log(`ZR Express headers: X-Tenant=${tenantId}, X-Api-Key=${apiKey.slice(0, 8)}...`);
 
-      const response = await fetch(`${this.apiBase}/parcels`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-Tenant': tenantId,
-          'X-Api-Key': apiKey,
+      const response = await fetchWithRetry(
+        `${this.apiBase}/parcels`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+            'X-Tenant': tenantId,
+            'X-Api-Key': apiKey,
+          },
+          body: JSON.stringify(payload),
+          timeout: 10000,
         },
-        body: JSON.stringify(payload),
-      });
+        {
+          circuitBreakerName: 'zr-express',
+          onRetry: (attempt, err) => this.logger.warn(`ZR create order retry ${attempt}: ${err instanceof Error ? err.message : 'HTTP ' + err.status}`),
+        },
+      );
 
       const responseStatus = response.status;
       const responseHeaders: Record<string, string> = {};
-      response.headers.forEach((v, k) => { responseHeaders[k] = v; });
+      response.headers.forEach((v, k) => {
+        responseHeaders[k] = v;
+      });
       this.logger.log(`ZR Express response status: ${responseStatus}`);
       this.logger.log(`ZR Express response headers: ${JSON.stringify(responseHeaders)}`);
 
@@ -122,14 +140,14 @@ export class ZrExpressHandler implements DeliveryCompanyHandler {
   async createBulkOrders(orders: Order[]): Promise<BulkOrderResult[]> {
     if (orders.length === 0) return [];
     if (orders.length > 100) {
-      return orders.map(o => ({ orderNo: o.orderNo, success: false, error: 'Max 100 orders per bulk request' }));
+      return orders.map((o) => ({ orderNo: o.orderNo, success: false, error: 'Max 100 orders per bulk request' }));
     }
 
     const config = await this.configModel.findOne({ vendorEmail: orders[0].vendorEmail }).exec();
     const { apiKey, tenantId } = this.getCredentials(config);
 
     if (!apiKey || !tenantId) {
-      return orders.map(o => ({ orderNo: o.orderNo, success: false, error: 'ZR Express credentials not configured' }));
+      return orders.map((o) => ({ orderNo: o.orderNo, success: false, error: 'ZR Express credentials not configured' }));
     }
 
     const parcels: ZrCreateParcelPayload[] = [];
@@ -137,7 +155,7 @@ export class ZrExpressHandler implements DeliveryCompanyHandler {
       const cityTerritoryId = await this.resolveCityTerritoryId(order.customer.wilaya);
       const districtTerritoryId = await this.resolveDistrictTerritoryId(order.customer.wilaya, order.customer.commune);
       if (!cityTerritoryId || !districtTerritoryId) {
-        return orders.map(o => ({ orderNo: o.orderNo, success: false, error: `Territory IDs not resolved. Run territory sync first.` }));
+        return orders.map((o) => ({ orderNo: o.orderNo, success: false, error: `Territory IDs not resolved. Run territory sync first.` }));
       }
       parcels.push(await this.buildZrPayload(order, cityTerritoryId, districtTerritoryId));
     }
@@ -146,16 +164,24 @@ export class ZrExpressHandler implements DeliveryCompanyHandler {
       this.logger.log(`ZR Express bulk request: POST ${this.apiBase}/parcels/bulk for ${orders.length} orders`);
       this.logger.log(`ZR Express bulk headers: X-Tenant=${tenantId}, X-Api-Key=${apiKey.slice(0, 8)}...`);
 
-      const response = await fetch(`${this.apiBase}/parcels/bulk`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-Tenant': tenantId,
-          'X-Api-Key': apiKey,
+      const response = await fetchWithRetry(
+        `${this.apiBase}/parcels/bulk`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+            'X-Tenant': tenantId,
+            'X-Api-Key': apiKey,
+          },
+          body: JSON.stringify(parcels),
+          timeout: 30000,
         },
-        body: JSON.stringify({ parcels }),
-      });
+        {
+          circuitBreakerName: 'zr-express',
+          onRetry: (attempt, err) => this.logger.warn(`ZR bulk create retry ${attempt}: ${err instanceof Error ? err.message : 'HTTP ' + err.status}`),
+        },
+      );
 
       const responseStatus = response.status;
       const responseText = await response.text();
@@ -167,12 +193,12 @@ export class ZrExpressHandler implements DeliveryCompanyHandler {
         body = JSON.parse(responseText);
       } catch {
         this.logger.error(`ZR Express bulk response is not valid JSON: ${responseText}`);
-        return orders.map(o => ({ orderNo: o.orderNo, success: false, error: `ZR Express returned invalid JSON: ${responseText}` }));
+        return orders.map((o) => ({ orderNo: o.orderNo, success: false, error: `ZR Express returned invalid JSON: ${responseText}` }));
       }
 
       if (!response.ok) {
         this.logger.error(`ZR Express bulk API error (${responseStatus}): ${responseText}`);
-        return orders.map(o => ({ orderNo: o.orderNo, success: false, error: `ZR Express API returned ${responseStatus}` }));
+        return orders.map((o) => ({ orderNo: o.orderNo, success: false, error: `ZR Express API returned ${responseStatus}` }));
       }
 
       const successes = (body as any).successes as Array<{ index: number; parcelId: string; trackingNumber: string }> | undefined;
@@ -198,7 +224,7 @@ export class ZrExpressHandler implements DeliveryCompanyHandler {
         }
       }
 
-      const returnedOrderNos = new Set(results.map(r => r.orderNo));
+      const returnedOrderNos = new Set(results.map((r) => r.orderNo));
       for (const order of orders) {
         if (!returnedOrderNos.has(order.orderNo)) {
           results.push({ orderNo: order.orderNo, success: false, error: 'Order not included in API response' });
@@ -209,7 +235,7 @@ export class ZrExpressHandler implements DeliveryCompanyHandler {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       this.logger.error(`ZR Express bulk API call failed: ${message}`);
-      return orders.map(o => ({ orderNo: o.orderNo, success: false, error: message }));
+      return orders.map((o) => ({ orderNo: o.orderNo, success: false, error: message }));
     }
   }
 
@@ -291,7 +317,8 @@ export class ZrExpressHandler implements DeliveryCompanyHandler {
   }
 
   private getCredentials(config: DeliveryConfig | null): { apiKey: string; tenantId: string } {
-    const creds = config?.companies?.['zr-express']?.credentials || {};
+    const rawCreds = config?.companies?.['zr-express']?.credentials || {};
+    const creds = decryptRecord(rawCreds, this.encryptionKey);
     return {
       apiKey: creds.apiKey || '',
       tenantId: creds.tenantId || '',

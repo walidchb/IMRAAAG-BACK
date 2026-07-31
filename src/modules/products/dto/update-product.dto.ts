@@ -7,10 +7,10 @@ import {
   Min,
   IsArray,
   ValidateNested,
-  IsNotEmpty,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { AtLeastOneLanguage, AtLeastOneImage } from '../../../common/validators/at-least-one-language.validator';
 
 class UpdateVariantOptionDto {
   @ApiPropertyOptional()

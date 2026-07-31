@@ -26,8 +26,7 @@ async function bootstrap() {
       const newAdmin = new userModel({
         email: adminEmail,
         password: hashedPassword,
-        firstName: 'System',
-        lastName: 'Admin',
+        fullName: 'System Admin',
         role: Role.ADMIN,
         isActive: true,
       });

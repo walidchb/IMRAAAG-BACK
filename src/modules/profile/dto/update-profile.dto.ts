@@ -1,10 +1,28 @@
 import {
   IsString,
   IsOptional,
-  IsEmail,
   IsIn,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+
+class UpdateAddressDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  city?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  state?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  addressLine1?: string;
+}
 
 export class UpdateProfileDto {
   @ApiPropertyOptional()
@@ -12,18 +30,19 @@ export class UpdateProfileDto {
   @IsString()
   fullName?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ enum: ['Male', 'Female'] })
   @IsOptional()
-  @IsEmail()
-  email?: string;
+  @IsIn(['Male', 'Female'])
+  gender?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   phoneNumber?: string;
 
-  @ApiPropertyOptional({ enum: ['Male', 'Female'] })
+  @ApiPropertyOptional()
   @IsOptional()
-  @IsIn(['Male', 'Female'])
-  gender?: string;
+  @ValidateNested()
+  @Type(() => UpdateAddressDto)
+  address?: UpdateAddressDto;
 }

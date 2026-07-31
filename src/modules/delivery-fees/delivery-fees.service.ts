@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { AppException } from '../../common/errors/app-exception';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
 import { InjectModel } from '@nestjs/mongoose';
@@ -7,6 +8,8 @@ import { DeliveryFee, DeliveryFeeDocument } from './schemas/delivery-fee.schema'
 import { UpdateDeliveryFeeDto, BulkUpdateDeliveryFeeDto } from './dto/manage-delivery-fees.dto';
 import { DeliveryConfig, DeliveryConfigDocument } from '../delivery/schemas/delivery-config.schema';
 import { CacheService } from '../../common/cache.service';
+import { decryptRecord } from '../../common/encryption.util';
+import { fetchWithRetry } from '../../common/fetch-with-retry';
 
 const CACHE_TTL = 3600000; // 1 hour
 
@@ -36,10 +39,21 @@ interface DhdWilayaFee {
   tarif_stopdesk: string;
 }
 
+interface FeeFetchJob {
+  id: string;
+  company: string;
+  status: 'pending' | 'running' | 'done' | 'error';
+  result?: { wilayaCode: string; homeDeliveryFee: number; stopDeskDeliveryFee: number }[];
+  error?: string;
+  createdAt: Date;
+}
+
 @Injectable()
 export class DeliveryFeesService {
   private readonly logger = new Logger(DeliveryFeesService.name);
   private readonly noestApiBase = 'https://app.noest-dz.com';
+  private readonly feeJobs = new Map<string, FeeFetchJob>();
+  private jobCounter = 0;
 
   constructor(
     @InjectModel(DeliveryFee.name)
@@ -47,7 +61,69 @@ export class DeliveryFeesService {
     @InjectModel(DeliveryConfig.name)
     private configModel: Model<DeliveryConfigDocument>,
     private readonly cacheService: CacheService,
+    private readonly configService: ConfigService,
   ) {}
+
+  private get encryptionKey(): string {
+    return this.configService.get<string>('deliveryEncryptionKey') || '';
+  }
+
+  async startFeeFetch(
+    vendorEmail: string,
+    company: string,
+    fetchFn: () => Promise<{ wilayaCode: string; homeDeliveryFee: number; stopDeskDeliveryFee: number }[]>,
+  ): Promise<{ jobId: string }> {
+    const jobId = `fee-fetch-${++this.jobCounter}-${Date.now()}`;
+    const job: FeeFetchJob = {
+      id: jobId,
+      company,
+      status: 'pending',
+      createdAt: new Date(),
+    };
+    this.feeJobs.set(jobId, job);
+
+    this.processFeeFetchJob(jobId, fetchFn);
+
+    return { jobId };
+  }
+
+  private async processFeeFetchJob(
+    jobId: string,
+    fetchFn: () => Promise<{ wilayaCode: string; homeDeliveryFee: number; stopDeskDeliveryFee: number }[]>,
+  ): Promise<void> {
+    const job = this.feeJobs.get(jobId);
+    if (!job) return;
+    job.status = 'running';
+
+    try {
+      const result = await fetchFn();
+      job.status = 'done';
+      job.result = result;
+    } catch (err) {
+      job.status = 'error';
+      job.error = err instanceof Error ? err.message : 'Unknown error';
+    }
+  }
+
+  getFetchJobStatus(jobId: string): FeeFetchJob | null {
+    return this.feeJobs.get(jobId) ?? null;
+  }
+
+  async startFetchNoest(vendorEmail: string): Promise<{ jobId: string }> {
+    return this.startFeeFetch(vendorEmail, 'noest', () => this.fetchNoestFees(vendorEmail));
+  }
+
+  async startFetchEcom(vendorEmail: string, apiKey: string, apiToken: string): Promise<{ jobId: string }> {
+    return this.startFeeFetch(vendorEmail, 'ecom', () => this.fetchEcomFees(vendorEmail, apiKey, apiToken));
+  }
+
+  async startFetchDhd(vendorEmail: string): Promise<{ jobId: string }> {
+    return this.startFeeFetch(vendorEmail, 'dhd', () => this.fetchDhdFees(vendorEmail));
+  }
+
+  async startFetchZr(vendorEmail: string, apiKey: string, tenantId: string): Promise<{ jobId: string }> {
+    return this.startFeeFetch(vendorEmail, 'zr-express', () => this.fetchZrFees(vendorEmail, apiKey, tenantId));
+  }
 
   async getFees(vendorEmail: string): Promise<DeliveryFee | null> {
     const cacheKey = `delivery-fees:${vendorEmail}:all`;
@@ -62,7 +138,7 @@ export class DeliveryFeesService {
     const cacheKey = `delivery-fees:${vendorEmail}:single:${wilayaCode}`;
     const cached = this.cacheService.get<{ wilayaCode: string; homeDeliveryFee: number; stopDeskDeliveryFee: number }>(cacheKey);
     if (cached) return cached;
-    const doc = await this.feeModel.findOne({ vendorEmail }).exec();
+    const doc = await this.feeModel.findOne({ vendorEmail }).lean().exec();
     if (!doc || !doc.fees || !doc.fees[wilayaCode]) {
       throw new AppException(AppErrorCode.FEE_NOT_FOUND_FOR_WILAYA, { wilayaCode });
     }
@@ -132,7 +208,10 @@ export class DeliveryFeesService {
 
   private async getNoestApiToken(vendorEmail: string): Promise<string> {
     const config = await this.configModel.findOne({ vendorEmail }).lean().exec();
-    const token = config?.companies?.['noest']?.credentials?.apiToken;
+    const rawCreds = config?.companies?.['noest']?.credentials || {};
+    const key = this.encryptionKey;
+    const creds = decryptRecord(rawCreds, key);
+    const token = creds.apiToken;
     if (!token) {
       throw new AppException(AppErrorCode.FEE_API_CREDENTIALS_MISSING, { company: 'Noest' });
     }
@@ -141,26 +220,26 @@ export class DeliveryFeesService {
 
   private async callNoestFeesApi(vendorEmail: string): Promise<Record<string, NoestFeeEntry>> {
     const apiToken = await this.getNoestApiToken(vendorEmail);
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
     let response: Response;
     try {
-      response = await fetch(`${this.noestApiBase}/api/public/fees`, {
+      response = await fetchWithRetry(`${this.noestApiBase}/api/public/fees`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${apiToken}`,
           'Accept': 'application/json',
         },
-        signal: controller.signal,
+        timeout: 10000,
+      }, {
+        circuitBreakerName: 'noest',
+        onRetry: (attempt, err) => this.logger.warn(`Noest fees API retry ${attempt}: ${err instanceof Error ? err.message : 'HTTP ' + (err as Response).status}`),
       });
     } catch (err: unknown) {
-      clearTimeout(timeoutId);
-      if (err instanceof DOMException && err.name === 'AbortError') {
+      if (err instanceof Error && err.message.includes('timed out')) {
         throw new AppException(AppErrorCode.FEE_FETCH_FAILED, { company: 'Noest', message: 'Request timed out' });
       }
       throw err;
     }
-    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const errorBody = await response.text();
@@ -249,27 +328,26 @@ export class DeliveryFeesService {
   }
 
   private async callEcomFeesApi(apiKey: string, apiToken: string): Promise<EcomWilayaFee[]> {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
     let response: Response;
     try {
-      response = await fetch('https://ecom-dz.com/api_v2/tarifs', {
+      response = await fetchWithRetry('https://ecom-dz.com/api_v2/tarifs', {
         method: 'GET',
         headers: {
           'X-API-Key': apiKey,
           'X-API-Token': apiToken,
           'Accept': 'application/json',
         },
-        signal: controller.signal,
+        timeout: 10000,
+      }, {
+        circuitBreakerName: 'ecom',
+        onRetry: (attempt, err) => this.logger.warn(`Ecom fees API retry ${attempt}: ${err instanceof Error ? err.message : 'HTTP ' + (err as Response).status}`),
       });
     } catch (err: unknown) {
-      clearTimeout(timeoutId);
-      if (err instanceof DOMException && err.name === 'AbortError') {
+      if (err instanceof Error && err.message.includes('timed out')) {
         throw new AppException(AppErrorCode.FEE_FETCH_FAILED, { company: 'Ecom', message: 'Request timed out' });
       }
       throw err;
     }
-    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const errorBody = await response.text();
@@ -352,27 +430,26 @@ export class DeliveryFeesService {
   }
 
   private async callZrFeesApi(apiKey: string, tenantId: string): Promise<ZrRateEntry[]> {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
     let response: Response;
     try {
-      response = await fetch('https://api.zrexpress.app/api/v1/delivery-pricing/rates', {
+      response = await fetchWithRetry('https://api.zrexpress.app/api/v1/delivery-pricing/rates', {
         method: 'GET',
         headers: {
           'X-Api-Key': apiKey,
           'X-Tenant': tenantId,
           'Accept': 'application/json',
         },
-        signal: controller.signal,
+        timeout: 10000,
+      }, {
+        circuitBreakerName: 'zr-express',
+        onRetry: (attempt, err) => this.logger.warn(`ZR fees API retry ${attempt}: ${err instanceof Error ? err.message : 'HTTP ' + (err as Response).status}`),
       });
     } catch (err: unknown) {
-      clearTimeout(timeoutId);
-      if (err instanceof DOMException && err.name === 'AbortError') {
+      if (err instanceof Error && err.message.includes('timed out')) {
         throw new AppException(AppErrorCode.FEE_FETCH_FAILED, { company: 'ZR Express', message: 'Request timed out' });
       }
       throw err;
     }
-    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const errorBody = await response.text();
@@ -456,7 +533,10 @@ export class DeliveryFeesService {
 
   private async getDhdApiToken(vendorEmail: string): Promise<string> {
     const config = await this.configModel.findOne({ vendorEmail }).lean().exec();
-    const token = config?.companies?.['dhd']?.credentials?.apiToken;
+    const rawCreds = config?.companies?.['dhd']?.credentials || {};
+    const key = this.encryptionKey;
+    const creds = decryptRecord(rawCreds, key);
+    const token = creds.apiToken;
     if (!token) {
       throw new AppException(AppErrorCode.FEE_API_CREDENTIALS_MISSING, { company: 'DHD' });
     }
@@ -464,26 +544,25 @@ export class DeliveryFeesService {
   }
 
   private async callDhdFeesApi(apiToken: string): Promise<DhdWilayaFee[]> {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
     let response: Response;
     try {
-      response = await fetch('https://platform.dhd-dz.com/api/v1/get/fees', {
+      response = await fetchWithRetry('https://platform.dhd-dz.com/api/v1/get/fees', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${apiToken}`,
           'Accept': 'application/json',
         },
-        signal: controller.signal,
+        timeout: 10000,
+      }, {
+        circuitBreakerName: 'dhd',
+        onRetry: (attempt, err) => this.logger.warn(`DHD fees API retry ${attempt}: ${err instanceof Error ? err.message : 'HTTP ' + (err as Response).status}`),
       });
     } catch (err: unknown) {
-      clearTimeout(timeoutId);
-      if (err instanceof DOMException && err.name === 'AbortError') {
+      if (err instanceof Error && err.message.includes('timed out')) {
         throw new AppException(AppErrorCode.FEE_FETCH_FAILED, { company: 'DHD', message: 'Request timed out' });
       }
       throw err;
     }
-    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const errorBody = await response.text();

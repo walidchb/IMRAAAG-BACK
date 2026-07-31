@@ -1,3 +1,4 @@
+import { StoreStatus } from '../schemas/store-status.enum';
 import {
   IsString,
   IsNotEmpty,
@@ -7,6 +8,9 @@ import {
   ArrayMaxSize,
   ValidateNested,
   IsIn,
+  MaxLength,
+  IsMongoId,
+  IsUrl,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -14,17 +18,20 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 export class SocialMediaDto {
   @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
+  @IsUrl()
+  @MaxLength(2048)
   instagram?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
+  @IsUrl()
+  @MaxLength(2048)
   facebook?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
+  @IsUrl()
+  @MaxLength(2048)
   tiktok?: string;
 }
 
@@ -63,12 +70,13 @@ export class CreateStoreDto {
 
   @ApiPropertyOptional({ description: 'Vendor user ID' })
   @IsOptional()
-  @IsString()
+  @IsMongoId()
   vendorId?: string;
 
   @ApiProperty({ description: 'Store name' })
   @IsString()
   @IsNotEmpty()
+  @MaxLength(80)
   storeName: string;
 
   @ApiPropertyOptional({ description: 'Store slug (auto-generated if not provided)' })
@@ -76,20 +84,22 @@ export class CreateStoreDto {
   @IsString()
   storeSlug?: string;
 
-  @ApiProperty({ description: 'Store description' })
+  @ApiPropertyOptional({ description: 'Store description' })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  description: string;
+  @MaxLength(2000)
+  description?: string;
 
   @ApiPropertyOptional({ description: 'Contact email' })
   @IsOptional()
   @IsEmail()
   contactEmail?: string;
 
-  @ApiPropertyOptional({ description: 'Contact phone' })
-  @IsOptional()
+  @ApiProperty({ description: 'Contact phone' })
   @IsString()
-  contactPhone?: string;
+  @IsNotEmpty()
+  @MaxLength(20)
+  contactPhone: string;
 
   @ApiPropertyOptional({ description: 'Contact phones array' })
   @IsOptional()
@@ -100,6 +110,7 @@ export class CreateStoreDto {
   @ApiPropertyOptional({ description: 'Commune' })
   @IsOptional()
   @IsString()
+  @MaxLength(60)
   commune?: string;
 
   @ApiPropertyOptional({ description: 'Social media links' })
@@ -108,25 +119,28 @@ export class CreateStoreDto {
   @Type(() => SocialMediaDto)
   socialMedia?: SocialMediaDto;
 
-  @ApiPropertyOptional({ description: 'Store status', enum: ['Active', 'Paused'] })
+  @ApiPropertyOptional({ description: 'Store status', enum: StoreStatus })
   @IsOptional()
   @IsString()
-  @IsIn(['Active', 'Paused'])
+  @IsIn(Object.values(StoreStatus))
   status?: string;
 
   @ApiPropertyOptional({ description: 'Store logo URL' })
   @IsOptional()
-  @IsString()
+  @IsUrl()
+  @MaxLength(2048)
   storeLogo?: string;
 
   @ApiPropertyOptional({ description: 'Cover image URL' })
   @IsOptional()
-  @IsString()
+  @IsUrl()
+  @MaxLength(2048)
   coverImage?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
+  @MaxLength(60)
   wilaya?: string;
 
   @ApiPropertyOptional({ description: 'Store categories (max 3)' })
@@ -139,6 +153,7 @@ export class CreateStoreDto {
   @ApiPropertyOptional({ description: 'Store tagline (one phrase)' })
   @IsOptional()
   @IsString()
+  @MaxLength(120)
   tagline?: string;
 
   @ApiPropertyOptional({ description: 'Address' })

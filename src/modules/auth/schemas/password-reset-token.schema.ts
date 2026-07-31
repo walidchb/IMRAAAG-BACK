@@ -25,3 +25,4 @@ export const PasswordResetTokenSchema = SchemaFactory.createForClass(PasswordRes
 
 PasswordResetTokenSchema.index({ tokenHash: 1 });
 PasswordResetTokenSchema.index({ userId: 1 });
+PasswordResetTokenSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });

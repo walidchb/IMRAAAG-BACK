@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { AppException } from '../../../../common/errors/app-exception';
 import { AppErrorCode } from '../../../../common/errors/error-codes.enum';
 import { InjectModel } from '@nestjs/mongoose';
@@ -7,6 +8,8 @@ import { DeliveryCompanyHandler, BulkOrderResult } from '../interfaces/delivery-
 import { DeliveryConfig, DeliveryConfigDocument } from '../../schemas/delivery-config.schema';
 import { Commune, CommuneDocument } from '../../../territories/schemas/commune.schema';
 import { Order } from '../../../orders/schemas/order.schema';
+import { decryptRecord } from '../../../../common/encryption.util';
+import { fetchWithRetry } from '../../../../common/fetch-with-retry';
 
 interface EcomParcelPayload {
   nom_complet: string;
@@ -52,7 +55,12 @@ export class EcomHandler implements DeliveryCompanyHandler {
     private configModel: Model<DeliveryConfigDocument>,
     @InjectModel(Commune.name)
     private communeModel: Model<CommuneDocument>,
+    private readonly configService: ConfigService,
   ) {}
+
+  private get encryptionKey(): string {
+    return this.configService.get<string>('deliveryEncryptionKey') || '';
+  }
 
   async createOrder(order: Order): Promise<{ parcelId: string }> {
     const results = await this.createBulkOrders([order]);
@@ -65,16 +73,17 @@ export class EcomHandler implements DeliveryCompanyHandler {
   async createBulkOrders(orders: Order[]): Promise<BulkOrderResult[]> {
     if (orders.length === 0) return [];
     if (orders.length > 100) {
-      return orders.map(o => ({ orderNo: o.orderNo, success: false, error: 'Max 100 orders per bulk request' }));
+      return orders.map((o) => ({ orderNo: o.orderNo, success: false, error: 'Max 100 orders per bulk request' }));
     }
 
     const config = await this.configModel.findOne({ vendorEmail: orders[0].vendorEmail }).lean().exec();
-    const creds = config?.companies?.['ecom-delivery']?.credentials || {};
+    const rawCreds = config?.companies?.['ecom-delivery']?.credentials || {};
+    const creds = decryptRecord(rawCreds, this.encryptionKey);
     const apiKey: string | undefined = creds.key;
     const apiToken: string | undefined = creds.token;
 
     if (!apiKey || !apiToken) {
-      return orders.map(o => ({ orderNo: o.orderNo, success: false, error: 'Ecom Delivery credentials not configured' }));
+      return orders.map((o) => ({ orderNo: o.orderNo, success: false, error: 'Ecom Delivery credentials not configured' }));
     }
 
     const parcels: EcomParcelPayload[] = [];
@@ -87,16 +96,24 @@ export class EcomHandler implements DeliveryCompanyHandler {
     try {
       this.logger.log(`Ecom payload for ${orders.length} orders: ${JSON.stringify(parcels).slice(0, 500)}...`);
 
-      const response = await fetch(`${this.apiBase}/colis`, {
-        method: 'POST',
-        headers: {
-          'X-API-Key': apiKey,
-          'X-API-Token': apiToken,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
+      const response = await fetchWithRetry(
+        `${this.apiBase}/colis`,
+        {
+          method: 'POST',
+          headers: {
+            'X-API-Key': apiKey,
+            'X-API-Token': apiToken,
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          body: JSON.stringify(parcels),
+          timeout: 15000,
         },
-        body: JSON.stringify(parcels),
-      });
+        {
+          circuitBreakerName: 'ecom',
+          onRetry: (attempt, err) => this.logger.warn(`Ecom create orders retry ${attempt}: ${err instanceof Error ? err.message : 'HTTP ' + err.status}`),
+        },
+      );
 
       const responseText = await response.text();
       let body: Record<string, unknown>;
@@ -109,17 +126,13 @@ export class EcomHandler implements DeliveryCompanyHandler {
       this.logger.log(`Ecom response (${response.status}): ${JSON.stringify(body).slice(0, 500)}`);
 
       if (!response.ok) {
-        const errorMsg = body?.error
-          ? typeof body.error === 'object'
-            ? (body.error as Record<string, unknown>).message || JSON.stringify(body.error)
-            : String(body.error)
-          : `HTTP ${response.status}`;
-        return orders.map(o => ({ orderNo: o.orderNo, success: false, error: `Ecom API error: ${errorMsg}` }));
+        const errorMsg = body?.error ? (typeof body.error === 'object' ? (body.error as Record<string, unknown>).message || JSON.stringify(body.error) : String(body.error)) : `HTTP ${response.status}`;
+        return orders.map((o) => ({ orderNo: o.orderNo, success: false, error: `Ecom API error: ${errorMsg}` }));
       }
 
       const resultats = (body as unknown as EcomCreateResponse).resultats;
       if (!resultats || !Array.isArray(resultats)) {
-        return orders.map(o => ({ orderNo: o.orderNo, success: false, error: 'Unexpected Ecom API response format' }));
+        return orders.map((o) => ({ orderNo: o.orderNo, success: false, error: 'Unexpected Ecom API response format' }));
       }
 
       const results: BulkOrderResult[] = [];
@@ -134,7 +147,7 @@ export class EcomHandler implements DeliveryCompanyHandler {
         }
       }
 
-      const returnedOrderNos = new Set(results.map(r => r.orderNo));
+      const returnedOrderNos = new Set(results.map((r) => r.orderNo));
       for (const order of orders) {
         if (!returnedOrderNos.has(order.orderNo)) {
           results.push({ orderNo: order.orderNo, success: false, error: 'Order not included in API response' });
@@ -145,21 +158,27 @@ export class EcomHandler implements DeliveryCompanyHandler {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       this.logger.error(`Ecom API call failed: ${message}`);
-      return orders.map(o => ({ orderNo: o.orderNo, success: false, error: message }));
+      return orders.map((o) => ({ orderNo: o.orderNo, success: false, error: message }));
     }
   }
 
   private buildPayload(order: Order, communeName: string): EcomParcelPayload {
     const isStopDesk = order.shippingMethod === 'stopdesk';
 
-    const article = order.items
-      ?.map((item) => item.productName || `Product ${item.productId || ''}`)
-      .filter(Boolean)
-      .join(', ')
-      .slice(0, 255) || `Order ${order.orderNo}`;
+    const article =
+      order.items
+        ?.map((item) => item.productName || `Product ${item.productId || ''}`)
+        .filter(Boolean)
+        .join(', ')
+        .slice(0, 255) || `Order ${order.orderNo}`;
+
+    const customerName = order.customer.name || 'Client';
+    if (customerName.length > 20) {
+      this.logger.warn(`Truncated customer name for order ${order.orderNo}: "${customerName}" (${customerName.length} chars → 20)`);
+    }
 
     const payload: EcomParcelPayload = {
-      nom_complet: (order.customer.name || 'Client').slice(0, 20),
+      nom_complet: customerName.slice(0, 20),
       mobile_1: this.cleanPhone(order.customer.phone || ''),
       id_wilaya: parseInt(order.customer.wilaya, 10) || 0,
       article,
@@ -170,6 +189,9 @@ export class EcomHandler implements DeliveryCompanyHandler {
     if (isStopDesk) {
       payload.stopdesk = 1;
       if (order.stopDeskCode) {
+        if (order.stopDeskCode.length > 10) {
+          this.logger.warn(`Truncated stopDeskCode for order ${order.orderNo}: "${order.stopDeskCode}" (${order.stopDeskCode.length} chars → 10)`);
+        }
         payload.code_stopdesk = order.stopDeskCode.slice(0, 10);
       }
     } else {
@@ -178,6 +200,9 @@ export class EcomHandler implements DeliveryCompanyHandler {
     }
 
     if (order.customer.address) {
+      if (order.customer.address.length > 30) {
+        this.logger.warn(`Truncated address for order ${order.orderNo}: "${order.customer.address}" (${order.customer.address.length} chars → 30)`);
+      }
       payload.adresse = order.customer.address.slice(0, 30);
     }
 

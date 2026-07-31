@@ -8,10 +8,12 @@ import {
   IsIn,
   Min,
   ArrayMinSize,
+  Matches,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ORDER_STATUS_VALUES } from '../../../common/constants/order-statuses.const';
+import { ALGERIAN_PHONE_REGEX, ALGERIAN_PHONE_MESSAGE } from '../../../common/constants/regex.const';
 
 class OrderItemDto {
   @ApiPropertyOptional({ description: 'Product ID' })
@@ -54,6 +56,7 @@ class CustomerDto {
   @ApiProperty({ description: 'Phone number' })
   @IsString()
   @IsNotEmpty()
+  @Matches(ALGERIAN_PHONE_REGEX, { message: ALGERIAN_PHONE_MESSAGE })
   phone: string;
 
   @ApiPropertyOptional({ description: 'Email' })

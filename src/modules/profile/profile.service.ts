@@ -8,6 +8,14 @@ import { User, UserDocument } from '../users/schemas/user.schema';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 
+const FAKE_EMAIL_SUFFIX = '@customer.imraaah';
+
+function sanitizeEmail(email?: string): string | null {
+  if (!email) return null;
+  if (email.endsWith(FAKE_EMAIL_SUFFIX)) return null;
+  return email;
+}
+
 @Injectable()
 export class ProfileService {
   constructor(
@@ -28,35 +36,18 @@ export class ProfileService {
 
     if (dto.fullName !== undefined) {
       updateData.fullName = dto.fullName.trim();
-      updateData.firstName = dto.fullName.trim();
-    }
-
-    if (dto.email !== undefined) {
-      const normalizedEmail = dto.email.toLowerCase().trim();
-      const existingEmail = await this.userModel.findOne({
-        email: normalizedEmail,
-        _id: { $ne: userId },
-      }).exec();
-      if (existingEmail) {
-        throw new AppException(AppErrorCode.USER_EMAIL_ALREADY_EXISTS);
-      }
-      updateData.email = normalizedEmail;
-    }
-
-    if (dto.phoneNumber !== undefined) {
-      const normalizedPhone = dto.phoneNumber.trim();
-      const existingPhone = await this.userModel.findOne({
-        phoneNumber: normalizedPhone,
-        _id: { $ne: userId },
-      }).exec();
-      if (existingPhone) {
-        throw new AppException(AppErrorCode.USER_PHONE_ALREADY_EXISTS);
-      }
-      updateData.phoneNumber = normalizedPhone;
     }
 
     if (dto.gender !== undefined) {
-      updateData.gender = dto.gender;
+      updateData.gender = dto.gender.charAt(0).toUpperCase() + dto.gender.slice(1).toLowerCase();
+    }
+
+    if (dto.phoneNumber !== undefined) {
+      updateData.phoneNumber = dto.phoneNumber.trim();
+    }
+
+    if (dto.address !== undefined) {
+      updateData.address = dto.address;
     }
 
     if (Object.keys(updateData).length === 0) {
@@ -76,7 +67,7 @@ export class ProfileService {
       throw new AppException(AppErrorCode.USER_PASSWORDS_DO_NOT_MATCH);
     }
 
-    const user = await this.userModel.findById(userId).exec();
+    const user = await this.userModel.findById(userId).select('+password').exec();
     if (!user) throw new AppException(AppErrorCode.USER_NOT_FOUND);
 
     const isMatch = await bcrypt.compare(dto.currentPassword, user.password);
@@ -84,8 +75,17 @@ export class ProfileService {
       throw new AppException(AppErrorCode.USER_CURRENT_PASSWORD_INCORRECT);
     }
 
+    const isSame = await bcrypt.compare(dto.newPassword, user.password);
+    if (isSame) {
+      throw new AppException(AppErrorCode.USER_PASSWORD_SAME_AS_OLD);
+    }
+
     const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
-    await this.userModel.findByIdAndUpdate(userId, { password: hashedPassword }).exec();
+    await this.userModel.findByIdAndUpdate(userId, {
+      password: hashedPassword,
+      refreshToken: null,
+      refreshTokenExpiresAt: null,
+    }).exec();
 
     return { message: 'Password updated successfully' };
   }
@@ -94,10 +94,11 @@ export class ProfileService {
     return {
       id: user._id.toString(),
       fullName: user.fullName,
-      email: user.email,
+      email: sanitizeEmail(user.email),
       phoneNumber: user.phoneNumber,
       role: user.role,
-      gender: user.gender || null,
+      gender: user.gender ? user.gender.toLowerCase() : null,
+      address: user.address || null,
       profileImage: user.profileImage || null,
       createdAt: (user as any).createdAt,
       savedProductIds: (user.savedProductIds || []).map((id) => id.toString()),
