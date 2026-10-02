@@ -92,8 +92,8 @@ export class ProductsController {
   @ApiResponse({ status: 200, description: 'Product updated', type: Product })
   @ApiResponse({ status: 404, description: 'Product not found' })
   update(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto, @Req() req: any) {
-    const user = req.user as { email: string };
-    return this.productsService.update(id, updateProductDto, user.email);
+    const user = req.user as { email: string; id: string };
+    return this.productsService.update(id, updateProductDto, user.email, user.id);
   }
 
   @Throttle({ default: { limit: 10, ttl: 60000 } })
@@ -102,8 +102,8 @@ export class ProductsController {
   @ApiResponse({ status: 200, description: 'Product deleted' })
   @ApiResponse({ status: 404, description: 'Product not found' })
   remove(@Param('id') id: string, @Req() req: any) {
-    const user = req.user as { email: string };
-    return this.productsService.remove(id, user.email);
+    const user = req.user as { email: string; id: string };
+    return this.productsService.remove(id, user.email, user.id);
   }
 
   @Throttle({ default: { limit: 10, ttl: 3600000 } })
@@ -112,7 +112,7 @@ export class ProductsController {
   @ApiResponse({ status: 201, description: 'Product duplicated', type: Product })
   @ApiResponse({ status: 404, description: 'Product not found' })
   duplicate(@Param('id') id: string, @Req() req: any) {
-    const user = req.user as { email: string };
-    return this.productsService.duplicate(id, user.email);
+    const user = req.user as { email: string; id: string };
+    return this.productsService.duplicate(id, user.email, user.id);
   }
 }

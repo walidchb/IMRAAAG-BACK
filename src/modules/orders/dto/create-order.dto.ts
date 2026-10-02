@@ -9,6 +9,7 @@ import {
   Min,
   ArrayMinSize,
   Matches,
+  IsMongoId,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -86,10 +87,17 @@ class CustomerDto {
 }
 
 export class CreateOrderDto {
-  @ApiProperty({ description: 'Vendor email' })
+  @ApiPropertyOptional({ description: 'Legacy vendor email. Prefer storeId.' })
+  @IsOptional()
   @IsString()
   @IsNotEmpty()
-  vendorEmail: string;
+  vendorEmail?: string;
+
+  @ApiPropertyOptional({ description: 'Preferred. Stable store identifier.' })
+  @IsOptional()
+  @IsString()
+  @IsMongoId()
+  storeId?: string;
 
   @ApiPropertyOptional({ description: 'Order date' })
   @IsOptional()

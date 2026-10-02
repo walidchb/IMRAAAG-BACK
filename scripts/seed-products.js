@@ -6,6 +6,9 @@ const mongoose = require('mongoose');
 const MONGO_URI = process.env.MONGODB_URI;
 
 const productSchema = new mongoose.Schema({
+  // Canonical store reference (PLAN_STORE_ID_MIGRATION.md). Authoritative for ownership.
+  storeId: { type: mongoose.Schema.Types.ObjectId, ref: 'Store', index: true },
+  // Legacy seller email, kept through Phase 4 for backward compatibility.
   vendorEmail: { type: String, required: true },
   nameEn: { type: String, required: true },
   nameAr: { type: String, required: true },
@@ -194,6 +197,20 @@ async function main() {
   const perCategory = Math.ceil(40 / catIds.length);
   const vendorEmail = 'walidchebbab2001@gmail.com';
 
+  // storeId migration: resolve the vendor's store and refuse to run without one.
+  // Inserting products keyed only by vendorEmail is exactly the un-migrated state this
+  // project exists to eliminate, so this fails loudly instead of silently creating orphans.
+  const store = await mongoose.connection.db.collection('stores').findOne({ vendorEmail });
+  if (!store) {
+    throw new Error(
+      `No store found for vendorEmail "${vendorEmail}". Refusing to seed: products would be created ` +
+      `without a storeId and could never be attributed to a store. Create the store first ` +
+      `(e.g. via src/scripts/seed-vendors.ts), then re-run.`
+    );
+  }
+  const storeId = store._id;
+  console.log(`Seeding for ${vendorEmail} -> storeId ${storeId}`);
+
   let idx = 0;
 
   for (const catId of catIds) {
@@ -207,6 +224,7 @@ async function main() {
       const storyIdx = Math.floor(Math.random() * stories.en.length);
 
       const doc = {
+        storeId,
         vendorEmail,
         nameEn: prod.nameEn,
         nameAr: prod.nameAr,
@@ -236,8 +254,15 @@ async function main() {
     }
   }
 
-  const total = await Product.countDocuments({ vendorEmail });
-  console.log(`\nDone! Total products for ${vendorEmail}: ${total}`);
+  const total = await Product.countDocuments({ storeId });
+  const byLegacyEmail = await Product.countDocuments({ vendorEmail });
+  console.log(`\nDone! Products for store ${storeId}: ${total}`);
+  if (byLegacyEmail !== total) {
+    console.warn(
+      `Warning: ${byLegacyEmail - total} product(s) carry vendorEmail "${vendorEmail}" but a different ` +
+      `storeId. Re-run scripts/migrate-store-id.js to reconcile.`
+    );
+  }
   await mongoose.disconnect();
 }
 

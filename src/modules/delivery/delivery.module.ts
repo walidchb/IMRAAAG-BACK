@@ -12,6 +12,7 @@ import { DeliveryService } from './delivery.service';
 import { DeliveryCompaniesService } from './delivery-companies.service';
 import { DeliveryFeesModule } from '../delivery-fees/delivery-fees.module';
 import { TerritoriesModule } from '../territories/territories.module';
+import { StoresModule } from '../stores/stores.module';
 import { DeliveryCompanyRegistry } from './delivery-companies/delivery-company-registry.service';
 import { NoestHandler } from './delivery-companies/handlers/noest.handler';
 import { EcomHandler } from './delivery-companies/handlers/ecom.handler';
@@ -31,6 +32,7 @@ import { DhdHandler } from './delivery-companies/handlers/dhd.handler';
     ]),
     DeliveryFeesModule,
     TerritoriesModule,
+    StoresModule,
   ],
   controllers: [DeliveryController],
   providers: [

@@ -3,6 +3,8 @@ import { Throttle } from '@nestjs/throttler';
 import { ApiTags, ApiOperation, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 import { DeliveryFeesService } from './delivery-fees.service';
 import { UpdateDeliveryFeeDto, BulkUpdateDeliveryFeeDto } from './dto/manage-delivery-fees.dto';
+import { AppException } from '../../common/errors/app-exception';
+import { AppErrorCode } from '../../common/errors/error-codes.enum';
 import { Public } from '../auth/decorators/public.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../../common/constants/roles.enum';
@@ -26,13 +28,17 @@ export class DeliveryFeesController {
   @Throttle({ default: { limit: 60, ttl: 60000 } })
   @Get('by-wilaya')
   @ApiOperation({ summary: 'Get delivery fee for a specific wilaya (public)' })
-  @ApiQuery({ name: 'vendorEmail', required: true })
+  @ApiQuery({ name: 'storeId', required: false, description: 'Preferred. Stable store identifier.' })
+  @ApiQuery({ name: 'vendorEmail', required: false, deprecated: true, description: 'Legacy. Use storeId.' })
   @ApiQuery({ name: 'wilayaCode', required: true })
-  getFee(
-    @Query('vendorEmail') vendorEmail: string,
+  async getFee(
+    @Query('storeId') storeId: string | undefined,
+    @Query('vendorEmail') vendorEmail: string | undefined,
     @Query('wilayaCode') wilayaCode: string,
   ) {
-    return this.feesService.getFee(vendorEmail, wilayaCode);
+    if (storeId) return this.feesService.getFeeByStoreId(storeId, wilayaCode);
+    if (vendorEmail) return this.feesService.getFee(vendorEmail, wilayaCode);
+    throw new AppException(AppErrorCode.VALIDATION_REQUIRED, { field: 'storeId' });
   }
 
   @Roles(Role.VENDOR)

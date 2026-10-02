@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 import type { StatusConfig } from '../../../common/constants/order-statuses.const';
 
 export type OrderDocument = Order & Document;
@@ -9,8 +9,13 @@ export class Order {
   @Prop({ required: true, unique: true })
   orderNo: string;
 
+  /** @deprecated Migration shim — use `storeId`. Retained until store-id migration completes. */
   @Prop({ required: true })
   vendorEmail: string;
+
+  /** Canonical owner reference. Populated by backfill + dual-write during migration. */
+  @Prop({ type: Types.ObjectId, ref: 'Store' })
+  storeId?: Types.ObjectId;
 
   @Prop({ type: Date })
   date: Date;
@@ -126,6 +131,7 @@ export const OrderSchema = SchemaFactory.createForClass(Order);
 
 OrderSchema.index({ orderNo: 1 });
 OrderSchema.index({ vendorEmail: 1 });
+OrderSchema.index({ storeId: 1 });
 OrderSchema.index({ 'status.slug': 1 });
 OrderSchema.index({ createdAt: -1 });
 OrderSchema.index({ isDeleted: 1 });

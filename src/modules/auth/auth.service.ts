@@ -81,19 +81,27 @@ export class AuthService {
     const token = this.jwtService.sign({ sub: userId, email: user.email, role: user.role });
     const refreshToken = await this.storeRefreshToken(userId);
 
+    let storeId: string | null = null;
     try {
-      await this.storesService.create({
-        vendorEmail: user.email,
-        vendorId: user._id.toString(),
-        storeName: `${user.fullName} Store`,
-        description: `Welcome to ${user.fullName}'s artisan store.`,
-        contactEmail: user.email,
-        contactPhone: user.phoneNumber || '',
-        storeLogo: undefined,
-        coverImage: undefined,
-        wilaya: '',
-        categories: [],
-      });
+      const store = await this.storesService.create(
+        {
+          vendorEmail: user.email,
+          storeName: `${user.fullName} Store`,
+          description: `Welcome to ${user.fullName}'s artisan store.`,
+          contactEmail: user.email,
+          contactPhone: user.phoneNumber || '',
+          storeLogo: undefined,
+          coverImage: undefined,
+          wilaya: '',
+          categories: [],
+        },
+        // Passed as an explicit argument rather than a field on the DTO: ownership is
+        // never read from a request-shaped object. This is the path that created two
+        // stores whose `vendorId` landed in the database as a BSON string, which
+        // `findByVendorIdOrThrow()` could not match - see `vendorIdFilter()`.
+        userId,
+      );
+      storeId = String(store._id);
     } catch (err) {
       // Rollback user creation if store creation fails
       await this.userModel.findByIdAndDelete(userId).exec();
@@ -113,6 +121,7 @@ export class AuthService {
         address: user.address || null,
         savedProductIds: (user.savedProductIds || []).map((id) => id.toString()),
         profileImage: user.profileImage || null,
+        storeId,
       },
     };
   }
@@ -160,8 +169,24 @@ export class AuthService {
         address: user.address || null,
         savedProductIds: (user.savedProductIds || []).map((id) => id.toString()),
         profileImage: user.profileImage || null,
+        storeId: await this.resolveStoreId(user._id.toString(), user.role),
       },
     };
+  }
+
+  /**
+   * storeId migration shim: resolves the authenticated user's store so the frontend can
+   * hydrate its storeId without an extra `GET /stores/mine` round-trip.
+   * Returns null for customers and for vendors that have not created a store yet.
+   */
+  private async resolveStoreId(userId: string, role: string): Promise<string | null> {
+    if (role !== Role.VENDOR) return null;
+    try {
+      const store = await this.storesService.findByVendorId(userId);
+      return store ? String(store._id) : null;
+    } catch {
+      return null;
+    }
   }
 
   async refreshAccessToken(dto: RefreshDto) {
@@ -185,6 +210,20 @@ export class AuthService {
     return {
       token,
       refreshToken: newRefreshToken,
+      // Same payload as login/signup so the client can hydrate `storeId` on reload
+      // without an extra `GET /stores/mine` round-trip.
+      user: {
+        id: user._id,
+        fullName: user.fullName,
+        email: sanitizeEmail(user.email),
+        phoneNumber: user.phoneNumber,
+        role: user.role,
+        gender: user.gender ? user.gender.toLowerCase() : null,
+        address: user.address || null,
+        savedProductIds: (user.savedProductIds || []).map((id) => id.toString()),
+        profileImage: user.profileImage || null,
+        storeId: await this.resolveStoreId(user._id.toString(), user.role),
+      },
     };
   }
 

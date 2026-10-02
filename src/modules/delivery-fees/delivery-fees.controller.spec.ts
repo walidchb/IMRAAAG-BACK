@@ -10,6 +10,7 @@ describe('DeliveryFeesController', () => {
   const mockService = {
     getFees: jest.fn(),
     getFee: jest.fn(),
+    getFeeByStoreId: jest.fn(),
     updateFee: jest.fn(),
     bulkUpdate: jest.fn(),
     seedDefaults: jest.fn(),
@@ -54,13 +55,27 @@ describe('DeliveryFeesController', () => {
   });
 
   describe('GET /delivery-fees/by-wilaya', () => {
-    it('returns fee for a specific wilaya', async () => {
+    it('prefers storeId when both params are supplied', async () => {
+      const expected = { wilayaCode: '01', homeDeliveryFee: 100, stopDeskDeliveryFee: 80 };
+      mockService.getFeeByStoreId.mockResolvedValue(expected);
+
+      const result = await controller.getFee('6a5ac33e2274da4958b72fc7', 'vendor@test.com', '01');
+      expect(result).toBe(expected);
+      expect(mockService.getFeeByStoreId).toHaveBeenCalledWith('6a5ac33e2274da4958b72fc7', '01');
+      expect(mockService.getFee).not.toHaveBeenCalled();
+    });
+
+    it('falls back to the deprecated vendorEmail when no storeId is given', async () => {
       const expected = { wilayaCode: '01', homeDeliveryFee: 100, stopDeskDeliveryFee: 80 };
       mockService.getFee.mockResolvedValue(expected);
 
-      const result = await controller.getFee('vendor@test.com', '01');
+      const result = await controller.getFee(undefined, 'vendor@test.com', '01');
       expect(result).toBe(expected);
       expect(mockService.getFee).toHaveBeenCalledWith('vendor@test.com', '01');
+    });
+
+    it('rejects a request with neither storeId nor vendorEmail', async () => {
+      await expect(controller.getFee(undefined, undefined, '01')).rejects.toBeDefined();
     });
   });
 

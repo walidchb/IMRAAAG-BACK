@@ -5,6 +5,7 @@ import { DeliveryConfig, DeliveryConfigSchema } from '../delivery/schemas/delive
 import { DeliveryFeesController } from './delivery-fees.controller';
 import { DeliveryFeesService } from './delivery-fees.service';
 import { CacheService } from '../../common/cache.service';
+import { StoresModule } from '../stores/stores.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { CacheService } from '../../common/cache.service';
       { name: DeliveryFee.name, schema: DeliveryFeeSchema },
       { name: DeliveryConfig.name, schema: DeliveryConfigSchema },
     ]),
+    StoresModule,
   ],
   controllers: [DeliveryFeesController],
   providers: [DeliveryFeesService, CacheService],

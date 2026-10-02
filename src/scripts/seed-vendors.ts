@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../app.module';
 import { getModelToken } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { User } from '../modules/users/schemas/user.schema';
 import { Store, StoreDocument } from '../modules/stores/schemas/store.schema';
 import { StoreStatus } from '../modules/stores/schemas/store-status.enum';
@@ -44,7 +44,7 @@ async function bootstrap() {
 
     console.log('Seeding 10 vendors with stores...\n');
 
-    const results: { email: string; password: string; fullName: string; storeName: string }[] = [];
+    const results: { email: string; password: string; fullName: string; storeName: string; storeId: string }[] = [];
     const password = 'Vendor123!';
 
     for (const v of VENDORS) {
@@ -93,7 +93,7 @@ async function bootstrap() {
       }) as StoreDocument;
       console.log(`    Store created: ${store.storeName} (${store._id})`);
 
-      results.push({ email, password, fullName: v.fullName, storeName: v.storeName });
+      results.push({ email, password, fullName: v.fullName, storeName: v.storeName, storeId: String(store._id) });
     }
 
     // --- Assign existing products to these vendors ---
@@ -114,12 +114,17 @@ async function bootstrap() {
         const productIds = allProducts.slice(productIndex, productIndex + count).map(p => p._id);
         productIndex += count;
 
+        // storeId migration (PLAN_STORE_ID_MIGRATION.md §3.8): the canonical store
+        // reference must be written alongside the legacy vendorEmail. Without this the
+        // script re-creates the exact un-migrated documents the migration removed.
         await productModel.updateMany(
           { _id: { $in: productIds } },
-          { $set: { vendorEmail: r.email } },
+          { $set: { vendorEmail: r.email, storeId: new Types.ObjectId(r.storeId) } },
         );
+        // Target the store by _id, not vendorEmail: the email is mutable and is exactly
+        // what this migration is moving away from.
         await storeModel.updateOne(
-          { vendorEmail: r.email },
+          { _id: new Types.ObjectId(r.storeId) },
           { $set: { totalProducts: count } },
         );
         console.log(`    ${r.storeName}: assigned ${count} products`);

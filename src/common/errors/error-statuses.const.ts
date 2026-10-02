@@ -125,8 +125,6 @@ export const ERROR_HTTP_STATUS: Record<string, number> = {
 
   // ─── Tracking ───
   [AppErrorCode.TRACKING_CONFIG_NOT_FOUND]: HttpStatus.NOT_FOUND,
-  [AppErrorCode.TRACKING_META_API_FAILED]: HttpStatus.BAD_GATEWAY,
-  [AppErrorCode.TRACKING_TIKTOK_API_FAILED]: HttpStatus.BAD_GATEWAY,
 
   // ─── Audit ───
   [AppErrorCode.AUDIT_ACTION_NOT_FOUND]: HttpStatus.NOT_FOUND,

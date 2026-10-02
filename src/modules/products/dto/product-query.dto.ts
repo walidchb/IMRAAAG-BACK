@@ -41,10 +41,16 @@ export class ProductQueryDto {
   @IsString()
   subCategory?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Legacy. Prefer storeId.' })
   @IsOptional()
   @IsString()
   vendorEmail?: string;
+
+  @ApiPropertyOptional({ description: 'Preferred. Stable store identifier.' })
+  @IsOptional()
+  @IsString()
+  @IsMongoId()
+  storeId?: string;
 
   @ApiPropertyOptional()
   @IsOptional()

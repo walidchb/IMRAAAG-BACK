@@ -32,9 +32,13 @@ export class StoresController {
   @ApiResponse({ status: 201, description: 'Store created', type: Store })
   @ApiResponse({ status: 409, description: 'Store already exists' })
   createMine(@Body() createStoreDto: CreateStoreDto, @Req() req: any) {
-    const user = req.user as { email: string };
+    const user = req.user as { id: string; email: string };
+    // Ownership comes from the session, never the body. A store created without a
+    // `vendorId` is invisible to `findByVendorIdOrThrow()`, which is what tracking
+    // settings resolve against - so a vendor whose store predates this would be locked
+    // out of their own pixel config with a 404.
     createStoreDto.vendorEmail = user.email;
-    return this.storesService.create(createStoreDto);
+    return this.storesService.create(createStoreDto, user.id);
   }
 
   @Roles(Role.VENDOR)
@@ -71,9 +75,19 @@ export class StoresController {
     return this.storesService.toggleStatus(store._id.toString());
   }
 
+  /**
+   * Admin-only. Note this route used to carry no `@Roles` guard at all, so any
+   * authenticated caller - including a CUSTOMER - could create a store. The vendor
+   * dashboard used this route rather than `POST /stores/mine`, which meant the
+   * session-derived ownership was never applied and the created store had no
+   * `vendorId`. Both are fixed: vendors must use `/stores/mine`, and this is now
+   * restricted to admins. An unlinked store (no `vendorId`) is created here, which no
+   * vendor-scoped endpoint can resolve.
+   */
+  @Roles(Role.ADMIN)
   @Throttle({ default: { limit: 5, ttl: 3600000 } })
   @Post()
-  @ApiOperation({ summary: 'Create a new store' })
+  @ApiOperation({ summary: 'Create a new store (admin)' })
   @ApiResponse({ status: 201, description: 'Store created', type: Store })
   @ApiResponse({ status: 409, description: 'Store already exists for this vendor' })
   create(@Body() createStoreDto: CreateStoreDto) {

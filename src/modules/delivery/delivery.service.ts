@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { AppException } from '../../common/errors/app-exception';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import * as fs from 'fs';
 import * as path from 'path';
 import { DeliveryConfig, DeliveryConfigDocument } from './schemas/delivery-config.schema';
@@ -21,6 +21,7 @@ import { Wilaya, WilayaDocument } from '../territories/schemas/wilaya.schema';
 import { Commune, CommuneDocument } from '../territories/schemas/commune.schema';
 import { encryptRecord, decryptRecord } from '../../common/encryption.util';
 import { fetchWithRetry } from '../../common/fetch-with-retry';
+import { StoresService } from '../stores/stores.service';
 
 interface NoestDeskRaw {
   code: string;
@@ -93,14 +94,38 @@ export class DeliveryService {
     private readonly deliveryCompanyRegistry: DeliveryCompanyRegistry,
     private readonly deliveryCompaniesService: DeliveryCompaniesService,
     private readonly configService: ConfigService,
+    private readonly storesService: StoresService,
   ) {}
 
   private get encryptionKey(): string {
     return this.configService.get<string>('deliveryEncryptionKey') || '';
   }
 
+  /**
+   * storeId migration shim: derives the canonical store reference for a vendor email so
+   * write paths can dual-write `storeId` alongside the legacy `vendorEmail` field.
+   * Returns null when the vendor has no store yet — Phase 1 backfill will populate it.
+   */
+  private async storeIdFor(vendorEmail: string): Promise<Types.ObjectId | null> {
+    return this.storesService.resolveStoreIdByEmail(vendorEmail).catch(() => null);
+  }
+
+  /**
+   * Read filter that prefers the stable `storeId` and falls back to the legacy
+   * `vendorEmail`. The store↔email mapping is 1:1, so both branches select the same
+   * single document; the `$or` only matters for documents written before Phase 1.
+   *
+   * Never use this for upsert filters — a `$or` upsert cannot derive the inserted
+   * document's fields and risks E11000 against the unique `storeId` index.
+   */
+  private async storeFilter(vendorEmail: string): Promise<Record<string, any>> {
+    const storeId = await this.storeIdFor(vendorEmail);
+    return storeId ? { $or: [{ storeId }, { vendorEmail }] } : { vendorEmail };
+  }
+
   async resolveCompanyForWilaya(vendorEmail: string, wilayaCode: string): Promise<string | null> {
-    const [attribution, config] = await Promise.all([this.attributionModel.findOne({ vendorEmail }).lean().exec(), this.configModel.findOne({ vendorEmail }).lean().exec()]);
+    const storeFilter = await this.storeFilter(vendorEmail);
+    const [attribution, config] = await Promise.all([this.attributionModel.findOne(storeFilter).lean().exec(), this.configModel.findOne(storeFilter).lean().exec()]);
 
     if (attribution?.attributions?.[wilayaCode]) {
       this.logger.log(`Resolved company "${attribution.attributions[wilayaCode]}" for wilaya ${wilayaCode} from attributions`);
@@ -182,7 +207,7 @@ export class DeliveryService {
   }
 
   async syncNoestDesks(vendorEmail: string): Promise<{ inserted: number }> {
-    const config = await this.configModel.findOne({ vendorEmail }).lean().exec();
+    const config = await this.configModel.findOne(await this.storeFilter(vendorEmail)).lean().exec();
     const rawCreds = config?.companies?.['noest']?.credentials || {};
     const key = this.encryptionKey;
     const creds = decryptRecord(rawCreds, key);
@@ -281,7 +306,7 @@ export class DeliveryService {
   }
 
   async syncEcomDesks(vendorEmail: string): Promise<{ inserted: number }> {
-    const config = await this.configModel.findOne({ vendorEmail }).lean().exec();
+    const config = await this.configModel.findOne(await this.storeFilter(vendorEmail)).lean().exec();
     const rawCreds = config?.companies?.['ecom-delivery']?.credentials || {};
     const key = this.encryptionKey;
     const creds = decryptRecord(rawCreds, key);
@@ -358,7 +383,7 @@ export class DeliveryService {
   }
 
   async syncZRTerritories(vendorEmail: string): Promise<{ updated: number }> {
-    const config = await this.configModel.findOne({ vendorEmail }).lean().exec();
+    const config = await this.configModel.findOne(await this.storeFilter(vendorEmail)).lean().exec();
     const { apiKey, tenantId } = this.getZrCredentials(config);
 
     const allTerritories = await this.fetchAllZRTerritories(apiKey, tenantId);
@@ -430,7 +455,7 @@ export class DeliveryService {
   }
 
   async syncZRHubs(vendorEmail: string): Promise<{ inserted: number }> {
-    const config = await this.configModel.findOne({ vendorEmail }).lean().exec();
+    const config = await this.configModel.findOne(await this.storeFilter(vendorEmail)).lean().exec();
     const { apiKey, tenantId } = this.getZrCredentials(config);
 
     const allHubs = await this.fetchAllZRHubs(apiKey, tenantId);
@@ -553,8 +578,27 @@ export class DeliveryService {
     return this.dhdDeskModel.find(filter).sort({ nom: 1 }).lean().exec();
   }
 
+  /**
+   * storeId-keyed variants for the public storefront (PLAN_STORE_ID_MIGRATION.md).
+   * The `vendorEmail` variants above are deprecated but still resolve identically, since
+   * the store↔email mapping is 1:1.
+   */
+  async getConfigsByStoreId(storeId: string): Promise<DeliveryConfig | null> {
+    if (!Types.ObjectId.isValid(storeId)) return null;
+    return this.getConfigsByFilter({ storeId: new Types.ObjectId(storeId) });
+  }
+
+  async getAttributionsByStoreId(storeId: string): Promise<DeliveryAttribution | null> {
+    if (!Types.ObjectId.isValid(storeId)) return null;
+    return this.attributionModel.findOne({ storeId: new Types.ObjectId(storeId) }).exec();
+  }
+
   async getConfigs(vendorEmail: string): Promise<DeliveryConfig | null> {
-    const config = await this.configModel.findOne({ vendorEmail }).lean().exec();
+    return this.getConfigsByFilter(await this.storeFilter(vendorEmail));
+  }
+
+  private async getConfigsByFilter(filter: Record<string, any>): Promise<DeliveryConfig | null> {
+    const config = await this.configModel.findOne(filter).lean().exec();
     if (config?.companies) {
       const key = this.encryptionKey;
       for (const company of Object.values(config.companies)) {
@@ -578,7 +622,7 @@ export class DeliveryService {
     }
 
     if (dto.isDefault === true) {
-      const current = await this.configModel.findOne({ vendorEmail }).exec();
+      const current = await this.configModel.findOne(await this.storeFilter(vendorEmail)).exec();
       if (current?.companies) {
         for (const cId of Object.keys(current.companies)) {
           if (cId !== dto.companyId) {
@@ -591,16 +635,23 @@ export class DeliveryService {
       setPaths[`companies.${dto.companyId}.isDefault`] = false;
     }
 
+    const storeId = await this.storeIdFor(vendorEmail);
+    if (storeId) setPaths.storeId = storeId;
+
     return this.configModel.findOneAndUpdate({ vendorEmail }, { $set: setPaths }, { upsert: true, new: true }).exec();
   }
 
   async getAttributions(vendorEmail: string): Promise<DeliveryAttribution | null> {
-    return this.attributionModel.findOne({ vendorEmail }).exec();
+    return this.attributionModel.findOne(await this.storeFilter(vendorEmail)).exec();
   }
   async saveAttributions(vendorEmail: string, dto: SaveAttributionsDto): Promise<DeliveryAttribution> {
+    const storeId = await this.storeIdFor(vendorEmail);
+    const baseSet: Record<string, unknown> = { vendorEmail, attributions: dto.attributions };
+    if (storeId) baseSet.storeId = storeId;
+
     const entries = Object.entries(dto.attributions);
     if (entries.length === 0) {
-      return this.attributionModel.findOneAndUpdate({ vendorEmail }, { $set: { vendorEmail, attributions: dto.attributions } }, { upsert: true, new: true }).exec();
+      return this.attributionModel.findOneAndUpdate({ vendorEmail }, { $set: baseSet }, { upsert: true, new: true }).exec();
     }
 
     const wilayaCodes = [...new Set(entries.map(([k]) => k))];
@@ -626,7 +677,7 @@ export class DeliveryService {
       }
     }
 
-    const result = await this.attributionModel.findOneAndUpdate({ vendorEmail }, { $set: { vendorEmail, attributions: dto.attributions } }, { upsert: true, new: true }).exec();
+    const result = await this.attributionModel.findOneAndUpdate({ vendorEmail }, { $set: baseSet }, { upsert: true, new: true }).exec();
 
     return result;
   }
@@ -642,7 +693,7 @@ export class DeliveryService {
   }
 
   async getTerritories(vendorEmail: string): Promise<Record<string, unknown>> {
-    const config = await this.configModel.findOne({ vendorEmail }).exec();
+    const config = await this.configModel.findOne(await this.storeFilter(vendorEmail)).exec();
     const { apiKey, tenantId } = this.getZrCredentials(config);
 
     const doFetch = async (body: Record<string, unknown>) => {

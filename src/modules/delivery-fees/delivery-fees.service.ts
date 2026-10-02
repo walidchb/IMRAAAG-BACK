@@ -3,13 +3,14 @@ import { ConfigService } from '@nestjs/config';
 import { AppException } from '../../common/errors/app-exception';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { DeliveryFee, DeliveryFeeDocument } from './schemas/delivery-fee.schema';
 import { UpdateDeliveryFeeDto, BulkUpdateDeliveryFeeDto } from './dto/manage-delivery-fees.dto';
 import { DeliveryConfig, DeliveryConfigDocument } from '../delivery/schemas/delivery-config.schema';
 import { CacheService } from '../../common/cache.service';
 import { decryptRecord } from '../../common/encryption.util';
 import { fetchWithRetry } from '../../common/fetch-with-retry';
+import { StoresService } from '../stores/stores.service';
 
 const CACHE_TTL = 3600000; // 1 hour
 
@@ -62,7 +63,30 @@ export class DeliveryFeesService {
     private configModel: Model<DeliveryConfigDocument>,
     private readonly cacheService: CacheService,
     private readonly configService: ConfigService,
+    private readonly storesService: StoresService,
   ) {}
+
+  /**
+   * storeId migration shim: derives the canonical store reference for a vendor email so
+   * every write path can dual-write `storeId` alongside the legacy `vendorEmail` field.
+   * Returns null when the vendor has no store yet — Phase 1 backfill will populate it.
+   */
+  private async storeIdFor(vendorEmail: string): Promise<Types.ObjectId | null> {
+    return this.storesService.resolveStoreIdByEmail(vendorEmail).catch(() => null);
+  }
+
+  /**
+   * Read filter that prefers the stable `storeId` and falls back to the legacy
+   * `vendorEmail`. The store↔email mapping is 1:1, so both branches select the same
+   * single document; the `$or` only matters for documents written before Phase 1.
+   *
+   * Never use this for upsert filters — a `$or` upsert cannot derive the inserted
+   * document's fields and risks E11000 against the unique `storeId` index.
+   */
+  private async storeFilter(vendorEmail: string): Promise<Record<string, any>> {
+    const storeId = await this.storeIdFor(vendorEmail);
+    return storeId ? { $or: [{ storeId }, { vendorEmail }] } : { vendorEmail };
+  }
 
   private get encryptionKey(): string {
     return this.configService.get<string>('deliveryEncryptionKey') || '';
@@ -129,7 +153,7 @@ export class DeliveryFeesService {
     const cacheKey = `delivery-fees:${vendorEmail}:all`;
     const cached = this.cacheService.get<DeliveryFee | null>(cacheKey);
     if (cached !== undefined) return cached;
-    const result = await this.feeModel.findOne({ vendorEmail }).exec();
+    const result = await this.feeModel.findOne(await this.storeFilter(vendorEmail)).exec();
     this.cacheService.set(cacheKey, result, CACHE_TTL);
     return result;
   }
@@ -138,7 +162,31 @@ export class DeliveryFeesService {
     const cacheKey = `delivery-fees:${vendorEmail}:single:${wilayaCode}`;
     const cached = this.cacheService.get<{ wilayaCode: string; homeDeliveryFee: number; stopDeskDeliveryFee: number }>(cacheKey);
     if (cached) return cached;
-    const doc = await this.feeModel.findOne({ vendorEmail }).lean().exec();
+    const doc = await this.feeModel.findOne(await this.storeFilter(vendorEmail)).lean().exec();
+    if (!doc || !doc.fees || !doc.fees[wilayaCode]) {
+      throw new AppException(AppErrorCode.FEE_NOT_FOUND_FOR_WILAYA, { wilayaCode });
+    }
+    const result = {
+      wilayaCode,
+      homeDeliveryFee: doc.fees[wilayaCode].homeDeliveryFee ?? 0,
+      stopDeskDeliveryFee: doc.fees[wilayaCode].stopDeskDeliveryFee ?? 0,
+    };
+    this.cacheService.set(cacheKey, result, CACHE_TTL);
+    return result;
+  }
+
+  /**
+   * Preferred public lookup (PLAN_STORE_ID_MIGRATION.md step 11): keyed by the stable
+   * `storeId`. `getFee(vendorEmail, ...)` remains for older storefronts and is deprecated.
+   */
+  async getFeeByStoreId(storeId: string, wilayaCode: string): Promise<{ wilayaCode: string; homeDeliveryFee: number; stopDeskDeliveryFee: number }> {
+    if (!Types.ObjectId.isValid(storeId)) {
+      throw new AppException(AppErrorCode.FEE_NOT_FOUND_FOR_WILAYA, { wilayaCode });
+    }
+    const cacheKey = `delivery-fees:store:${storeId}:single:${wilayaCode}`;
+    const cached = this.cacheService.get<{ wilayaCode: string; homeDeliveryFee: number; stopDeskDeliveryFee: number }>(cacheKey);
+    if (cached) return cached;
+    const doc = await this.feeModel.findOne({ storeId: new Types.ObjectId(storeId) }).lean().exec();
     if (!doc || !doc.fees || !doc.fees[wilayaCode]) {
       throw new AppException(AppErrorCode.FEE_NOT_FOUND_FOR_WILAYA, { wilayaCode });
     }
@@ -153,12 +201,14 @@ export class DeliveryFeesService {
 
   async updateFee(vendorEmail: string, wilayaCode: string, dto: UpdateDeliveryFeeDto): Promise<DeliveryFee> {
     this.cacheService.clear(`delivery-fees:${vendorEmail}`);
-    const doc = await this.feeModel.findOne({ vendorEmail }).exec();
+    const doc = await this.feeModel.findOne(await this.storeFilter(vendorEmail)).exec();
     const current = doc?.fees?.[wilayaCode] || { homeDeliveryFee: 0, stopDeskDeliveryFee: 0 };
+    const storeId = doc?.storeId ?? (await this.storeIdFor(vendorEmail));
     return this.feeModel.findOneAndUpdate(
       { vendorEmail },
       {
         $set: {
+          ...(storeId ? { storeId } : {}),
           [`fees.${wilayaCode}`]: {
             homeDeliveryFee: dto.homeDeliveryFee ?? current.homeDeliveryFee,
             stopDeskDeliveryFee: dto.stopDeskDeliveryFee ?? current.stopDeskDeliveryFee,
@@ -180,9 +230,10 @@ export class DeliveryFeesService {
       };
     }
     if (Object.keys(setFields).length > 0) {
+      const storeId = await this.storeIdFor(vendorEmail);
       await this.feeModel.updateOne(
         { vendorEmail },
-        { $set: setFields },
+        { $set: { ...(storeId ? { storeId } : {}), ...setFields } },
         { upsert: true },
       ).exec();
     }
@@ -191,7 +242,7 @@ export class DeliveryFeesService {
 
   async seedDefaults(vendorEmail: string, wilayaCodes: string[]): Promise<void> {
     this.cacheService.clear(`delivery-fees:${vendorEmail}`);
-    const doc = await this.feeModel.findOne({ vendorEmail }).exec();
+    const doc = await this.feeModel.findOne(await this.storeFilter(vendorEmail)).exec();
     const existingCodes = new Set(Object.keys(doc?.fees || {}));
     const missing = wilayaCodes.filter(c => !existingCodes.has(c));
     if (missing.length === 0) return;
@@ -199,15 +250,16 @@ export class DeliveryFeesService {
     for (const code of missing) {
       setFields[`fees.${code}`] = { homeDeliveryFee: 0, stopDeskDeliveryFee: 0 };
     }
+    const storeId = doc?.storeId ?? (await this.storeIdFor(vendorEmail));
     await this.feeModel.updateOne(
       { vendorEmail },
-      { $set: setFields },
+      { $set: { ...(storeId ? { storeId } : {}), ...setFields } },
       { upsert: true },
     ).exec();
   }
 
   private async getNoestApiToken(vendorEmail: string): Promise<string> {
-    const config = await this.configModel.findOne({ vendorEmail }).lean().exec();
+    const config = await this.configModel.findOne(await this.storeFilter(vendorEmail)).lean().exec();
     const rawCreds = config?.companies?.['noest']?.credentials || {};
     const key = this.encryptionKey;
     const creds = decryptRecord(rawCreds, key);
@@ -270,9 +322,11 @@ export class DeliveryFeesService {
         stopDeskDeliveryFee: f.stopDeskDeliveryFee,
       };
     }
+    const existing = await this.feeModel.findOne(await this.storeFilter(vendorEmail)).select('storeId').lean().exec();
+    const storeId = existing?.storeId ?? (await this.storeIdFor(vendorEmail));
     await this.feeModel.updateOne(
       { vendorEmail },
-      { $set: setFields },
+      { $set: { ...(storeId ? { storeId } : {}), ...setFields } },
       { upsert: true },
     ).exec();
   }
@@ -532,7 +586,7 @@ export class DeliveryFeesService {
   }
 
   private async getDhdApiToken(vendorEmail: string): Promise<string> {
-    const config = await this.configModel.findOne({ vendorEmail }).lean().exec();
+    const config = await this.configModel.findOne(await this.storeFilter(vendorEmail)).lean().exec();
     const rawCreds = config?.companies?.['dhd']?.credentials || {};
     const key = this.encryptionKey;
     const creds = decryptRecord(rawCreds, key);

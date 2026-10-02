@@ -5,11 +5,17 @@ export type ProductDocument = Product & Document;
 
 @Schema({ timestamps: true })
 export class Product {
+  /** @deprecated Migration shim — use `storeId`. Retained until store-id migration completes. */
   @Prop({ required: true, trim: true })
   vendorEmail: string;
 
+  /** @deprecated Migration shim — use `storeId`. Retained until store-id migration completes. */
   @Prop({ trim: true })
   vendorId: string;
+
+  /** Canonical owner reference. Populated by backfill + dual-write during migration. */
+  @Prop({ type: Types.ObjectId, ref: 'Store' })
+  storeId?: Types.ObjectId;
 
   @Prop({ required: true, trim: true })
   nameEn: string;
@@ -95,6 +101,7 @@ export const ProductSchema = SchemaFactory.createForClass(Product);
 ProductSchema.index({ nameEn: 'text', nameAr: 'text', nameFr: 'text', storyEn: 'text', storyAr: 'text', storyFr: 'text' });
 ProductSchema.index({ vendorEmail: 1 });
 ProductSchema.index({ vendorId: 1 });
+ProductSchema.index({ storeId: 1 });
 ProductSchema.index({ category: 1, subCategory: 1 });
 ProductSchema.index({ price: 1 });
 ProductSchema.index({ status: 1 });
@@ -103,4 +110,5 @@ ProductSchema.index({ published: 1 });
 ProductSchema.index({ published: 1, status: 1, createdAt: -1, _id: -1 });
 ProductSchema.index({ published: 1, status: 1, category: 1, createdAt: -1, _id: -1 });
 ProductSchema.index({ published: 1, status: 1, vendorEmail: 1, createdAt: -1, _id: -1 });
+ProductSchema.index({ published: 1, status: 1, storeId: 1, createdAt: -1, _id: -1 });
 ProductSchema.index({ published: 1, status: 1, price: 1, createdAt: -1, _id: -1 });

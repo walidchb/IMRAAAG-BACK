@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Patch, Body, Query, Req, Param } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { ApiTags, ApiOperation, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiQuery, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 import { DeliveryService } from './delivery.service';
 import { DeliveryCompaniesService } from './delivery-companies.service';
 import { SaveDeliveryConfigDto, SaveAttributionsDto } from './dto/save-delivery-config.dto';
@@ -140,7 +140,8 @@ export class DeliveryController {
   @Public()
   @Throttle({ default: { limit: 60, ttl: 60000 } })
   @Get('public/attributions/:vendorEmail')
-  @ApiOperation({ summary: 'Get wilaya-to-company attributions for a vendor (public)' })
+  @ApiOperation({ summary: 'Get wilaya-to-company attributions for a vendor (public, legacy)' })
+  @ApiParam({ name: 'vendorEmail', description: 'Legacy. Prefer the store route.' })
   getPublicAttributions(@Param('vendorEmail') vendorEmail: string) {
     return this.deliveryService.getAttributions(vendorEmail);
   }
@@ -148,8 +149,27 @@ export class DeliveryController {
   @Public()
   @Throttle({ default: { limit: 60, ttl: 60000 } })
   @Get('public/configs/:vendorEmail')
-  @ApiOperation({ summary: 'Get delivery configs for a vendor (public)' })
+  @ApiOperation({ summary: 'Get delivery configs for a vendor (public, legacy)' })
+  @ApiParam({ name: 'vendorEmail', description: 'Legacy. Prefer the store route.' })
   getPublicConfigs(@Param('vendorEmail') vendorEmail: string) {
     return this.deliveryService.getConfigs(vendorEmail);
+  }
+
+  @Public()
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
+  @Get('public/attributions/store/:storeId')
+  @ApiOperation({ summary: 'Get wilaya-to-company attributions for a store (public)' })
+  @ApiParam({ name: 'storeId', description: 'Stable store identifier.' })
+  getPublicAttributionsByStore(@Param('storeId') storeId: string) {
+    return this.deliveryService.getAttributionsByStoreId(storeId);
+  }
+
+  @Public()
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
+  @Get('public/configs/store/:storeId')
+  @ApiOperation({ summary: 'Get delivery configs for a store (public)' })
+  @ApiParam({ name: 'storeId', description: 'Stable store identifier.' })
+  getPublicConfigsByStore(@Param('storeId') storeId: string) {
+    return this.deliveryService.getConfigsByStoreId(storeId);
   }
 }

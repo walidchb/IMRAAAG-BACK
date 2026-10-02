@@ -8,8 +8,13 @@ export class DeliveryConfig {
   @Prop({ type: Types.ObjectId, ref: 'User' })
   vendorId: Types.ObjectId;
 
+  /** @deprecated Migration shim — use `storeId`. Retained until store-id migration completes. */
   @Prop({ required: true, unique: true })
   vendorEmail: string;
+
+  /** Canonical owner reference. Populated by backfill + dual-write during migration. */
+  @Prop({ type: Types.ObjectId, ref: 'Store' })
+  storeId?: Types.ObjectId;
 
   @Prop({ type: Object, default: {} })
   companies: Record<string, {
@@ -22,3 +27,4 @@ export class DeliveryConfig {
 export const DeliveryConfigSchema = SchemaFactory.createForClass(DeliveryConfig);
 
 DeliveryConfigSchema.index({ vendorId: 1 });
+DeliveryConfigSchema.index({ storeId: 1 }, { unique: true, sparse: true });

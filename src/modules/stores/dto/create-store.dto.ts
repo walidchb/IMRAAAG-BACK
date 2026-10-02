@@ -68,10 +68,14 @@ export class CreateStoreDto {
   @IsNotEmpty()
   vendorEmail: string;
 
-  @ApiPropertyOptional({ description: 'Vendor user ID' })
-  @IsOptional()
-  @IsMongoId()
-  vendorId?: string;
+  // NOTE: `vendorId` is deliberately NOT part of this DTO.
+  //
+  // It used to be an optional client-supplied field, which meant any caller could
+  // create a store claiming another vendor's user id. `findByVendorIdOrThrow()` is what
+  // resolves ownership for tracking settings (and anything else keyed on the session),
+  // so claiming a victim's `vendorId` handed the caller that victim's store.
+  // Ownership is now always derived from the session by the controller - see
+  // `StoresController.createMine()`. Do not re-add this field.
 
   @ApiProperty({ description: 'Store name' })
   @IsString()

@@ -22,6 +22,8 @@ export interface CursorPaginatedStoresResult {
 
 @Injectable()
 export class StoresService {
+  private static readonly STORE_ID_CACHE_TTL_MS = 60_000;
+  private readonly storeIdByEmailCache = new Map<string, { id: Types.ObjectId | null; at: number }>();
   private readonly logger = new Logger(StoresService.name);
   constructor(
     @InjectModel(Store.name) private storeModel: Model<StoreDocument>,
@@ -42,10 +44,20 @@ export class StoresService {
     return slug;
   }
 
-  async create(createStoreDto: CreateStoreDto): Promise<Store> {
+  /**
+   * `vendorId` is passed explicitly by the controller from the authenticated session -
+   * it is never read from the request body, so a caller cannot claim another vendor's
+   * store. Omitting it creates an unlinked store (admin tooling), which no vendor-scoped
+   * endpoint can resolve.
+   */
+  async create(createStoreDto: CreateStoreDto, vendorId?: string): Promise<StoreDocument> {
     const vendorEmail = createStoreDto.vendorEmail?.toLowerCase();
     if (!vendorEmail) {
       throw new AppException(AppErrorCode.STORE_VENDOR_EMAIL_REQUIRED);
+    }
+
+    if (vendorId !== undefined && !Types.ObjectId.isValid(vendorId)) {
+      throw new AppException(AppErrorCode.VALIDATION_INVALID_ID, { field: 'vendorId' });
     }
 
     const existingVendor = await this.storeModel.findOne({ vendorEmail }).exec();
@@ -53,19 +65,33 @@ export class StoresService {
       throw new AppException(AppErrorCode.STORE_ALREADY_EXISTS);
     }
 
+    // A vendor owns at most one store. Checked up front so the failure is a clear 409
+    // rather than a duplicate-key E11000 from the `vendorId` unique index.
+    const vendorIdFilter = vendorId ? this.vendorIdFilter(vendorId) : null;
+    if (vendorIdFilter) {
+      const existingByVendorId = await this.storeModel.findOne(vendorIdFilter).exec();
+      if (existingByVendorId) {
+        throw new AppException(AppErrorCode.STORE_ALREADY_EXISTS);
+      }
+    }
+
     let storeSlug = createStoreDto.storeSlug || this.slugify(createStoreDto.storeName);
     const existingSlug = await this.storeModel.findOne({ storeSlug }).exec();
     if (existingSlug) {
       storeSlug = `${storeSlug}-${Date.now()}`;
     }
-
     const created = new this.storeModel({
       ...createStoreDto,
       vendorEmail,
       storeSlug,
+      // Cast explicitly rather than relying on Mongoose: a string here is exactly the
+      // defect `vendorIdFilter()` has to tolerate, so do not create new instances of it.
+      ...(vendorId ? { vendorId: new Types.ObjectId(vendorId) } : {}),
     });
 
-    return created.save();
+    const saved = await created.save();
+    this.storeIdByEmailCache.set(vendorEmail, { id: saved._id, at: Date.now() });
+    return saved;
   }
 
   async findAll(query: {
@@ -179,6 +205,84 @@ export class StoresService {
       throw new AppException(AppErrorCode.STORE_NOT_ACTIVE, { email });
     }
     return store;
+  }
+
+  /**
+   * Filter that matches a store by its owning vendor user.
+   *
+   * `Store.vendorId` is declared as an ObjectId, and Mongoose casts on every write it
+   * performs, so new documents are stored as BSON ObjectId. Some rows however predate
+   * that, or were written by a raw-driver script (`db.collection().updateOne()`), which
+   * bypasses Mongoose casting and leaves the value as a BSON **string**.
+   *
+   * MongoDB compares by BSON type, so `findOne({ vendorId: ObjectId(id) })` silently
+   * misses a row holding the identical 24 hex characters as a string. That is not
+   * hypothetical: it 404'd a real vendor's tracking settings. Both branches below sit
+   * on the same indexed field, so this stays a single index scan.
+   *
+   * See `scripts/migrate-store-vendorid-type.js` for the one-time data repair, and
+   * `PLAN_STOREFRONT.md` for the backfill gate. The fallback is kept deliberately so a
+   * future bad write degrades to "works" instead of "vendor locked out of their own
+   * settings".
+   */
+  private vendorIdFilter(vendorId: string): Record<string, unknown> | null {
+    if (!vendorId || !Types.ObjectId.isValid(vendorId)) return null;
+    return { vendorId: { $in: [new Types.ObjectId(vendorId), vendorId] } };
+  }
+
+  /**
+   * Resolves the store that owns a given vendor user.
+   * Used by the storeId migration to derive `storeId` from an authenticated request
+   * instead of from the vendor's mutable email address.
+   */
+  async findByVendorIdOrThrow(
+    vendorId: string,
+    opts?: { skipStatusCheck?: boolean },
+  ): Promise<StoreDocument> {
+    const filter = this.vendorIdFilter(vendorId);
+    const store = filter
+      ? await this.storeModel.findOne(filter).exec()
+      : null;
+    if (!store) {
+      throw new AppException(AppErrorCode.STORE_NOT_FOUND, { field: 'vendorId', value: vendorId });
+    }
+    if (!opts?.skipStatusCheck && store.status !== StoreStatus.ACTIVE) {
+      throw new AppException(AppErrorCode.STORE_NOT_ACTIVE, { vendorId });
+    }
+    return store;
+  }
+
+  /** Non-throwing variant. Returns null when the vendor has no store yet. */
+  async findByVendorId(
+    vendorId: string,
+  ): Promise<StoreDocument | null> {
+    const filter = this.vendorIdFilter(vendorId);
+    if (!filter) return null;
+    return this.storeModel.findOne(filter).exec();
+  }
+
+  /**
+   * Resolves a storeId from a vendor email. Used to backfill `storeId` on write paths and
+   * to build storeId-preferring read filters.
+   *
+   * Results are memoised for 60s: this sits on hot read paths (delivery fees, tracking
+   * pixels), and the store↔email mapping changes only when a vendor edits their store.
+   */
+  async resolveStoreIdByEmail(email: string): Promise<Types.ObjectId | null> {
+    if (!email) return null;
+    const key = email.toLowerCase();
+    const hit = this.storeIdByEmailCache.get(key);
+    if (hit && Date.now() - hit.at < StoresService.STORE_ID_CACHE_TTL_MS) {
+      return hit.id;
+    }
+    const store = await this.storeModel
+      .findOne({ vendorEmail: key })
+      .select('_id')
+      .lean()
+      .exec();
+    const id = store ? (store._id as Types.ObjectId) : null;
+    this.storeIdByEmailCache.set(key, { id, at: Date.now() });
+    return id;
   }
 
   async update(id: string, updateStoreDto: UpdateStoreDto): Promise<Store> {

@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { AppException } from '../../common/errors/app-exception';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Order, OrderDocument } from './schemas/order.schema';
 import { Counter, CounterDocument } from './schemas/counter.schema';
 import { Product, ProductDocument } from '../products/schemas/product.schema';
@@ -53,11 +53,71 @@ export class OrdersService {
     }
   }
 
-  private assertOrderOwnership(order: Order, user: RequestUser): void {
+  /**
+   * Scopes a query to the authenticated vendor's own orders, preferring the stable
+   * `storeId` and falling back to the legacy `vendorEmail` for pre-migration orders.
+   * The store↔email mapping is 1:1, so the `$or` never widens the result set.
+   */
+  private async vendorOrderFilter(vendorEmail: string): Promise<Record<string, any>> {
+    const storeId = await this.storesService
+      .resolveStoreIdByEmail(vendorEmail)
+      .catch(() => null);
+    return storeId
+      ? { $or: [{ storeId }, { vendorEmail }] }
+      : { vendorEmail };
+  }
+
+  /**
+   * D3 ownership check: compares the order's stable `storeId` against the caller's store
+   * rather than the mutable `vendorEmail`. Falls back to the email comparison only for
+   * orders written before the migration (no `storeId`) or callers with no store yet.
+   */
+  private async assertOrderOwnership(order: Order, user: RequestUser): Promise<void> {
     if (user.role === Role.ADMIN) return;
+
+    const store = user.id
+      ? await this.storesService.findByVendorId(user.id).catch(() => null)
+      : null;
+
+    if (store && order.storeId) {
+      if (String(order.storeId) === String(store._id)) return;
+      throw new AppException(AppErrorCode.AUTH_ORDER_OWNER_ONLY, { orderNo: order.orderNo });
+    }
+
     if (order.vendorEmail?.toLowerCase() !== user.email?.toLowerCase()) {
       throw new AppException(AppErrorCode.AUTH_ORDER_OWNER_ONLY, { orderNo: order.orderNo });
     }
+  }
+
+  /**
+   * Resolves the store a new order belongs to.
+   *
+   * - `storeId` (preferred) is authoritative: the store must exist, and its
+   *   `vendorEmail` is taken from the store record rather than trusted from the client,
+   *   so a mismatched pair can never be used to file an order against the wrong vendor.
+   * - Legacy `vendorEmail` still works; the storeId is backfilled from it when possible.
+   *
+   * Throws when neither is supplied, or when a supplied `storeId` does not exist.
+   */
+  private async resolveOrderStore(
+    dto: CreateOrderDto,
+  ): Promise<{ storeId: Types.ObjectId | null; vendorEmail: string }> {
+    if (dto.storeId) {
+      const store = await this.storesService.findOne(dto.storeId, { skipStatusCheck: true });
+      if (!store) {
+        throw new AppException(AppErrorCode.STORE_NOT_FOUND, { id: dto.storeId });
+      }
+      return { storeId: new Types.ObjectId(dto.storeId), vendorEmail: store.vendorEmail };
+    }
+
+    if (dto.vendorEmail) {
+      const storeId = await this.storesService
+        .resolveStoreIdByEmail(dto.vendorEmail)
+        .catch(() => null);
+      return { storeId, vendorEmail: dto.vendorEmail };
+    }
+
+    throw new AppException(AppErrorCode.VALIDATION_REQUIRED, { field: 'storeId' });
   }
 
   private async generateOrderNo(): Promise<string> {
@@ -77,9 +137,16 @@ export class OrdersService {
   }
 
   async create(createOrderDto: CreateOrderDto, user?: RequestUser): Promise<Order> {
+    // Resolve the store up front. `storeId` is preferred; the legacy `vendorEmail` is
+    // still accepted so the un-migrated storefront keeps working through Phase 3.
+    // Both end up on the document, so downstream vendor scoping is identical either way.
+    const storeRef = await this.resolveOrderStore(createOrderDto);
+    createOrderDto.storeId = storeRef.storeId?.toString();
+    createOrderDto.vendorEmail = storeRef.vendorEmail;
+
     if (user) {
       this.assertVendorOrAdmin(user);
-      if (user.role === Role.VENDOR && createOrderDto.vendorEmail?.toLowerCase() !== user.email?.toLowerCase()) {
+      if (user.role === Role.VENDOR && storeRef.vendorEmail?.toLowerCase() !== user.email?.toLowerCase()) {
         throw new AppException(AppErrorCode.AUTH_ORDER_OWNER_ONLY);
       }
     }
@@ -141,6 +208,9 @@ export class OrdersService {
 
     const placedStatus = (await this.statusesService.getBySlug('placed'))!;
 
+    // `storeId` was already resolved (and validated) at the top of `create()`.
+    const storeId = storeRef.storeId;
+
     let saved: OrderDocument;
     let retries = 0;
 
@@ -149,6 +219,7 @@ export class OrdersService {
 
       const created = new this.orderModel({
         ...createOrderDto,
+        ...(storeId ? { storeId } : {}),
         items,
         total,
         orderNo: nextNumber,
@@ -193,7 +264,7 @@ export class OrdersService {
     if (user) {
       this.assertVendorOrAdmin(user);
       if (user.role === Role.VENDOR) {
-        filter.vendorEmail = user.email;
+        Object.assign(filter, await this.vendorOrderFilter(user.email));
       } else if (query.vendorEmail) {
         filter.vendorEmail = query.vendorEmail;
       }
@@ -328,7 +399,7 @@ export class OrdersService {
     }
     if (user) {
       this.assertVendorOrAdmin(user);
-      this.assertOrderOwnership(order, user);
+      await this.assertOrderOwnership(order, user);
     }
     return order;
   }
@@ -380,7 +451,7 @@ export class OrdersService {
     const existing = await this.orderModel.findById(id).exec();
     if (!existing) throw new AppException(AppErrorCode.ORDER_NOT_FOUND, { id });
     if (user) {
-      this.assertOrderOwnership(existing, user);
+      await this.assertOrderOwnership(existing, user);
     }
 
     if (updateOrderDto.expectedUpdatedAt && existing.updatedAt) {
@@ -476,7 +547,7 @@ export class OrdersService {
     const existing = await this.orderModel.findById(id).exec();
     if (!existing) throw new AppException(AppErrorCode.ORDER_NOT_FOUND, { id });
     if (user) {
-      this.assertOrderOwnership(existing, user);
+      await this.assertOrderOwnership(existing, user);
     }
 
     if (existing.isDeleted) {
@@ -497,7 +568,7 @@ export class OrdersService {
     if (user) {
       this.assertVendorOrAdmin(user);
       if (user.role === Role.VENDOR) {
-        baseFilter.vendorEmail = user.email;
+        Object.assign(baseFilter, await this.vendorOrderFilter(user.email));
       }
     }
 
@@ -575,7 +646,7 @@ export class OrdersService {
     if (user) {
       this.assertVendorOrAdmin(user);
       if (user.role === Role.VENDOR) {
-        baseFilter.vendorEmail = user.email;
+        Object.assign(baseFilter, await this.vendorOrderFilter(user.email));
       }
     }
 

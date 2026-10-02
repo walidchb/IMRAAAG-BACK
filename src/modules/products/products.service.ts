@@ -75,9 +75,13 @@ export class ProductsService {
       slug = `${slug}-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
     }
 
+    // storeId migration shim: dual-write the canonical store reference alongside vendorEmail.
+    const storeId = await this.storesService.resolveStoreIdByEmail(vendorEmail).catch(() => null);
+
     const created = new this.productModel({
       ...createProductDto,
       vendorEmail,
+      ...(storeId ? { storeId } : {}),
       ...filled,
       price: createProductDto.price ?? createProductDto.originalPrice,
       slug,
@@ -92,7 +96,13 @@ export class ProductsService {
   async findAll(query: ProductQueryDto): Promise<CursorPaginatedResult<Product>> {
     const filter: Record<string, any> = { published: true, status: 'Active' };
 
-    if (query.vendorEmail) filter.vendorEmail = query.vendorEmail;
+    // `storeId` is preferred and takes precedence. The legacy `vendorEmail` remains
+    // supported so the un-migrated storefront keeps working through Phase 3.
+    if (query.storeId) {
+      filter.storeId = new Types.ObjectId(query.storeId);
+    } else if (query.vendorEmail) {
+      filter.vendorEmail = query.vendorEmail;
+    }
     if (query.category) filter.category = query.category;
     if (query.subCategory) filter.subCategory = query.subCategory;
     if (query.minPrice !== undefined || query.maxPrice !== undefined) {
@@ -207,8 +217,43 @@ export class ProductsService {
     return { products: items as Product[], nextCursor, hasMore };
   }
 
+  /**
+   * D3 ownership check (PLAN_STORE_ID_MIGRATION.md).
+   *
+   * A vendor may only touch documents that belong to their own store. Compares the stable
+   * `storeId` rather than the mutable `vendorEmail`. Falls back to the legacy email
+   * comparison only for documents written before the migration (no `storeId`) or for
+   * callers that have no store record yet.
+   */
+  private async assertOwnership(
+    doc: { storeId?: Types.ObjectId | null; vendorEmail?: string | null },
+    userId: string | undefined,
+    userEmail: string,
+    action: string,
+  ): Promise<void> {
+    const store = userId ? await this.storesService.findByVendorId(userId).catch(() => null) : null;
+
+    if (store) {
+      const docStoreId = doc.storeId ? String(doc.storeId) : null;
+      if (docStoreId === String(store._id)) return;
+      // Document predates the migration: allow the legacy email match, otherwise deny.
+      if (!docStoreId && this.sameEmail(doc.vendorEmail, userEmail)) return;
+      throw new AppException(AppErrorCode.PRODUCT_ACCESS_DENIED, { action });
+    }
+
+    if (this.sameEmail(doc.vendorEmail, userEmail)) return;
+    throw new AppException(AppErrorCode.PRODUCT_ACCESS_DENIED, { action });
+  }
+
+  private sameEmail(a?: string | null, b?: string | null): boolean {
+    return !!a && !!b && a.toLowerCase() === b.toLowerCase();
+  }
+
   async findVendorProducts(vendorEmail: string, query: VendorProductQueryDto): Promise<CursorPaginatedResult<Product>> {
-    const filter: Record<string, any> = { vendorEmail };
+    const storeId = await this.storesService.resolveStoreIdByEmail(vendorEmail).catch(() => null);
+    const filter: Record<string, any> = storeId
+      ? { $or: [{ storeId }, { vendorEmail }] }
+      : { vendorEmail };
 
     if (query.category) filter.category = query.category;
     if (query.subCategory) filter.subCategory = query.subCategory;
@@ -343,12 +388,10 @@ export class ProductsService {
     return product;
   }
 
-  async update(id: string, updateProductDto: UpdateProductDto, userEmail: string): Promise<Product> {
+  async update(id: string, updateProductDto: UpdateProductDto, userEmail: string, userId?: string): Promise<Product> {
     const existing = await this.productModel.findById(id).exec();
     if (!existing) throw new AppException(AppErrorCode.PRODUCT_NOT_FOUND, { id });
-    if (existing.vendorEmail !== userEmail) {
-      throw new AppException(AppErrorCode.PRODUCT_ACCESS_DENIED, { action: 'update' });
-    }
+    await this.assertOwnership(existing, userId, userEmail, 'update');
 
     const updateData: Record<string, any> = {};
 
@@ -459,17 +502,26 @@ export class ProductsService {
       .exec();
   }
 
-  async remove(id: string, userEmail: string): Promise<{ id: string; deleted: true }> {
+  async remove(id: string, userEmail: string, userId?: string): Promise<{ id: string; deleted: true }> {
     const orderCount = await this.orderModel.countDocuments({ 'items.productId': id }).exec();
     if (orderCount > 0) {
       throw new AppException(AppErrorCode.PRODUCT_CANNOT_DELETE_HAS_ORDERS, { id, count: orderCount });
     }
 
-    const result = await this.productModel.findOneAndDelete({ _id: id, vendorEmail: userEmail }).exec();
+    const existing = await this.productModel.findById(id).exec();
+    if (!existing) throw new AppException(AppErrorCode.PRODUCT_NOT_FOUND, { id });
+    await this.assertOwnership(existing, userId, userEmail, 'delete');
+
+    // Filter is scoped by `_id` plus the already-verified owner, so this cannot delete
+    // another vendor's product even under a concurrent write.
+    const result = await this.productModel.findOneAndDelete({
+      _id: id,
+      ...(existing.storeId
+        ? { storeId: existing.storeId }
+        : { vendorEmail: existing.vendorEmail }),
+    }).exec();
     if (!result) {
-      const exists = await this.productModel.findById(id).select('_id').exec();
-      if (!exists) throw new AppException(AppErrorCode.PRODUCT_NOT_FOUND, { id });
-      throw new AppException(AppErrorCode.PRODUCT_ACCESS_DENIED, { action: 'delete' });
+      throw new AppException(AppErrorCode.PRODUCT_NOT_FOUND, { id });
     }
 
     this.cacheService.clear('categories:');
@@ -492,12 +544,10 @@ export class ProductsService {
     return { id: String(result._id), deleted: true };
   }
 
-  async duplicate(id: string, userEmail: string): Promise<Product> {
+  async duplicate(id: string, userEmail: string, userId?: string): Promise<Product> {
     const original = await this.productModel.findById(id).exec();
     if (!original) throw new AppException(AppErrorCode.PRODUCT_NOT_FOUND, { id });
-    if (original.vendorEmail !== userEmail) {
-      throw new AppException(AppErrorCode.PRODUCT_ACCESS_DENIED, { action: 'duplicate' });
-    }
+    await this.assertOwnership(original, userId, userEmail, 'duplicate');
 
     const baseName = firstNonEmpty(original.nameEn, original.nameAr, original.nameFr);
     let slug = `${this.slugify(baseName)}-copy`;
@@ -509,6 +559,7 @@ export class ProductsService {
     const duplicateDoc = new this.productModel({
       vendorEmail: original.vendorEmail,
       vendorId: original.vendorId,
+      ...(original.storeId ? { storeId: original.storeId } : {}),
       nameEn: original.nameEn,
       nameAr: original.nameAr,
       nameFr: original.nameFr,

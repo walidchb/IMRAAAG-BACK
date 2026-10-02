@@ -51,7 +51,7 @@ export class Store {
   @Prop({ type: Object, default: {} })
   socialMedia: Record<string, string>;
 
-  @Prop({ default: StoreStatus.ACTIVE, enum: StoreStatus })
+  @Prop({ type: String, default: StoreStatus.ACTIVE, enum: Object.values(StoreStatus) })
   status: StoreStatus;
 
   /** @deprecated Use `wilaya` and `commune` root-level fields instead */

@@ -144,6 +144,19 @@ async function main() {
   const perCategory = Math.ceil(50 / catIds.length);
   const vendorEmail = 'walidchebbab2001@gmail.com';
 
+  // storeId migration: resolve the vendor's store and refuse to run without one, so the
+  // script cannot recreate un-migrated products that no store can claim.
+  const store = await mongoose.connection.db.collection('stores').findOne({ vendorEmail });
+  if (!store) {
+    throw new Error(
+      `No store found for vendorEmail "${vendorEmail}". Refusing to seed: products would be created ` +
+      `without a storeId and could never be attributed to a store. Create the store first ` +
+      `(e.g. via src/scripts/seed-vendors.ts), then re-run.`
+    );
+  }
+  const storeId = store._id;
+  console.log(`Seeding for ${vendorEmail} -> storeId ${storeId}`);
+
   let idx = 0;
 
   for (const catId of catIds) {
@@ -159,6 +172,7 @@ async function main() {
       const now = new Date(Date.now() + idx);
 
       const doc = {
+        storeId,
         vendorEmail,
         nameEn: prod.nameEn,
         nameAr: prod.nameAr,
@@ -187,8 +201,15 @@ async function main() {
     }
   }
 
-  const total = await mongoose.connection.db.collection('products').countDocuments({ vendorEmail });
-  console.log(`\nDone! Total products for ${vendorEmail}: ${total}`);
+  const total = await mongoose.connection.db.collection('products').countDocuments({ storeId });
+  const byLegacyEmail = await mongoose.connection.db.collection('products').countDocuments({ vendorEmail });
+  console.log(`\nDone! Products for store ${storeId}: ${total}`);
+  if (byLegacyEmail !== total) {
+    console.warn(
+      `Warning: ${byLegacyEmail - total} product(s) carry vendorEmail "${vendorEmail}" but a different ` +
+      `storeId. Re-run scripts/migrate-store-id.js to reconcile.`
+    );
+  }
   await mongoose.disconnect();
 }
 
