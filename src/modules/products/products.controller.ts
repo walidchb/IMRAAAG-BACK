@@ -14,22 +14,33 @@ import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { ProductQueryDto, VendorProductQueryDto } from './dto/product-query.dto';
+import { ProductQueryDto, VendorProductQueryDto, ProductSuggestionQueryDto } from './dto/product-query.dto';
 import { Product } from './schemas/product.schema';
 import { Public } from '../auth/decorators/public.decorator';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Role } from '../../common/constants/roles.enum';
 
 @ApiTags('Products')
 @Controller('products')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
+  // D-7: `RolesGuard` is a strict allowlist, so listing ADMIN alongside VENDOR mirrors
+  // `ProductsService.assertVendorOrAdmin` exactly. The point of the guard is to stop a
+  // CUSTOMER reaching these routes at all - they previously could, and only the
+  // service's ownership check stood between them and another vendor's catalogue.
+  @Roles(Role.VENDOR, Role.ADMIN)
   @Throttle({ default: { limit: 10, ttl: 3600000 } })
   @Post()
   @ApiOperation({ summary: 'Create a new product' })
   @ApiResponse({ status: 201, description: 'Product created', type: Product })
   create(@Body() createProductDto: CreateProductDto, @Req() req: any) {
-    const user = req.user as { email: string; sub: string };
-    createProductDto.vendorId = user.sub;
+    // D-7: this used to read `user.sub`, which the JWT strategy has never populated - it
+    // returns `{ id, email, role }`. So `vendorId` was always `undefined`, and the field
+    // was nonetheless client-settable through the body, which is a privilege-escalation
+    // hole of the same shape as the one closed on `CreateStoreDto.vendorId`. Seller
+    // identity is `storeId`, resolved from the session by the service.
+    const user = req.user as { email: string };
     return this.productsService.create(createProductDto, user.email);
   }
 
@@ -51,9 +62,9 @@ export class ProductsController {
   }
 
   @Get('vendor')
-  @ApiOperation({ summary: 'List vendor\'s own products (protected, cursor-based pagination)' })
-  @ApiQuery({ name: 'limit', required: false })
-  @ApiQuery({ name: 'cursor', required: false })
+  @ApiOperation({ summary: 'List vendor\'s own products (protected, offset pagination)' })
+  @ApiQuery({ name: 'limit', required: false, description: 'Items per page (default 20, max 100)' })
+  @ApiQuery({ name: 'page', required: false, description: 'Page number (default 1)' })
   @ApiQuery({ name: 'search', required: false })
   @ApiQuery({ name: 'category', required: false })
   @ApiQuery({ name: 'subCategory', required: false })
@@ -61,11 +72,34 @@ export class ProductsController {
   @ApiQuery({ name: 'maxPrice', required: false })
   @ApiQuery({ name: 'sortBy', required: false, enum: ['price_asc', 'price_desc', 'newest', 'name'] })
   @ApiQuery({ name: 'published', required: false })
-  @ApiQuery({ name: 'status', required: false })
-  @ApiResponse({ status: 200, description: 'Vendor products with cursor pagination' })
+  @ApiResponse({ status: 200, description: 'Vendor products with offset pagination' })
   findVendorProducts(@Query() query: VendorProductQueryDto, @Req() req: any) {
     const user = req.user as { email: string };
     return this.productsService.findVendorProducts(user.email, query);
+  }
+
+  /**
+   * Product suggestions for the inventory search box's autocomplete.
+   *
+   * Three properties matter and are why this is not another use of `GET /products/vendor`:
+   *  - the store is resolved from the session (the service takes the vendor id), so a
+   *    caller can only ever be shown their own catalogue;
+   *  - the response is a handful of projected fields, sized for a dropdown;
+   *  - it never touches variant stock or the `GET /inventory` listing, so typing here
+   *    cannot move the grid.
+   *
+   * Declared before `GET :id` on purpose: Express matches routes in declaration order,
+   * and `search` would otherwise be swallowed by the `:id` parameter route.
+   */
+  @Roles(Role.VENDOR, Role.ADMIN)
+  @Throttle({ default: { limit: 120, ttl: 60000 } })
+  @Get('search')
+  @ApiOperation({ summary: 'Lightweight product suggestions for the current store (inventory search)' })
+  @ApiQuery({ name: 'q', required: true })
+  @ApiQuery({ name: 'limit', required: false })
+  searchSuggestions(@Query() query: ProductSuggestionQueryDto, @Req() req: any) {
+    const user = req.user as { id: string };
+    return this.productsService.searchSuggestions(user.id, query);
   }
 
   @Public()
@@ -86,6 +120,7 @@ export class ProductsController {
     return this.productsService.findOne(id);
   }
 
+  @Roles(Role.VENDOR, Role.ADMIN)
   @Throttle({ default: { limit: 30, ttl: 60000 } })
   @Patch(':id')
   @ApiOperation({ summary: 'Update product by ID' })
@@ -96,6 +131,7 @@ export class ProductsController {
     return this.productsService.update(id, updateProductDto, user.email, user.id);
   }
 
+  @Roles(Role.VENDOR, Role.ADMIN)
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Delete(':id')
   @ApiOperation({ summary: 'Delete product by ID' })
@@ -106,6 +142,7 @@ export class ProductsController {
     return this.productsService.remove(id, user.email, user.id);
   }
 
+  @Roles(Role.VENDOR, Role.ADMIN)
   @Throttle({ default: { limit: 10, ttl: 3600000 } })
   @Post(':id/duplicate')
   @ApiOperation({ summary: 'Duplicate a product' })

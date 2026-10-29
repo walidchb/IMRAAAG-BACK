@@ -3,6 +3,7 @@ import {
   IsString,
   IsOptional,
   IsNumber,
+  IsInt,
   IsIn,
   Min,
   ValidateNested,
@@ -10,6 +11,7 @@ import {
   IsNotEmpty,
   ArrayMinSize,
   Matches,
+  IsMongoId,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
@@ -26,7 +28,7 @@ class UpdateOrderItemDto {
   @ApiPropertyOptional() @IsOptional() @IsString()
   productName?: string;
 
-  @ApiPropertyOptional() @IsOptional() @IsNumber() @Min(1)
+  @ApiPropertyOptional() @IsOptional() @IsInt() @Min(1)
   quantity?: number;
 
   @ApiPropertyOptional() @IsOptional() @IsNumber() @Min(0)
@@ -35,8 +37,27 @@ class UpdateOrderItemDto {
   @ApiPropertyOptional() @IsOptional() @IsString()
   variantDetails?: string;
 
+  /** Phase 4 (roadmap 4.6) - see `CreateOrderDto`'s item DTO. */
+  @ApiPropertyOptional() @IsOptional() @IsString() @IsMongoId()
+  variantId?: string;
+
   @ApiPropertyOptional() @IsOptional() @IsNumber()
   weight?: number;
+
+  /** Immutable snapshot fields echoed back from the order document. Idempotent — never
+   *  used by `update()`, but the storefront sends the full mapped order, so they must
+   *  survive whitelist validation. */
+  @ApiPropertyOptional() @Allow()
+  lineId?: string;
+
+  @ApiPropertyOptional() @Allow()
+  sku?: string;
+
+  @ApiPropertyOptional() @Allow()
+  variantSnapshot?: unknown;
+
+  @ApiPropertyOptional() @Allow()
+  image?: string;
 }
 
 class UpdateCustomerDto {

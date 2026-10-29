@@ -1,13 +1,17 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Store, StoreSchema } from './schemas/store.schema';
+import { Product, ProductSchema } from '../products/schemas/product.schema';
 import { StoresController } from './stores.controller';
 import { StoresService } from './stores.service';
 import { UploadModule } from '../upload/upload.module';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Store.name, schema: StoreSchema }]),
+    MongooseModule.forFeature([
+      { name: Store.name, schema: StoreSchema },
+      { name: Product.name, schema: ProductSchema },
+    ]),
     UploadModule,
   ],
   controllers: [StoresController],

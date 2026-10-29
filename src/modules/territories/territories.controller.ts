@@ -2,6 +2,8 @@ import { Controller, Get, Post, Patch, Query, Body } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery, ApiBody } from '@nestjs/swagger';
 import { TerritoriesService } from './territories.service';
 import { Public } from '../auth/decorators/public.decorator';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Role } from '../../common/constants/roles.enum';
 
 @ApiTags('Territories')
 @Controller('territories')
@@ -23,6 +25,7 @@ export class TerritoriesController {
     return this.territoriesService.getCommunes(wilayaCode);
   }
 
+  @Roles(Role.ADMIN)
   @Patch('wilayas/uuid')
   @ApiOperation({ summary: 'Update delivery company UUID for a wilaya' })
   @ApiBody({ schema: { example: { code: '16', zrexpress_uuid: 'uuid-here', yalidine_uuid: 'uuid-here', ecomdelivery_uuid: 'uuid-here' } } })
@@ -30,6 +33,7 @@ export class TerritoriesController {
     return this.territoriesService.updateWilayaUuid(body.code, body.zrexpress_uuid, body.yalidine_uuid, body.ecomdelivery_uuid);
   }
 
+  @Roles(Role.ADMIN)
   @Patch('communes/uuid')
   @ApiOperation({ summary: 'Update delivery company UUID for a commune' })
   @ApiBody({ schema: { example: { post_code: '16001', zrexpress_uuid: 'uuid-here', yalidine_uuid: 'uuid-here', ecomdelivery_uuid: 'uuid-here' } } })
@@ -37,12 +41,14 @@ export class TerritoriesController {
     return this.territoriesService.updateCommuneUuid(body.post_code, body.zrexpress_uuid, body.yalidine_uuid, body.ecomdelivery_uuid);
   }
 
+  @Roles(Role.ADMIN)
   @Post('seed')
   @ApiOperation({ summary: 'Seed wilayas and communes from JSON files' })
   seed() {
     return this.territoriesService.seed();
   }
 
+  @Roles(Role.ADMIN)
   @Post('migrate')
   @ApiOperation({ summary: 'Migrate communes from old wilayas to new wilayas (49-58)' })
   migrate() {

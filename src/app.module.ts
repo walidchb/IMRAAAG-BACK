@@ -17,12 +17,17 @@ import { AuthModule } from './modules/auth/auth.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { DeliveryModule } from './modules/delivery/delivery.module';
+import { DeliveryStatusModule } from './modules/delivery/delivery-status/delivery-status.module';
 import { DeliveryFeesModule } from './modules/delivery-fees/delivery-fees.module';
 import { TerritoriesModule } from './modules/territories/territories.module';
 import { ProfileModule } from './modules/profile/profile.module';
 import { TrackingModule } from './modules/tracking/tracking.module';
 import { SavedProductsModule } from './modules/saved-products/saved-products.module';
 import { SearchModule } from './modules/search/search.module';
+import { InventoryModule } from './modules/inventory/inventory.module';
+import { PosModule } from './modules/pos/pos.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { OrderLabelsModule } from './modules/order-labels/order-labels.module';
 
 @Module({
   imports: [
@@ -52,12 +57,17 @@ import { SearchModule } from './modules/search/search.module';
     CategoriesModule,
     UploadModule,
     DeliveryModule,
+    DeliveryStatusModule,
     DeliveryFeesModule,
     TerritoriesModule,
     ProfileModule,
     TrackingModule,
     SavedProductsModule,
     SearchModule,
+    InventoryModule,
+    PosModule,
+    AnalyticsModule,
+    OrderLabelsModule,
   ],
   controllers: [AppController],
   providers: [AppService, CacheService, { provide: APP_GUARD, useClass: AppThrottlerGuard }],

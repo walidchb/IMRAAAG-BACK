@@ -4,6 +4,7 @@ import { AppErrorCode } from '../../common/errors/error-codes.enum';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Store, StoreDocument } from './schemas/store.schema';
+import { Product, ProductDocument } from '../products/schemas/product.schema';
 import { CreateStoreDto } from './dto/create-store.dto';
 import { UpdateStoreDto } from './dto/update-store.dto';
 import { StoreStatus } from './schemas/store-status.enum';
@@ -27,6 +28,7 @@ export class StoresService {
   private readonly logger = new Logger(StoresService.name);
   constructor(
     @InjectModel(Store.name) private storeModel: Model<StoreDocument>,
+    @InjectModel(Product.name) private productModel: Model<ProductDocument>,
     private readonly uploadService: UploadService,
   ) {}
 
@@ -157,6 +159,8 @@ export class StoresService {
     const hasMore = items.length > limit;
     if (hasMore) items.pop();
 
+    await this.attachPublishedProductCounts(items);
+
     let nextCursor: CursorDto | null = null;
     if (items.length > 0) {
       const last = items[items.length - 1];
@@ -171,40 +175,75 @@ export class StoresService {
     return { stores: items as Store[], nextCursor, hasMore };
   }
 
-  async findOne(id: string, opts?: { skipStatusCheck?: boolean }): Promise<Store> {
+  async findOne(id: string, opts?: { skipStatusCheck?: boolean; includePublishedCount?: boolean }): Promise<Store> {
     const store = await this.storeModel.findById(id).exec();
     if (!store) throw new AppException(AppErrorCode.STORE_NOT_FOUND, { id });
     if (!opts?.skipStatusCheck && store.status !== StoreStatus.ACTIVE) {
       throw new AppException(AppErrorCode.STORE_NOT_ACTIVE, { id });
     }
+    if (opts?.includePublishedCount) await this.attachPublishedProductCounts([store]);
     return store;
   }
 
-  async findBySlug(slug: string, opts?: { skipStatusCheck?: boolean }): Promise<Store> {
+  async findBySlug(slug: string, opts?: { skipStatusCheck?: boolean; includePublishedCount?: boolean }): Promise<Store> {
     const store = await this.storeModel.findOne({ storeSlug: slug }).exec();
     if (!store) throw new AppException(AppErrorCode.STORE_NOT_FOUND, { field: 'slug', value: slug });
     if (!opts?.skipStatusCheck && store.status !== StoreStatus.ACTIVE) {
       throw new AppException(AppErrorCode.STORE_NOT_ACTIVE, { slug });
     }
+    if (opts?.includePublishedCount) await this.attachPublishedProductCounts([store]);
     return store;
   }
 
-  async findByVendor(vendorId: string, opts?: { skipStatusCheck?: boolean }): Promise<Store> {
+  async findByVendor(vendorId: string, opts?: { skipStatusCheck?: boolean; includePublishedCount?: boolean }): Promise<Store> {
     const store = await this.storeModel.findOne({ vendorId }).exec();
     if (!store) throw new AppException(AppErrorCode.STORE_NOT_FOUND, { field: 'vendorId', value: vendorId });
     if (!opts?.skipStatusCheck && store.status !== StoreStatus.ACTIVE) {
       throw new AppException(AppErrorCode.STORE_NOT_ACTIVE, { vendorId });
     }
+    if (opts?.includePublishedCount) await this.attachPublishedProductCounts([store]);
     return store;
   }
 
-  async findByEmail(email: string, opts?: { skipStatusCheck?: boolean }): Promise<Store> {
+  async findByEmail(email: string, opts?: { skipStatusCheck?: boolean; includePublishedCount?: boolean }): Promise<Store> {
     const store = await this.storeModel.findOne({ vendorEmail: email.toLowerCase() }).exec();
     if (!store) throw new AppException(AppErrorCode.STORE_NOT_FOUND, { field: 'email', value: email });
     if (!opts?.skipStatusCheck && store.status !== StoreStatus.ACTIVE) {
       throw new AppException(AppErrorCode.STORE_NOT_ACTIVE, { email });
     }
+    if (opts?.includePublishedCount) await this.attachPublishedProductCounts([store]);
     return store;
+  }
+
+  /**
+   * Replaces the denormalised `totalProducts` counter with a live count of the products
+   * the storefront can actually list (`published: true`). The counter is incremented on
+   * product creation (including drafts), is not touched by publish/unpublish or product
+   * duplication, and can therefore drift far below the real catalogue size. Public store
+   * reads must not trust it.
+   *
+   * One aggregation for a whole store page, never one query per store.
+   */
+  private async attachPublishedProductCounts(stores: any[]): Promise<void> {
+    const ids = stores
+      .map((store) => store?._id)
+      .filter((id) => !!id && Types.ObjectId.isValid(String(id)))
+      .map((id) => new Types.ObjectId(String(id)));
+    if (ids.length === 0) return;
+
+    const rows = await this.productModel
+      .aggregate<{ _id: Types.ObjectId; count: number }>([
+        { $match: { storeId: { $in: ids }, published: true } },
+        { $group: { _id: '$storeId', count: { $sum: 1 } } },
+      ])
+      .exec();
+
+    const counts = new Map<string, number>(
+      rows.map((row) => [String(row._id), row.count] as [string, number]),
+    );
+    for (const store of stores) {
+      if (store?._id) store.totalProducts = counts.get(String(store._id)) ?? 0;
+    }
   }
 
   /**
@@ -304,6 +343,9 @@ export class StoresService {
     if (updateStoreDto.wilaya !== undefined) updateData.wilaya = updateStoreDto.wilaya;
     if (updateStoreDto.categories !== undefined) updateData.categories = updateStoreDto.categories;
     if (updateStoreDto.tagline !== undefined) updateData.tagline = updateStoreDto.tagline;
+    if (updateStoreDto.inventoryEnabled !== undefined) {
+      updateData.inventoryEnabled = updateStoreDto.inventoryEnabled;
+    }
 
     if (updateStoreDto.storeName) {
       let storeSlug = this.slugify(updateStoreDto.storeName);

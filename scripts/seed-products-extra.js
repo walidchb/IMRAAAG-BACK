@@ -1,9 +1,15 @@
 require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') });
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const mongoose = require('mongoose');
 
 const MONGO_URI = process.env.MONGODB_URI;
+
+// Collection names resolved from the compiled schemas (same lib the inventory scripts use) so a
+// schema rename cannot silently redirect the seed writes into phantom collections.
+const { inventoryCollectionNames } = require('./lib/inventory-collections');
+const COL = inventoryCollectionNames();
 
 const extraProducts = [
   { nameEn: 'Crepe Wrap Dress', nameAr: 'فستان ملفوف كريب', nameFr: 'Robe Portefeuille Crêpe', slug: 'crepe-wrap-dress' },
@@ -100,19 +106,6 @@ const stories = {
   ],
 };
 
-const variantTemplate = {
-  nameEn: 'Size',
-  nameAr: 'المقاس',
-  nameFr: 'Taille',
-  type: 'generic',
-  options: [
-    { nameEn: 'S', nameAr: 'صغير', nameFr: 'S' },
-    { nameEn: 'M', nameAr: 'متوسط', nameFr: 'M' },
-    { nameEn: 'L', nameAr: 'كبير', nameFr: 'L' },
-    { nameEn: 'XL', nameAr: 'كبير جدًا', nameFr: 'XL' },
-  ],
-};
-
 function shuffle(arr) {
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -123,6 +116,58 @@ function shuffle(arr) {
 
 function randomFrom(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
+}
+
+/**
+ * Default-variant combination key: sha1 of the value id, matching
+ * `VariantsService.combinationKeyFor`. Single id, so the service's canonicalization
+ * (sorted, deduped, `:`-joined) is just the id itself.
+ */
+function defaultCombinationKey(valueId) {
+  return crypto.createHash('sha1').update(String(valueId)).digest('hex');
+}
+
+/**
+ * Builds the default variant chain for a freshly inserted product, mirroring
+ * `VariantsService.createDefaultVariant` ("Default"/"One Size" option+value, one variant,
+ * `onHand` balance, `initial_stock` movement). Raw-driver insert because the seed scripts
+ * bypass the Nest container; the four writes must agree with what the service would write.
+ */
+async function createDefaultVariant(productId, storeId, initialQuantity) {
+  const db = mongoose.connection.db;
+  const now = new Date();
+  const optionId = new mongoose.Types.ObjectId();
+  const valueId = new mongoose.Types.ObjectId();
+  const variantId = new mongoose.Types.ObjectId();
+
+  await db.collection(COL.options).insertOne({
+    _id: optionId, storeId, productId,
+    key: 'default', nameEn: 'Default', nameAr: 'افتراضي', nameFr: 'Par défaut',
+    position: 0, type: 'text', createdAt: now, updatedAt: now,
+  });
+  await db.collection(COL.optionValues).insertOne({
+    _id: valueId, storeId, productId, optionId,
+    value: 'default', valueEn: 'One Size', valueAr: 'مقاس واحد', valueFr: 'Taille unique',
+    color: null, position: 0, isActive: true, createdAt: now, updatedAt: now,
+  });
+  await db.collection(COL.variants).insertOne({
+    _id: variantId, storeId, productId,
+    combinationKey: defaultCombinationKey(valueId),
+    sku: null, isActive: true, isDeleted: false, position: 0, createdAt: now, updatedAt: now,
+  });
+  await db.collection(COL.joins).insertOne({
+    storeId, variantId, optionValueId: valueId, createdAt: now, updatedAt: now,
+  });
+  await db.collection(COL.balances).insertOne({
+    storeId, variantId, onHand: initialQuantity, reserved: 0, lowStockThreshold: null,
+    createdAt: now, updatedAt: now,
+  });
+  await db.collection(COL.movements).insertOne({
+    storeId, variantId, type: 'initial_stock',
+    quantityDelta: initialQuantity, onHandBefore: 0, onHandAfter: initialQuantity,
+    reservedBefore: 0, reservedAfter: 0,
+    reason: 'Default variant created on product creation', actorUserId: null, createdAt: now,
+  });
 }
 
 async function main() {
@@ -171,6 +216,11 @@ async function main() {
 
       const now = new Date(Date.now() + idx);
 
+      // Ahead of the insert, draw the quantity that becomes the default variant's opening
+      // balance (and the `initial_stock` movement). `Product.stock` no longer exists: every
+      // product is a variant product and the balance is the only source of stock.
+      const initialStock = Math.floor(Math.random() * 50) + 5;
+
       const doc = {
         storeId,
         vendorEmail,
@@ -185,18 +235,16 @@ async function main() {
         subCategory: subCat._id.$oid || subCat._id,
         originalPrice: Math.floor(Math.random() * 5000) + 500,
         price: Math.floor(Math.random() * 4000) + 300,
-        stock: Math.floor(Math.random() * 50) + 5,
         weight: parseFloat((Math.random() * 2 + 0.1).toFixed(2)),
         image: img,
         images: shuffle([...imagePool]).slice(0, 3),
-        status: 'Active',
         published: true,
-        variants: [variantTemplate],
         createdAt: now,
         updatedAt: now,
       };
 
       await mongoose.connection.db.collection('products').insertOne(doc);
+      await createDefaultVariant(doc._id, storeId, initialStock);
       console.log(`Created: ${prod.nameEn} (${catInfo.data.nameEn} > ${subCat.nameEn})`);
     }
   }

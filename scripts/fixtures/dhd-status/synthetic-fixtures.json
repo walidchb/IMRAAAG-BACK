@@ -1,0 +1,45 @@
+{
+  "synthetic": true,
+  "source": "ECOTRACK Postman collection and DHD live labels captured in the implementation plan; replace with recorded live responses during D0 when credentials exist.",
+  "parcels": [
+    { "status": "Prête à expédier", "expectedStatus": "processing", "expectedSignal": "none" },
+    { "status": "Prête à préparer", "expectedStatus": "preparing", "expectedSignal": "none" },
+    { "status": "En ramassage", "expectedStatus": "dispatch_local", "expectedSignal": "none" },
+    { "status": "Stock en préparation", "expectedStatus": "preparing", "expectedSignal": "none" },
+    { "status": "Vers hub", "expectedStatus": "dispatch_local", "expectedSignal": "in_transit" },
+    { "status": "En hub", "expectedStatus": "dispatch_interwilaya", "expectedSignal": "in_transit" },
+    { "status": "Vers wilaya", "expectedStatus": "dispatch_interwilaya", "expectedSignal": "in_transit" },
+    { "status": "En préparation", "expectedStatus": "preparing", "expectedSignal": "none" },
+    { "status": "En livraison", "expectedStatus": "out_for_delivery", "expectedSignal": "in_transit" },
+    { "status": "Suspendus", "expectedStatus": "unknown", "expectedSignal": "none" },
+    { "status": "Livre non encaissé", "expectedStatus": "delivered", "expectedSignal": "delivered" },
+    { "status": "Livre encaissé non payé", "expectedStatus": "cash_collected", "expectedSignal": "delivered" },
+    { "status": "Paiement prêt", "expectedStatus": "settled", "expectedSignal": "delivered" },
+    { "status": "Paiement archivé", "expectedStatus": "settled", "expectedSignal": "delivered" },
+    { "status": "Retours chez livreur", "expectedStatus": "returned", "expectedSignal": "returned" },
+    { "status": "Retours en transit stock", "expectedStatus": "returned", "expectedSignal": "returned" },
+    { "status": "Retours en traitement", "expectedStatus": "returned", "expectedSignal": "returned" },
+    { "status": "Retours reçu", "expectedStatus": "returned", "expectedSignal": "returned" },
+    { "status": "Retours archivé", "expectedStatus": "returned", "expectedSignal": "returned" },
+    { "status": "Retours à dispatcher vers stock", "expectedStatus": "returned", "expectedSignal": "returned" },
+    { "status": "Retours prêts", "expectedStatus": "returned", "expectedSignal": "returned" },
+    { "status": "Retours en stock", "expectedStatus": "returned", "expectedSignal": "returned" },
+    { "status": "Annulé", "expectedStatus": "cancelled", "expectedSignal": "cancelled" },
+    { "status": "Nouvelle situation inconnue", "expectedStatus": "unknown", "expectedSignal": "none" }
+  ],
+  "activities": [
+    { "status": "Picked", "expectedStatus": "dispatch_local", "expectedSignal": "in_transit" },
+    { "status": "Accepted by carrier", "expectedStatus": "dispatch_interwilaya", "expectedSignal": "in_transit" },
+    { "status": "Dispatched to driver", "expectedStatus": "out_for_delivery", "expectedSignal": "in_transit" },
+    { "status": "Livred", "expectedStatus": "delivered", "expectedSignal": "delivered" },
+    { "status": "Encaissed", "expectedStatus": "cash_collected", "expectedSignal": "delivered" },
+    { "status": "Payed", "expectedStatus": "settled", "expectedSignal": "delivered" },
+    { "status": "Return received", "expectedStatus": "returned", "expectedSignal": "returned" },
+    { "status": "Attempt_delivery", "expectedStatus": "out_for_delivery", "expectedSignal": "none" },
+    { "status": "Notification on order", "expectedStatus": "unknown", "expectedSignal": "none" }
+  ],
+  "rateLimit": {
+    "httpStatus": 429,
+    "body": { "message": "Too Many Attempts." }
+  }
+}

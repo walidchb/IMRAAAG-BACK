@@ -7,13 +7,22 @@ import { NoestDesk, NoestDeskSchema } from './schemas/noest-desk.schema';
 import { EcomDesk, EcomDeskSchema } from './schemas/ecom-desk.schema';
 import { ZrHub, ZrHubSchema } from './schemas/zr-hub.schema';
 import { DhdDesk, DhdDeskSchema } from './schemas/dhd-desk.schema';
+import {
+  DeliveryParcelStatus,
+  DeliveryParcelStatusSchema,
+} from './schemas/delivery-parcel-status.schema';
 import { DeliveryController } from './delivery.controller';
 import { DeliveryService } from './delivery.service';
 import { DeliveryCompaniesService } from './delivery-companies.service';
+import { DeliveryParcelStatusService } from './delivery-parcel-status.service';
 import { DeliveryFeesModule } from '../delivery-fees/delivery-fees.module';
 import { TerritoriesModule } from '../territories/territories.module';
 import { StoresModule } from '../stores/stores.module';
-import { DeliveryCompanyRegistry } from './delivery-companies/delivery-company-registry.service';
+import {
+  DELIVERY_COMPANY_HANDLERS,
+  DeliveryCompanyRegistry,
+} from './delivery-companies/delivery-company-registry.service';
+import { DeliveryCompanyHandler } from './delivery-companies/interfaces/delivery-company-handler.interface';
 import { NoestHandler } from './delivery-companies/handlers/noest.handler';
 import { EcomHandler } from './delivery-companies/handlers/ecom.handler';
 import { ZrExpressHandler } from './delivery-companies/handlers/zr-express.handler';
@@ -29,6 +38,7 @@ import { DhdHandler } from './delivery-companies/handlers/dhd.handler';
       { name: EcomDesk.name, schema: EcomDeskSchema },
       { name: ZrHub.name, schema: ZrHubSchema },
       { name: DhdDesk.name, schema: DhdDeskSchema },
+      { name: DeliveryParcelStatus.name, schema: DeliveryParcelStatusSchema },
     ]),
     DeliveryFeesModule,
     TerritoriesModule,
@@ -38,12 +48,24 @@ import { DhdHandler } from './delivery-companies/handlers/dhd.handler';
   providers: [
     DeliveryService,
     DeliveryCompaniesService,
-    DeliveryCompanyRegistry,
+    DeliveryParcelStatusService,
     NoestHandler,
     EcomHandler,
     ZrExpressHandler,
     DhdHandler,
+    {
+      provide: DELIVERY_COMPANY_HANDLERS,
+      useFactory: (...handlers: DeliveryCompanyHandler[]) => handlers,
+      inject: [NoestHandler, EcomHandler, ZrExpressHandler, DhdHandler],
+    },
+    DeliveryCompanyRegistry,
   ],
-  exports: [DeliveryService, DeliveryCompaniesService, MongooseModule],
+  exports: [
+    DeliveryService,
+    DeliveryCompaniesService,
+    DeliveryCompanyRegistry,
+    DeliveryParcelStatusService,
+    MongooseModule,
+  ],
 })
 export class DeliveryModule {}

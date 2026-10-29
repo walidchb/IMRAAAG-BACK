@@ -1,24 +1,18 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { DeliveryCompanyHandler } from './interfaces/delivery-company-handler.interface';
-import { NoestHandler } from './handlers/noest.handler';
-import { EcomHandler } from './handlers/ecom.handler';
-import { ZrExpressHandler } from './handlers/zr-express.handler';
-import { DhdHandler } from './handlers/dhd.handler';
+
+/** Injection token for the ordered list of carrier handlers, owned by `DeliveryModule`. */
+export const DELIVERY_COMPANY_HANDLERS = Symbol('DELIVERY_COMPANY_HANDLERS');
 
 @Injectable()
 export class DeliveryCompanyRegistry {
   private readonly handlers = new Map<string, DeliveryCompanyHandler>();
 
   constructor(
-    noestHandler: NoestHandler,
-    ecomHandler: EcomHandler,
-    zrExpressHandler: ZrExpressHandler,
-    dhdHandler: DhdHandler,
+    @Inject(DELIVERY_COMPANY_HANDLERS)
+    handlers: DeliveryCompanyHandler[],
   ) {
-    this.register(noestHandler);
-    this.register(ecomHandler);
-    this.register(zrExpressHandler);
-    this.register(dhdHandler);
+    for (const handler of handlers) this.register(handler);
   }
 
   private register(handler: DeliveryCompanyHandler): void {
@@ -31,5 +25,13 @@ export class DeliveryCompanyRegistry {
 
   getRegisteredCompanyIds(): string[] {
     return Array.from(this.handlers.keys());
+  }
+
+  /** Company slugs whose handler can produce labels. Drives the vendor UI capability list. */
+  getLabelCapableCompanyIds(): string[] {
+    return Array.from(this.handlers.values())
+      .filter((handler) => typeof handler.createLabels === 'function')
+      .map((handler) => handler.companyId)
+      .sort();
   }
 }

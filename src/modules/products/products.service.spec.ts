@@ -9,7 +9,9 @@ import { Order } from '../orders/schemas/order.schema';
 import { CacheService } from '../../common/cache.service';
 import { StoresService } from '../stores/stores.service';
 import { UploadService } from '../upload/upload.service';
+import { VariantsService } from '../inventory/services/variants.service';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
+import { AppException } from '../../common/errors/app-exception';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 
@@ -30,6 +32,7 @@ const VENDOR_EMAIL = 'vendor@test.com';
 const OTHER_EMAIL = 'other@test.com';
 
 const PRODUCT_ID = new Types.ObjectId().toString();
+const VARIANT_ID = new Types.ObjectId().toString();
 
 /** A query-chain stub: every mongoose builder method returns itself, `.exec()` resolves. */
 const query = (result: unknown) => {
@@ -51,6 +54,17 @@ describe('ProductsService', () => {
   let storesService: jest.Mocked<StoresService>;
   let uploadService: jest.Mocked<UploadService>;
   let cacheService: jest.Mocked<CacheService>;
+  let variantsService: jest.Mocked<
+    Pick<
+      VariantsService,
+      | 'getMatrix'
+      | 'getProductSummaries'
+      | 'createDefaultVariant'
+      | 'duplicateMatrix'
+      | 'cascadeSoftDeleteForProduct'
+      | 'listVariantIdsForProduct'
+    >
+  >;
 
   const ownedProduct = (overrides: Record<string, unknown> = {}) => ({
     _id: new Types.ObjectId(PRODUCT_ID),
@@ -61,7 +75,6 @@ describe('ProductsService', () => {
     nameFr: 'Owned Product',
     image: 'https://cdn.test/a.webp',
     images: [],
-    status: 'Active',
     published: true,
     ...overrides,
   });
@@ -77,6 +90,7 @@ describe('ProductsService', () => {
     productModel.findById = jest.fn();
     productModel.findByIdAndUpdate = jest.fn();
     productModel.findOneAndDelete = jest.fn();
+    productModel.deleteOne = jest.fn().mockReturnValue(query({ deletedCount: 1 }));
 
     orderModel = { countDocuments: jest.fn() };
     categoryModel = { find: jest.fn() };
@@ -85,6 +99,7 @@ describe('ProductsService', () => {
     storesService = {
       resolveStoreIdByEmail: jest.fn().mockResolvedValue(null),
       findByVendorId: jest.fn().mockResolvedValue(null),
+      findByVendorIdOrThrow: jest.fn(),
       incrementProductCount: jest.fn().mockResolvedValue(undefined),
     } as unknown as jest.Mocked<StoresService>;
 
@@ -96,6 +111,17 @@ describe('ProductsService', () => {
 
     cacheService = { clear: jest.fn() } as unknown as jest.Mocked<CacheService>;
 
+    // Added with the universal-variant work. Defaults keep existing product tests on their
+    // previous behaviour (no store resolves -> no factory runs; summaries return nothing).
+    variantsService = {
+      getMatrix: jest.fn().mockResolvedValue(null),
+      getProductSummaries: jest.fn().mockResolvedValue(new Map()),
+      createDefaultVariant: jest.fn().mockResolvedValue({ productId: '', variantsCreated: 1 }),
+      duplicateMatrix: jest.fn().mockResolvedValue({ variantsCreated: 0 }),
+      cascadeSoftDeleteForProduct: jest.fn().mockResolvedValue({ variants: 0, values: 0, joins: 0 }),
+      listVariantIdsForProduct: jest.fn().mockResolvedValue([]),
+    } as unknown as jest.Mocked<typeof variantsService>;
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ProductsService,
@@ -106,6 +132,7 @@ describe('ProductsService', () => {
         { provide: CacheService, useValue: cacheService },
         { provide: StoresService, useValue: storesService },
         { provide: UploadService, useValue: uploadService },
+        { provide: VariantsService, useValue: variantsService },
       ],
     }).compile();
 
@@ -134,6 +161,20 @@ describe('ProductsService', () => {
       expect(created.vendorEmail).toBe(VENDOR_EMAIL);
     });
 
+    it('bootstraps the default "One Size" variant on the fresh product', async () => {
+      // Every product is a variant product: create must hand the new product a matrix.
+      storesService.resolveStoreIdByEmail.mockResolvedValue(VENDOR_STORE_ID);
+      productModel.findOne.mockReturnValue(query(null));
+
+      const saved = (await service.create(dto, VENDOR_EMAIL)) as unknown as { _id: Types.ObjectId };
+
+      expect(variantsService.createDefaultVariant).toHaveBeenCalledWith(
+        String(saved._id),
+        VENDOR_STORE_ID,
+        0,
+      );
+    });
+
     it('still creates the product when the store lookup fails, without a storeId', async () => {
       // A vendor whose email resolves to no store must not be blocked from listing products.
       storesService.resolveStoreIdByEmail.mockRejectedValue(new Error('lookup boom'));
@@ -143,6 +184,152 @@ describe('ProductsService', () => {
 
       expect(result).toBeDefined();
       expect(productModel.mock.calls[0][0].storeId).toBeUndefined();
+      expect(variantsService.createDefaultVariant).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('create() — HI-2 store product counter stays net-zero', () => {
+    const dto = {
+      nameEn: 'New Product',
+      nameAr: 'New Product',
+      nameFr: 'New Product',
+      image: 'https://cdn.test/new.webp',
+      price: 100,
+    } as unknown as CreateProductDto;
+
+    beforeEach(() => {
+      storesService.resolveStoreIdByEmail.mockResolvedValue(VENDOR_STORE_ID);
+      productModel.findOne.mockReturnValue(query(null));
+      storesService.incrementProductCount.mockClear();
+      productModel.deleteOne.mockClear();
+    });
+
+    it('increments exactly once on the success path', async () => {
+      await service.create(dto, VENDOR_EMAIL);
+
+      expect(storesService.incrementProductCount).toHaveBeenCalledTimes(1);
+      expect(storesService.incrementProductCount).toHaveBeenCalledWith(VENDOR_EMAIL, 1);
+      expect(productModel.deleteOne).not.toHaveBeenCalled();
+    });
+
+    it('increments before the variant factory runs, so a factory failure can compensate', async () => {
+      // Ordering is the whole fix: if the +1 landed after the factory, a thrown factory
+      // would never be compensated and the count would drift down by one on every retry.
+      await service.create(dto, VENDOR_EMAIL);
+
+      expect(
+        storesService.incrementProductCount.mock.invocationCallOrder[0],
+      ).toBeLessThan(variantsService.createDefaultVariant.mock.invocationCallOrder[0]);
+    });
+
+    it('rolls the product back and decrements on factory failure, netting zero', async () => {
+      variantsService.createDefaultVariant.mockRejectedValue(new Error('factory boom'));
+
+      await expect(service.create(dto, VENDOR_EMAIL)).rejects.toThrow('factory boom');
+
+      expect(storesService.incrementProductCount.mock.calls).toEqual([
+        [VENDOR_EMAIL, 1],
+        [VENDOR_EMAIL, -1],
+      ]);
+      expect(productModel.deleteOne).toHaveBeenCalledWith({ _id: expect.any(Types.ObjectId) });
+    });
+  });
+
+  describe('create() — discount price must not exceed the original price', () => {
+    const base = {
+      nameEn: 'Priced Product',
+      image: 'https://cdn.test/new.webp',
+      weight: 1,
+    };
+
+    beforeEach(() => {
+      storesService.resolveStoreIdByEmail.mockResolvedValue(VENDOR_STORE_ID);
+      productModel.findOne.mockReturnValue(query(null));
+    });
+
+    it('rejects a discount price above the original price with a dedicated code', async () => {
+      const dto = { ...base, originalPrice: 1000, price: 1500 } as unknown as CreateProductDto;
+
+      await expect(service.create(dto, VENDOR_EMAIL)).rejects.toMatchObject({
+        errorCode: AppErrorCode.PRODUCT_PRICE_EXCEEDS_ORIGINAL_PRICE,
+        errorParams: { price: 1500, originalPrice: 1000 },
+      });
+      expect(productModel).not.toHaveBeenCalled();
+    });
+
+    it('accepts a discount price below the original price', async () => {
+      const dto = { ...base, originalPrice: 1800, price: 1500 } as unknown as CreateProductDto;
+
+      await service.create(dto, VENDOR_EMAIL);
+
+      expect(productModel).toHaveBeenCalled();
+    });
+
+    it('accepts an omitted price (it defaults to the original price)', async () => {
+      const dto = { ...base, originalPrice: 1200 } as unknown as CreateProductDto;
+
+      await service.create(dto, VENDOR_EMAIL);
+
+      expect(productModel).toHaveBeenCalled();
+    });
+  });
+
+  describe('update() — discount price must not exceed the original price', () => {
+    beforeEach(() => {
+      productModel.findById.mockReturnValue(
+        query(ownedProduct({ originalPrice: 1000, price: 900 })),
+      );
+      productModel.findByIdAndUpdate.mockReturnValue(
+        query(ownedProduct({ originalPrice: 1000, price: 950 })),
+      );
+    });
+
+    it('rejects a price-only PATCH that exceeds the stored original price', async () => {
+      await expect(
+        service.update(PRODUCT_ID, { price: 1500 } as UpdateProductDto, VENDOR_EMAIL, VENDOR_USER_ID),
+      ).rejects.toMatchObject({
+        errorCode: AppErrorCode.PRODUCT_PRICE_EXCEEDS_ORIGINAL_PRICE,
+        errorParams: { price: 1500, originalPrice: 1000 },
+      });
+      expect(productModel.findByIdAndUpdate).not.toHaveBeenCalled();
+    });
+
+    it('rejects a payload where both fields make the price exceed the original', async () => {
+      await expect(
+        service.update(
+          PRODUCT_ID,
+          { originalPrice: 800, price: 900 } as UpdateProductDto,
+          VENDOR_EMAIL,
+          VENDOR_USER_ID,
+        ),
+      ).rejects.toMatchObject({ errorCode: AppErrorCode.PRODUCT_PRICE_EXCEEDS_ORIGINAL_PRICE });
+      expect(productModel.findByIdAndUpdate).not.toHaveBeenCalled();
+    });
+
+    it('allows a price-only PATCH below the stored original price', async () => {
+      await service.update(
+        PRODUCT_ID,
+        { price: 950 } as UpdateProductDto,
+        VENDOR_EMAIL,
+        VENDOR_USER_ID,
+      );
+
+      expect(productModel.findByIdAndUpdate).toHaveBeenCalled();
+    });
+
+    it('allows lowering the original price, which pulls the omitted price down with it', async () => {
+      // No `price` in the payload: the service mirrors `originalPrice` into `price`, so the
+      // effective pair is equal and valid — the guard must not read the stored price here.
+      await service.update(
+        PRODUCT_ID,
+        { originalPrice: 500 } as UpdateProductDto,
+        VENDOR_EMAIL,
+        VENDOR_USER_ID,
+      );
+
+      const updateArg = productModel.findByIdAndUpdate.mock.calls[0][1];
+      expect(updateArg.price).toBe(500);
+      expect(updateArg.originalPrice).toBe(500);
     });
   });
 
@@ -153,7 +340,7 @@ describe('ProductsService', () => {
       await service.findAll({ storeId: VENDOR_STORE_ID.toString() });
 
       expect(productModel.find).toHaveBeenCalledWith(
-        expect.objectContaining({ storeId: VENDOR_STORE_ID, published: true, status: 'Active' }),
+        expect.objectContaining({ storeId: VENDOR_STORE_ID, published: true }),
       );
     });
 
@@ -178,6 +365,112 @@ describe('ProductsService', () => {
       expect(productModel.find).toHaveBeenCalledWith(
         expect.objectContaining({ vendorEmail: VENDOR_EMAIL }),
       );
+    });
+  });
+
+  describe('findAll() — variantSummary price range', () => {
+    const summaryWith = (over: Record<string, unknown> = {}) => ({
+      variantCount: 2,
+      activeVariantCount: 2,
+      availableTotal: 5,
+      inStock: true,
+      hasPriceOverride: true,
+      overrideMin: 800,
+      overrideMax: 1500,
+      ...over,
+    });
+
+    const findOne = () => {
+      productModel.find.mockReturnValue(query([ownedProduct({ price: 1000 })]));
+    };
+
+    it('pairs priceRange.compareAtPrice with the variant that owns the minimum', async () => {
+      productModel.find.mockReturnValue(query([ownedProduct({ price: 1000 })]));
+      variantsService.getProductSummaries.mockResolvedValue(
+        new Map([
+          [
+            PRODUCT_ID,
+            summaryWith({
+              variantPrices: [
+                { priceOverride: 800, compareAtPrice: 1200 },
+                { priceOverride: 1500, compareAtPrice: null },
+              ],
+            }),
+          ],
+        ]) as any,
+      );
+
+      const result = await service.findAll({});
+      const summary = (result.products[0] as any).variantSummary;
+
+      expect(result.products[0].price).toBe(1000);
+      expect((result.products[0] as any).variantSummary.priceRange).toEqual({
+        min: 800,
+        max: 1500,
+        compareAtPrice: 1200,
+      });
+      // The internal pair list must never leak to the public payload.
+      expect(summary.variantPrices).toBeUndefined();
+    });
+
+    it('pairs the compare-at of the inheriting variant when the base price is the minimum', async () => {
+      productModel.find.mockReturnValue(query([ownedProduct({ price: 500 })]));
+      variantsService.getProductSummaries.mockResolvedValue(
+        new Map([
+          [
+            PRODUCT_ID,
+            {
+              variantCount: 2,
+              activeVariantCount: 2,
+              availableTotal: 5,
+              inStock: true,
+              hasPriceOverride: true,
+              overrideMin: 800,
+              overrideMax: 1500,
+              variantPrices: [
+                { priceOverride: 800, compareAtPrice: 1200 },
+                { priceOverride: null, compareAtPrice: 900 },
+              ],
+            },
+          ],
+        ]) as any,
+      );
+
+      const { products } = await service.findAll({});
+
+      expect(products[0].variantSummary?.priceRange).toEqual({
+        min: 500,
+        max: 1500,
+        compareAtPrice: 900,
+      });
+    });
+
+    it('reports a null compare-at when none of the variants carry one', async () => {
+      productModel.find.mockReturnValue(query([ownedProduct({ price: 1000 })]));
+      variantsService.getProductSummaries.mockResolvedValue(
+        new Map([
+          [
+            PRODUCT_ID,
+            {
+              variantCount: 1,
+              activeVariantCount: 1,
+              availableTotal: 3,
+              inStock: true,
+              hasPriceOverride: false,
+              overrideMin: null,
+              overrideMax: null,
+            },
+          ],
+        ]) as any,
+      );
+
+      const { products } = await service.findAll({});
+
+      expect(products[0].variantSummary?.priceRange).toEqual({
+        min: 1000,
+        max: 1000,
+        compareAtPrice: null,
+      });
     });
   });
 
@@ -293,6 +586,9 @@ describe('ProductsService', () => {
     });
 
     it('refuses to delete a product that appears in orders', async () => {
+      // `remove()` loads the product first (ownership, then the Phase 4 cascade needs the
+      // store scope), so the order-count guard can only be reached with a loadable document.
+      productModel.findById.mockReturnValue(query(ownedProduct()));
       orderModel.countDocuments.mockReturnValue(query(3));
 
       await expect(service.remove(PRODUCT_ID, VENDOR_EMAIL, VENDOR_USER_ID)).rejects.toMatchObject({
@@ -301,6 +597,36 @@ describe('ProductsService', () => {
 
       expect(productModel.findOneAndDelete).not.toHaveBeenCalled();
     });
+
+    it('refuses to delete a product whose order history only mentions a variant (HI-3)', async () => {
+      productModel.findById.mockReturnValue(query(ownedProduct()));
+      variantsService.listVariantIdsForProduct.mockResolvedValue([VARIANT_ID]);
+      orderModel.countDocuments.mockReturnValue(query(2));
+
+      await expect(service.remove(PRODUCT_ID, VENDOR_EMAIL, VENDOR_USER_ID)).rejects.toMatchObject({
+        errorCode: AppErrorCode.PRODUCT_CANNOT_DELETE_HAS_ORDERS,
+      });
+
+      expect(orderModel.countDocuments).toHaveBeenCalledWith({
+        $or: [{ 'items.productId': PRODUCT_ID }, { 'items.variantId': { $in: [VARIANT_ID] } }],
+      });
+      expect(variantsService.listVariantIdsForProduct).toHaveBeenCalledWith(PRODUCT_ID, String(VENDOR_STORE_ID));
+      expect(productModel.findOneAndDelete).not.toHaveBeenCalled();
+    });
+
+    it('deletes a product when no order line references it or its variants (HI-3)', async () => {
+      productModel.findById.mockReturnValue(query(ownedProduct()));
+      productModel.findOneAndDelete.mockReturnValue(query(ownedProduct()));
+      variantsService.listVariantIdsForProduct.mockResolvedValue([VARIANT_ID]);
+      orderModel.countDocuments.mockReturnValue(query(0));
+
+      await service.remove(PRODUCT_ID, VENDOR_EMAIL, VENDOR_USER_ID);
+
+      expect(orderModel.countDocuments).toHaveBeenCalledWith({
+        $or: [{ 'items.productId': PRODUCT_ID }, { 'items.variantId': { $in: [VARIANT_ID] } }],
+      });
+      expect(productModel.findOneAndDelete).toHaveBeenCalled();
+    });
   });
 
   describe('duplicate()', () => {
@@ -308,7 +634,7 @@ describe('ProductsService', () => {
       storesService.findByVendorId.mockResolvedValue({ _id: VENDOR_STORE_ID } as any);
     });
 
-    it('copies storeId and resets status/published', async () => {
+    it('copies storeId and resets published', async () => {
       productModel.findById.mockReturnValue(query(ownedProduct()));
       productModel.findOne.mockReturnValue(query(null));
 
@@ -316,7 +642,6 @@ describe('ProductsService', () => {
 
       const copy = productModel.mock.calls[0][0];
       expect(copy.storeId).toBe(VENDOR_STORE_ID);
-      expect(copy.status).toBe('Draft');
       expect(copy.published).toBe(false);
     });
 
@@ -328,6 +653,128 @@ describe('ProductsService', () => {
       });
 
       expect(productModel).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('searchSuggestions() — inventory autocomplete', () => {
+    beforeEach(() => {
+      storesService.findByVendorIdOrThrow.mockResolvedValue({
+        _id: VENDOR_STORE_ID,
+        vendorEmail: VENDOR_EMAIL,
+      } as any);
+      productModel.find.mockReturnValue(query([]));
+    });
+
+    it('resolves the store from the session vendor id, never from the query', async () => {
+      await service.searchSuggestions(VENDOR_USER_ID, { q: 'VB' });
+
+      expect(storesService.findByVendorIdOrThrow).toHaveBeenCalledWith(VENDOR_USER_ID);
+    });
+
+    it('refuses when the caller has no store, instead of falling back to a wider scope', async () => {
+      storesService.findByVendorIdOrThrow.mockRejectedValue(
+        new AppException(AppErrorCode.STORE_NOT_FOUND, {}),
+      );
+
+      await expect(service.searchSuggestions(VENDOR_USER_ID, { q: 'VB' })).rejects.toMatchObject({
+        errorCode: AppErrorCode.STORE_NOT_FOUND,
+      });
+      expect(productModel.find).not.toHaveBeenCalled();
+    });
+
+    it('scopes ownership to the storeId, keeping vendorEmail only as the pre-migration fallback', async () => {
+      await service.searchSuggestions(VENDOR_USER_ID, { q: 'VB' });
+
+      const filter = productModel.find.mock.calls[0][0];
+      expect(filter.$and[0].$or).toEqual([
+        { storeId: VENDOR_STORE_ID },
+        { vendorEmail: VENDOR_EMAIL },
+      ]);
+    });
+
+    it('drops the vendorEmail branch when the store carries none, so it cannot widen the match', async () => {
+      storesService.findByVendorIdOrThrow.mockResolvedValue({
+        _id: VENDOR_STORE_ID,
+      } as any);
+
+      await service.searchSuggestions(VENDOR_USER_ID, { q: 'VB' });
+
+      expect(productModel.find.mock.calls[0][0].$and[0].$or).toEqual([{ storeId: VENDOR_STORE_ID }]);
+    });
+
+    it('matches product names in all three languages plus the slug', async () => {
+      await service.searchSuggestions(VENDOR_USER_ID, { q: 'VB' });
+
+      const matchBranch = productModel.find.mock.calls[0][0].$and[1].$or;
+      expect(matchBranch.map((c: Record<string, unknown>) => Object.keys(c)[0])).toEqual([
+        'nameEn',
+        'nameAr',
+        'nameFr',
+        'slug',
+      ]);
+    });
+
+    it('escapes regex metacharacters before they reach the query', async () => {
+      await service.searchSuggestions(VENDOR_USER_ID, { q: 'C++ (test)' });
+
+      const matchBranch = productModel.find.mock.calls[0][0].$and[1].$or;
+      expect(matchBranch[0]).toEqual({
+        nameEn: { $regex: 'C\\+\\+ \\(test\\)', $options: 'i' },
+      });
+    });
+
+    it('projects only the dropdown fields, sorts and applies the limit', async () => {
+      await service.searchSuggestions(VENDOR_USER_ID, { q: 'VB', limit: 5 });
+
+      const chain = productModel.find.mock.results[0].value;
+      expect(chain.select).toHaveBeenCalledWith(
+        '_id nameEn nameAr nameFr slug image',
+      );
+      expect(chain.sort).toHaveBeenCalledWith({ nameEn: 1, _id: 1 });
+      expect(chain.limit).toHaveBeenCalledWith(5);
+    });
+
+    it('clamps an out-of-range limit rather than trusting it', async () => {
+      await service.searchSuggestions(VENDOR_USER_ID, { q: 'VB', limit: 999 });
+
+      expect(productModel.find.mock.results[0].value.limit).toHaveBeenCalledWith(20);
+    });
+
+    it('answers a blank query with an empty list and issues no find at all', async () => {
+      await expect(service.searchSuggestions(VENDOR_USER_ID, { q: '   ' })).resolves.toEqual([]);
+      expect(productModel.find).not.toHaveBeenCalled();
+    });
+
+    it('maps documents to the suggestion shape the dropdown renders', async () => {
+      productModel.find.mockReturnValue(
+        query([
+          {
+            _id: new Types.ObjectId(PRODUCT_ID),
+            nameEn: 'Vêtement Bébé',
+            nameAr: 'بيبي',
+            nameFr: 'Vêtement Bébé',
+            slug: 'vetement-bebe',
+            image: 'https://cdn.test/vb.webp',
+          },
+          {
+            _id: new Types.ObjectId(),
+            nameEn: 'Legacy',
+            slug: 'legacy',
+            image: null,
+          },
+        ]),
+      );
+
+      const suggestions = await service.searchSuggestions(VENDOR_USER_ID, { q: 'VB' });
+
+      expect(suggestions[0]).toEqual({
+        id: PRODUCT_ID,
+        name: { en: 'Vêtement Bébé', ar: 'بيبي', fr: 'Vêtement Bébé' },
+        image: 'https://cdn.test/vb.webp',
+        slug: 'vetement-bebe',
+      });
+      expect(suggestions[1].name).toEqual({ en: 'Legacy', ar: '', fr: '' });
+      expect(suggestions[1].image).toBeNull();
     });
   });
 });

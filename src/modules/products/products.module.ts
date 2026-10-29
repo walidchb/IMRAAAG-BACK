@@ -9,6 +9,7 @@ import { ProductsService } from './products.service';
 import { CacheService } from '../../common/cache.service';
 import { StoresModule } from '../stores/stores.module';
 import { UploadModule } from '../upload/upload.module';
+import { InventoryModule } from '../inventory/inventory.module';
 
 @Module({
   imports: [
@@ -20,6 +21,11 @@ import { UploadModule } from '../upload/upload.module';
     ]),
     StoresModule,
     UploadModule,
+    // Needed for the default-variant factory and matrix duplication: every created or
+    // duplicated product gets its variant structure (and opening balance) in one
+    // transaction rather than as a bare field copy. One-directional: InventoryModule
+    // never imports ProductsModule.
+    InventoryModule,
   ],
   controllers: [ProductsController],
   providers: [ProductsService, CacheService],

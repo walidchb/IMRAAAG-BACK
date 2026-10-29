@@ -48,7 +48,9 @@ export class DeliveryController {
   @ApiOperation({ summary: 'Get wilaya-to-company attributions for current vendor' })
   getAttributions(@Req() req: any) {
     const vendorEmail = req.user.email;
-    return this.deliveryService.getAttributions(vendorEmail);
+    // A vendor with no attributions document has none — answer `{ attributions: {} }`, never an
+    // empty 200 body (which the client's `res.json()` cannot parse).
+    return this.deliveryService.getAttributions(vendorEmail).then((doc) => doc ?? { attributions: {} });
   }
 
   @Roles(Role.VENDOR)
@@ -143,7 +145,7 @@ export class DeliveryController {
   @ApiOperation({ summary: 'Get wilaya-to-company attributions for a vendor (public, legacy)' })
   @ApiParam({ name: 'vendorEmail', description: 'Legacy. Prefer the store route.' })
   getPublicAttributions(@Param('vendorEmail') vendorEmail: string) {
-    return this.deliveryService.getAttributions(vendorEmail);
+    return this.deliveryService.getAttributions(vendorEmail).then((doc) => doc ?? { attributions: {} });
   }
 
   @Public()
@@ -161,7 +163,7 @@ export class DeliveryController {
   @ApiOperation({ summary: 'Get wilaya-to-company attributions for a store (public)' })
   @ApiParam({ name: 'storeId', description: 'Stable store identifier.' })
   getPublicAttributionsByStore(@Param('storeId') storeId: string) {
-    return this.deliveryService.getAttributionsByStoreId(storeId);
+    return this.deliveryService.getAttributionsByStoreId(storeId).then((doc) => doc ?? { attributions: {} });
   }
 
   @Public()

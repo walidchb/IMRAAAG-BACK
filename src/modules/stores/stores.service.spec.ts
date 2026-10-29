@@ -3,6 +3,7 @@ import { getModelToken } from '@nestjs/mongoose';
 import { Types } from 'mongoose';
 import { StoresService } from './stores.service';
 import { Store } from './schemas/store.schema';
+import { Product } from '../products/schemas/product.schema';
 import { StoreStatus } from './schemas/store-status.enum';
 import { UploadService } from '../upload/upload.service';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
@@ -45,6 +46,7 @@ const activeStore = (overrides: Record<string, unknown> = {}) => ({
 describe('StoresService', () => {
   let service: StoresService;
   let storeModel: any;
+  let productModel: any;
 
   beforeEach(async () => {
     // A single jest.fn() acts as both the model constructor (`new this.storeModel(...)`)
@@ -53,15 +55,19 @@ describe('StoresService', () => {
     const model: any = jest.fn();
     model.findOne = jest.fn().mockReturnValue(query(null));
     model.findById = jest.fn().mockReturnValue(query(null));
+    model.find = jest.fn().mockReturnValue(query([]));
     model.prototype.save = jest.fn().mockImplementation(function (this: any) {
       this._id = this._id ?? new Types.ObjectId();
       return Promise.resolve(this);
     });
 
+    productModel = { aggregate: jest.fn().mockReturnValue(query([])) };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         StoresService,
         { provide: getModelToken(Store.name), useValue: model },
+        { provide: getModelToken(Product.name), useValue: productModel },
         { provide: UploadService, useValue: {} },
       ],
     }).compile();
@@ -246,6 +252,76 @@ describe('StoresService', () => {
       await expect(service.create({ ...dto(), vendorEmail: '' })).rejects.toMatchObject({
         errorCode: AppErrorCode.STORE_VENDOR_EMAIL_REQUIRED,
       });
+    });
+  });
+
+  describe('findAll - public product counts', () => {
+    it('replaces the stale totalProducts counter with a live published count', async () => {
+      const store = activeStore({ totalProducts: 5 });
+      storeModel.find = jest.fn().mockReturnValue(query([store]));
+      productModel.aggregate = jest
+        .fn()
+        .mockReturnValue(query([{ _id: store._id, count: 12 }]));
+
+      const result = await service.findAll({ limit: 10 });
+
+      expect(result.stores[0].totalProducts).toBe(12);
+      expect(productModel.aggregate).toHaveBeenCalledWith([
+        { $match: { storeId: { $in: [store._id] }, published: true } },
+        { $group: { _id: '$storeId', count: { $sum: 1 } } },
+      ]);
+    });
+
+    it('reports zero when the store has no published products', async () => {
+      const store = activeStore({ totalProducts: 5 });
+      storeModel.find = jest.fn().mockReturnValue(query([store]));
+      productModel.aggregate = jest.fn().mockReturnValue(query([]));
+
+      const result = await service.findAll({ limit: 10 });
+
+      expect(result.stores[0].totalProducts).toBe(0);
+    });
+  });
+
+  describe('incrementProductCount - the HI-2 counter primitive', () => {
+    beforeEach(() => {
+      storeModel.updateOne = jest.fn().mockReturnValue(query({ matchedCount: 1, modifiedCount: 1 }));
+    });
+
+    it('applies a +1 $inc keyed on the lowercased vendorEmail', async () => {
+      await service.incrementProductCount('Vendor@Test.COM', 1);
+
+      expect(storeModel.updateOne).toHaveBeenCalledWith(
+        { vendorEmail: 'vendor@test.com' },
+        { $inc: { totalProducts: 1 } },
+      );
+    });
+
+    it('accepts the negative delta the product-create rollback uses', async () => {
+      // products.service.create() compensates a failed default-variant factory with -1;
+      // the two calls must address the same document or the count drifts.
+      await service.incrementProductCount('vendor@test.com', -1);
+
+      expect(storeModel.updateOne).toHaveBeenCalledWith(
+        { vendorEmail: 'vendor@test.com' },
+        { $inc: { totalProducts: -1 } },
+      );
+    });
+
+    it('defaults to +1 when no delta is given', async () => {
+      await service.incrementProductCount('vendor@test.com');
+
+      expect(storeModel.updateOne).toHaveBeenCalledWith(
+        { vendorEmail: 'vendor@test.com' },
+        { $inc: { totalProducts: 1 } },
+      );
+    });
+
+    it('never touches the order counter', async () => {
+      await service.incrementProductCount('vendor@test.com', 1);
+
+      const update = storeModel.updateOne.mock.calls[0][1];
+      expect(update.$inc).not.toHaveProperty('totalOrders');
     });
   });
 });

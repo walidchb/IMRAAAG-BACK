@@ -6,73 +6,20 @@ import {
   IsMongoId,
   Min,
   IsArray,
-  ValidateNested,
 } from 'class-validator';
-import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { AtLeastOneLanguage, AtLeastOneImage } from '../../../common/validators/at-least-one-language.validator';
 
-class UpdateVariantOptionDto {
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  id?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  nameEn?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  nameAr?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  nameFr?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  value?: string;
-}
-
-class UpdateVariantDto {
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  id?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  nameEn?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  nameAr?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  nameFr?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  type?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => UpdateVariantOptionDto)
-  options?: UpdateVariantOptionDto[];
-}
-
+/**
+ * The embedded `variants` array that this DTO used to accept is gone, for the same reason it is
+ * gone from `CreateProductDto`: it stored option groups with no stock, and writing it never
+ * flipped `hasVariants`, so the product claimed to be simple while carrying variant data.
+ *
+ * `hasVariants` and `toggleVariants` are gone too. Every product is a variant product and its
+ * stock is owned by the inventory balances, so a product update can no longer carry a `stock`
+ * value or ask to change variant mode: those paths were how a simple product could hold a
+ * competing stock number.
+ */
 export class UpdateProductDto {
   @ApiPropertyOptional()
   @IsOptional()
@@ -126,11 +73,11 @@ export class UpdateProductDto {
   @Min(0)
   price?: number;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Low-stock alert threshold for the product' })
   @IsOptional()
   @IsNumber()
   @Min(0)
-  stock?: number;
+  lowStockThreshold?: number;
 
   @ApiPropertyOptional({ description: 'Weight in kg' })
   @IsOptional()
@@ -149,20 +96,8 @@ export class UpdateProductDto {
   @IsString({ each: true })
   images?: string[];
 
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  status?: string;
-
   @ApiPropertyOptional({ description: 'Whether the product is publicly visible' })
   @IsOptional()
   @IsBoolean()
   published?: boolean;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => UpdateVariantDto)
-  variants?: UpdateVariantDto[];
 }

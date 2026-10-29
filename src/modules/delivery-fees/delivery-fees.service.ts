@@ -355,6 +355,9 @@ export class DeliveryFeesService {
         stopDeskDeliveryFee: parseInt(fee.tarif_stopdesk || '0', 10) || 0,
       }));
     } catch (err) {
+      // Preserve the specific code (e.g. FEE_API_CREDENTIALS_MISSING) so the caller can tell
+      // "not configured" apart from an upstream failure.
+      if (err instanceof AppException) throw err;
       const message = err instanceof Error ? err.message : 'Unknown error';
       this.logger.error(`Failed to fetch Noest fees: ${message}`);
       throw new AppException(AppErrorCode.FEE_FETCH_FAILED, { company: 'Noest', message });
@@ -452,6 +455,7 @@ export class DeliveryFeesService {
         stopDeskDeliveryFee: w.stopdesk,
       }));
     } catch (err) {
+      if (err instanceof AppException) throw err;
       const message = err instanceof Error ? err.message : 'Unknown error';
       this.logger.error(`Failed to fetch Ecom Delivery fees: ${message}`);
       throw new AppException(AppErrorCode.FEE_FETCH_FAILED, { company: 'Ecom', message });
@@ -554,6 +558,7 @@ export class DeliveryFeesService {
         stopDeskDeliveryFee: r.deliveryPrices?.find(p => p.deliveryType === 'pickup-point')?.price ?? 0,
       }));
     } catch (err) {
+      if (err instanceof AppException) throw err;
       const message = err instanceof Error ? err.message : 'Unknown error';
       this.logger.error(`Failed to fetch ZR Express fees: ${message}`);
       throw new AppException(AppErrorCode.FEE_FETCH_FAILED, { company: 'ZR Express', message });
@@ -665,6 +670,7 @@ export class DeliveryFeesService {
         stopDeskDeliveryFee: parseInt(w.tarif_stopdesk || '0', 10) || 0,
       }));
     } catch (err) {
+      if (err instanceof AppException) throw err;
       const message = err instanceof Error ? err.message : 'Unknown error';
       this.logger.error(`Failed to fetch DHD fees: ${message}`);
       throw new AppException(AppErrorCode.FEE_FETCH_FAILED, { company: 'DHD', message });

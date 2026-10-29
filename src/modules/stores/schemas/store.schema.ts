@@ -18,7 +18,10 @@ export class Store {
   @Prop({ required: true, unique: true, lowercase: true, trim: true })
   storeSlug: string;
 
-  @Prop({ required: true })
+  // Optional: only `storeName`, `storeSlug` (derived from the name) and the contact
+  // identity (`vendorEmail`) are mandatory. Every other attribute - description, logo,
+  // cover, location, socials - is optional.
+  @Prop()
   description: string;
 
   @Prop()
@@ -54,6 +57,18 @@ export class Store {
   @Prop({ type: String, default: StoreStatus.ACTIVE, enum: Object.values(StoreStatus) })
   status: StoreStatus;
 
+  /**
+   * Per-store rollout switch for variant inventory.
+   *
+   * `false` for every existing store, so nothing changes until a vendor opts in. This is not
+   * the per-product variant mode or a per-product stock source: with inventory enabled the
+   * whole store's stock is managed through the inventory module. (The old `hasVariants`
+   * field that used to select a stock source per product is gone - every product is a
+   * variant product now.)
+   */
+  @Prop({ default: false })
+  inventoryEnabled: boolean;
+
   /** @deprecated Use `wilaya` and `commune` root-level fields instead */
   @Prop({
     type: {
@@ -77,6 +92,17 @@ export class Store {
 
   @Prop({ default: 0 })
   totalOrders: number;
+
+  /**
+   * Barcode/SKU plan (Phase 1): monotonic source for collision-free EAN-13 barcode bodies.
+   *
+   * Advanced with an atomic `$inc` each time a barcode is generated for this store, so two
+   * concurrent generations can never share a body. Defaults to 0, which is why every existing
+   * store needs no migration - the first generated barcode simply gets body `0000000001`.
+   * Nothing reads this field until Phase 3.
+   */
+  @Prop({ default: 0 })
+  barcodeSeq: number;
 }
 
 export const StoreSchema = SchemaFactory.createForClass(Store);

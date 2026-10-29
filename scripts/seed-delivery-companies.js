@@ -133,7 +133,7 @@ const companies = [
     credentialFields: [
       { key: 'apiToken', label: 'API Token', fieldType: 'password' },
     ],
-    hasHandler: false,
+    hasHandler: true,
     hasPickupPoints: true,
     hasFeeSync: true,
     feeFetchCredentials: { apiToken: 'apiToken' },

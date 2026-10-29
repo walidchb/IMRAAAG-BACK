@@ -3,6 +3,7 @@ import {
   IsNotEmpty,
   IsNumber,
   IsOptional,
+  IsInt,
   ValidateNested,
   IsArray,
   IsIn,
@@ -28,7 +29,7 @@ class OrderItemDto {
   productName: string;
 
   @ApiProperty({ description: 'Quantity', minimum: 1 })
-  @IsNumber()
+  @IsInt()
   @Min(1)
   quantity: number;
 
@@ -41,6 +42,19 @@ class OrderItemDto {
   @IsOptional()
   @IsString()
   variantDetails?: string;
+
+  /**
+   * The variant actually bought. The reservation, the ledger, and the whole per-variant
+   * stock model key off this id, and every product is a variant product - so a line
+   * without one could never be reserved or fulfilled against anything. Required since the
+   * universal-variant change; `productId` remains optional because a variant id alone
+   * already identifies the item unambiguously.
+   */
+  @ApiProperty({ description: 'Ordered variant id (required on every line)' })
+  @IsString()
+  @IsNotEmpty()
+  @IsMongoId()
+  variantId: string;
 
   @ApiPropertyOptional({ description: 'Item weight in kg' })
   @IsOptional()
@@ -134,10 +148,10 @@ export class CreateOrderDto {
   @IsString()
   statusConfirmation?: string;
 
-  @ApiProperty({ enum: ['stopdesk', 'home'], description: 'Shipping method' })
+  @ApiProperty({ enum: ['stopdesk', 'home', 'pickup'], description: 'Shipping method' })
   @IsString()
   @IsNotEmpty()
-  @IsIn(['stopdesk', 'home'])
+  @IsIn(['stopdesk', 'home', 'pickup'])
   shippingMethod: string;
 
   @ApiPropertyOptional({ description: 'Bureau / branch' })
@@ -173,7 +187,7 @@ export class CreateOrderDto {
   @IsIn(ORDER_STATUS_VALUES)
   status?: string;
 
-  @ApiPropertyOptional({ default: 'COD' })
+  @ApiPropertyOptional({ default: 'COD', enum: ['COD', 'CASH'], description: "'COD' for delivery, 'CASH' for in-store/POS" })
   @IsOptional()
   @IsString()
   paymentMethod?: string;

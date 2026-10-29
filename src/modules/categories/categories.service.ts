@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { AppException } from '../../common/errors/app-exception';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
+import { Role } from '../../common/constants/roles.enum';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Category, CategoryDocument } from './schemas/category.schema';
@@ -168,7 +169,7 @@ export class CategoriesService {
 
     const [catCounts] = await Promise.all([
       this.productModel.aggregate<{ _id: Types.ObjectId; count: number }>([
-        { $match: { published: true, status: 'Active', category: { $in: categoryIds } } },
+        { $match: { published: true, category: { $in: categoryIds } } },
         { $group: { _id: '$category', count: { $sum: 1 } } },
       ]).exec(),
     ]);
@@ -201,7 +202,11 @@ export class CategoriesService {
     return { category, subCategories };
   }
 
-  async remove(id: string): Promise<void> {
+  async remove(id: string, user?: { role?: string }): Promise<void> {
+    if (user?.role !== Role.ADMIN) {
+      throw new AppException(AppErrorCode.AUTH_INSUFFICIENT_PERMISSIONS);
+    }
+
     const filter = Types.ObjectId.isValid(id) ? { _id: id } : { slug: id };
     const category = await this.categoryModel.findOne(filter).exec();
     if (!category) throw new AppException(AppErrorCode.CATEGORY_NOT_FOUND, { id });

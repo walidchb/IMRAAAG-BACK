@@ -22,6 +22,7 @@ import { Commune, CommuneDocument } from '../territories/schemas/commune.schema'
 import { encryptRecord, decryptRecord } from '../../common/encryption.util';
 import { fetchWithRetry } from '../../common/fetch-with-retry';
 import { StoresService } from '../stores/stores.service';
+import { CARRIER_ORDER_SIGNALS, isNormalizedStatus } from './delivery-status/carrier/carrier-signal';
 
 interface NoestDeskRaw {
   code: string;
@@ -127,24 +128,96 @@ export class DeliveryService {
     const storeFilter = await this.storeFilter(vendorEmail);
     const [attribution, config] = await Promise.all([this.attributionModel.findOne(storeFilter).lean().exec(), this.configModel.findOne(storeFilter).lean().exec()]);
 
-    if (attribution?.attributions?.[wilayaCode]) {
-      this.logger.log(`Resolved company "${attribution.attributions[wilayaCode]}" for wilaya ${wilayaCode} from attributions`);
-      return attribution.attributions[wilayaCode];
+    // A disabled company is no longer offered for automatic routing. Its credentials are kept so
+    // orders already assigned to it keep working, but a new order must resolve to an enabled one.
+    const isEnabled = (companyId: string) => config?.companies?.[companyId]?.status === 'enabled';
+
+    const attributed = attribution?.attributions?.[wilayaCode];
+    if (attributed && isEnabled(attributed)) {
+      this.logger.log(`Resolved company "${attributed}" for wilaya ${wilayaCode} from attributions`);
+      return attributed;
+    }
+    if (attributed) {
+      this.logger.warn(`Attribution "${attributed}" for wilaya ${wilayaCode} is disabled; falling back`);
     }
 
-    this.logger.warn(`No attribution found for wilaya ${wilayaCode}, attributions keys: ${Object.keys(attribution?.attributions || {}).join(',') || 'none'}`);
+    this.logger.warn(`No enabled attribution found for wilaya ${wilayaCode}, attributions keys: ${Object.keys(attribution?.attributions || {}).join(',') || 'none'}`);
 
     if (config?.companies) {
       for (const [id, c] of Object.entries(config.companies)) {
-        if (c.isDefault) {
+        if (c.isDefault && c.status === 'enabled') {
           this.logger.log(`Falling back to default company: ${id}`);
           return id;
         }
       }
     }
 
-    this.logger.warn(`No default company found for vendor ${vendorEmail}`);
+    this.logger.warn(`No enabled default company found for vendor ${vendorEmail}`);
     return null;
+  }
+
+  /**
+   * Picks the same first pickup point the vendor order dialog shows for a wilaya.
+   *
+   * The carrier handlers only send a stop-desk code when the order carries one, so an order
+   * created without opening the edit dialog (storefront checkout, row-menu dispatch) would
+   * otherwise be booked without a station. Each carrier exposes its code under a different
+   * field, so the mapping is kept next to the desk models rather than in the orders module.
+   */
+  async resolveDefaultStopDesk(
+    companyId: string | undefined,
+    wilayaCode: string | undefined,
+  ): Promise<string | null> {
+    if (!companyId || !wilayaCode) return null;
+
+    switch (companyId) {
+      case 'noest': {
+        const desk = await this.noestDeskModel.findOne({ wilayaCode }).sort({ code: 1 }).lean().exec();
+        return desk?.code ?? null;
+      }
+      case 'ecom-delivery': {
+        const desk = await this.ecomDeskModel.findOne({ wilayaCode }).sort({ nom_bureau: 1 }).lean().exec();
+        return desk?.code_stopdesk ?? null;
+      }
+      case 'zr-express': {
+        const pickupHub = await this.zrHubModel
+          .findOne({ wilayaCode, isPickupPoint: { $ne: false } })
+          .sort({ name: 1 })
+          .lean()
+          .exec();
+        if (pickupHub) return pickupHub.hubId ?? null;
+
+        // Older syncs could mark every hub non-pickup; the dialog still lists those hubs, so
+        // fall back to the same first one rather than blocking the dispatch.
+        const hub = await this.zrHubModel.findOne({ wilayaCode }).sort({ name: 1 }).lean().exec();
+        return hub?.hubId ?? null;
+      }
+      case 'dhd': {
+        const desk = await this.dhdDeskModel.findOne({ wilayaCode }).sort({ nom: 1 }).lean().exec();
+        return desk?._id ? String(desk._id) : null;
+      }
+      default:
+        return null;
+    }
+  }
+
+  /**
+   * Fails fast when an order cannot be handed to a courier, without booking anything.
+   *
+   * Needed because Phase 4 books the parcel *after* the dispatch claim: the claim and the stock
+   * deduction have to commit together, and an external HTTP call cannot join a transaction. That
+   * reordering means the "no delivery company assigned" and "no handler registered" cases would
+   * otherwise be discovered only after the stock was already deducted. Checking them up front
+   * keeps those two failures side-effect free, exactly as they were before.
+   */
+  assertCanCreateDelivery(order: { orderNo?: string; deliveryCompanyId?: string }): void {
+    const companyId = order.deliveryCompanyId;
+    if (!companyId) {
+      throw new AppException(AppErrorCode.DELIVERY_COMPANY_NOT_ASSIGNED, { orderNo: order.orderNo });
+    }
+    if (!this.deliveryCompanyRegistry.getHandler(companyId)) {
+      throw new AppException(AppErrorCode.DELIVERY_HANDLER_NOT_FOUND, { companyId });
+    }
   }
 
   async createDeliveryForOrder(order: Order): Promise<{ parcelId: string }> {
@@ -612,6 +685,7 @@ export class DeliveryService {
 
   async saveConfig(vendorEmail: string, dto: SaveDeliveryConfigDto): Promise<DeliveryConfig> {
     const setPaths: Record<string, unknown> = {};
+    const disabling = dto.status === 'disabled';
 
     if (dto.credentials !== undefined) {
       const key = this.encryptionKey;
@@ -620,9 +694,28 @@ export class DeliveryService {
     if (dto.status !== undefined) {
       setPaths[`companies.${dto.companyId}.status`] = dto.status;
     }
+    if (dto.statusSyncEnabled !== undefined) {
+      setPaths[`companies.${dto.companyId}.statusSyncEnabled`] = dto.statusSyncEnabled;
+    }
+    if (dto.statusStateOverrides !== undefined) {
+      setPaths[`statusStateOverrides.${dto.companyId}`] = this.validateOverrides(
+        dto.statusStateOverrides,
+        isNormalizedStatus,
+        'statusStateOverrides',
+      );
+    }
+    if (dto.statusSignalOverrides !== undefined) {
+      setPaths[`statusSignalOverrides.${dto.companyId}`] = this.validateOverrides(
+        dto.statusSignalOverrides,
+        (value): boolean => (CARRIER_ORDER_SIGNALS as readonly string[]).includes(value),
+        'statusSignalOverrides',
+      );
+    }
 
-    if (dto.isDefault === true) {
+    let becomingDefault = false;
+    if (dto.isDefault === true && !disabling) {
       const current = await this.configModel.findOne(await this.storeFilter(vendorEmail)).exec();
+      becomingDefault = current?.companies?.[dto.companyId]?.isDefault !== true;
       if (current?.companies) {
         for (const cId of Object.keys(current.companies)) {
           if (cId !== dto.companyId) {
@@ -631,15 +724,73 @@ export class DeliveryService {
         }
       }
       setPaths[`companies.${dto.companyId}.isDefault`] = true;
-    } else if (dto.isDefault === false) {
+    } else if (dto.isDefault === false || disabling) {
+      // A disabled company can never remain the default: it is no longer offered for new orders.
       setPaths[`companies.${dto.companyId}.isDefault`] = false;
     }
 
     const storeId = await this.storeIdFor(vendorEmail);
     if (storeId) setPaths.storeId = storeId;
 
-    return this.configModel.findOneAndUpdate({ vendorEmail }, { $set: setPaths }, { upsert: true, new: true }).exec();
+    const config = await this.configModel.findOneAndUpdate({ vendorEmail }, { $set: setPaths }, { upsert: true, new: true }).exec();
+
+    // A company *becoming* the default is also applied to every wilaya, so the vendor never has to
+    // attribute each wilaya by hand. Re-saving the already-default company's credentials does NOT
+    // re-apply, so a vendor's deliberate per-wilaya overrides survive that edit.
+    if (dto.isDefault === true && becomingDefault) {
+      await this.applyCompanyToAllWilayas(vendorEmail, dto.companyId, storeId);
+    }
+
+    return config;
   }
+
+  /**
+   * Validates a carrier override map before it is written to the config.
+   *
+   * Keys are carrier states and end up as MongoDB field names, so an empty key, a dot or a
+   * leading `$` is refused (they would either be unreachable or inject a path). Values must be
+   * in the provider-neutral catalogue the caller passes; an unknown value would silently make a
+   * state unreadable, so it is rejected instead of dropped.
+   */
+  private validateOverrides(
+    input: Record<string, string>,
+    isAllowed: (value: string) => boolean,
+    field: string,
+  ): Record<string, string> {
+    const out: Record<string, string> = {};
+    for (const [rawKey, rawValue] of Object.entries(input ?? {})) {
+      const key = String(rawKey ?? '').trim();
+      const value = String(rawValue ?? '').trim();
+      if (!key || key.length > 120 || /[.$]/.test(key)) {
+        throw new AppException(AppErrorCode.VALIDATION_INVALID_VALUE, { field, value: key });
+      }
+      if (!isAllowed(value)) {
+        throw new AppException(AppErrorCode.VALIDATION_INVALID_VALUE, { field, value });
+      }
+      out[key] = value;
+    }
+    return out;
+  }
+
+  /**
+   * Writes `every wilaya → companyId` into the store's delivery attribution document, creating it
+   * when absent. Used when a company becomes the default so it is applied store-wide in one step.
+   */
+  private async applyCompanyToAllWilayas(
+    vendorEmail: string,
+    companyId: string,
+    storeId: Types.ObjectId | null,
+  ): Promise<void> {
+    const wilayas = await this.wilayaModel.find({}, { code: 1 }).lean().exec();
+    const attributions: Record<string, string> = {};
+    for (const w of wilayas) {
+      if (w.code) attributions[w.code] = companyId;
+    }
+    const set: Record<string, unknown> = { vendorEmail, attributions };
+    if (storeId) set.storeId = storeId;
+    await this.attributionModel.findOneAndUpdate({ vendorEmail }, { $set: set }, { upsert: true, new: true }).exec();
+  }
+
 
   async getAttributions(vendorEmail: string): Promise<DeliveryAttribution | null> {
     return this.attributionModel.findOne(await this.storeFilter(vendorEmail)).exec();

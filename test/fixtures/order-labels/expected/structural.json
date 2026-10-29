@@ -1,0 +1,103 @@
+{
+  "_note": "Synthetic structural expectations only. This is NOT live-carrier proof; replace with scrubbed live measurements at the L0 gate.",
+  "fixtures": {
+    "zr-individual-a4.html": {
+      "kind": "html",
+      "synthetic": true,
+      "page": { "widthMm": 210, "heightMm": 297 },
+      "labels": 1,
+      "trackings": ["ZR-SYNTHETIC-0001"],
+      "cropBox": { "widthMm": 105, "heightMm": 148.5, "position": "top-left" }
+    },
+    "zr-multiple-a4.html": {
+      "kind": "html",
+      "synthetic": true,
+      "page": { "widthMm": 210, "heightMm": 297 },
+      "labels": 4,
+      "trackings": [
+        "ZR-SYNTHETIC-0001",
+        "ZR-SYNTHETIC-0002",
+        "ZR-SYNTHETIC-0003",
+        "ZR-SYNTHETIC-0004"
+      ]
+    },
+    "ecom-10x13.html": {
+      "kind": "html",
+      "synthetic": true,
+      "page": { "widthMm": 100, "heightMm": 130 },
+      "labels": 1,
+      "trackings": ["ECM-SYNTHETIC-0001"]
+    },
+    "ecom-bulk-10x13.html": {
+      "kind": "html",
+      "synthetic": true,
+      "page": { "widthMm": 100, "heightMm": 130 },
+      "pages": 2,
+      "labels": 2,
+      "trackings": ["ECM-SYNTHETIC-0001", "ECM-SYNTHETIC-0002"]
+    },
+    "dhd-label.pdf": {
+      "kind": "pdf",
+      "synthetic": true,
+      "pages": 1,
+      "page": { "widthMm": 100, "heightMm": 150 }
+    },
+    "noest-label.pdf": {
+      "kind": "pdf",
+      "synthetic": true,
+      "pages": 1,
+      "page": { "widthMm": 210, "heightMm": 297 },
+      "cropBox": {
+        "widthMm": 100.8,
+        "heightMm": 143.5,
+        "widthPt": 285.837,
+        "heightPt": 406.676,
+        "xPt": 7.5,
+        "yPt": 427.714,
+        "position": "top-left"
+      }
+    }
+  },
+  "layout": {
+    "oneUpMm": {
+      "10x13": { "width": 100, "height": 130 },
+      "10x15": { "width": 100, "height": 150 },
+      "15x20": { "width": 150, "height": 200 },
+      "10x10": { "width": 100, "height": 100 }
+    },
+    "a4Mm": { "width": 210, "height": 297 },
+    "fourUp": {
+      "labelsPerPage": 4,
+      "cellsPerPage": 4,
+      "fits": ["10x13", "10x15", "10x10"],
+      "warnsScaled": ["10x15"],
+      "notOffered": ["15x20"]
+    }
+  },
+  "artifactKey": "order-labels/<storeId>/<jobId>/labels.pdf",
+  "errorCodes": [
+    "ORDER_LABEL_DISABLED",
+    "ORDER_LABEL_INVALID_FORMAT",
+    "ORDER_LABEL_INVALID_GROUPING",
+    "ORDER_LABEL_TOO_MANY_ORDERS",
+    "ORDER_LABEL_NOTHING_ELIGIBLE",
+    "ORDER_LABEL_MIXED_STORES",
+    "ORDER_LABEL_ORDER_NOT_FOUND",
+    "ORDER_LABEL_UNSUPPORTED_CARRIER",
+    "ORDER_LABEL_PRE_DISPATCH",
+    "ORDER_LABEL_CANCELLED",
+    "ORDER_LABEL_NO_DELIVERY_COMPANY",
+    "ORDER_LABEL_MISSING_PARCEL",
+    "ORDER_LABEL_TRACKING_UNAVAILABLE",
+    "ORDER_LABEL_NOT_FOUND_AT_CARRIER",
+    "ORDER_LABEL_DUPLICATE_TRACKING",
+    "ORDER_LABEL_CARRIER_FAILED",
+    "ORDER_LABEL_SOURCE_EXPIRED",
+    "ORDER_LABEL_RENDER_FAILED",
+    "ORDER_LABEL_LAYOUT_UNSUPPORTED",
+    "ORDER_LABEL_SCALE_WARNING",
+    "ORDER_LABEL_STORAGE_UNAVAILABLE",
+    "ORDER_LABEL_ARTIFACT_NOT_FOUND",
+    "ORDER_LABEL_JOB_TIMEOUT"
+  ]
+}

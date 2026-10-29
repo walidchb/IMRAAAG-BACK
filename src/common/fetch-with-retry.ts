@@ -7,6 +7,7 @@ interface RetryOptions {
   baseDelayMs?: number;
   onRetry?: (attempt: number, error: Error | Response) => void;
   circuitBreakerName?: string;
+  retryOn?: (response: Response) => boolean;
 }
 
 export async function fetchWithRetry(
@@ -18,6 +19,7 @@ export async function fetchWithRetry(
   const maxRetries = retryOptions?.maxRetries ?? 3;
   const baseDelayMs = retryOptions?.baseDelayMs ?? 1000;
   const onRetry = retryOptions?.onRetry;
+  const retryOn = retryOptions?.retryOn;
   const cbName = retryOptions?.circuitBreakerName;
 
   let lastError: Error | null = null;
@@ -54,7 +56,11 @@ export async function fetchWithRetry(
 
       if (response.ok) return response;
 
-      if (!RETRYABLE_STATUSES.has(response.status) || attempt === maxRetries) {
+      const retryable =
+        RETRYABLE_STATUSES.has(response.status) &&
+        (retryOn ? retryOn(response) : true);
+
+      if (!retryable || attempt === maxRetries) {
         return response;
       }
 

@@ -13,67 +13,20 @@ import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { AtLeastOneLanguage, AtLeastOneImage } from '../../../common/validators/at-least-one-language.validator';
 
-class VariantOptionDto {
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  id?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  nameEn?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  nameAr?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  nameFr?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  value?: string;
-}
-
-class VariantDto {
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  id?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  nameEn?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  nameAr?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  nameFr?: string;
-
-  @ApiPropertyOptional({ enum: ['generic', 'color'] })
-  @IsOptional()
-  @IsString()
-  type?: string;
-
-  @ApiPropertyOptional({ type: [VariantOptionDto] })
-  @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => VariantOptionDto)
-  options?: VariantOptionDto[];
-}
-
+/**
+ * Variants are deliberately absent from this DTO.
+ *
+ * This DTO used to accept a `variants` array of option groups and persist it straight onto the
+ * product, which was how a product ended up holding variant data while `hasVariants` stayed
+ * `false`. Options and values are created through `POST /products/:productId/options` and
+ * `/options/:optionId/values`, and the sellable combinations plus their stock are created by
+ * the option/value/variant/balance factories.
+ *
+ * Every product is a variant product. When no options are supplied, the server creates a
+ * single "Default/One Size" variant whose balance opens at zero; stock is owned by the
+ * inventory module and adjusted through `GET/PATCH /inventory` afterwards, so the create
+ * payload carries no stock figure.
+ */
 export class CreateProductDto {
   @AtLeastOneLanguage(['nameEn', 'nameAr', 'nameFr'], { message: 'At least one product name is required (English, Arabic, or French)' })
   @ApiProperty({ description: 'Product name (English)' })
@@ -128,11 +81,6 @@ export class CreateProductDto {
   @Min(0)
   price?: number;
 
-  @ApiProperty({ description: 'Stock quantity', default: 0 })
-  @IsNumber()
-  @Min(0)
-  stock: number;
-
   @ApiProperty({ description: 'Weight in kg' })
   @IsNumber()
   @Min(0)
@@ -150,25 +98,8 @@ export class CreateProductDto {
   @IsString({ each: true })
   images?: string[];
 
-  @ApiPropertyOptional({ enum: ['Active', 'Draft'], default: 'Active' })
-  @IsOptional()
-  @IsString()
-  status?: string;
-
   @ApiPropertyOptional({ default: false, description: 'Whether the product is publicly visible' })
   @IsOptional()
   @IsBoolean()
   published?: boolean;
-
-  @ApiPropertyOptional({ description: 'Vendor user ID (auto-set from auth)' })
-  @IsOptional()
-  @IsString()
-  vendorId?: string;
-
-  @ApiPropertyOptional({ type: [VariantDto] })
-  @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => VariantDto)
-  variants?: VariantDto[];
 }

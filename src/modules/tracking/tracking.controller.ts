@@ -6,6 +6,8 @@ import { TrackingService } from './tracking.service';
 import { StoresService } from '../stores/stores.service';
 import { UpdateTrackingConfigDto } from './dto/tracking-config.dto';
 import { Public } from '../auth/decorators/public.decorator';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Role } from '../../common/constants/roles.enum';
 import { AppException } from '../../common/errors/app-exception';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
 
@@ -42,12 +44,14 @@ export class TrackingController {
   }
 
   @Get('config')
+  @Roles(Role.VENDOR, Role.ADMIN)
   @ApiOperation({ summary: 'Get tracking pixel config for the authenticated vendor' })
   async getConfig(@Req() req: Request) {
     return this.trackingService.getConfig(await this.storeOf(req));
   }
 
   @Patch('config')
+  @Roles(Role.VENDOR, Role.ADMIN)
   @ApiOperation({ summary: 'Update tracking pixel config for the authenticated vendor' })
   async updateConfig(
     @Req() req: Request,
@@ -85,6 +89,7 @@ export class TrackingController {
    * vendor pasted their own pixel and not someone else's.
    */
   @Post('test')
+  @Roles(Role.VENDOR, Role.ADMIN)
   @HttpCode(200)
   @ApiOperation({ summary: 'Validate a pixel ID without waiting for an event to fire' })
   async testConfig(

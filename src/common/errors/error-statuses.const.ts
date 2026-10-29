@@ -1,4 +1,4 @@
-import { HttpStatus } from '@nestjs/common';
+﻿import { HttpStatus } from '@nestjs/common';
 import { AppErrorCode } from './error-codes.enum';
 
 export const ERROR_HTTP_STATUS: Record<string, number> = {
@@ -58,7 +58,7 @@ export const ERROR_HTTP_STATUS: Record<string, number> = {
   [AppErrorCode.PRODUCT_NOT_FOUND]: HttpStatus.NOT_FOUND,
   [AppErrorCode.PRODUCT_ACCESS_DENIED]: HttpStatus.FORBIDDEN,
   [AppErrorCode.PRODUCT_CANNOT_DELETE_HAS_ORDERS]: HttpStatus.CONFLICT,
-  [AppErrorCode.PRODUCT_INSUFFICIENT_STOCK]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.PRODUCT_PRICE_EXCEEDS_ORIGINAL_PRICE]: HttpStatus.BAD_REQUEST,
 
   // ─── Category ───
   [AppErrorCode.CATEGORY_NOT_FOUND]: HttpStatus.NOT_FOUND,
@@ -76,13 +76,9 @@ export const ERROR_HTTP_STATUS: Record<string, number> = {
   [AppErrorCode.ORDER_WILAYA_COMMUNE_REQUIRED]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.ORDER_PRODUCT_NOT_AVAILABLE]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.ORDER_TOTAL_MISMATCH]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.ORDER_ITEM_OUT_OF_STOCK]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.ORDER_DELIVERY_CREATION_FAILED]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.ORDER_ONLY_CONFIRMED_CAN_SHIP]: HttpStatus.BAD_REQUEST,
-  [AppErrorCode.ORDER_ALREADY_CANCELLED]: HttpStatus.BAD_REQUEST,
-  [AppErrorCode.ORDER_ALREADY_DELIVERED]: HttpStatus.BAD_REQUEST,
-  [AppErrorCode.ORDER_ALREADY_REFUNDED]: HttpStatus.BAD_REQUEST,
-  [AppErrorCode.ORDER_ALREADY_DELETED]: HttpStatus.BAD_REQUEST,
-  [AppErrorCode.ORDER_CONFLICT]: HttpStatus.CONFLICT,
   [AppErrorCode.ORDER_CANNOT_CANCEL_AFTER_SHIPPED]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.ORDER_CANNOT_PURCHASE_OWN_PRODUCT]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.ORDER_CANNOT_REVIEW_TWICE]: HttpStatus.BAD_REQUEST,
@@ -94,6 +90,30 @@ export const ERROR_HTTP_STATUS: Record<string, number> = {
   [AppErrorCode.ORDER_REFUND_NOT_ALLOWED]: HttpStatus.BAD_REQUEST,
 
   // ─── Delivery ───
+  [AppErrorCode.ORDER_LABEL_DISABLED]: HttpStatus.NOT_FOUND,
+  [AppErrorCode.ORDER_LABEL_INVALID_FORMAT]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.ORDER_LABEL_INVALID_GROUPING]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.ORDER_LABEL_TOO_MANY_ORDERS]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.ORDER_LABEL_NOTHING_ELIGIBLE]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.ORDER_LABEL_MIXED_STORES]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.ORDER_LABEL_ORDER_NOT_FOUND]: HttpStatus.NOT_FOUND,
+  [AppErrorCode.ORDER_LABEL_UNSUPPORTED_CARRIER]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.ORDER_LABEL_PRE_DISPATCH]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.ORDER_LABEL_CANCELLED]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.ORDER_LABEL_NO_DELIVERY_COMPANY]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.ORDER_LABEL_MISSING_PARCEL]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.ORDER_LABEL_TRACKING_UNAVAILABLE]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.ORDER_LABEL_NOT_FOUND_AT_CARRIER]: HttpStatus.NOT_FOUND,
+  [AppErrorCode.ORDER_LABEL_DUPLICATE_TRACKING]: HttpStatus.OK,
+  [AppErrorCode.ORDER_LABEL_CARRIER_FAILED]: HttpStatus.BAD_GATEWAY,
+  [AppErrorCode.ORDER_LABEL_SOURCE_EXPIRED]: HttpStatus.GONE,
+  [AppErrorCode.ORDER_LABEL_RENDER_FAILED]: HttpStatus.INTERNAL_SERVER_ERROR,
+  [AppErrorCode.ORDER_LABEL_LAYOUT_UNSUPPORTED]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.ORDER_LABEL_SCALE_WARNING]: HttpStatus.OK,
+  [AppErrorCode.ORDER_LABEL_STORAGE_UNAVAILABLE]: HttpStatus.SERVICE_UNAVAILABLE,
+  [AppErrorCode.ORDER_LABEL_ARTIFACT_NOT_FOUND]: HttpStatus.NOT_FOUND,
+  [AppErrorCode.ORDER_LABEL_JOB_TIMEOUT]: HttpStatus.GATEWAY_TIMEOUT,
+
   [AppErrorCode.DELIVERY_COMPANY_NOT_ASSIGNED]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.DELIVERY_HANDLER_NOT_FOUND]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.DELIVERY_CREDENTIALS_NOT_CONFIGURED]: HttpStatus.BAD_REQUEST,
@@ -106,6 +126,14 @@ export const ERROR_HTTP_STATUS: Record<string, number> = {
   [AppErrorCode.DELIVERY_ORDER_NOT_IN_RESPONSE]: HttpStatus.INTERNAL_SERVER_ERROR,
   [AppErrorCode.DELIVERY_UNKNOWN_ERROR]: HttpStatus.INTERNAL_SERVER_ERROR,
 
+  // ─── Delivery status sync ───
+  [AppErrorCode.DELIVERY_STATUS_SYNC_FAILED]: HttpStatus.BAD_GATEWAY,
+  /** Advisory only — the code is recorded on the record, never raised at a caller. */
+  [AppErrorCode.DELIVERY_STATUS_UNKNOWN_STATE]: HttpStatus.OK,
+  /** Advisory only — the code is recorded on the record, never raised at a caller. */
+  [AppErrorCode.DELIVERY_STATUS_ADVANCE_CONFLICT]: HttpStatus.CONFLICT,
+  [AppErrorCode.DELIVERY_STATUS_NOT_FOUND]: HttpStatus.NOT_FOUND,
+
   // ─── Delivery Fees ───
   [AppErrorCode.FEE_NOT_FOUND_FOR_WILAYA]: HttpStatus.NOT_FOUND,
   [AppErrorCode.FEE_API_CREDENTIALS_MISSING]: HttpStatus.BAD_REQUEST,
@@ -117,6 +145,7 @@ export const ERROR_HTTP_STATUS: Record<string, number> = {
   [AppErrorCode.UPLOAD_NO_FILE_PROVIDED]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.UPLOAD_MAX_FILES_EXCEEDED]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.UPLOAD_NO_KEY_PROVIDED]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.UPLOAD_KEY_FORBIDDEN]: HttpStatus.FORBIDDEN,
   [AppErrorCode.UPLOAD_INVALID_FILE_TYPE]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.UPLOAD_FILE_TOO_LARGE]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.UPLOAD_R2_ACCESS_DENIED]: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -133,18 +162,6 @@ export const ERROR_HTTP_STATUS: Record<string, number> = {
   // ─── Infrastructure ───
   [AppErrorCode.INTERNAL_SERVER_ERROR]: HttpStatus.INTERNAL_SERVER_ERROR,
   [AppErrorCode.VALIDATION_FAILED]: HttpStatus.BAD_REQUEST,
-  [AppErrorCode.INVALID_ID_FORMAT]: HttpStatus.BAD_REQUEST,
-  [AppErrorCode.REQUEST_TIMEOUT]: HttpStatus.REQUEST_TIMEOUT,
-  [AppErrorCode.RATE_LIMIT_EXCEEDED]: HttpStatus.TOO_MANY_REQUESTS,
-  [AppErrorCode.DATABASE_ERROR]: HttpStatus.INTERNAL_SERVER_ERROR,
-  [AppErrorCode.SERVICE_UNAVAILABLE]: HttpStatus.SERVICE_UNAVAILABLE,
-  [AppErrorCode.EXTERNAL_API_ERROR]: HttpStatus.BAD_GATEWAY,
-  [AppErrorCode.EXTERNAL_API_TIMEOUT]: HttpStatus.GATEWAY_TIMEOUT,
-
-  // ─── Validation ───
-  [AppErrorCode.VALIDATION_MUST_BE_STRING]: HttpStatus.BAD_REQUEST,
-  [AppErrorCode.VALIDATION_INVALID_EMAIL]: HttpStatus.BAD_REQUEST,
-  [AppErrorCode.VALIDATION_REQUIRED]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.VALIDATION_MIN_LENGTH]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.VALIDATION_MIN_VALUE]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.VALIDATION_INVALID_VALUE]: HttpStatus.BAD_REQUEST,
@@ -160,6 +177,43 @@ export const ERROR_HTTP_STATUS: Record<string, number> = {
   [AppErrorCode.COUPON_MINIMUM_NOT_REACHED]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.COUPON_INVALID]: HttpStatus.BAD_REQUEST,
 
+  // ─── Payment ───\r\n  [AppErrorCode.PAYMENT_ALREADY_COMPLETED]: HttpStatus.BAD_REQUEST,\r\n\r\n  // ─── Inventory / Variants ───\r\n  // ─── Inventory / Variants ───
   // ─── Payment ───
   [AppErrorCode.PAYMENT_ALREADY_COMPLETED]: HttpStatus.BAD_REQUEST,
+
+  // ─── Inventory / Variants ───
+  [AppErrorCode.VARIANT_NOT_FOUND]: HttpStatus.NOT_FOUND,
+  [AppErrorCode.VARIANT_INACTIVE]: HttpStatus.CONFLICT,
+  [AppErrorCode.DUPLICATE_VARIANT_COMBINATION]: HttpStatus.CONFLICT,
+  [AppErrorCode.DUPLICATE_SKU]: HttpStatus.CONFLICT,
+  [AppErrorCode.VARIANT_PRICE_EXCEEDS_INITIAL_PRICE]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.BARCODE_INVALID]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.BARCODE_DUPLICATE]: HttpStatus.CONFLICT,
+  [AppErrorCode.PRODUCT_HAS_NO_VARIANTS]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.PRODUCT_NOT_IN_VARIANT_MODE]: HttpStatus.CONFLICT,
+  [AppErrorCode.PRODUCT_NOT_IN_STORE]: HttpStatus.NOT_FOUND,
+  [AppErrorCode.RESERVED_STOCK_CONFLICT]: HttpStatus.CONFLICT,
+  [AppErrorCode.RESERVATION_NOT_FOUND]: HttpStatus.NOT_FOUND,
+  [AppErrorCode.INVALID_QUANTITY]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.ADJUSTMENT_REASON_REQUIRED]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.INVALID_ORDER_TRANSITION]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.TENANT_ACCESS_DENIED]: HttpStatus.NOT_FOUND,
+  [AppErrorCode.ORDER_ALREADY_RESERVED]: HttpStatus.CONFLICT,
+  [AppErrorCode.INSUFFICIENT_STOCK]: HttpStatus.CONFLICT,
+  [AppErrorCode.VARIANT_HAS_RESERVED_STOCK]: HttpStatus.CONFLICT,
+  [AppErrorCode.VARIANT_NOT_FOUND_IN_BULK]: HttpStatus.NOT_FOUND,
+  [AppErrorCode.INVALID_ADJUSTMENT_MODE]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.OPTION_NOT_FOUND]: HttpStatus.NOT_FOUND,
+  [AppErrorCode.OPTION_VALUE_NOT_FOUND]: HttpStatus.NOT_FOUND,
+  [AppErrorCode.OPTION_KEY_IN_USE]: HttpStatus.CONFLICT,
+  [AppErrorCode.OPTION_VALUE_IN_USE]: HttpStatus.CONFLICT,
+  [AppErrorCode.INVALID_COMBINATION]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.VARIANT_DEACTIVATE_REQUIRES_CHOICE]: HttpStatus.CONFLICT,
+  [AppErrorCode.VARIANT_SET_NOT_EMPTY]: HttpStatus.CONFLICT,
+  [AppErrorCode.VARIANT_SET_MISSING_QUANTITIES]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.NO_ACTIVE_VALUES]: HttpStatus.CONFLICT,
+  [AppErrorCode.ORDER_ALREADY_FULFILLED]: HttpStatus.CONFLICT,
+  [AppErrorCode.ORDER_ALREADY_RELEASED]: HttpStatus.CONFLICT,
+  // ─── Inventory lookup ───
+  [AppErrorCode.INVENTORY_BARCODE_NOT_FOUND]: HttpStatus.NOT_FOUND,
 };

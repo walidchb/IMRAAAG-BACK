@@ -9,24 +9,39 @@ import {
   IsIn,
   MaxLength,
   IsUrl,
+  IsBoolean,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+
+/**
+ * Treats an empty/whitespace-only string as "not provided".
+ *
+ * `@IsOptional()` only skips validators for `null`/`undefined` - an empty string still runs
+ * them, so the vendor edit form (which posts `storeLogo: ''`/`coverImage: ''` for a store
+ * that has no image yet) was rejected by `@IsUrl()`/`@IsEmail()` with a 400. Optional
+ * fields must tolerate being cleared.
+ */
+const EmptyToUndefined = () =>
+  Transform(({ value }) => (typeof value === 'string' && value.trim() === '' ? undefined : value));
 
 export class SocialMediaDto {
   @ApiPropertyOptional()
+  @EmptyToUndefined()
   @IsOptional()
   @IsUrl()
   @MaxLength(2048)
   instagram?: string;
 
   @ApiPropertyOptional()
+  @EmptyToUndefined()
   @IsOptional()
   @IsUrl()
   @MaxLength(2048)
   facebook?: string;
 
   @ApiPropertyOptional()
+  @EmptyToUndefined()
   @IsOptional()
   @IsUrl()
   @MaxLength(2048)
@@ -74,6 +89,7 @@ export class UpdateStoreDto {
   description?: string;
 
   @ApiPropertyOptional()
+  @EmptyToUndefined()
   @IsOptional()
   @IsEmail()
   contactEmail?: string;
@@ -108,13 +124,22 @@ export class UpdateStoreDto {
   @IsIn(Object.values(StoreStatus))
   status?: string;
 
+  @ApiPropertyOptional({
+    description: 'Opt this store into variant inventory. Default false.',
+  })
+  @IsOptional()
+  @IsBoolean()
+  inventoryEnabled?: boolean;
+
   @ApiPropertyOptional()
+  @EmptyToUndefined()
   @IsOptional()
   @IsUrl()
   @MaxLength(2048)
   storeLogo?: string;
 
   @ApiPropertyOptional()
+  @EmptyToUndefined()
   @IsOptional()
   @IsUrl()
   @MaxLength(2048)

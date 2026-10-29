@@ -18,6 +18,8 @@ import { Store } from './schemas/store.schema';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 import { Role } from '../../common/constants/roles.enum';
+import { AppException } from '../../common/errors/app-exception';
+import { AppErrorCode } from '../../common/errors/error-codes.enum';
 
 @ApiTags('Stores')
 @ApiBearerAuth()
@@ -58,6 +60,17 @@ export class StoresController {
   @ApiResponse({ status: 200, description: 'Store updated', type: Store })
   @ApiResponse({ status: 404, description: 'Store not found' })
   async updateMine(@Body() updateStoreDto: UpdateStoreDto, @Req() req: any) {
+    // Required attributes on the vendor edit path: store name, phone and email. The slug
+    // is derived from the name. Everything else (description, logo, cover, location,
+    // socials) is optional. The public `UpdateStoreDto` keeps every field optional because
+    // the admin `PATCH /stores/:id` route shares it and performs partial updates; the
+    // vendor's own store must always carry its contact identity, so enforce it here.
+    for (const field of ['storeName', 'contactPhone', 'contactEmail'] as const) {
+      const value = updateStoreDto[field];
+      if (value === undefined || value === null || (typeof value === 'string' && value.trim() === '')) {
+        throw new AppException(AppErrorCode.VALIDATION_REQUIRED, { field });
+      }
+    }
     const user = req.user as { email: string };
     const store = await this.storesService.findByEmail(user.email, { skipStatusCheck: true }) as any;
     return this.storesService.update(store._id.toString(), updateStoreDto);
@@ -119,7 +132,7 @@ export class StoresController {
   @ApiResponse({ status: 200, description: 'Store found', type: Store })
   @ApiResponse({ status: 404, description: 'Store not found' })
   findByEmail(@Param('email') email: string) {
-    return this.storesService.findByEmail(email);
+    return this.storesService.findByEmail(email, { includePublishedCount: true });
   }
 
   @Public()
@@ -137,13 +150,13 @@ export class StoresController {
     @Param('id') id: string,
     @Query('by') by?: string,
   ) {
-    if (by === 'slug') return this.storesService.findBySlug(id);
-    if (by === 'vendor') return this.storesService.findByVendor(id);
+    if (by === 'slug') return this.storesService.findBySlug(id, { includePublishedCount: true });
+    if (by === 'vendor') return this.storesService.findByVendor(id, { includePublishedCount: true });
 
     const isMongoId = /^[0-9a-fA-F]{24}$/.test(id);
-    if (isMongoId) return this.storesService.findOne(id);
+    if (isMongoId) return this.storesService.findOne(id, { includePublishedCount: true });
 
-    return this.storesService.findBySlug(id);
+    return this.storesService.findBySlug(id, { includePublishedCount: true });
   }
 
   @Roles(Role.ADMIN)

@@ -11,7 +11,7 @@ export class DeliveryCompaniesService {
   ) {}
 
   async getAll(): Promise<DeliveryCompany[]> {
-    return this.companyModel.find().sort({ slug: 1 }).exec();
+    return this.companyModel.find({ isActive: true }).sort({ slug: 1 }).exec();
   }
 
   async getBySlug(slug: string): Promise<DeliveryCompany | null> {

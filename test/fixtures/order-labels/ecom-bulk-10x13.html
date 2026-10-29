@@ -1,0 +1,25 @@
+<!doctype html>
+<!--
+  SYNTHETIC TEST FIXTURE — not a live Ecom capture.
+  Mirrors a two-page Ecom bulk bordereau with page order asserted by tracking.
+  Replace with a scrubbed real response during the L0 live gate.
+-->
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      @page { size: 100mm 130mm; margin: 0; }
+      body { margin: 0; font-family: sans-serif; }
+      .label { width: 100mm; height: 130mm; box-sizing: border-box; padding: 4mm; page-break-after: always; }
+      .label:last-child { page-break-after: auto; }
+    </style>
+  </head>
+  <body>
+    <section class="label" data-label="ecom-bulk" data-page="1" data-tracking="ECM-SYNTHETIC-0001">
+      <h1>Ecom Delivery</h1><p>ECM-SYNTHETIC-0001</p><p>ORD-SYNTHETIC-0001</p>
+    </section>
+    <section class="label" data-label="ecom-bulk" data-page="2" data-tracking="ECM-SYNTHETIC-0002">
+      <h1>Ecom Delivery</h1><p>ECM-SYNTHETIC-0002</p><p>ORD-SYNTHETIC-0002</p>
+    </section>
+  </body>
+</html>

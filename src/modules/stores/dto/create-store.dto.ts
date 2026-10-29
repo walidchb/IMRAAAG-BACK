@@ -12,23 +12,37 @@ import {
   IsMongoId,
   IsUrl,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+/**
+ * Treats an empty/whitespace-only string as "not provided".
+ *
+ * `@IsOptional()` only skips validators for `null`/`undefined` - an empty string still runs
+ * them, so a blank optional field sent by the client (e.g. a store with no logo posting
+ * `storeLogo: ''`) was rejected by `@IsUrl()`/`@IsEmail()` with a 400. Optional fields must
+ * tolerate being cleared.
+ */
+const EmptyToUndefined = () =>
+  Transform(({ value }) => (typeof value === 'string' && value.trim() === '' ? undefined : value));
 
 export class SocialMediaDto {
   @ApiPropertyOptional()
+  @EmptyToUndefined()
   @IsOptional()
   @IsUrl()
   @MaxLength(2048)
   instagram?: string;
 
   @ApiPropertyOptional()
+  @EmptyToUndefined()
   @IsOptional()
   @IsUrl()
   @MaxLength(2048)
   facebook?: string;
 
   @ApiPropertyOptional()
+  @EmptyToUndefined()
   @IsOptional()
   @IsUrl()
   @MaxLength(2048)
@@ -94,10 +108,10 @@ export class CreateStoreDto {
   @MaxLength(2000)
   description?: string;
 
-  @ApiPropertyOptional({ description: 'Contact email' })
-  @IsOptional()
+  @ApiProperty({ description: 'Contact email (required)' })
+  @EmptyToUndefined()
   @IsEmail()
-  contactEmail?: string;
+  contactEmail: string;
 
   @ApiProperty({ description: 'Contact phone' })
   @IsString()
@@ -130,12 +144,14 @@ export class CreateStoreDto {
   status?: string;
 
   @ApiPropertyOptional({ description: 'Store logo URL' })
+  @EmptyToUndefined()
   @IsOptional()
   @IsUrl()
   @MaxLength(2048)
   storeLogo?: string;
 
   @ApiPropertyOptional({ description: 'Cover image URL' })
+  @EmptyToUndefined()
   @IsOptional()
   @IsUrl()
   @MaxLength(2048)

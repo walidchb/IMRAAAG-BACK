@@ -2,8 +2,14 @@ import { Injectable, Logger } from '@nestjs/common';
 import { AppException } from '../../common/errors/app-exception';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
 import { ConfigService } from '@nestjs/config';
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+  GetObjectCommand,
+} from '@aws-sdk/client-s3';
 import { randomUUID } from 'crypto';
+import { Readable } from 'node:stream';
 import sharp from 'sharp';
 import { IMAGE_CONFIG } from './image.config';
 
@@ -147,6 +153,65 @@ export class UploadService {
         }),
         { abortSignal: controller.signal },
       );
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+
+  /**
+   * Stores a private artifact (order-label PDF/ZIP). These objects are never public and are
+   * always read back through the authenticated API, so no public cache header is set.
+   */
+  async putPrivateObject(key: string, body: Buffer, contentType: string): Promise<void> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
+
+    try {
+      await this.s3.send(
+        new PutObjectCommand({
+          Bucket: this.bucket,
+          Key: key,
+          Body: body,
+          ContentType: contentType,
+          CacheControl: 'private, no-store',
+        }),
+        { abortSignal: controller.signal },
+      );
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+
+  async streamPrivateObject(key: string): Promise<{
+    body: Readable;
+    contentLength: number | null;
+    contentType: string;
+  }> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+    try {
+      const response = await this.s3.send(
+        new GetObjectCommand({ Bucket: this.bucket, Key: key }),
+        { abortSignal: controller.signal },
+      );
+
+      if (!response.Body) {
+        throw new AppException(AppErrorCode.ORDER_LABEL_ARTIFACT_NOT_FOUND, { key });
+      }
+
+      return {
+        body: response.Body as unknown as Readable,
+        contentLength: response.ContentLength ?? null,
+        contentType: response.ContentType || 'application/octet-stream',
+      };
+    } catch (err) {
+      if (err instanceof AppException) throw err;
+      const name = (err as { name?: string })?.name;
+      if (name === 'NoSuchKey' || name === 'NotFound') {
+        throw new AppException(AppErrorCode.ORDER_LABEL_ARTIFACT_NOT_FOUND, { key });
+      }
+      throw new AppException(AppErrorCode.ORDER_LABEL_ARTIFACT_NOT_FOUND, { key });
     } finally {
       clearTimeout(timeoutId);
     }
