@@ -23,6 +23,8 @@ import { encryptRecord, decryptRecord } from '../../common/encryption.util';
 import { fetchWithRetry } from '../../common/fetch-with-retry';
 import { StoresService } from '../stores/stores.service';
 import { CARRIER_ORDER_SIGNALS, isNormalizedStatus } from './delivery-status/carrier/carrier-signal';
+import { DhdCommuneOption } from './delivery-companies/dhd-commune';
+import { NoestCommuneOption } from './delivery-companies/noest-commune';
 
 interface NoestDeskRaw {
   code: string;
@@ -210,14 +212,18 @@ export class DeliveryService {
    * otherwise be discovered only after the stock was already deducted. Checking them up front
    * keeps those two failures side-effect free, exactly as they were before.
    */
-  assertCanCreateDelivery(order: { orderNo?: string; deliveryCompanyId?: string }): void {
+  async assertCanCreateDelivery(order: Order): Promise<void> {
     const companyId = order.deliveryCompanyId;
     if (!companyId) {
       throw new AppException(AppErrorCode.DELIVERY_COMPANY_NOT_ASSIGNED, { orderNo: order.orderNo });
     }
-    if (!this.deliveryCompanyRegistry.getHandler(companyId)) {
+    const handler = this.deliveryCompanyRegistry.getHandler(companyId);
+    if (!handler) {
       throw new AppException(AppErrorCode.DELIVERY_HANDLER_NOT_FOUND, { companyId });
     }
+    // A handler may need to consult the platform location registry (DHD resolves the customer's
+    // commune `dhd_uuid`), so the assertion is allowed to be asynchronous.
+    await handler.assertDispatchable?.(order);
   }
 
   async createDeliveryForOrder(order: Order): Promise<{ parcelId: string }> {
@@ -649,6 +655,59 @@ export class DeliveryService {
   async getDhdDesks(wilayaCode?: string): Promise<DhdDesk[]> {
     const filter = wilayaCode ? { wilayaCode } : {};
     return this.dhdDeskModel.find(filter).sort({ nom: 1 }).lean().exec();
+  }
+
+  async getDhdCommunes(vendorEmail: string, wilayaCode: string): Promise<DhdCommuneOption[]> {
+    if (!wilayaCode) {
+      throw new AppException(AppErrorCode.VALIDATION_REQUIRED, { field: 'wilayaCode' });
+    }
+    const normalized = String(Number(wilayaCode));
+    if (!/^\d{1,2}$/.test(normalized) || Number(normalized) < 1 || Number(normalized) > 58) {
+      throw new AppException(AppErrorCode.VALIDATION_INVALID_VALUE, { field: 'wilayaCode' });
+    }
+
+    const handler = this.deliveryCompanyRegistry.getHandler('dhd');
+    if (!handler?.listCommunes) {
+      throw new AppException(AppErrorCode.DELIVERY_HANDLER_NOT_FOUND, { companyId: 'dhd' });
+    }
+
+    const storeId = await this.storeIdFor(vendorEmail);
+    // DHD's own option shape is narrower than the provider-neutral one (it always reports
+    // `hasStopDesk`), so the shared declaration is re-narrowed here. No behaviour change.
+    return (await handler.listCommunes(normalized, {
+      storeId: storeId ? String(storeId) : undefined,
+      vendorEmail,
+    })) as DhdCommuneOption[];
+  }
+
+  /**
+   * Noest's commune list for one wilaya. Same contract as `getDhdCommunes`: the vendor's store is
+   * resolved from the session and handed to the handler, which owns the credentials.
+   */
+  async getNoestCommunes(vendorEmail: string, wilayaCode: string): Promise<NoestCommuneOption[]> {
+    if (!wilayaCode) {
+      throw new AppException(AppErrorCode.VALIDATION_REQUIRED, { field: 'wilayaCode' });
+    }
+    const normalized = String(Number(wilayaCode));
+    if (!/^\d{1,2}$/.test(normalized) || Number(normalized) < 1 || Number(normalized) > 58) {
+      throw new AppException(AppErrorCode.VALIDATION_INVALID_VALUE, { field: 'wilayaCode' });
+    }
+
+    const handler = this.deliveryCompanyRegistry.getHandler('noest');
+    if (!handler?.listCommunes) {
+      throw new AppException(AppErrorCode.DELIVERY_HANDLER_NOT_FOUND, { companyId: 'noest' });
+    }
+
+    const storeId = await this.storeIdFor(vendorEmail);
+    const communes = await handler.listCommunes(normalized, {
+      storeId: storeId ? String(storeId) : undefined,
+      vendorEmail,
+    });
+    return communes.map((c) => ({
+      name: c.name,
+      wilayaId: c.wilayaId,
+      postalCode: c.postalCode,
+    }));
   }
 
   /**

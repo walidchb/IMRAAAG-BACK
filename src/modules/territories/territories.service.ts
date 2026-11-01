@@ -48,12 +48,23 @@ export class TerritoriesService {
     return this.wilayaModel.findOneAndUpdate({ code }, { $set: update }, { new: true }).exec();
   }
 
-  async updateCommuneUuid(post_code: string, zrexpress_uuid?: string, yalidine_uuid?: string, ecomdelivery_uuid?: string) {
+  async updateCommuneUuid(
+    post_code: string,
+    zrexpress_uuid?: string,
+    yalidine_uuid?: string,
+    ecomdelivery_uuid?: string,
+    dhd_uuid?: string,
+  ) {
     const update: Record<string, string> = {};
+    if (dhd_uuid !== undefined) update.dhd_uuid = dhd_uuid;
     if (zrexpress_uuid !== undefined) update.zrexpress_uuid = zrexpress_uuid;
     if (yalidine_uuid !== undefined) update.yalidine_uuid = yalidine_uuid;
     if (ecomdelivery_uuid !== undefined) update.ecomdelivery_uuid = ecomdelivery_uuid;
-    return this.communeModel.findOneAndUpdate({ post_code }, { $set: update }, { new: true }).exec();
+    const updated = await this.communeModel.findOneAndUpdate({ post_code }, { $set: update }, { new: true }).exec();
+    // The public commune read is cached for a week; drop it so an edited `dhd_uuid` reaches the
+    // vendor UI (and the dispatch resolver) immediately instead of after a restart.
+    if (updated) this.cacheService.clear('territories:');
+    return updated;
   }
 
   async migrateNewWilayas(): Promise<{ moved: number }> {

@@ -104,6 +104,27 @@
     authMode: process.env.DHD_STATUS_AUTH_MODE || 'bearer',
   },
 
+  /**
+   * The DHD commune mapping gate. DHD/ECOTRACK exposes communes by `{ nom, wilaya_id }` (no UUID),
+   * and an unmapped order would be rejected by DHD's dispatch API. When this is off, dispatch keeps
+   * its legacy behaviour (resolve the commune name from the platform `communes` collection and send
+   * it verbatim), so the feature rolls back instantly. Default `false`.
+   */
+  dhdCommuneMapping: {
+    enabled: process.env.DHD_COMMUNE_MAPPING_ENABLED === 'true',
+  },
+
+  /**
+   * The Noest commune mapping gate. Noest identifies communes by `{ nom, wilaya_id }` (no UUID) and
+   * rejects an inactive/unknown commune at dispatch. When this is off, dispatch keeps its legacy
+   * behaviour (resolve the commune name from the platform `communes` collection and send it
+   * verbatim), so the feature rolls back instantly. Independent from `dhdCommuneMapping`.
+   * Default `false`.
+   */
+  noestCommuneMapping: {
+    enabled: process.env.NOEST_COMMUNE_MAPPING_ENABLED === 'true',
+  },
+
   noestStatusSync: {
     enabled: process.env.NOEST_STATUS_SYNC_ENABLED === 'true',
     intervalMinutes: parseInt(process.env.NOEST_STATUS_SYNC_INTERVAL_MINUTES || '15', 10),

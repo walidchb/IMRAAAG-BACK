@@ -303,3 +303,71 @@ describe('DeliveryService.resolveDefaultStopDesk - first pickup point per carrie
     expect(dhdDeskModel.findOne).not.toHaveBeenCalled();
   });
 });
+
+/**
+ * `GET /delivery/noest-communes` — the service validates the wilaya, resolves the vendor's store
+ * from the session and delegates the carrier read to the handler (which owns the credentials).
+ */
+describe('DeliveryService.getNoestCommunes', () => {
+  const VENDOR = 'vendor@test.com';
+  const STORE_ID = new Types.ObjectId('6ac400e26b1b2c3d4e5f6a71');
+
+  function makeService(listCommunes: jest.Mock) {
+    const registry = { getHandler: jest.fn().mockReturnValue({ listCommunes }) };
+    const storesService = { resolveStoreIdByEmail: jest.fn().mockResolvedValue(STORE_ID) };
+    const service = new DeliveryService(
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      registry as any,
+      {} as any,
+      { get: jest.fn() } as any,
+      storesService as any,
+    );
+    return { service, registry, storesService };
+  }
+
+  it('delegates with the store resolved from the session and returns the three option fields', async () => {
+    const listCommunes = jest.fn().mockResolvedValue([
+      { name: 'Batna', wilayaId: '5', postalCode: '05001' },
+    ]);
+    const { service, registry } = makeService(listCommunes);
+
+    await expect(service.getNoestCommunes(VENDOR, ' 5 ')).resolves.toEqual([
+      { name: 'Batna', wilayaId: '5', postalCode: '05001' },
+    ]);
+
+    expect(registry.getHandler).toHaveBeenCalledWith('noest');
+    expect(listCommunes).toHaveBeenCalledWith('5', {
+      storeId: String(STORE_ID),
+      vendorEmail: VENDOR,
+    });
+  });
+
+  it('refuses a missing or out-of-range wilaya before any carrier call', async () => {
+    const listCommunes = jest.fn();
+    const { service } = makeService(listCommunes);
+
+    await expect(service.getNoestCommunes(VENDOR, '')).rejects.toMatchObject({
+      errorCode: 'VALIDATION_REQUIRED',
+    });
+    await expect(service.getNoestCommunes(VENDOR, '59')).rejects.toMatchObject({
+      errorCode: 'VALIDATION_INVALID_VALUE',
+    });
+    expect(listCommunes).not.toHaveBeenCalled();
+  });
+
+  it('reports a missing handler capability instead of failing silently', async () => {
+    const { service, registry } = makeService(jest.fn());
+    registry.getHandler.mockReturnValue({});
+
+    await expect(service.getNoestCommunes(VENDOR, '5')).rejects.toMatchObject({
+      errorCode: 'DELIVERY_HANDLER_NOT_FOUND',
+    });
+  });
+});

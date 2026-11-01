@@ -1,0 +1,1178 @@
+{
+  "info": {
+    "name": "E-com Delivery — API v2",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Collection générée. Importer dans Postman, renseigner les variables « cle » et « token », puis tester tous les endpoints."
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://ecom-dz.com/api_v2"
+    },
+    {
+      "key": "cle",
+      "value": ""
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "tracking",
+      "value": "EC000000"
+    },
+    {
+      "key": "id_paiement",
+      "value": "1042"
+    },
+    {
+      "key": "id_produit",
+      "value": "13"
+    }
+  ],
+  "item": [
+    {
+      "name": "Référentiels",
+      "item": [
+        {
+          "name": "GET /test",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{cle}}"
+              },
+              {
+                "key": "X-API-Token",
+                "value": "{{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/test",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "test"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /wilayas",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{cle}}"
+              },
+              {
+                "key": "X-API-Token",
+                "value": "{{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/wilayas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "wilayas"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /communes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{cle}}"
+              },
+              {
+                "key": "X-API-Token",
+                "value": "{{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/communes?id_wilaya=16",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "communes"
+              ],
+              "query": [
+                {
+                  "key": "id_wilaya",
+                  "value": "16"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /stopdesks",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{cle}}"
+              },
+              {
+                "key": "X-API-Token",
+                "value": "{{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/stopdesks?id_wilaya=16",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "stopdesks"
+              ],
+              "query": [
+                {
+                  "key": "id_wilaya",
+                  "value": "16"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /situations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{cle}}"
+              },
+              {
+                "key": "X-API-Token",
+                "value": "{{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/situations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "situations"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /etats-logistiques",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{cle}}"
+              },
+              {
+                "key": "X-API-Token",
+                "value": "{{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/etats-logistiques",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "etats-logistiques"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /tarifs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{cle}}"
+              },
+              {
+                "key": "X-API-Token",
+                "value": "{{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tarifs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tarifs"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /changelog",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{cle}}"
+              },
+              {
+                "key": "X-API-Token",
+                "value": "{{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/changelog?limit=50",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "changelog"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Colis",
+      "item": [
+        {
+          "name": "POST /colis",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{cle}}"
+              },
+              {
+                "key": "X-API-Token",
+                "value": "{{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/colis",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "colis"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nom_complet\": \"Client Test\",\n  \"mobile_1\": \"0550000000\",\n  \"id_wilaya\": 16,\n  \"commune\": \"Alger Centre\",\n  \"adresse\": \"Rue Didouche Mourad\",\n  \"article\": \"Article test\",\n  \"quantite\": 1,\n  \"total\": 2500,\n  \"stopdesk\": 0,\n  \"confirmee\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /colis/confirmer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{cle}}"
+              },
+              {
+                "key": "X-API-Token",
+                "value": "{{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/colis/confirmer",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "colis",
+                "confirmer"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"trackings\": [\n    \"{{tracking}}\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /colis",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{cle}}"
+              },
+              {
+                "key": "X-API-Token",
+                "value": "{{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/colis?page=1&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "colis"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /colis/{tracking}",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{cle}}"
+              },
+              {
+                "key": "X-API-Token",
+                "value": "{{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/colis/{{tracking}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "colis",
+                "{{tracking}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "PUT /colis/{tracking}",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{cle}}"
+              },
+              {
+                "key": "X-API-Token",
+                "value": "{{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/colis/{{tracking}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "colis",
+                "{{tracking}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nom_complet\": \"Client Test\",\n  \"mobile_1\": \"0550000000\",\n  \"id_wilaya\": 16,\n  \"commune\": \"Alger Centre\",\n  \"adresse\": \"Rue Didouche Mourad\",\n  \"article\": \"Article test\",\n  \"quantite\": 1,\n  \"total\": 2500,\n  \"stopdesk\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "DELETE /colis/{tracking}",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{cle}}"
+              },
+              {
+                "key": "X-API-Token",
+                "value": "{{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/colis/{{tracking}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "colis",
+                "{{tracking}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /colis/{tracking}/bordereau",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{cle}}"
+              },
+              {
+                "key": "X-API-Token",
+                "value": "{{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/colis/{{tracking}}/bordereau?format=10x13",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "colis",
+                "{{tracking}}",
+                "bordereau"
+              ],
+              "query": [
+                {
+                  "key": "format",
+                  "value": "10x13"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /colis/bordereaux",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{cle}}"
+              },
+              {
+                "key": "X-API-Token",
+                "value": "{{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/colis/bordereaux",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "colis",
+                "bordereaux"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"trackings\": [\n    \"{{tracking}}\"\n  ],\n  \"format\": \"10x13\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /colis/historique",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{cle}}"
+              },
+              {
+                "key": "X-API-Token",
+                "value": "{{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/colis/historique",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "colis",
+                "historique"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"trackings\": [\n    \"{{tracking}}\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /colis/statuts",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{cle}}"
+              },
+              {
+                "key": "X-API-Token",
+                "value": "{{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/colis/statuts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "colis",
+                "statuts"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"trackings\": [\n    \"{{tracking}}\"\n  ],\n  \"id_externes\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /colis/maj",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{cle}}"
+              },
+              {
+                "key": "X-API-Token",
+                "value": "{{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/colis/maj?depuis=2026-06-01",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "colis",
+                "maj"
+              ],
+              "query": [
+                {
+                  "key": "depuis",
+                  "value": "2026-06-01"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /colis/resume",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{cle}}"
+              },
+              {
+                "key": "X-API-Token",
+                "value": "{{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/colis/resume?depuis=2026-06-01",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "colis",
+                "resume"
+              ],
+              "query": [
+                {
+                  "key": "depuis",
+                  "value": "2026-06-01"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /paiements",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{cle}}"
+              },
+              {
+                "key": "X-API-Token",
+                "value": "{{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/paiements?page=1&limit=50",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "paiements"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /paiements/{id_paiement}",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{cle}}"
+              },
+              {
+                "key": "X-API-Token",
+                "value": "{{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/paiements/{{id_paiement}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "paiements",
+                "{{id_paiement}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Ramassage",
+      "item": [
+        {
+          "name": "POST /ramassage",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{cle}}"
+              },
+              {
+                "key": "X-API-Token",
+                "value": "{{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ramassage",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ramassage"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nb_colis\": 12,\n  \"type_vehicule\": 2,\n  \"commune\": \"Alger Centre\",\n  \"heure\": \"14h30\",\n  \"google_map\": \"https://maps.app.goo.gl/xxxx\",\n  \"mobile\": \"0550000000\",\n  \"note\": \"Sonner au portail\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Réclamation",
+      "item": [
+        {
+          "name": "GET /reclamations/motifs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{cle}}"
+              },
+              {
+                "key": "X-API-Token",
+                "value": "{{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reclamations/motifs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reclamations",
+                "motifs"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /reclamations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{cle}}"
+              },
+              {
+                "key": "X-API-Token",
+                "value": "{{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reclamations?date_debut=2026-10-01&limit=50",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reclamations"
+              ],
+              "query": [
+                {
+                  "key": "date_debut",
+                  "value": "2026-10-01"
+                },
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /reclamations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{cle}}"
+              },
+              {
+                "key": "X-API-Token",
+                "value": "{{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reclamations?en_cours=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reclamations"
+              ],
+              "query": [
+                {
+                  "key": "en_cours",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Produits",
+      "item": [
+        {
+          "name": "GET /produits",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{cle}}"
+              },
+              {
+                "key": "X-API-Token",
+                "value": "{{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/produits",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "produits"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /produits",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{cle}}"
+              },
+              {
+                "key": "X-API-Token",
+                "value": "{{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/produits",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "produits"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ref_article\": \"TS-100\",\n  \"article\": \"Montre connectée\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "PUT /produits/{id_produit}",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{cle}}"
+              },
+              {
+                "key": "X-API-Token",
+                "value": "{{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/produits/{{id_produit}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "produits",
+                "{{id_produit}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ref_article\": \"TS-100\",\n  \"article\": \"Montre connectée bleue\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Webhooks",
+      "item": [
+        {
+          "name": "GET /webhook",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{cle}}"
+              },
+              {
+                "key": "X-API-Token",
+                "value": "{{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/webhook",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "webhook"
+              ]
+            }
+          }
+        },
+        {
+          "name": "PUT /webhook",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{cle}}"
+              },
+              {
+                "key": "X-API-Token",
+                "value": "{{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/webhook",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "webhook"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://mon-site.com/webhook\",\n  \"secret\": \"\",\n  \"events\": [\n    \"*\"\n  ],\n  \"active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "DELETE /webhook",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{cle}}"
+              },
+              {
+                "key": "X-API-Token",
+                "value": "{{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/webhook",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "webhook"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /webhook/test",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{cle}}"
+              },
+              {
+                "key": "X-API-Token",
+                "value": "{{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/webhook/test",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "webhook",
+                "test"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event\": \"colis.situation\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /webhook/events",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{cle}}"
+              },
+              {
+                "key": "X-API-Token",
+                "value": "{{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/webhook/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "webhook",
+                "events"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /webhook/logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{cle}}"
+              },
+              {
+                "key": "X-API-Token",
+                "value": "{{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/webhook/logs?limit=50",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "webhook",
+                "logs"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

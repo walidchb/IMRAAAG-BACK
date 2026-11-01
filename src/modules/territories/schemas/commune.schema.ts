@@ -23,12 +23,25 @@ export class Commune {
   @Prop({ required: true })
   wilaya_code: string;
 
+  /**
+   * The commune's DHD/ECOTRACK counterpart, stored as the carrier's commune **name** (`nom`):
+   * DHD exposes no commune UUID and matches on the French toponym. A populated value means the
+   * commune needs no manual DHD mapping — dispatch sends it verbatim.
+   */
+  @Prop()
+  dhd_uuid: string;
+
   @Prop()
   zrexpress_uuid: string;
 
   @Prop()
   yalidine_uuid: string;
 
+  /**
+   * The commune's Noest Express counterpart, stored as the carrier's commune **name** (`nom`):
+   * Noest exposes no commune UUID and matches on `{ nom, wilaya_id }`. A populated value means the
+   * commune needs no manual Noest mapping — dispatch sends it verbatim.
+   */
   @Prop()
   noestexpress_uuid: string;
 

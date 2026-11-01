@@ -179,6 +179,62 @@ export class Order {
   @Prop()
   stopDeskCode: string;
 
+  /**
+   * The DHD Delivery commune selection, required when dispatching via DHD (`deliveryCompanyId === 'dhd'`).
+   *
+   * The ECOTRACK/DHD API exposes no commune UUID, identifying communes by `{ nom, wilaya_id }`.
+   * Preserved separately from `customer.wilaya` and `customer.commune` so the customer's canonical
+   * platform address remains untouched.
+   */
+  @Prop({
+    type: {
+      name: { type: String, trim: true },
+      wilayaId: { type: String, trim: true },
+      postalCode: { type: String, trim: true, default: null },
+      hasStopDesk: { type: Boolean, default: false },
+      selectedAt: { type: Date, default: null },
+      selectedBy: { type: String, default: null },
+    },
+    _id: false,
+    default: null,
+  })
+  dhdCommune?: {
+    name: string;
+    wilayaId: string;
+    postalCode?: string | null;
+    hasStopDesk?: boolean;
+    selectedAt?: Date | null;
+    selectedBy?: string | null;
+  } | null;
+
+  /**
+   * The Noest Express commune selection, used when dispatching via Noest
+   * (`deliveryCompanyId === 'noest'`).
+   *
+   * Noest identifies communes by `{ nom, wilaya_id }` and publishes no commune UUID, so only the
+   * name and the numeric wilaya are sent. No `hasStopDesk` field: Noest exposes no per-commune
+   * stop-desk capability. Preserved separately from `customer.wilaya`/`customer.commune` so the
+   * customer's canonical platform address remains untouched.
+   */
+  @Prop({
+    type: {
+      name: { type: String, trim: true },
+      wilayaId: { type: String, trim: true },
+      postalCode: { type: String, trim: true, default: null },
+      selectedAt: { type: Date, default: null },
+      selectedBy: { type: String, default: null },
+    },
+    _id: false,
+    default: null,
+  })
+  noestCommune?: {
+    name: string;
+    wilayaId: string;
+    postalCode?: string | null;
+    selectedAt?: Date | null;
+    selectedBy?: string | null;
+  } | null;
+
   @Prop({ type: Date })
   updatedAt: Date;
 

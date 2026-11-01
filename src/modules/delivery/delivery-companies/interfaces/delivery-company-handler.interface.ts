@@ -1,10 +1,26 @@
 import { Order } from '../../../orders/schemas/order.schema';
 
+/**
+ * A carrier-recognized commune, provider-neutral.
+ *
+ * Carriers identify communes by name + numeric wilaya (neither DHD nor Noest publishes a commune
+ * UUID). `hasStopDesk` is **optional** because only some carriers publish a per-commune stop-desk
+ * capability — DHD does, Noest does not. A provider must never fabricate one it does not have.
+ */
+export interface CarrierCommuneOption {
+  name: string;
+  wilayaId: string;
+  postalCode: string | null;
+  hasStopDesk?: boolean;
+}
+
 export interface BulkOrderResult {
   orderNo: string;
   success: boolean;
   parcelId?: string;
   error?: string;
+  /** Additive machine-readable failure/skip code (e.g. DELIVERY_COMMUNE_NOT_MAPPED). */
+  code?: string;
 }
 
 /**
@@ -298,4 +314,22 @@ export interface DeliveryCompanyHandler {
     orders: DeliveryLabelOrder[],
     context: DeliveryLabelContext,
   ): Promise<DeliveryLabelResult>;
+
+  /**
+   * **Optional** carrier commune capability.
+   *
+   * Lists valid carrier-recognized communes for a given numeric wilaya code.
+   */
+  listCommunes?(
+    wilayaCode: string,
+    context: DeliveryStatusContext,
+  ): Promise<CarrierCommuneOption[]>;
+
+  /**
+   * **Optional** pre-dispatch carrier assertions.
+   *
+   * Throws an AppException if the order does not satisfy carrier-specific dispatch prerequisites
+   * (e.g. missing mapped carrier commune for DHD).
+   */
+  assertDispatchable?(order: Order): void | Promise<void>;
 }

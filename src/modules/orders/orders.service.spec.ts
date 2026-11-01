@@ -474,6 +474,221 @@ describe('OrdersService', () => {
     });
   });
 
+  describe('update() — DHD commune mapping', () => {
+    const selection = {
+      name: '  Alger Centre  ',
+      wilayaId: '16',
+      postalCode: ' 16000 ',
+      hasStopDesk: true,
+    };
+
+    it('stamps a normalized selection with the acting user', async () => {
+      const existing = makeOrder({ deliveryCompanyId: 'dhd' });
+      const claimed = makeOrder({ deliveryCompanyId: 'dhd', dhdCommune: selection });
+      orderModel.findById.mockReturnValue(query(existing));
+      orderModel.findByIdAndUpdate.mockReturnValue(query(claimed));
+
+      await service.update(
+        ORDER_ID.toString(),
+        { dhdCommune: selection } as unknown as UpdateOrderDto,
+        VENDOR_USER,
+      );
+
+      const [, updateData] = orderModel.findByIdAndUpdate.mock.calls[0];
+      expect(updateData.dhdCommune).toEqual({
+        name: 'Alger Centre',
+        wilayaId: '16',
+        postalCode: '16000',
+        hasStopDesk: true,
+        selectedAt: expect.any(Date),
+        selectedBy: VENDOR_USER.id,
+      });
+    });
+
+    it('refuses a selection from another wilaya', async () => {
+      orderModel.findById.mockReturnValue(query(makeOrder({ deliveryCompanyId: 'dhd' })));
+
+      await expect(
+        service.update(ORDER_ID.toString(), {
+          dhdCommune: { name: 'Oran', wilayaId: '31' },
+        } as unknown as UpdateOrderDto),
+      ).rejects.toMatchObject({
+        errorCode: AppErrorCode.DELIVERY_COMMUNE_INVALID,
+        errorParams: expect.objectContaining({ wilaya: '16', selectedWilaya: '31' }),
+      });
+
+      expect(orderModel.findByIdAndUpdate).not.toHaveBeenCalled();
+    });
+
+    it('refuses an empty commune name', async () => {
+      orderModel.findById.mockReturnValue(query(makeOrder({ deliveryCompanyId: 'dhd' })));
+
+      await expect(
+        service.update(ORDER_ID.toString(), {
+          dhdCommune: { name: '   ', wilayaId: '16' },
+        } as unknown as UpdateOrderDto),
+      ).rejects.toMatchObject({ errorCode: AppErrorCode.DELIVERY_COMMUNE_INVALID });
+    });
+
+    it('clears the mapping when the client sends null', async () => {
+      const existing = makeOrder({
+        deliveryCompanyId: 'dhd',
+        dhdCommune: { name: 'Alger Centre', wilayaId: '16', hasStopDesk: true },
+      });
+      orderModel.findById.mockReturnValue(query(existing));
+      orderModel.findByIdAndUpdate.mockReturnValue(query(makeOrder({ dhdCommune: null })));
+
+      await service.update(ORDER_ID.toString(), { dhdCommune: null } as unknown as UpdateOrderDto);
+
+      const [, updateData] = orderModel.findByIdAndUpdate.mock.calls[0];
+      expect(updateData).toHaveProperty('dhdCommune', null);
+    });
+
+    it('clears a stale mapping when the wilaya changes without a new selection', async () => {
+      const existing = makeOrder({
+        deliveryCompanyId: 'dhd',
+        customer: { name: 'Customer', phone: '0550000000', wilaya: '16', commune: 'Alger', address: 'Somewhere' },
+        dhdCommune: { name: 'Alger Centre', wilayaId: '16', hasStopDesk: true },
+      });
+      orderModel.findById.mockReturnValue(query(existing));
+      orderModel.findByIdAndUpdate.mockReturnValue(query(makeOrder()));
+
+      await service.update(ORDER_ID.toString(), {
+        customer: { wilaya: '31', commune: 'Oran' },
+      } as UpdateOrderDto);
+
+      const [, updateData] = orderModel.findByIdAndUpdate.mock.calls[0];
+      expect(updateData).toHaveProperty('dhdCommune', null);
+    });
+
+    it('keeps the mapping when the wilaya is unchanged', async () => {
+      const existing = makeOrder({
+        deliveryCompanyId: 'dhd',
+        dhdCommune: { name: 'Alger Centre', wilayaId: '16', hasStopDesk: true },
+      });
+      orderModel.findById.mockReturnValue(query(existing));
+      orderModel.findByIdAndUpdate.mockReturnValue(query(existing));
+
+      await service.update(ORDER_ID.toString(), {
+        customer: { wilaya: '16', commune: 'Alger Centre', name: 'Customer' },
+      } as UpdateOrderDto);
+
+      const [, updateData] = orderModel.findByIdAndUpdate.mock.calls[0];
+      expect(updateData).not.toHaveProperty('dhdCommune');
+    });
+  });
+
+  describe('update() — Noest commune mapping', () => {
+    const noestSelection = {
+      name: '  Alger Centre  ',
+      wilayaId: '16',
+      postalCode: ' 16000 ',
+    };
+
+    it('stamps a normalized selection with the acting user', async () => {
+      const existing = makeOrder({ deliveryCompanyId: 'noest' });
+      orderModel.findById.mockReturnValue(query(existing));
+      orderModel.findByIdAndUpdate.mockReturnValue(query(makeOrder({ deliveryCompanyId: 'noest' })));
+
+      await service.update(
+        ORDER_ID.toString(),
+        { noestCommune: noestSelection } as unknown as UpdateOrderDto,
+        VENDOR_USER,
+      );
+
+      const [, updateData] = orderModel.findByIdAndUpdate.mock.calls[0];
+      expect(updateData.noestCommune).toEqual({
+        name: 'Alger Centre',
+        wilayaId: '16',
+        postalCode: '16000',
+        selectedAt: expect.any(Date),
+        selectedBy: VENDOR_USER.id,
+      });
+    });
+
+    it('refuses a selection from another wilaya', async () => {
+      orderModel.findById.mockReturnValue(query(makeOrder({ deliveryCompanyId: 'noest' })));
+
+      await expect(
+        service.update(ORDER_ID.toString(), {
+          noestCommune: { name: 'Oran', wilayaId: '31' },
+        } as unknown as UpdateOrderDto),
+      ).rejects.toMatchObject({
+        errorCode: AppErrorCode.DELIVERY_COMMUNE_INVALID,
+        errorParams: expect.objectContaining({ wilaya: '16', selectedWilaya: '31' }),
+      });
+
+      expect(orderModel.findByIdAndUpdate).not.toHaveBeenCalled();
+    });
+
+    it('clears the mapping when the client sends null', async () => {
+      const existing = makeOrder({
+        deliveryCompanyId: 'noest',
+        noestCommune: { name: 'Alger Centre', wilayaId: '16' },
+      });
+      orderModel.findById.mockReturnValue(query(existing));
+      orderModel.findByIdAndUpdate.mockReturnValue(query(makeOrder({ noestCommune: null })));
+
+      await service.update(ORDER_ID.toString(), { noestCommune: null } as unknown as UpdateOrderDto);
+
+      const [, updateData] = orderModel.findByIdAndUpdate.mock.calls[0];
+      expect(updateData).toHaveProperty('noestCommune', null);
+    });
+
+    it('clears a stale mapping when the wilaya changes without a new selection', async () => {
+      const existing = makeOrder({
+        deliveryCompanyId: 'noest',
+        customer: { name: 'Customer', phone: '0550000000', wilaya: '16', commune: 'Alger', address: 'Somewhere' },
+        noestCommune: { name: 'Alger Centre', wilayaId: '16' },
+      });
+      orderModel.findById.mockReturnValue(query(existing));
+      orderModel.findByIdAndUpdate.mockReturnValue(query(makeOrder()));
+
+      await service.update(ORDER_ID.toString(), {
+        customer: { wilaya: '31', commune: 'Oran' },
+      } as UpdateOrderDto);
+
+      const [, updateData] = orderModel.findByIdAndUpdate.mock.calls[0];
+      expect(updateData).toHaveProperty('noestCommune', null);
+    });
+
+    it('keeps the mapping when the wilaya is unchanged', async () => {
+      const existing = makeOrder({
+        deliveryCompanyId: 'noest',
+        noestCommune: { name: 'Alger Centre', wilayaId: '16' },
+      });
+      orderModel.findById.mockReturnValue(query(existing));
+      orderModel.findByIdAndUpdate.mockReturnValue(query(existing));
+
+      await service.update(ORDER_ID.toString(), {
+        customer: { wilaya: '16', commune: 'Alger Centre', name: 'Customer' },
+      } as UpdateOrderDto);
+
+      const [, updateData] = orderModel.findByIdAndUpdate.mock.calls[0];
+      expect(updateData).not.toHaveProperty('noestCommune');
+    });
+
+    it('does not touch a Noest selection when a DHD selection is saved', async () => {
+      const existing = makeOrder({
+        deliveryCompanyId: 'dhd',
+        customer: { name: 'Customer', phone: '0550000000', wilaya: '16', commune: 'Alger', address: 'Somewhere' },
+        noestCommune: { name: 'Alger Centre', wilayaId: '16' },
+      });
+      orderModel.findById.mockReturnValue(query(existing));
+      orderModel.findByIdAndUpdate.mockReturnValue(query(existing));
+
+      await service.update(ORDER_ID.toString(), {
+        dhdCommune: { name: 'Alger Centre', wilayaId: '16', hasStopDesk: true },
+      } as unknown as UpdateOrderDto);
+
+      const [, updateData] = orderModel.findByIdAndUpdate.mock.calls[0];
+      expect(updateData).not.toHaveProperty('noestCommune');
+      expect(updateData.dhdCommune).toEqual(
+        expect.objectContaining({ name: 'Alger Centre', wilayaId: '16' }),
+      );
+    });
+  });
+
   describe('update() — editing the lines of a confirmed order', () => {
     const OTHER_VARIANT_ID = new Types.ObjectId();
     const swappedItems = () => [

@@ -104,6 +104,26 @@ export class DeliveryController {
     return this.deliveryService.getDhdDesks(wilayaCode);
   }
 
+  @Roles(Role.VENDOR)
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  @Get('dhd-communes')
+  @ApiOperation({ summary: 'Get DHD communes for a wilaya' })
+  @ApiQuery({ name: 'wilayaCode', required: true, description: 'Wilaya numeric code (1-58)' })
+  async getDhdCommunes(@Req() req: any, @Query('wilayaCode') wilayaCode: string) {
+    const communes = await this.deliveryService.getDhdCommunes(req.user.email, wilayaCode);
+    return { wilayaCode, communes };
+  }
+
+  @Roles(Role.VENDOR)
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  @Get('noest-communes')
+  @ApiOperation({ summary: 'Get Noest communes for a wilaya' })
+  @ApiQuery({ name: 'wilayaCode', required: true, description: 'Wilaya numeric code (1-58)' })
+  async getNoestCommunes(@Req() req: any, @Query('wilayaCode') wilayaCode: string) {
+    const communes = await this.deliveryService.getNoestCommunes(req.user.email, wilayaCode);
+    return { wilayaCode, communes };
+  }
+
   @Public()
   @Get('zr-hubs')
   @ApiOperation({ summary: 'Get ZR Express hubs (pickup points)' })

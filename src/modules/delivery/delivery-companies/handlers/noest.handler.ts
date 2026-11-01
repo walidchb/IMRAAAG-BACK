@@ -7,6 +7,7 @@ import { Model, Types } from 'mongoose';
 import {
   DeliveryCompanyHandler,
   BulkOrderResult,
+  CarrierCommuneOption,
   DeliveryStatusContext,
   DeliveryStatusSearchResult,
   DeliveryStatusEntry,
@@ -31,8 +32,15 @@ import {
   normalizeNoestEvent,
 } from './noest/noest-status.mapper';
 import type { NoestDiscoveryResponseDto } from './noest/noest-status.types';
+import {
+  NoestCommuneOption,
+  isNoestDispatchable,
+  isNoestMappingValid,
+} from '../noest-commune';
 
 const NOEST_LABEL_BREAKER_PREFIX = 'noest-labels:';
+/** Dedicated breaker for the commune list: never the shared `noest` create breaker. */
+const NOEST_COMMUNES_BREAKER_PREFIX = 'noest-communes:';
 const NOEST_LABEL_TIMEOUT_MS = 15000;
 const NOEST_LABEL_MAX_BYTES = 10 * 1024 * 1024;
 const NOEST_LABEL_CONCURRENCY = 5;
@@ -102,6 +110,169 @@ export class NoestHandler implements DeliveryCompanyHandler {
     return this.configService.get<string>('deliveryEncryptionKey') || '';
   }
 
+  /**
+   * The carrier's commune list for one wilaya.
+   *
+   * `GET /api/public/get/communes/{wilaya_id}` needs only the Bearer token — `user_guid` is not
+   * required. The response is a bare array (`[{ nom, wilaya_id, code_postal, is_active }]`): no
+   * UUID and **no stop-desk flag**, so the normalised options carry no `hasStopDesk` key.
+   */
+  async listCommunes(
+    wilayaCode: string,
+    context: DeliveryStatusContext,
+  ): Promise<CarrierCommuneOption[]> {
+    const credentials = await this.resolveStatusCredentials(context);
+    const wilayaId = String(Number(wilayaCode));
+
+    const response = await fetchWithRetry(
+      `${this.apiBase}/api/public/get/communes/${wilayaId}`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${credentials.apiKey}`,
+          Accept: 'application/json',
+        },
+        timeout: 15000,
+      },
+      {
+        circuitBreakerName: `${NOEST_COMMUNES_BREAKER_PREFIX}${credentials.tenantId}`,
+        retryOn: (res) => [408, 429, 500, 502, 503, 504].includes(res.status),
+        onRetry: (attempt, err) =>
+          this.logger.warn(
+            `[Noest] Communes retry ${attempt}: ${err instanceof Error ? err.message : 'HTTP ' + err.status}`,
+          ),
+      },
+    );
+
+    if (response.status === 401 || response.status === 403) {
+      throw new AppException(AppErrorCode.DELIVERY_CREDENTIALS_NOT_CONFIGURED, {
+        company: 'Noest',
+      });
+    }
+
+    if (response.status === 429) {
+      const retryAfter = response.headers.get('retry-after');
+      throw new AppException(AppErrorCode.RATE_LIMIT_EXCEEDED, {
+        company: 'Noest',
+        retryAfter: retryAfter ? parseInt(retryAfter, 10) : 60,
+      });
+    }
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new AppException(AppErrorCode.DELIVERY_API_ERROR, {
+        company: 'Noest',
+        status: response.status,
+        text: text.slice(0, 300),
+      });
+    }
+
+    const body = await response.json().catch(() => null);
+    return normalizeNoestCommunes(body, wilayaId);
+  }
+
+  /**
+   * Rollout gate for the commune-mapping *requirement*. When off, dispatch keeps today's legacy
+   * behaviour: the commune is resolved from the platform `communes` collection and sent verbatim.
+   * A valid saved selection is used either way. Default `false`, so the gate stays dark and rolls
+   * back instantly.
+   */
+  private communeMappingEnabled(): boolean {
+    return this.configService.get<boolean>('noestCommuneMapping.enabled') === true;
+  }
+
+  /**
+   * The authoritative Noest commune for a dispatch. An explicit, valid operator selection always
+   * wins, even while the rollout flag is off: the selector is available to vendors regardless of
+   * the flag, so ignoring a saved selection would send the carrier a different commune than the
+   * one the operator chose.
+   *
+   * With no usable selection, the platform location registry is consulted: a populated
+   * `communes.noestexpress_uuid` means the commune is already Noest-recognized, so no manual
+   * mapping is needed and its value is sent verbatim as `commune`. Only a commune with an empty
+   * `noestexpress_uuid` still needs the operator to pick one from Noest's list.
+   */
+  private async resolveDispatchCommune(order: Order): Promise<Order['noestCommune'] | null> {
+    if (isNoestDispatchable(order)) return order.noestCommune ?? null;
+    return this.communeFromRegistry(order);
+  }
+
+  /**
+   * Looks the order's customer commune up in the platform `communes` collection and turns its
+   * `noestexpress_uuid` (the Noest commune name) into a dispatch selection. Returns `null` when the
+   * commune has no Noest counterpart — exactly the "Noest commune missing" case the vendor UI
+   * shows.
+   */
+  private async communeFromRegistry(order: Order): Promise<Order['noestCommune'] | null> {
+    const wilayaCode = String(order.customer?.wilaya ?? '').trim();
+    const communeValue = String(order.customer?.commune ?? '').trim();
+    const wilayaId = String(Number(wilayaCode));
+    if (!communeValue || !/^\d{1,2}$/.test(wilayaId)) return null;
+
+    try {
+      const query: Record<string, unknown> = { wilaya_code: wilayaCode };
+      if (/^[a-fA-F0-9]{24}$/.test(communeValue)) {
+        query._id = communeValue;
+      } else {
+        query.$or = [{ post_code: communeValue }, { name: communeValue }];
+      }
+
+      const commune = await this.communeModel.findOne(query).lean().exec();
+      const noestName =
+        typeof commune?.noestexpress_uuid === 'string' ? commune.noestexpress_uuid.trim() : '';
+      if (!noestName) return null;
+
+      const postalCode = typeof commune?.post_code === 'string' ? commune.post_code.trim() : '';
+      return {
+        name: noestName,
+        wilayaId,
+        postalCode: postalCode || null,
+      };
+    } catch (err) {
+      this.logger.warn(
+        `Failed to resolve Noest commune for order ${order.orderNo}: ${err instanceof Error ? err.message : 'unknown error'}`,
+      );
+      return null;
+    }
+  }
+
+  /**
+   * Pre-dispatch assertion delegated from `DeliveryService.assertCanCreateDelivery`. Only Noest
+   * orders are gated, and only while the feature is enabled; everything else is a no-op so the
+   * other carriers' dispatch paths are untouched.
+   *
+   * A commune whose platform row already carries a `noestexpress_uuid` is dispatchable with no
+   * manual mapping. Only a commune with an empty mapping (and no explicit selection) is refused —
+   * before any Noest HTTP call, so nothing is booked and no stock moves.
+   */
+  async assertDispatchable(order: Order): Promise<void> {
+    if (!this.communeMappingEnabled()) return;
+    if (order.deliveryCompanyId !== 'noest') return;
+    if (isNoestDispatchable(order)) return;
+
+    // An explicit selection that fails validation is never silently replaced: the operator chose
+    // it, so the save must be corrected rather than dispatched with a different commune.
+    if (order.noestCommune?.name?.trim()) {
+      throw new AppException(
+        isNoestMappingValid(order)
+          ? AppErrorCode.DELIVERY_COMMUNE_NOT_MAPPED
+          : AppErrorCode.DELIVERY_COMMUNE_INVALID,
+        {
+          orderNo: order.orderNo,
+          wilaya: order.customer?.wilaya,
+        },
+      );
+    }
+
+    const registrySelection = await this.communeFromRegistry(order);
+    if (registrySelection) return;
+
+    throw new AppException(AppErrorCode.DELIVERY_COMMUNE_NOT_MAPPED, {
+      orderNo: order.orderNo,
+      wilaya: order.customer?.wilaya,
+    });
+  }
+
   async createOrder(order: Order): Promise<{ parcelId: string }> {
     const config = await this.configModel.findOne({ vendorEmail: order.vendorEmail }).exec();
     const rawCreds = config?.companies?.['noest']?.credentials || {};
@@ -114,9 +285,12 @@ export class NoestHandler implements DeliveryCompanyHandler {
       throw new AppException(AppErrorCode.DELIVERY_CREDENTIALS_NOT_CONFIGURED, { company: 'Noest', vendor: order.vendorEmail });
     }
 
-    const communeName = await this.resolveCommuneName(order.customer.wilaya, order.customer.commune);
+    const selection = await this.resolveDispatchCommune(order);
+    const communeName = selection
+      ? ''
+      : await this.resolveCommuneName(order.customer.wilaya, order.customer.commune);
 
-    const payload = this.buildNoestPayload(order, userGuid, communeName);
+    const payload = this.buildNoestPayload(order, userGuid, communeName, selection);
 
     if (payload.wilaya_id < 1 || payload.wilaya_id > 58) {
       throw new AppException(AppErrorCode.DELIVERY_INVALID_WILAYA, { wilaya: payload.wilaya_id, orderNo: order.orderNo });
@@ -178,6 +352,64 @@ export class NoestHandler implements DeliveryCompanyHandler {
       return orders.map((o) => ({ orderNo: o.orderNo, success: false, error: 'Max 100 orders per bulk request' }));
     }
 
+    // Tenancy guard (mirrors DHD): one batch is always one store's batch.
+    if (new Set(orders.map((o) => String(o.storeId ?? ''))).size > 1) {
+      throw new AppException(AppErrorCode.VALIDATION_INVALID_VALUE, { field: 'orders' });
+    }
+
+    // Resolve every order's Noest commune once and reuse it for the partition and the payload.
+    // An explicit selection wins; otherwise the platform commune's `noestexpress_uuid` is the
+    // mapping, and a commune with neither still needs the operator to pick one.
+    const selections = new Map<Order, Order['noestCommune'] | null>();
+    for (const order of orders) {
+      selections.set(order, await this.resolveDispatchCommune(order));
+    }
+
+    if (!this.communeMappingEnabled()) {
+      return this.dispatchBulkOrders(orders, selections);
+    }
+
+    const validOrders: Order[] = [];
+    const invalidResults: BulkOrderResult[] = [];
+
+    for (const order of orders) {
+      const explicitlySelected = !!order.noestCommune?.name?.trim();
+      // A valid explicit selection dispatches; so does a commune the platform already maps to
+      // Noest via `noestexpress_uuid`. Anything else needs the operator to pick a Noest commune.
+      const dispatchable =
+        isNoestDispatchable(order) || (!explicitlySelected && !!selections.get(order));
+      if (!dispatchable) {
+        invalidResults.push({
+          orderNo: order.orderNo,
+          success: false,
+          code: AppErrorCode.DELIVERY_COMMUNE_NOT_MAPPED,
+          error: 'Noest commune not selected or not mapped for this wilaya',
+        });
+      } else {
+        validOrders.push(order);
+      }
+    }
+
+    // Zero HTTP calls when the whole batch is unmapped.
+    if (validOrders.length === 0) return invalidResults;
+
+    return [...invalidResults, ...(await this.dispatchBulkOrders(validOrders, selections))];
+  }
+
+  /**
+   * Sends one Noest bulk request for the orders it is given.
+   *
+   * Noest's `passed`/`failed` keys are indices into the array **we sent**, so every lookup goes
+   * through `orders[index]` — the array this method receives. After partitioning that is the
+   * `validOrders` array, never the caller's pre-partition batch; resolving against the wrong array
+   * would attach a tracking number to the wrong order.
+   */
+  private async dispatchBulkOrders(
+    orders: Order[],
+    resolvedSelections?: Map<Order, Order['noestCommune'] | null>,
+  ): Promise<BulkOrderResult[]> {
+    if (orders.length === 0) return [];
+
     const config = await this.configModel.findOne({ vendorEmail: orders[0].vendorEmail }).exec();
     const rawCreds = config?.companies?.['noest']?.credentials || {};
     const creds = decryptRecord(rawCreds, this.encryptionKey);
@@ -190,8 +422,13 @@ export class NoestHandler implements DeliveryCompanyHandler {
 
     const orderPayloads: NoestCreateOrderPayload[] = [];
     for (const order of orders) {
-      const communeName = await this.resolveCommuneName(order.customer.wilaya, order.customer.commune);
-      const payload = this.buildNoestPayload(order, userGuid, communeName);
+      const selection = resolvedSelections
+        ? resolvedSelections.get(order) ?? null
+        : await this.resolveDispatchCommune(order);
+      const communeName = selection
+        ? ''
+        : await this.resolveCommuneName(order.customer.wilaya, order.customer.commune);
+      const payload = this.buildNoestPayload(order, userGuid, communeName, selection);
 
       if (payload.wilaya_id < 1 || payload.wilaya_id > 58) {
         return orders.map((o) => ({ orderNo: o.orderNo, success: false, error: `Invalid wilaya_id ${payload.wilaya_id} for order ${order.orderNo}` }));
@@ -270,7 +507,19 @@ export class NoestHandler implements DeliveryCompanyHandler {
     }
   }
 
-  private buildNoestPayload(order: Order, userGuid: string, communeName: string): NoestCreateOrderPayload {
+  /**
+   * Builds the Noest create-order payload.
+   *
+   * A resolved commune mapping is authoritative (`commune` + `wilaya_id`). Its `postalCode` is
+   * deliberately **never** sent: Noest accepts no `code_postal` on create, and its `zip_code`
+   * field *replaces* `wilaya_id`/`commune`, which would silently discard the mapping.
+   */
+  private buildNoestPayload(
+    order: Order,
+    userGuid: string,
+    communeName: string,
+    selection: Order['noestCommune'] | null = null,
+  ): NoestCreateOrderPayload {
     const weight = order.items?.reduce((sum, item) => sum + (item.weight || 0) * (item.quantity || 1), 0) || 1;
 
     const produit =
@@ -281,14 +530,19 @@ export class NoestHandler implements DeliveryCompanyHandler {
 
     const isStopDesk = order.shippingMethod === 'stopdesk';
 
+    const commune = selection?.name ?? communeName;
+    const wilayaId = selection
+      ? Number(selection.wilayaId)
+      : parseInt(order.customer.wilaya, 10) || 0;
+
     const payload: NoestCreateOrderPayload = {
       user_guid: userGuid,
       reference: order.orderNo,
       client: order.customer.name || 'Client',
       phone: this.cleanPhone(order.customer.phone || ''),
-      adresse: order.customer.address || communeName,
-      wilaya_id: parseInt(order.customer.wilaya, 10) || 0,
-      commune: communeName,
+      adresse: order.customer.address || commune,
+      wilaya_id: wilayaId,
+      commune,
       montant: order.total || 0,
       produit,
       type_id: 1,
@@ -925,4 +1179,54 @@ export class NoestHandler implements DeliveryCompanyHandler {
       raw: entry,
     }));
   }
+}
+
+/**
+ * Normalises `GET /api/public/get/communes/{wilaya_id}`.
+ *
+ * The documented shape is a **bare array** of
+ * `{ nom, wilaya_id, code_postal, is_active }`, but the envelope is normalised defensively (an
+ * array, an object of entries, or a `{ data: … }` wrapper) so a carrier-side change degrades to an
+ * empty list instead of a crash. Inactive communes are dropped, entries for another wilaya are
+ * ignored, duplicates are removed case-insensitively and the result is sorted with `fr` collation.
+ *
+ * There is deliberately **no** `hasStopDesk` field: Noest publishes no per-commune stop-desk
+ * capability, and inventing one would gate dispatch on a value the carrier never sent.
+ */
+export function normalizeNoestCommunes(body: unknown, wilayaId: string): NoestCommuneOption[] {
+  const root =
+    body && typeof body === 'object' && !Array.isArray(body) && 'data' in (body as Record<string, unknown>)
+      ? (body as Record<string, unknown>).data
+      : body;
+
+  const entries = Array.isArray(root)
+    ? root
+    : root && typeof root === 'object'
+      ? Object.values(root as Record<string, unknown>)
+      : [];
+
+  const expectedWilaya = String(Number(wilayaId));
+  const seen = new Set<string>();
+  const out: NoestCommuneOption[] = [];
+
+  for (const raw of entries) {
+    if (!raw || typeof raw !== 'object') continue;
+    const e = raw as Record<string, unknown>;
+
+    const name = typeof e.nom === 'string' ? e.nom.trim() : '';
+    const id = String(Number(e.wilaya_id ?? wilayaId));
+    if (!name || id !== expectedWilaya) continue;
+    if (e.is_active === 0 || e.is_active === '0' || e.is_active === false) continue;
+
+    const key = name.toLocaleLowerCase('fr');
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    const postalCode =
+      typeof e.code_postal === 'string' && e.code_postal.trim() ? e.code_postal.trim() : null;
+
+    out.push({ name, wilayaId: id, postalCode });
+  }
+
+  return out.sort((a, b) => a.name.localeCompare(b.name, 'fr'));
 }

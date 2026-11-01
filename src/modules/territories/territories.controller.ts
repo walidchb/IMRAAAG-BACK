@@ -36,9 +36,15 @@ export class TerritoriesController {
   @Roles(Role.ADMIN)
   @Patch('communes/uuid')
   @ApiOperation({ summary: 'Update delivery company UUID for a commune' })
-  @ApiBody({ schema: { example: { post_code: '16001', zrexpress_uuid: 'uuid-here', yalidine_uuid: 'uuid-here', ecomdelivery_uuid: 'uuid-here' } } })
-  updateCommuneUuid(@Body() body: { post_code: string; zrexpress_uuid?: string; yalidine_uuid?: string; ecomdelivery_uuid?: string }) {
-    return this.territoriesService.updateCommuneUuid(body.post_code, body.zrexpress_uuid, body.yalidine_uuid, body.ecomdelivery_uuid);
+  @ApiBody({ schema: { example: { post_code: '16001', zrexpress_uuid: 'uuid-here', yalidine_uuid: 'uuid-here', ecomdelivery_uuid: 'uuid-here', dhd_uuid: 'commune-name' } } })
+  updateCommuneUuid(@Body() body: { post_code: string; zrexpress_uuid?: string; yalidine_uuid?: string; ecomdelivery_uuid?: string; dhd_uuid?: string }) {
+    return this.territoriesService.updateCommuneUuid(
+      body.post_code,
+      body.zrexpress_uuid,
+      body.yalidine_uuid,
+      body.ecomdelivery_uuid,
+      body.dhd_uuid,
+    );
   }
 
   @Roles(Role.ADMIN)

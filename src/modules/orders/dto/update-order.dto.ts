@@ -12,6 +12,8 @@ import {
   ArrayMinSize,
   Matches,
   IsMongoId,
+  IsBoolean,
+  MaxLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
@@ -86,6 +88,54 @@ class UpdateCustomerDto {
   note?: string;
 }
 
+export class DhdCommuneDto {
+  @ApiPropertyOptional()
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(120)
+  name: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @Matches(/^\d{1,2}$/)
+  wilayaId: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  postalCode?: string | null;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  hasStopDesk?: boolean;
+}
+
+/**
+ * A Noest Express commune selection. Noest identifies communes by `{ nom, wilaya_id }` and
+ * publishes no stop-desk capability, so there is no `hasStopDesk` field. `selectedAt`/`selectedBy`
+ * are server-stamped and are deliberately not accepted here.
+ */
+export class NoestCommuneDto {
+  @ApiPropertyOptional({ example: 'Batna' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(120)
+  name: string;
+
+  @ApiPropertyOptional({ example: '5' })
+  @IsString()
+  @Matches(/^\d{1,2}$/)
+  wilayaId: string;
+
+  @ApiPropertyOptional({ example: '05001', nullable: true })
+  @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  postalCode?: string | null;
+}
+
 export class UpdateOrderDto {
   @ApiPropertyOptional() @IsOptional() @IsString()
   vendorEmail?: string;
@@ -152,6 +202,18 @@ export class UpdateOrderDto {
   @IsOptional()
   @IsString()
   stopDeskCode?: string;
+
+  @ApiPropertyOptional({ type: () => DhdCommuneDto, nullable: true })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => DhdCommuneDto)
+  dhdCommune?: DhdCommuneDto | null;
+
+  @ApiPropertyOptional({ type: () => NoestCommuneDto, nullable: true })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => NoestCommuneDto)
+  noestCommune?: NoestCommuneDto | null;
 
   @ApiPropertyOptional({ description: 'Expected updatedAt timestamp for conflict detection' })
   @IsOptional()

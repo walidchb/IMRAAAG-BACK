@@ -1,0 +1,1137 @@
+{
+  "info": {
+    "_postman_id": "c537094b-a150-41e8-b6fc-dcf01d85f98f",
+    "name": "ECOTRACK API",
+    "description": "L'API Public ECOTRACK vous permet d'utiliser le service sans passer par l'interface web et vous donne la possibilité de lier votre compte avec votre CRM, Plateforme E-commerce ou autres applications.\n\nLes fonctionnalités disponibles sont :\n\n- L'ajout de commande\n    \n- La modification de commande\n    \n- L'ajout et la récupération des mises a jours sur l’état de livraison\n    \n- Demander le retour d'un colis\n    \n- Suivre l'avancement de livraison d'un colis",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "34819342"
+  },
+  "item": [
+    {
+      "name": "Authorisation",
+      "item": [
+        {
+          "name": "Vérification de validité d'un token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/api/v1/validate/token?api_token={{api_token}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "validate",
+                "token"
+              ],
+              "query": [
+                {
+                  "key": "api_token",
+                  "value": "{{api_token}}"
+                }
+              ]
+            },
+            "description": "Cet endpoint permet de vérifier si votre token est valide.  \nLes retours possibles sont :\n\n- `{ 'success' : false, 'message' : 'INVALID_TOKEN'}` si le token est invalide\n    \n- `{ 'success' : false, 'message' : 'TOKEN_NOT_ALLOWED'}` Si l'accès a l'api public est désactivé pour ce compte\n    \n- `{ 'success' : true, 'message' : 'VALID_TOKEN'}` Si le token est valide"
+          },
+          "response": [
+            {
+              "name": "Vérification de validité d'un token",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{url}}/api/v1/validate/token?api_token={{api_token}}",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "validate",
+                    "token"
+                  ],
+                  "query": [
+                    {
+                      "key": "api_token",
+                      "value": "{{api_token}}"
+                    }
+                  ]
+                }
+              },
+              "_postman_previewlanguage": "Text",
+              "header": [],
+              "cookie": [
+                {
+                  "expires": "Invalid Date",
+                  "domain": "",
+                  "path": ""
+                }
+              ],
+              "body": "{ 'success' : true, 'message' : 'VALID_TOKEN'}"
+            }
+          ]
+        }
+      ],
+      "description": "Pour consommer l'API il est nécessaire de générer un **token** à partir de votre compte ECOTRACK, ce token est un équivalent de votre nom d'utilisateur et mot de passe.\n\nUtiliser le token de l'API dans l'en-tête Autorisation autan que jeton Bearer.",
+      "auth": {
+        "type": "noauth"
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              ""
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              ""
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Suivi des commandes",
+      "item": [
+        {
+          "name": " Ajouter une information de suivi sur le colis",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/api/v1/add/maj?tracking={{tracking}}&content={{text}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "add",
+                "maj"
+              ],
+              "query": [
+                {
+                  "key": "tracking",
+                  "value": "{{tracking}}",
+                  "description": "L'identifiant unique de la commande | **obligatoire**"
+                },
+                {
+                  "key": "content",
+                  "value": "{{text}}",
+                  "description": "Contenu de la mise a jour | string , maximum : 255 caractéres , **obligatoire**"
+                }
+              ]
+            },
+            "description": "Après expédition et pendant le process de livraison de votre commande vous pouvez ajouter des remarques sur le colis pour notifier la société de livraison sur un éventuel changement.\n\nCe point de terminaison vous permet d'ajouter une mise à jour sur votre colis"
+          },
+          "response": [
+            {
+              "name": " Ajouter une information de suivi sur le colis",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{url}}/api/v1/add/maj?tracking=ECQFLD2103047673&content=Livraison avant 17:00 h",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "add",
+                    "maj"
+                  ],
+                  "query": [
+                    {
+                      "key": "tracking",
+                      "value": "ECQFLD2103047673"
+                    },
+                    {
+                      "key": "content",
+                      "value": "Livraison avant 17:00 h"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Server",
+                  "value": "nginx/1.19.6"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Accept-Encoding"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "PHP/7.3.25"
+                },
+                {
+                  "key": "Cache-Control",
+                  "value": "no-cache, private"
+                },
+                {
+                  "key": "Date",
+                  "value": "Fri, 05 Mar 2021 10:04:51 GMT"
+                },
+                {
+                  "key": "X-RateLimit-Limit",
+                  "value": "120"
+                },
+                {
+                  "key": "X-RateLimit-Remaining",
+                  "value": "117"
+                },
+                {
+                  "key": "phpdebugbar-id",
+                  "value": "X6501f34cd66925a20c3d4f2b1bc025a3"
+                },
+                {
+                  "key": "Content-Encoding",
+                  "value": "gzip"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"success\": true,\n    \"message\": \"Mise a jour avec success\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Liste des mise a jours appliquée sur un colis",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/api/v1/get/maj?tracking={{tracking}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "get",
+                "maj"
+              ],
+              "query": [
+                {
+                  "key": "tracking",
+                  "value": "{{tracking}}",
+                  "description": "L'identifiant unique de la commande | **obligatoire**"
+                }
+              ]
+            },
+            "description": "Il est possible de récupérer l’ensemble des mises a jours appliquées sur un colis.\nLa liste contient les mises a jours appliquées par le livreur et / ou par l’expéditeur.\n\nCe point de terminaison vous permet de récupérer la liste des mises à jours"
+          },
+          "response": [
+            {
+              "name": "Liste des mise a jours appliquées sur un colis",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{url}}/api/v1/get/maj?tracking=ECQFLD2103047673",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "get",
+                    "maj"
+                  ],
+                  "query": [
+                    {
+                      "key": "tracking",
+                      "value": "ECQFLD2103047673"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Server",
+                  "value": "nginx/1.19.6"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Accept-Encoding"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "PHP/7.3.25"
+                },
+                {
+                  "key": "Cache-Control",
+                  "value": "no-cache, private"
+                },
+                {
+                  "key": "Date",
+                  "value": "Fri, 05 Mar 2021 10:19:18 GMT"
+                },
+                {
+                  "key": "X-RateLimit-Limit",
+                  "value": "120"
+                },
+                {
+                  "key": "X-RateLimit-Remaining",
+                  "value": "118"
+                },
+                {
+                  "key": "phpdebugbar-id",
+                  "value": "Xdbe3dc6c2465dc989e4bf55a557636cf"
+                },
+                {
+                  "key": "Content-Encoding",
+                  "value": "gzip"
+                }
+              ],
+              "cookie": [],
+              "body": "[\n    {\n        \"remarque\": \"Test Shop : TEST MAJ\",\n        \"station\": \"\",\n        \"livreur\": \"\",\n        \"created_at\": \"2021-03-05 11:04:19\",\n        \"tracking\": \"ECQFLD2103047673\"\n    },\n    {\n        \"remarque\": \"Test Shop : Livraison avant 17:00 h\",\n        \"station\": \"\",\n        \"livreur\": \"\",\n        \"created_at\": \"2021-03-05 11:04:51\",\n        \"tracking\": \"ECQFLD2103047673\"\n    },\n    {\n        \"remarque\": \"لا يرد على الإتصال\",\n        \"station\": \"Centre draria\",\n        \"livreur\": \"testhasna test\",\n        \"created_at\": \"2021-03-05 11:16:27\",\n        \"tracking\": \"ECQFLD2103047673\"\n    }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Demander le retour d'un colis",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/api/v1/ask/for/order/return?tracking={{tracking}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ask",
+                "for",
+                "order",
+                "return"
+              ],
+              "query": [
+                {
+                  "key": "tracking",
+                  "value": "{{tracking}}",
+                  "description": "L'identifiant unique de la commande | **obligatoire**"
+                }
+              ]
+            },
+            "description": "Si le colis est en livraison il est possible de soumettre une demande de retour, dans le cas contraire un code d'erreur vous sera renvoyé.\n\nNB: cette demande peut être ignorée par la société de livraison.\n\nCe point de terminaison vous permet de demander le retour"
+          },
+          "response": [
+            {
+              "name": "Demander le retour d'un colis - Erreur",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{url}}/api/v1/ask/for/order/return?tracking=ECQFLD2103047673",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "ask",
+                    "for",
+                    "order",
+                    "return"
+                  ],
+                  "query": [
+                    {
+                      "key": "tracking",
+                      "value": "ECQFLD2103047673",
+                      "description": "Obligatoire"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Server",
+                  "value": "nginx/1.19.6"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Accept-Encoding"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "PHP/7.3.25"
+                },
+                {
+                  "key": "Cache-Control",
+                  "value": "no-cache, private"
+                },
+                {
+                  "key": "Date",
+                  "value": "Fri, 05 Mar 2021 15:15:09 GMT"
+                },
+                {
+                  "key": "X-RateLimit-Limit",
+                  "value": "120"
+                },
+                {
+                  "key": "X-RateLimit-Remaining",
+                  "value": "119"
+                },
+                {
+                  "key": "phpdebugbar-id",
+                  "value": "Xbfe4a54f242a191784b412e4c014e3f4"
+                },
+                {
+                  "key": "Content-Encoding",
+                  "value": "gzip"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"success\": false,\n    \"error\": 10003,\n    \"message\": \"Le retour ne peut pas etre demandé pour cette commande\"\n}"
+            },
+            {
+              "name": "Demander le retour d'un colis",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{url}}/api/v1/ask/for/order/return?tracking=ECQFLD2103047673",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "ask",
+                    "for",
+                    "order",
+                    "return"
+                  ],
+                  "query": [
+                    {
+                      "key": "tracking",
+                      "value": "ECQFLD2103047673"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Server",
+                  "value": "nginx/1.19.6"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Accept-Encoding"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "PHP/7.3.25"
+                },
+                {
+                  "key": "Cache-Control",
+                  "value": "no-cache, private"
+                },
+                {
+                  "key": "Date",
+                  "value": "Fri, 05 Mar 2021 14:41:04 GMT"
+                },
+                {
+                  "key": "X-RateLimit-Limit",
+                  "value": "120"
+                },
+                {
+                  "key": "X-RateLimit-Remaining",
+                  "value": "118"
+                },
+                {
+                  "key": "phpdebugbar-id",
+                  "value": "X06c5b68b703ae59aa6a68a62534e2d1b"
+                },
+                {
+                  "key": "Content-Encoding",
+                  "value": "gzip"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"success\": true,\n    \"message\": \"Retour demandé avec succès\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Suivi et historique des operations sur une commande",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/api/v1/get/tracking/info?tracking={{tracking}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "get",
+                "tracking",
+                "info"
+              ],
+              "query": [
+                {
+                  "key": "tracking",
+                  "value": "{{tracking}}",
+                  "description": "L'identifiant unique de la commande | **obligatoire**"
+                }
+              ]
+            },
+            "description": "Ce point de terminaison vous donne la possibilité de récupérer l'historique des opérations effectuées sur une commande.\n\nLes retours possibles pour **activity** sont **:**\n\n- **order_information_received_by_carrier** : Commande enregistrée et validée par le vendeur\n    \n- **picked**: Commande récupérée par le prestataire de livraison\n    \n- **accepted_by_carrier**  \n    Commande réceptionnée par le centre de tri (Hub ou Station)\n    \n- **dispatched_to_driver**  \n    Commande dispatchée au livreur\n    \n- **attempt_delivery**  \n    Tentative de livraison\n    \n- **return_asked**  \n    Retour initié par le centre de tri (Hub ou Station)\n    \n- **return_in_transit**  \n    Retour en transit\n    \n- **Return_received**  \n    Retour réceptionné par le vendeur\n    \n- **livred**  \n    Commande livrée\n    \n- **encaissed**  \n    Commande encaissée\n    \n- **payed**:  \n    Paiement effectué"
+          },
+          "response": [
+            {
+              "name": "Suivi et historique des operations sur une commande - Erreur tracking",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{url}}/api/v1/get/tracking/info?tracking={{tracking}}",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "get",
+                    "tracking",
+                    "info"
+                  ],
+                  "query": [
+                    {
+                      "key": "tracking",
+                      "value": "{{tracking}}",
+                      "description": "L'identifiant unique de la commande | **obligatoire**"
+                    }
+                  ]
+                }
+              },
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Date",
+                  "value": "Fri, 05 Mar 2021 17:32:22 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Apache/2.4.35 (Win64) OpenSSL/1.1.1b PHP/7.2.19"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "PHP/7.2.19"
+                },
+                {
+                  "key": "Cache-Control",
+                  "value": "no-cache, private"
+                },
+                {
+                  "key": "X-RateLimit-Limit",
+                  "value": "120"
+                },
+                {
+                  "key": "X-RateLimit-Remaining",
+                  "value": "119"
+                },
+                {
+                  "key": "phpdebugbar-id",
+                  "value": "X9d8cb08ba0ed732470ab5f8bee98357e"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "121"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=5, max=100"
+                },
+                {
+                  "key": "Connection",
+                  "value": "Keep-Alive"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"message\": \"The given data was invalid.\",\n    \"errors\": {\n        \"tracking\": [\n            \"Le champ tracking sélectionné est invalide.\"\n        ]\n    }\n}"
+            },
+            {
+              "name": "Suivi et historique des operations sur une commande",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{url}}/api/v1/get/tracking/info?tracking= ECQFLD2103047673",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "get",
+                    "tracking",
+                    "info"
+                  ],
+                  "query": [
+                    {
+                      "key": "tracking",
+                      "value": " ECQFLD2103047673"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Server",
+                  "value": "nginx/1.19.6"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Accept-Encoding"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "PHP/7.3.25"
+                },
+                {
+                  "key": "Cache-Control",
+                  "value": "no-cache, private"
+                },
+                {
+                  "key": "Date",
+                  "value": "Fri, 05 Mar 2021 15:03:12 GMT"
+                },
+                {
+                  "key": "X-RateLimit-Limit",
+                  "value": "120"
+                },
+                {
+                  "key": "X-RateLimit-Remaining",
+                  "value": "118"
+                },
+                {
+                  "key": "phpdebugbar-id",
+                  "value": "X3eb1a0c75b14d58e0e05621695d04293"
+                },
+                {
+                  "key": "Content-Encoding",
+                  "value": "gzip"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"recipientName\": \"client\",\n    \"shippedBy\": \"Test Shop\",\n    \"originCity\": 16,\n    \"destLocationCity\": 16,\n    \"activity\": [\n        {\n            \"date\": \"2021-03-04\",\n            \"time\": \"22:32:47\",\n            \"status\": \"order_information_received_by_carrier\"\n        },\n        {\n            \"date\": \"2021-03-05\",\n            \"time\": \"11:04:49\",\n            \"status\": \"notification_on_order\"\n        },\n        {\n            \"date\": \"2021-03-05\",\n            \"time\": \"11:05:21\",\n            \"status\": \"notification_on_order\"\n        },\n        {\n            \"date\": \"2021-03-05\",\n            \"time\": \"11:15:26\",\n            \"status\": \"picked\"\n        },\n        {\n            \"date\": \"2021-03-05\",\n            \"time\": \"11:16:05\",\n            \"status\": \"accepted_by_carrier\"\n        },\n        {\n            \"date\": \"2021-03-05\",\n            \"time\": \"11:16:37\",\n            \"status\": \"dispatched_to_driver\",\n            \"scanLocation\": \"HUB\"\n        },\n        {\n            \"date\": \"2021-03-05\",\n            \"time\": \"11:16:57\",\n            \"status\": \"attempt_delivery\"\n        }\n    ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Suivi et historique des operations sur plusieurs commandes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/api/v1/get/trackings/info?trackings[]=[{{tracking}},{{tracking}}]",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "get",
+                "trackings",
+                "info"
+              ],
+              "query": [
+                {
+                  "key": "trackings[]",
+                  "value": "[{{tracking}},{{tracking}}]",
+                  "description": "tableau des trackings | **obligatoire**"
+                }
+              ]
+            },
+            "description": "Ce point de terminaison vous donne la possibilité de récupérer l'historique des opérations effectuées sur un ensemble de commandes.  \nIl est possible de soumettre un tableau de 100 trackings en une seule requête.\n\nLes retours possibles pour **status** sont :\n\n- **'Prêt à expédier'**\n    \n- **'Prêt à préparer'**\n    \n- **'En ramassage'**\n    \n- **'Stock en préparation'**\n    \n- **'Vers hub'**\n    \n- **'En hub'**\n    \n- **'Vers wilaya'**\n    \n- **'En préparation'**\n    \n- **'En livraison'**\n    \n- **'Suspendus'**\n    \n- **'Retours chez livreur'**\n    \n- **'Retours en traitement'**\n    \n- **'Retours prêts'**\n    \n- **'Retours reçu'**\n    \n- **'Retours à dispatcher vers stock'**\n    \n- **'Retours en transit stock'**\n    \n- **'Retours en stock'**\n    \n- **'Livre non encaissé'**\n    \n- **'Livre encaissé non payé'**\n    \n- **'Paiement prêt'**\n    \n- **'Paiement archivé'**\n    \n- **'Retours archivé'**\n    \n\nLes retours possibles pour **activity** sont **:**\n\n- **order_information_received_by_carrier** : Commande enregistrée et validée par le vendeur\n    \n- **picked**: Commande récupérée par le prestataire de livraison\n    \n- **accepted_by_carrier**  \n    Commande réceptionnée par le centre de tri (Hub ou Station)\n    \n- **dispatched_to_driver**  \n    Commande dispatchée au livreur\n    \n- **attempt_delivery**  \n    Tentative de livraison\n    \n- **return_asked**  \n    Retour initié par le centre de tri (Hub ou Station)\n    \n- **return_in_transit**  \n    Retour en transit\n    \n- **Return_received**  \n    Retour réceptionné par le vendeur\n    \n- **livred**  \n    Commande livrée\n    \n- **encaissed**  \n    Commande encaissée\n    \n- **payed**:  \n    Paiement effectué"
+          },
+          "response": [
+            {
+              "name": "Suivi et historique des operations sur une commande - Erreur tracking",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{url}}/api/v1/get/trackings/info?trackings[]=[{{tracking}},{{tracking}}]",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "get",
+                    "trackings",
+                    "info"
+                  ],
+                  "query": [
+                    {
+                      "key": "trackings[]",
+                      "value": "[{{tracking}},{{tracking}}]"
+                    }
+                  ]
+                }
+              },
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Date",
+                  "value": "Fri, 05 Mar 2021 17:32:22 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Apache/2.4.35 (Win64) OpenSSL/1.1.1b PHP/7.2.19"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "PHP/7.2.19"
+                },
+                {
+                  "key": "Cache-Control",
+                  "value": "no-cache, private"
+                },
+                {
+                  "key": "X-RateLimit-Limit",
+                  "value": "120"
+                },
+                {
+                  "key": "X-RateLimit-Remaining",
+                  "value": "119"
+                },
+                {
+                  "key": "phpdebugbar-id",
+                  "value": "X9d8cb08ba0ed732470ab5f8bee98357e"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "121"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=5, max=100"
+                },
+                {
+                  "key": "Connection",
+                  "value": "Keep-Alive"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"message\": \"The given data was invalid.\",\n    \"errors\": {\n        \"tracking\": [\n            \"Le champ tracking sélectionné est invalide.\"\n        ]\n    }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Liste des commandes avec status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/api/v1/get/orders?page={{int}}&start_date={{Y-m-d}}&end_date={{Y-m-d}}&tracking",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "get",
+                "orders"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{int}}",
+                  "description": "page a afficher | int"
+                },
+                {
+                  "key": "start_date",
+                  "value": "{{Y-m-d}}",
+                  "description": "Filtre par date de creation de la commande | Y-m-d"
+                },
+                {
+                  "key": "end_date",
+                  "value": "{{Y-m-d}}",
+                  "description": "Filtre par date de creation de la commande | Y-m-d"
+                },
+                {
+                  "key": "tracking",
+                  "value": "",
+                  "description": "Tracking de la commande",
+                  "type": "text"
+                }
+              ]
+            },
+            "description": "Ce point de terminaison vous donne la possibilité de récupérer la liste de vos commandes en process avec leurs statuts actuels.\n\nLes résultats sont affichés en pagination avec 40 commandes par page.\n\nIl est possible de naviguer entre les pages en utilisant le paramètre page.\n\nPar défaut, le point de terminaison renvoie les commandes en process crée lors des derniers 90 jours, vous pouvez utiliser les paramètres **start_date** et **end_date** pour personnaliser la période selon vos besoins.\n\nIl est egalement possible de recuperer les information pour **une commande uniquement** en envoyant le parametre **tracking** dans la requette.\n\nNB: les commandes archivés sont exclut du retour des resultat pour ce point de terminaison"
+          },
+          "response": [
+            {
+              "name": "Liste des commandes avec status",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{url}}/api/v1/get/orders?page={{int}}",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "get",
+                    "orders"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "{{int}}",
+                      "description": "page a afficher | int"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Date",
+                  "value": "Mon, 20 Dec 2021 09:35:48 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Apache/2.4.35 (Win64) OpenSSL/1.1.1i PHP/7.4.16"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "PHP/7.4.16"
+                },
+                {
+                  "key": "Cache-Control",
+                  "value": "no-cache, private"
+                },
+                {
+                  "key": "X-RateLimit-Limit",
+                  "value": "60"
+                },
+                {
+                  "key": "X-RateLimit-Remaining",
+                  "value": "57"
+                },
+                {
+                  "key": "phpdebugbar-id",
+                  "value": "Xd03242435e0a967c4dbb97ef750a621f"
+                },
+                {
+                  "key": "Access-Control-Allow-Origin",
+                  "value": "*"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "2417"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=5, max=100"
+                },
+                {
+                  "key": "Connection",
+                  "value": "Keep-Alive"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"current_page\": 1,\n    \"data\": [\n        {\n            \"tracking\": \"ECG4SU2112195902\",\n            \"reference\": null,\n            \"client\": \"kas\",\n            \"phone\": \"0560351041\",\n            \"phone_2\": null,\n            \"adresse\": \"Alger\",\n            \"commune\": \"Ain Taya\",\n            \"wilaya_id\": 16,\n            \"montant\": \"500\",\n            \"tarif_prestation\": \"400\",\n            \"tarif_retour\": \"200\",\n            \"type_id\": 1,\n            \"created_at\": \"2021-12-19\",\n            \"payment_id\": null,\n            \"return_id\": null,\n            \"status\": \"prete_a_expedier\",\n            \"products\": \"Prod 1\"\n        },\n        {\n            \"tracking\": \"ECG4SU2111175434\",\n            \"reference\": \"REF123\",\n            \"client\": \"client 1\",\n            \"phone\": \"0500000000\",\n            \"phone_2\": null,\n            \"adresse\": \"ouled fayet\",\n            \"commune\": \"Ouled Fayet\",\n            \"wilaya_id\": 16,\n            \"montant\": \"21900\",\n            \"tarif_prestation\": \"400\",\n            \"tarif_retour\": \"200\",\n            \"type_id\": 1,\n            \"created_at\": \"2021-11-16\",\n            \"payment_id\": 312,\n            \"return_id\": null,\n            \"status\": \"payé_et_archivé\",\n            \"products\": \"Prod 1\"\n        }\n    ],\n    \"first_page_url\": \"https://ecotrack-new.test/api/v1/get/orders?page=1\",\n    \"from\": 1,\n    \"last_page\": 190,\n    \"last_page_url\": \"https://ecotrack-new.test/api/v1/get/orders?page=190\",\n    \"links\": [\n        {\n            \"url\": null,\n            \"label\": \"&laquo; Précédent\",\n            \"active\": false\n        },\n        {\n            \"url\": \"https://ecotrack-new.test/api/v1/get/orders?page=1\",\n            \"label\": \"1\",\n            \"active\": true\n        },\n        {\n            \"url\": \"https://ecotrack-new.test/api/v1/get/orders?page=2\",\n            \"label\": \"2\",\n            \"active\": false\n        },\n        {\n            \"url\": \"https://ecotrack-new.test/api/v1/get/orders?page=3\",\n            \"label\": \"3\",\n            \"active\": false\n        },\n        {\n            \"url\": \"https://ecotrack-new.test/api/v1/get/orders?page=4\",\n            \"label\": \"4\",\n            \"active\": false\n        },\n        {\n            \"url\": \"https://ecotrack-new.test/api/v1/get/orders?page=5\",\n            \"label\": \"5\",\n            \"active\": false\n        },\n        {\n            \"url\": \"https://ecotrack-new.test/api/v1/get/orders?page=6\",\n            \"label\": \"6\",\n            \"active\": false\n        },\n        {\n            \"url\": \"https://ecotrack-new.test/api/v1/get/orders?page=7\",\n            \"label\": \"7\",\n            \"active\": false\n        },\n        {\n            \"url\": \"https://ecotrack-new.test/api/v1/get/orders?page=8\",\n            \"label\": \"8\",\n            \"active\": false\n        },\n        {\n            \"url\": \"https://ecotrack-new.test/api/v1/get/orders?page=9\",\n            \"label\": \"9\",\n            \"active\": false\n        },\n        {\n            \"url\": \"https://ecotrack-new.test/api/v1/get/orders?page=10\",\n            \"label\": \"10\",\n            \"active\": false\n        },\n        {\n            \"url\": null,\n            \"label\": \"...\",\n            \"active\": false\n        },\n        {\n            \"url\": \"https://ecotrack-new.test/api/v1/get/orders?page=189\",\n            \"label\": \"189\",\n            \"active\": false\n        },\n        {\n            \"url\": \"https://ecotrack-new.test/api/v1/get/orders?page=190\",\n            \"label\": \"190\",\n            \"active\": false\n        },\n        {\n            \"url\": \"https://ecotrack-new.test/api/v1/get/orders?page=2\",\n            \"label\": \"Suivant &raquo;\",\n            \"active\": false\n        }\n    ],\n    \"next_page_url\": \"https://ecotrack-new.test/api/v1/get/orders?page=2\",\n    \"path\": \"https://ecotrack-new.test/api/v1/get/orders\",\n    \"per_page\": 2,\n    \"prev_page_url\": null,\n    \"to\": 2,\n    \"total\": 379\n}"
+            }
+          ]
+        },
+        {
+          "name": "Filtre des commandes par status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/api/v1/get/orders/status?api_token={{token}}&trackings={{tracking1}},{{tracking2}},{{tracking3}}&status={{status1}},{{status2}},{{status3}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "get",
+                "orders",
+                "status"
+              ],
+              "query": [
+                {
+                  "key": "api_token",
+                  "value": "{{token}}",
+                  "description": "token généré a partir de votre compte | **obligatoire**"
+                },
+                {
+                  "key": "trackings",
+                  "value": "{{tracking1}},{{tracking2}},{{tracking3}}",
+                  "description": "trackings des commandes | string | **obligatoire**"
+                },
+                {
+                  "key": "status",
+                  "value": "{{status1}},{{status2}},{{status3}}",
+                  "description": "status des commandes | string | **obligatoire**"
+                }
+              ]
+            },
+            "description": "Ce point de terminaison vous donne la possibilité de filtrer la liste de vos commandes par leurs statuts .\n\nLe nombre maximum de trackings soumis est de 100 par requête.\n\nles statuts disponibles sont identique a l'affichage du menu sur votre compte expéditeur :\n\n- **prete_a_expedier,**\n- **en_ramassage,**\n- **en_preparation_stock,**\n- **vers_hub,**\n- **en_hub,**\n- **vers_wilaya,**\n- **en_preparation,**\n- **en_livraison,**\n- **suspendu,**\n- **livre_non_encaisse,**\n- **encaisse_non_paye,**\n- **paiements_prets,**\n- **paye_et_archive,**\n- **retour_chez_livreur,**\n- **retour_transit_entrepot,**\n- **retour_en_traitement,**\n- **retour_recu,**\n- **retour_archive,**\n- **annule**\n- **all**"
+          },
+          "response": [
+            {
+              "name": "Filtre des commandes par status",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{url}}/api/v1/get/orders/status?api_token={{token}}&trackings={{tracking1}},{{tracking2}},{{tracking3}}&status={{status1}},{{status2}},{{status3}}",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "get",
+                    "orders",
+                    "status"
+                  ],
+                  "query": [
+                    {
+                      "key": "api_token",
+                      "value": "{{token}}",
+                      "description": "token généré a partir de votre compte | **obligatoire**"
+                    },
+                    {
+                      "key": "trackings",
+                      "value": "{{tracking1}},{{tracking2}},{{tracking3}}",
+                      "description": "trackings des commandes | string | **obligatoire**"
+                    },
+                    {
+                      "key": "status",
+                      "value": "{{status1}},{{status2}},{{status3}}",
+                      "description": "status des commandes | string | **obligatoire**"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Server",
+                  "value": "nginx/1.27.5"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Accept-Encoding"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "PHP/8.3.21"
+                },
+                {
+                  "key": "Cache-Control",
+                  "value": "no-cache, private"
+                },
+                {
+                  "key": "Date",
+                  "value": "Wed, 16 Jul 2025 01:39:36 GMT"
+                },
+                {
+                  "key": "X-RateLimit-Limit-Day",
+                  "value": "15000"
+                },
+                {
+                  "key": "X-RateLimit-Remaining-Day",
+                  "value": "14985"
+                },
+                {
+                  "key": "X-RateLimit-Reset-Day",
+                  "value": "1752714620"
+                },
+                {
+                  "key": "X-RateLimit-Limit-Hour",
+                  "value": "1500"
+                },
+                {
+                  "key": "X-RateLimit-Remaining-Hour",
+                  "value": "1485"
+                },
+                {
+                  "key": "X-RateLimit-Reset-Hour",
+                  "value": "1752631820"
+                },
+                {
+                  "key": "X-RateLimit-Limit-Minute",
+                  "value": "50"
+                },
+                {
+                  "key": "X-RateLimit-Remaining-Minute",
+                  "value": "47"
+                },
+                {
+                  "key": "X-RateLimit-Reset-Minute",
+                  "value": "1752630023"
+                },
+                {
+                  "key": "phpdebugbar-id",
+                  "value": "X4ac9b3cfeb0141879413203733814646"
+                },
+                {
+                  "key": "Access-Control-Allow-Origin",
+                  "value": "*"
+                },
+                {
+                  "key": "Content-Encoding",
+                  "value": "gzip"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"data\": {\n        \"ECLWIT2505052286\": {\n            \"status\": \"en_preparation\",\n            \"order_id\": \"1237\",\n            \"desk_phone\": \"\",\n            \"desk_commune\": \"\",\n            \"desk_map_link\": \"\",\n            \"desk_address\": \"\",\n            \"activity\": [\n                {\n                    \"reason\": \"Client ne réponds pas\",\n                    \"details\": \"\",\n                    \"station\": \"Station principale\",\n                    \"driver\": \"HINI Djamel\",\n                    \"date\": \"2025-07-16\",\n                    \"time\": \"02:08:51\",\n                    \"postponed_to\": null\n                },\n                {\n                    \"reason\": \"Le client est absent\",\n                    \"details\": \"test 000029\",\n                    \"station\": \"Station principale\",\n                    \"driver\": \"HINI Djamel\",\n                    \"date\": \"2025-07-16\",\n                    \"time\": \"02:09:11\",\n                    \"postponed_to\": \"2025-07-19\"\n                },\n                {\n                    \"reason\": \"Écrire une remarque\",\n                    \"details\": \"another test\",\n                    \"station\": \"Station principale\",\n                    \"driver\": \"HINI Djamel\",\n                    \"date\": \"2025-07-16\",\n                    \"time\": \"02:09:20\",\n                    \"postponed_to\": \"2025-07-19\"\n                }\n            ]\n        },\n        \"ECLWIT2507162547\": {\n            \"status\": \"en_livraison\",\n            \"order_id\": \"\",\n            \"driver_phone\": \"0123456789\",\n            \"desk_phone\": \"\",\n            \"desk_commune\": \"\",\n            \"desk_map_link\": \"\",\n            \"desk_address\": \"\",\n            \"activity\": [\n                {\n                    \"reason\": \"Remarque\",\n                    \"details\": \"Colis a livrer le 23 juillet\",\n                    \"station\": \"Station principale\",\n                    \"driver\": \"\",\n                    \"date\": \"2025-07-16\",\n                    \"time\": \"02:31:15\",\n                    \"postponed_to\": \"2025-07-23\"\n                }\n            ]\n        },\n        \"ECLWIT2505052287\": {\n            \"status\": \"encaisse_non_paye\",\n            \"order_id\": \"\",\n            \"estimated_fee\": 700,\n            \"activity\": []\n        }\n    }\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ]
+}

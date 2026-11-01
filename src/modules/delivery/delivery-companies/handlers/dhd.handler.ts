@@ -38,7 +38,13 @@ import type {
   DhdParcelDto,
   DhdStatusResponseDto,
 } from './dhd/dhd-status.types';
+import {
+  DhdCommuneOption,
+  isDhdDispatchable,
+  isDhdMappingValid,
+} from '../dhd-commune';
 
+const DHD_COMMUNES_BREAKER_PREFIX = 'dhd-communes:';
 const DHD_STATUS_BREAKER_PREFIX = 'dhd-status:';
 const DHD_STATUS_TIMEOUT_MS = 15000;
 const DHD_STATUS_BATCH_SIZE = 100;
@@ -76,6 +82,7 @@ interface DhdOrderPayload {
   adresse: string;
   commune: string;
   code_wilaya: string;
+  code_postal?: string;
   montant: number;
   remarque?: string;
   produit: string;
@@ -121,14 +128,144 @@ export class DhdHandler implements DeliveryCompanyHandler {
       : DHD_LABEL_CONCURRENCY;
   }
 
+  async listCommunes(
+    wilayaCode: string,
+    context: DeliveryStatusContext,
+  ): Promise<DhdCommuneOption[]> {
+    const credentials = await this.resolveStatusCredentials(context);
+    const wilayaId = String(Number(wilayaCode));
+
+    let body: unknown;
+    try {
+      body = await this.getStatusJson<unknown>(
+        '/api/v1/get/communes',
+        { wilaya_id: wilayaId },
+        credentials,
+        `${DHD_COMMUNES_BREAKER_PREFIX}${credentials.tenantId}`,
+      );
+    } catch (err) {
+      if (err instanceof DhdInvalidTrackingError) {
+        throw new AppException(AppErrorCode.DELIVERY_API_ERROR, {
+          company: 'DHD',
+          status: 422,
+          text: `DHD rejected wilaya code ${wilayaCode}`,
+        });
+      }
+      throw err;
+    }
+
+    return normalizeDhdCommunes(body, wilayaId);
+  }
+
+  /**
+   * Rollout gate for the commune-mapping *requirement* (roadmap D3). When off, an unmapped order
+   * keeps its legacy behaviour: the handler resolves the commune name from the platform `communes`
+   * collection and sends it verbatim. A valid saved selection is used either way. Default `false`,
+   * so requiring mappings stays dark and rolls back instantly.
+   */
+  private communeMappingEnabled(): boolean {
+    return this.configService.get<boolean>('dhdCommuneMapping.enabled') === true;
+  }
+
+  /**
+   * The authoritative DHD commune for a dispatch. An explicit, valid operator selection always
+   * wins, even while the rollout flag is off: the selector is available to vendors regardless of
+   * the flag, so silently ignoring a saved selection would send the carrier a different commune
+   * than the one the operator chose (the live 001016 `Ben Badis El haria` failure).
+   *
+   * When the order has no usable selection, the platform location registry is consulted: a
+   * populated `communes.dhd_uuid` means the commune is already DHD-recognized, so no manual
+   * mapping is needed and its value is sent verbatim as `commune`. Only a commune with an empty
+   * `dhd_uuid` still needs the operator to pick one from DHD's list.
+   */
+  private async resolveDispatchSelection(order: Order): Promise<Order['dhdCommune'] | null> {
+    if (isDhdDispatchable(order)) return order.dhdCommune ?? null;
+    return this.communeFromRegistry(order);
+  }
+
+  /**
+   * Looks the order's customer commune up in the platform `communes` collection and turns its
+   * `dhd_uuid` (the DHD commune name) into a dispatch selection. Returns `null` when the commune
+   * has no DHD counterpart, which is exactly the "DHD commune missing" case the vendor UI shows.
+   */
+  private async communeFromRegistry(order: Order): Promise<Order['dhdCommune'] | null> {
+    const wilayaCode = String(order.customer?.wilaya ?? '').trim();
+    const communeValue = String(order.customer?.commune ?? '').trim();
+    const wilayaId = String(Number(wilayaCode));
+    if (!communeValue || !/^\d{1,2}$/.test(wilayaId)) return null;
+
+    try {
+      const query: Record<string, unknown> = { wilaya_code: wilayaCode };
+      if (/^[a-fA-F0-9]{24}$/.test(communeValue)) {
+        query._id = communeValue;
+      } else {
+        query.$or = [{ post_code: communeValue }, { name: communeValue }];
+      }
+
+      const commune = await this.communeModel.findOne(query).lean().exec();
+      const dhdName = typeof commune?.dhd_uuid === 'string' ? commune.dhd_uuid.trim() : '';
+      if (!dhdName) return null;
+
+      const postalCode = typeof commune?.post_code === 'string' ? commune.post_code.trim() : '';
+      return {
+        name: dhdName,
+        wilayaId,
+        postalCode: postalCode || null,
+      };
+    } catch (err) {
+      this.logger.warn(
+        `Failed to resolve DHD commune for order ${order.orderNo}: ${err instanceof Error ? err.message : 'unknown error'}`,
+      );
+      return null;
+    }
+  }
+
+  /**
+   * Pre-dispatch assertion delegated from `DeliveryService.assertCanCreateDelivery`. Only DHD
+   * orders are gated, and only while the feature is enabled; everything else is a no-op so the
+   * other carriers' dispatch paths are untouched.
+   *
+   * An order whose customer commune already carries a `dhd_uuid` is dispatchable with no manual
+   * mapping. Only a commune with an empty `dhd_uuid` (and no explicit selection) is refused.
+   */
+  async assertDispatchable(order: Order): Promise<void> {
+    if (!this.communeMappingEnabled()) return;
+    if (order.deliveryCompanyId !== 'dhd') return;
+    if (isDhdDispatchable(order)) return;
+
+    // An explicit selection that fails validation is never silently replaced: the operator chose
+    // it, so the save must be corrected rather than dispatched with a different commune.
+    if (order.dhdCommune?.name?.trim()) {
+      const wilayaMismatch = !isDhdMappingValid(order);
+      throw new AppException(
+        wilayaMismatch ? AppErrorCode.DELIVERY_COMMUNE_INVALID : AppErrorCode.DELIVERY_COMMUNE_NOT_MAPPED,
+        {
+          orderNo: order.orderNo,
+          wilaya: order.customer?.wilaya,
+        },
+      );
+    }
+
+    const registrySelection = await this.communeFromRegistry(order);
+    if (registrySelection) return;
+
+    throw new AppException(AppErrorCode.DELIVERY_COMMUNE_NOT_MAPPED, {
+      orderNo: order.orderNo,
+      wilaya: order.customer?.wilaya,
+    });
+  }
+
   async createOrder(order: Order): Promise<{ parcelId: string }> {
     const apiToken = await this.getApiToken(order.vendorEmail);
     if (!apiToken) {
       throw new AppException(AppErrorCode.DELIVERY_CREDENTIALS_NOT_CONFIGURED, { company: 'DHD', vendor: order.vendorEmail });
     }
 
-    const communeName = await this.resolveCommuneName(order.customer.wilaya, order.customer.commune);
-    const payload = this.buildPayload(order, communeName);
+    const selection = await this.resolveDispatchSelection(order);
+    const communeName = selection
+      ? ''
+      : await this.resolveCommuneName(order.customer.wilaya, order.customer.commune);
+    const payload = this.buildPayload(order, communeName, selection);
 
     const params = new URLSearchParams();
     if (payload.reference) params.append('reference', payload.reference);
@@ -137,6 +274,7 @@ export class DhdHandler implements DeliveryCompanyHandler {
     params.append('adresse', payload.adresse);
     params.append('commune', payload.commune);
     params.append('code_wilaya', payload.code_wilaya);
+    if (payload.code_postal) params.append('code_postal', payload.code_postal);
     params.append('montant', String(payload.montant));
     params.append('produit', payload.produit);
     params.append('type', String(payload.type));
@@ -191,6 +329,66 @@ export class DhdHandler implements DeliveryCompanyHandler {
 
   async createBulkOrders(orders: Order[]): Promise<BulkOrderResult[]> {
     if (orders.length === 0) return [];
+
+    const storeIds = new Set(orders.map((o) => String(o.storeId ?? '')));
+    if (storeIds.size > 1) {
+      throw new AppException(AppErrorCode.VALIDATION_INVALID_VALUE, { field: 'orders' });
+    }
+
+    // Resolve every order's DHD commune once and reuse it for the partition and the payload.
+    // An explicit selection wins; otherwise the platform commune's `dhd_uuid` is the mapping.
+    const selections = new Map<Order, Order['dhdCommune'] | null>();
+    for (const order of orders) {
+      selections.set(order, await this.resolveDispatchSelection(order));
+    }
+
+    if (!this.communeMappingEnabled()) {
+      return this.dispatchBulkOrders(orders, selections);
+    }
+
+    const validOrders: Order[] = [];
+    const invalidResults: BulkOrderResult[] = [];
+
+    for (const order of orders) {
+      const explicitlySelected = !!order.dhdCommune?.name?.trim();
+      // A valid explicit selection dispatches; so does a commune the platform already maps to
+      // DHD via `dhd_uuid`. Anything else needs the operator to pick a DHD commune first.
+      const dispatchable = isDhdDispatchable(order) || (!explicitlySelected && !!selections.get(order));
+      if (!dispatchable) {
+        invalidResults.push({
+          orderNo: order.orderNo,
+          success: false,
+          code: AppErrorCode.DELIVERY_COMMUNE_NOT_MAPPED,
+          error: 'DHD commune not selected or invalid for this wilaya',
+        });
+      } else {
+        validOrders.push(order);
+      }
+    }
+
+    if (validOrders.length === 0) {
+      return invalidResults;
+    }
+
+    if (validOrders.length > 100) {
+      return [
+        ...invalidResults,
+        ...validOrders.map((o) => ({
+          orderNo: o.orderNo,
+          success: false,
+          error: 'Max 100 orders per bulk request',
+        })),
+      ];
+    }
+
+    return [...invalidResults, ...(await this.dispatchBulkOrders(validOrders, selections))];
+  }
+
+  private async dispatchBulkOrders(
+    orders: Order[],
+    resolvedSelections?: Map<Order, Order['dhdCommune'] | null>,
+  ): Promise<BulkOrderResult[]> {
+    if (orders.length === 0) return [];
     if (orders.length > 100) {
       return orders.map((o) => ({ orderNo: o.orderNo, success: false, error: 'Max 100 orders per bulk request' }));
     }
@@ -202,8 +400,13 @@ export class DhdHandler implements DeliveryCompanyHandler {
 
     const ordersPayload: Record<string, DhdOrderPayload> = {};
     for (let i = 0; i < orders.length; i++) {
-      const communeName = await this.resolveCommuneName(orders[i].customer.wilaya, orders[i].customer.commune);
-      ordersPayload[String(i)] = this.buildPayload(orders[i], communeName);
+      const selection = resolvedSelections
+        ? resolvedSelections.get(orders[i]) ?? null
+        : await this.resolveDispatchSelection(orders[i]);
+      const communeName = selection
+        ? ''
+        : await this.resolveCommuneName(orders[i].customer.wilaya, orders[i].customer.commune);
+      ordersPayload[String(i)] = this.buildPayload(orders[i], communeName, selection);
     }
 
     try {
@@ -861,6 +1064,7 @@ export class DhdHandler implements DeliveryCompanyHandler {
     path: string,
     query: Record<string, string | readonly string[]>,
     credentials: DhdStatusCredentials,
+    breakerName?: string,
   ): Promise<T> {
     const params = new URLSearchParams();
     for (const [key, value] of Object.entries(query)) {
@@ -888,7 +1092,7 @@ export class DhdHandler implements DeliveryCompanyHandler {
         { method: 'GET', headers, timeout: DHD_STATUS_TIMEOUT_MS },
         {
           maxRetries: 2,
-          circuitBreakerName: `${DHD_STATUS_BREAKER_PREFIX}${credentials.tenantId}`,
+          circuitBreakerName: breakerName || `${DHD_STATUS_BREAKER_PREFIX}${credentials.tenantId}`,
           retryOn: (candidate) => candidate.status !== 429,
         },
       );
@@ -950,8 +1154,17 @@ export class DhdHandler implements DeliveryCompanyHandler {
     });
   }
 
-  private buildPayload(order: Order, communeName: string): DhdOrderPayload {
+  private buildPayload(
+    order: Order,
+    communeName: string,
+    selection: Order['dhdCommune'] | null,
+  ): DhdOrderPayload {
     const isStopDesk = order.shippingMethod === 'stopdesk';
+
+    // A resolved DHD commune is always authoritative: `commune`/`code_wilaya` come from it (and
+    // `code_postal` when present), and the legacy `communeName` is never used. Without one the
+    // legacy name feeds the fallback, preserving the pre-feature behaviour for truly unmapped
+    // communes.
 
     const produit =
       order.items
@@ -967,13 +1180,17 @@ export class DhdHandler implements DeliveryCompanyHandler {
       nom_client: (order.customer.name || 'Client').slice(0, 255),
       telephone: this.cleanPhone(order.customer.phone || ''),
       adresse: (order.customer.address || '').slice(0, 255) || 'N/A',
-      commune: communeName,
-      code_wilaya: order.customer.wilaya || '',
+      commune: selection?.name ?? communeName,
+      code_wilaya: selection?.wilayaId ?? order.customer.wilaya ?? '',
       montant: order.total || 0,
       produit: produit.slice(0, 255),
       type: 1,
       stop_desk: isStopDesk ? 1 : 0,
     };
+
+    if (selection?.postalCode) {
+      payload.code_postal = selection.postalCode;
+    }
 
     if (order.customer.email) {
       payload.telephone_2 = this.cleanPhone(order.customer.email);
@@ -1027,4 +1244,41 @@ export class DhdHandler implements DeliveryCompanyHandler {
   private cleanPhone(phone: string): string {
     return phone.replace(/[^0-9]/g, '').slice(0, 10);
   }
+}
+
+export function normalizeDhdCommunes(body: unknown, wilayaId: string): DhdCommuneOption[] {
+  const root =
+    body && typeof body === 'object' && !Array.isArray(body) && 'data' in (body as Record<string, unknown>)
+      ? (body as Record<string, unknown>).data
+      : body;
+  const entries = Array.isArray(root)
+    ? root
+    : root && typeof root === 'object'
+      ? Object.values(root as Record<string, unknown>)
+      : [];
+  const seen = new Set<string>();
+  const out: DhdCommuneOption[] = [];
+  const normalizedWilaya = String(Number(wilayaId));
+
+  for (const raw of entries) {
+    if (!raw || typeof raw !== 'object') continue;
+    const e = raw as Record<string, unknown>;
+    const name = typeof e.nom === 'string' ? e.nom.trim() : '';
+    const id = String(Number(e.wilaya_id ?? normalizedWilaya));
+    if (!name || id !== normalizedWilaya) continue;
+    if (e.is_active === 0 || e.is_active === '0' || e.is_active === false) continue;
+    const key = name.toLocaleLowerCase('fr');
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({
+      name,
+      wilayaId: id,
+      postalCode:
+        typeof e.code_postal === 'string' && e.code_postal.trim()
+          ? e.code_postal.trim()
+          : null,
+      hasStopDesk: e.has_stop_desk === 1 || e.has_stop_desk === '1' || e.has_stop_desk === true,
+    });
+  }
+  return out.sort((a, b) => a.name.localeCompare(b.name, 'fr'));
 }

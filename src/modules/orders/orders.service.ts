@@ -14,6 +14,8 @@ import { BulkShipDto } from './dto/bulk-ship.dto';
 import { DeliveryService } from '../delivery/delivery.service';
 import { OrderStatusesService } from './order-statuses.service';
 import { BulkOrderResult } from '../delivery/delivery-companies/interfaces/delivery-company-handler.interface';
+import { normalizeDhdCommuneSelection } from '../delivery/delivery-companies/dhd-commune';
+import { normalizeNoestCommuneSelection } from '../delivery/delivery-companies/noest-commune';
 import { ORDER_STATUS_VALUES, ORDER_STATUS_TRANSITIONS, OrderStatus } from '../../common/constants/order-statuses.const';
 import { DELIVERY_STATUS_CONFLICT_CODES } from '../../common/constants/delivery-status.const';
 import { OrderSource } from '../../common/constants/order-sources.const';
@@ -1562,8 +1564,77 @@ export class OrdersService {
 
     const existingSlug = this.getStatusSlug(existing.status);
 
-    const { status: _, expectedUpdatedAt: __, history: _history, ...restDto } = updateOrderDto;
+    const {
+      status: _,
+      expectedUpdatedAt: __,
+      history: _history,
+      dhdCommune: incomingDhdCommune,
+      noestCommune: incomingNoestCommune,
+      ...restDto
+    } = updateOrderDto;
     const updateData: Record<string, any> = { ...restDto, updatedAt: new Date() };
+
+    // DHD commune mapping (DHD-COMMUNE-MAPPING-IMPLEMENTATION-PLAN.md §2.4): the selection is an
+    // additive dispatch property, never a replacement for the canonical customer wilaya/commune.
+    // The audit fields are server-stamped; the client may only send the identification fields.
+    const effectiveWilaya = updateOrderDto.customer?.wilaya ?? existing.customer?.wilaya;
+    if (incomingDhdCommune === null) {
+      updateData.dhdCommune = null;
+    } else if (incomingDhdCommune !== undefined) {
+      const normalized = normalizeDhdCommuneSelection(incomingDhdCommune, user?.id ?? null);
+      if (!normalized) {
+        throw new AppException(AppErrorCode.DELIVERY_COMMUNE_INVALID, {
+          orderNo: existing.orderNo,
+          wilaya: effectiveWilaya,
+        });
+      }
+      if (Number(normalized.wilayaId) !== Number(effectiveWilaya)) {
+        throw new AppException(AppErrorCode.DELIVERY_COMMUNE_INVALID, {
+          orderNo: existing.orderNo,
+          wilaya: effectiveWilaya,
+          selectedWilaya: normalized.wilayaId,
+        });
+      }
+      updateData.dhdCommune = normalized;
+    } else if (
+      updateOrderDto.customer?.wilaya !== undefined &&
+      existing.dhdCommune &&
+      Number(existing.dhdCommune.wilayaId) !== Number(effectiveWilaya)
+    ) {
+      // The order moved to another wilaya: a commune from the old wilaya must never be sent to
+      // DHD, so the stale mapping is cleared rather than silently carried over.
+      updateData.dhdCommune = null;
+    }
+
+    // Noest commune mapping (NOEST-COMMUNE-MAPPING-IMPLEMENTATION-PLAN.md §3.3): identical
+    // additive rules to DHD, but independent — a DHD save never clears a Noest selection and vice
+    // versa. The selection is dispatch data only; `customer.wilaya`/`customer.commune` stay
+    // canonical.
+    if (incomingNoestCommune === null) {
+      updateData.noestCommune = null;
+    } else if (incomingNoestCommune !== undefined) {
+      const normalized = normalizeNoestCommuneSelection(incomingNoestCommune, user?.id ?? null);
+      if (!normalized) {
+        throw new AppException(AppErrorCode.DELIVERY_COMMUNE_INVALID, {
+          orderNo: existing.orderNo,
+          wilaya: effectiveWilaya,
+        });
+      }
+      if (Number(normalized.wilayaId) !== Number(effectiveWilaya)) {
+        throw new AppException(AppErrorCode.DELIVERY_COMMUNE_INVALID, {
+          orderNo: existing.orderNo,
+          wilaya: effectiveWilaya,
+          selectedWilaya: normalized.wilayaId,
+        });
+      }
+      updateData.noestCommune = normalized;
+    } else if (
+      updateOrderDto.customer?.wilaya !== undefined &&
+      existing.noestCommune &&
+      Number(existing.noestCommune.wilayaId) !== Number(effectiveWilaya)
+    ) {
+      updateData.noestCommune = null;
+    }
 
     if (updateOrderDto.expectedUpdatedAt && existing.updatedAt) {
       const expected = new Date(updateOrderDto.expectedUpdatedAt).getTime();
@@ -1723,7 +1794,7 @@ export class OrdersService {
         if (value !== undefined) bookingOverrides[key] = value;
       }
       const bookingOrder = { ...(stored as Record<string, unknown>), ...bookingOverrides } as unknown as Order;
-      this.deliveryService.assertCanCreateDelivery(bookingOrder);
+      await this.deliveryService.assertCanCreateDelivery(bookingOrder);
       try {
         const { parcelId } = await this.deliveryService.createDeliveryForOrder(bookingOrder);
         bookedParcelId = parcelId;
@@ -2050,7 +2121,7 @@ export class OrdersService {
         // The courier refused the parcel, so the order is not dispatched. Record why and move on.
         const error = booking?.error ?? 'Delivery booking failed';
         await this.orderModel.updateOne({ _id: order._id }, { $set: { deliveryError: error } }).exec();
-        results.push({ orderNo: order.orderNo, success: false, error });
+        results.push({ orderNo: order.orderNo, success: false, error, code: booking?.code });
         continue;
       }
 
