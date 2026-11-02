@@ -17,6 +17,9 @@ export class Product {
   @Prop({ type: Types.ObjectId, ref: 'Store' })
   storeId?: Types.ObjectId;
 
+  /** @deprecated Use `storeId` instead */
+  @Prop({ type: Types.ObjectId, ref: 'Store' })
+  storeId_vendorEmail?: Types.ObjectId;
   @Prop({ required: true, trim: true })
   nameEn: string;
 
@@ -116,4 +119,5 @@ ProductSchema.index({ published: 1, createdAt: -1, _id: -1 });
 ProductSchema.index({ published: 1, category: 1, createdAt: -1, _id: -1 });
 ProductSchema.index({ published: 1, vendorEmail: 1, createdAt: -1, _id: -1 });
 ProductSchema.index({ published: 1, storeId: 1, createdAt: -1, _id: -1 });
+ProductSchema.index({ vendorId: 1, storeId: 1 }, { unique: true, sparse: true });
 ProductSchema.index({ published: 1, price: 1, createdAt: -1, _id: -1 });

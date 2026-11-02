@@ -21,7 +21,7 @@ export class EmailService {
         auth: { user, pass },
       });
     } else {
-      this.logger.warn('SMTP not configured. Emails will be logged instead of sent.');
+      this.logger.warn('SMTP not configured. Password reset emails cannot be delivered.');
     }
   }
 
@@ -35,11 +35,19 @@ export class EmailService {
         await this.transporter.sendMail({ from, to, subject, html });
         this.logger.log(`Password reset email sent to ${to}`);
       } catch (err) {
-        this.logger.error(`Failed to send email to ${to}: ${err instanceof Error ? err.stack || err.message : String(err)}`);
-        this.logger.log(`[EMAIL FALLBACK] To: ${to} | Reset URL: ${resetUrl}`);
+        // No reset URL in the log: a URL with a live token is a password-reset credential.
+        // The correlation id is the recipient, so an operator can still find the failure.
+        this.logger.error(
+          `Password reset email delivery failed for ${to}: ${err instanceof Error ? err.message : String(err)}`,
+        );
       }
     } else {
-      this.logger.log(`[EMAIL LOG] To: ${to} | Subject: ${subject} | Reset URL: ${resetUrl}`);
+      // SMTP is not configured (no provider, or a misconfiguration). Say so plainly and do
+      // not print the reset URL — it would be the token, in plaintext, in a log. Password
+      // reset requires a working mail provider in production.
+      this.logger.error(
+        '[EMAIL] SMTP is not configured; the password reset email was not sent.',
+      );
     }
   }
 

@@ -78,7 +78,12 @@ export class AuthService {
     const user = created.toObject();
     const userId = user._id.toString();
 
-    const token = this.jwtService.sign({ sub: userId, email: user.email, role: user.role });
+    const token = this.jwtService.sign({
+      sub: userId,
+      email: user.email,
+      role: user.role,
+      tokenVersion: user.tokenVersion ?? 0,
+    });
     const refreshToken = await this.storeRefreshToken(userId);
 
     let storeId: string | null = null;
@@ -153,7 +158,12 @@ export class AuthService {
         : {}),
     });
 
-    const token = this.jwtService.sign({ sub: user._id, email: user.email, role: user.role });
+    const token = this.jwtService.sign({
+      sub: user._id,
+      email: user.email,
+      role: user.role,
+      tokenVersion: user.tokenVersion ?? 0,
+    });
     const refreshToken = await this.storeRefreshToken(user._id.toString());
 
     return {
@@ -204,7 +214,12 @@ export class AuthService {
       throw new AppException(AppErrorCode.AUTH_REFRESH_TOKEN_EXPIRED);
     }
 
-    const token = this.jwtService.sign({ sub: user._id, email: user.email, role: user.role });
+    const token = this.jwtService.sign({
+      sub: user._id,
+      email: user.email,
+      role: user.role,
+      tokenVersion: user.tokenVersion ?? 0,
+    });
     const newRefreshToken = await this.storeRefreshToken(user._id.toString());
 
     return {
@@ -236,7 +251,10 @@ export class AuthService {
       const rawToken = crypto.randomBytes(32).toString('hex');
       const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
 
-      this.logger.log(`[FORGOT_PASSWORD] userId=${user._id} email=${user.email} rawToken=${rawToken.substring(0,16)}... tokenHash=${tokenHash.substring(0,16)}...`);
+      // Never log the token, its hash, or the reset URL. Anything that ingests stdout (ops, a
+      // log aggregator, a CI artifact, a shipped *.log file) could otherwise reset an arbitrary
+      // account for the life of the token. The userId is enough to correlate the request.
+      this.logger.log(`[FORGOT_PASSWORD] Reset link issued for userId=${user._id}`);
 
       await this.resetTokenModel.create({
         userId: user._id,
@@ -248,22 +266,22 @@ export class AuthService {
       const frontendUrl = this.configService.get<string>('frontendUrl') || 'http://localhost:3001';
       const resetUrl = `${frontendUrl}/en/reset-password?token=${rawToken}&email=${encodeURIComponent(user.email)}`;
 
-      this.logger.log(`[FORGOT_PASSWORD] resetUrl=${resetUrl}`);
-
       await this.emailService.sendPasswordResetEmail(user.email, resetUrl, 30);
     } else {
-      this.logger.log(`[FORGOT_PASSWORD] No user found for email=${dto.email}`);
+      // Deliberately does not echo the email back: the response is already uniform so the
+      // endpoint cannot be used to enumerate accounts, and the log should not undo that.
+      this.logger.log('[FORGOT_PASSWORD] No matching account');
     }
 
     return { message: 'If an account exists, a password reset email has been sent.' };
   }
 
   async resetPassword(dto: ResetPasswordDto) {
+    // The submitted token (and its hash) must never reach a log line — that is exactly the
+    // value an attacker needs to take the account over.
     const tokenHash = crypto.createHash('sha256').update(dto.token).digest('hex');
-    this.logger.log(`[RESET_PASSWORD] received token=${dto.token.substring(0,16)}... computed hash=${tokenHash.substring(0,16)}...`);
 
     const resetToken = await this.resetTokenModel.findOne({ tokenHash });
-    this.logger.log(`[RESET_PASSWORD] found in DB: ${resetToken ? `userId=${resetToken.userId} usedAt=${resetToken.usedAt} expiresAt=${resetToken.expiresAt}` : 'NONE'}`);
 
     if (!resetToken) {
       throw new AppException(AppErrorCode.AUTH_RESET_TOKEN_INVALID);
@@ -278,10 +296,17 @@ export class AuthService {
     }
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
-    await this.userModel.findByIdAndUpdate(resetToken.userId, { password: hashedPassword });
+    // Resetting the password ends every existing session: the refresh token is cleared and the
+    // token generation is bumped, which invalidates all already-issued access tokens (H3).
+    await this.userModel.findByIdAndUpdate(resetToken.userId, {
+      password: hashedPassword,
+      refreshToken: null,
+      refreshTokenExpiresAt: null,
+      $inc: { tokenVersion: 1 },
+    });
     await this.resetTokenModel.findByIdAndUpdate(resetToken._id, { usedAt: new Date() });
 
-    this.logger.log(`[RESET_PASSWORD] SUCCESS for userId=${resetToken.userId}`);
+    this.logger.log('[RESET_PASSWORD] Password reset completed.');
 
     return { message: 'Password has been reset successfully.' };
   }
@@ -306,7 +331,12 @@ export class AuthService {
     });
     const user = created.toObject();
 
-    const token = this.jwtService.sign({ sub: user._id.toString(), email: user.email, role: user.role });
+    const token = this.jwtService.sign({
+      sub: user._id.toString(),
+      email: user.email,
+      role: user.role,
+      tokenVersion: user.tokenVersion ?? 0,
+    });
     const refreshToken = await this.storeRefreshToken(user._id.toString());
 
     return {
@@ -416,6 +446,8 @@ export class AuthService {
       password: hashedPassword,
       refreshToken: null,
       refreshTokenExpiresAt: null,
+      // Revoke every access token issued before this reset (H3).
+      $inc: { tokenVersion: 1 },
     });
 
     await this.otpModel.updateMany(
@@ -439,6 +471,17 @@ class ConsoleSmsSender implements SmsSender {
   constructor(private readonly logger: Logger) {}
 
   async send(phoneNumber: string, message: string) {
+    if (process.env.NODE_ENV === 'production') {
+      // The fallback sender must never print an OTP in production: the message *is* the
+      // credential. Without a configured SMS provider the code is simply not delivered — the
+      // fix is a real provider, not a log line.
+      this.logger.error(
+        '[SMS] No SMS provider configured; the verification code was not delivered.',
+      );
+      return;
+    }
+
+    // Local development only: the console is the SMS channel, so the code has to be visible.
     this.logger.log(`[SMS to ${phoneNumber}]: ${message}`);
   }
 }

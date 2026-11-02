@@ -15,6 +15,10 @@ export class Store {
   @Prop({ required: true, trim: true, unique: true })
   storeName: string;
 
+  /** @deprecated Use `storeId` instead */
+  @Prop({ type: Types.ObjectId, ref: 'Store' })
+  storeId?: Types.ObjectId;
+
   @Prop({ required: true, unique: true, lowercase: true, trim: true })
   storeSlug: string;
 

@@ -18,6 +18,7 @@ import { DeliveryParcelStatusService } from './delivery-parcel-status.service';
 import { DeliveryFeesModule } from '../delivery-fees/delivery-fees.module';
 import { TerritoriesModule } from '../territories/territories.module';
 import { StoresModule } from '../stores/stores.module';
+import { AuditModule } from '../audit/audit.module';
 import {
   DELIVERY_COMPANY_HANDLERS,
   DeliveryCompanyRegistry,
@@ -43,6 +44,7 @@ import { DhdHandler } from './delivery-companies/handlers/dhd.handler';
     DeliveryFeesModule,
     TerritoriesModule,
     StoresModule,
+    AuditModule,
   ],
   controllers: [DeliveryController],
   providers: [

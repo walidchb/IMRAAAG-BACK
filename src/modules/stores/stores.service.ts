@@ -405,6 +405,24 @@ export class StoresService {
     return this.storeModel.find(filter).sort({ createdAt: -1 }).limit(50).exec();
   }
 
+  /**
+   * Public search results (H2). A storefront listing needs the shop's public identity only:
+   * `vendorEmail` (enumerable, and the key the removed public carrier-config route used),
+   * `vendorId` (an internal user ObjectId) and the contact fields are deliberately projected
+   * out. The public store page (`GET /stores/:id`) remains the place that shows contact
+   * details for a store the shopper is actually looking at.
+   */
+  async findAllRawPublic(filter: Record<string, any>): Promise<Store[]> {
+    return this.storeModel
+      .find(filter)
+      .select(
+        '_id storeName storeSlug description storeLogo coverImage tagline wilaya commune categories socialMedia status totalProducts totalOrders createdAt',
+      )
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .exec();
+  }
+
   async incrementProductCount(vendorEmail: string, delta = 1): Promise<void> {
     await this.storeModel.updateOne(
       { vendorEmail: vendorEmail.toLowerCase() },

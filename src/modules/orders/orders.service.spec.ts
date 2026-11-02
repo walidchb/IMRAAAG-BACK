@@ -6,6 +6,8 @@ import { Order } from './schemas/order.schema';
 import { Counter } from './schemas/counter.schema';
 import { Product } from '../products/schemas/product.schema';
 import { DeliveryService } from '../delivery/delivery.service';
+import { DeliveryFeesService } from '../delivery-fees/delivery-fees.service';
+import { AuditService } from '../audit/audit.service';
 import { OrderStatusesService } from './order-statuses.service';
 import { StoresService } from '../stores/stores.service';
 import { ReservationsService } from '../inventory/services/reservations.service';
@@ -115,6 +117,7 @@ describe('OrdersService', () => {
   let counterModel: any;
   let productModel: any;
   let deliveryService: any;
+  let deliveryFeesService: any;
   let statusesService: any;
   let storesService: any;
   let reservationsService: any;
@@ -148,6 +151,14 @@ describe('OrdersService', () => {
       assertCanCreateDelivery: jest.fn(),
       createDeliveryForOrder: jest.fn().mockResolvedValue({ parcelId: 'PARCEL-1' }),
       createBulkDeliveriesForOrders: jest.fn().mockResolvedValue([]),
+    };
+
+    deliveryFeesService = {
+      getFeeByStoreId: jest.fn().mockResolvedValue({
+        wilayaCode: '16',
+        homeDeliveryFee: 600,
+        stopDeskDeliveryFee: 400,
+      }),
     };
 
     statusesService = {
@@ -188,10 +199,12 @@ describe('OrdersService', () => {
         { provide: getModelToken(Counter.name), useValue: counterModel },
         { provide: getModelToken(Product.name), useValue: productModel },
         { provide: DeliveryService, useValue: deliveryService },
+        { provide: DeliveryFeesService, useValue: deliveryFeesService },
         { provide: OrderStatusesService, useValue: statusesService },
         { provide: StoresService, useValue: storesService },
         { provide: ReservationsService, useValue: reservationsService },
         { provide: VariantsService, useValue: variantsService },
+        { provide: AuditService, useValue: { record: jest.fn().mockResolvedValue(undefined) } },
       ],
     }).compile();
 
@@ -199,6 +212,33 @@ describe('OrdersService', () => {
   });
 
   describe('update() — D-1 atomic status claim', () => {
+    it('ignores ownership and audit fields supplied by the client (H11)', async () => {
+      const existing = makeOrder();
+      const updated = makeOrder();
+      orderModel.findById.mockReturnValue(query(existing));
+      orderModel.findByIdAndUpdate.mockReturnValue(query(updated));
+
+      await service.update(ORDER_ID.toString(), {
+        vendorEmail: 'attacker@store.test',
+        createdAt: '2001-01-01T00:00:00.000Z',
+        confirmedAt: '2001-01-02T00:00:00.000Z',
+        createdBy: 'Someone Else',
+        statusConfirmation: 'forged',
+        customer: { name: 'Real Customer' },
+      } as UpdateOrderDto);
+
+      const write = orderModel.findByIdAndUpdate.mock.calls[0][1];
+      // Server-owned columns never reach the update document…
+      expect(write.vendorEmail).toBeUndefined();
+      expect(write.createdAt).toBeUndefined();
+      expect(write.confirmedAt).toBeUndefined();
+      expect(write.createdBy).toBeUndefined();
+      expect(write.statusConfirmation).toBeUndefined();
+      // …while a legitimate editable field still does.
+      expect(write.customer).toEqual({ name: 'Real Customer' });
+      expect(write.updatedAt).toBeInstanceOf(Date);
+    });
+
     it('claims a transition with a predicate on the status it moves from', async () => {
       const existing = makeOrder();
       const claimed = makeOrder({ status: statusConfig(OrderStatus.CONFIRMED) });
@@ -1263,6 +1303,9 @@ describe('OrdersService', () => {
     let reservations: { checkAdvisoryAvailability: jest.Mock; assertLinesInStock: jest.Mock };
     let variantsService: { snapshotsForVariants: jest.Mock };
     let delivery: { resolveCompanyForWilaya: jest.Mock; resolveDefaultStopDesk: jest.Mock };
+    let productModel: { find: jest.Mock };
+    let deliveryFees: { getFeeByStoreId: jest.Mock };
+    const PRODUCT_ID = new Types.ObjectId();
 
     beforeEach(async () => {
       const callableOrderModel: any = jest.fn().mockImplementation((doc: any) => ({
@@ -1272,7 +1315,7 @@ describe('OrdersService', () => {
       callableOrderModel.findOne = jest.fn().mockReturnValue(query(undefined));
 
       reservations = {
-        checkAdvisoryAvailability: jest.fn(),
+        checkAdvisoryAvailability: jest.fn().mockResolvedValue([]),
         assertLinesInStock: jest.fn().mockResolvedValue(undefined),
       };
       variantsService = {
@@ -1282,7 +1325,7 @@ describe('OrdersService', () => {
               VARIANT_ID.toString(),
               {
                 variantId: VARIANT_ID.toString(),
-                productId: '',
+                productId: PRODUCT_ID.toString(),
                 storeId: null,
                 sku: null,
                 snapshot: null,
@@ -1299,6 +1342,20 @@ describe('OrdersService', () => {
         resolveDefaultStopDesk: jest.fn().mockResolvedValue(null),
       };
 
+      productModel = {
+        find: jest.fn().mockReturnValue(
+          query([{ _id: PRODUCT_ID, price: 100, weight: 1, originalPrice: null }]),
+        ),
+      };
+
+      deliveryFees = {
+        getFeeByStoreId: jest.fn().mockResolvedValue({
+          wilayaCode: '16',
+          homeDeliveryFee: 600,
+          stopDeskDeliveryFee: 4,
+        }),
+      };
+
       const module: TestingModule = await Test.createTestingModule({
         providers: [
           OrdersService,
@@ -1307,11 +1364,12 @@ describe('OrdersService', () => {
             provide: getModelToken(Counter.name),
             useValue: { findOneAndUpdate: jest.fn().mockReturnValue(query({ seq: 42 })) },
           },
-          { provide: getModelToken(Product.name), useValue: { find: jest.fn() } },
+          { provide: getModelToken(Product.name), useValue: productModel },
           {
             provide: DeliveryService,
             useValue: delivery,
           },
+          { provide: DeliveryFeesService, useValue: deliveryFees },
           {
             provide: OrderStatusesService,
             useValue: { getBySlug: jest.fn(async (slug: string) => statusConfig(slug)) },
@@ -1326,6 +1384,7 @@ describe('OrdersService', () => {
           },
           { provide: ReservationsService, useValue: reservations },
           { provide: VariantsService, useValue: variantsService },
+          { provide: AuditService, useValue: { record: jest.fn().mockResolvedValue(undefined) } },
         ],
       }).compile();
 
@@ -1472,6 +1531,50 @@ describe('OrdersService', () => {
       expect(order.source).toBe('ONLINE');
     });
 
+    it('server-stamps a public checkout instead of trusting client dates', async () => {
+      reservations.checkAdvisoryAvailability.mockResolvedValue([]);
+      const payload: any = dto();
+      payload.date = '2001-01-01T00:00:00.000Z';
+      payload.createdAt = '2001-01-01T00:00:00.000Z';
+      payload.confirmedAt = '2001-01-02T00:00:00.000Z';
+      payload.createdBy = 'Vendor';
+
+      const order: any = await service.create(payload);
+
+      expect(new Date(order.date).getFullYear()).toBeGreaterThan(2001);
+      expect(new Date(order.createdAt).getFullYear()).toBeGreaterThan(2001);
+      expect(order.confirmedAt).toBeUndefined();
+      expect(order.createdBy).toBeUndefined();
+      expect(order.history[0].user).toBe('Customer');
+    });
+
+    it('keeps the date a vendor recorded on a manual order', async () => {
+      reservations.checkAdvisoryAvailability.mockResolvedValue([]);
+      const payload: any = dto();
+      payload.date = '2024-05-01T00:00:00.000Z';
+
+      const order: any = await service.create(payload, {
+        id: new Types.ObjectId().toString(),
+        email: 'store@imraaah.com',
+        role: 'VENDOR',
+        fullName: 'Vendor',
+      });
+
+      expect(new Date(order.date).toISOString()).toBe('2024-05-01T00:00:00.000Z');
+    });
+
+    it('resolves a public checkout carrier from the attribution, not the request', async () => {
+      reservations.checkAdvisoryAvailability.mockResolvedValue([]);
+      delivery.resolveCompanyForWilaya.mockResolvedValue('company-attributed');
+      const payload: any = dto();
+      payload.deliveryCompanyId = 'company-chosen-by-the-caller';
+
+      const order: any = await service.create(payload);
+
+      expect(delivery.resolveCompanyForWilaya).toHaveBeenCalledWith('store@imraaah.com', '16');
+      expect(order.deliveryCompanyId).toBe('company-attributed');
+    });
+
     it('charges the variant override, never the client-sent price (storefront path)', async () => {
       reservations.checkAdvisoryAvailability.mockResolvedValue([]);
       variantsService.snapshotsForVariants.mockResolvedValue(
@@ -1480,7 +1583,7 @@ describe('OrdersService', () => {
             VARIANT_ID.toString(),
             {
               variantId: VARIANT_ID.toString(),
-              productId: '',
+              productId: PRODUCT_ID.toString(),
               storeId: null,
               sku: null,
               snapshot: null,
@@ -1497,12 +1600,101 @@ describe('OrdersService', () => {
       expect(order.items[0].price).toBe(1500);
     });
 
-    it('keeps the client price when the variant carries no override', async () => {
+    it('charges the product price, never the client price, when the variant carries no override', async () => {
       reservations.checkAdvisoryAvailability.mockResolvedValue([]);
+      productModel.find.mockReturnValue(
+        query([{ _id: PRODUCT_ID, price: 250, weight: 1, originalPrice: null }]),
+      );
+
+      // `dto()` sends price: 100 and omits a usable productId; the line must still be priced
+      // from the variant's product.
+      const order: any = await service.create(dto());
+
+      expect(order.items[0].price).toBe(250);
+      expect(order.items[0].price).not.toBe(100);
+    });
+
+    it('ignores a zero client price on a storefront line', async () => {
+      reservations.checkAdvisoryAvailability.mockResolvedValue([]);
+      deliveryFees.getFeeByStoreId.mockResolvedValue({
+        wilayaCode: '16',
+        homeDeliveryFee: 600,
+        stopDeskDeliveryFee: 0,
+      });
+      const payload: any = dto();
+      payload.items[0].price = 0;
+      payload.shippingFee = 0;
+
+      const order: any = await service.create(payload);
+
+      expect(order.items[0].price).toBe(100);
+      expect(order.total).toBe(200);
+    });
+
+    it('refuses a storefront line whose product is not available', async () => {
+      reservations.checkAdvisoryAvailability.mockResolvedValue([]);
+      productModel.find.mockReturnValue(query([]));
+
+      await expect(service.create(dto())).rejects.toMatchObject({
+        errorCode: AppErrorCode.ORDER_PRODUCT_NOT_AVAILABLE,
+      });
+    });
+
+    it('computes storefront shipping from the store fee table', async () => {
+      reservations.checkAdvisoryAvailability.mockResolvedValue([]);
+      deliveryFees.getFeeByStoreId.mockResolvedValue({
+        wilayaCode: '16',
+        homeDeliveryFee: 600,
+        stopDeskDeliveryFee: 400,
+      });
+      const payload: any = dto();
+      payload.shippingFee = -500;
+
+      const order: any = await service.create(payload);
+
+      expect(deliveryFees.getFeeByStoreId).toHaveBeenCalledWith(STORE_ID.toString(), '16');
+      expect(order.shippingFee).toBe(400);
+      expect(order.total).toBe(600);
+    });
+
+    it('uses the home fee for a home-delivery storefront order', async () => {
+      reservations.checkAdvisoryAvailability.mockResolvedValue([]);
+      const payload: any = dto();
+      payload.shippingMethod = 'home';
+      payload.shippingFee = 0;
+
+      const order: any = await service.create(payload);
+
+      expect(order.shippingFee).toBe(600);
+      expect(order.total).toBe(800);
+    });
+
+    it('charges zero shipping when the store has no fee for the wilaya', async () => {
+      reservations.checkAdvisoryAvailability.mockResolvedValue([]);
+      deliveryFees.getFeeByStoreId.mockRejectedValue(
+        new AppException(AppErrorCode.FEE_NOT_FOUND_FOR_WILAYA, { wilayaCode: '16' }),
+      );
 
       const order: any = await service.create(dto());
 
+      expect(order.shippingFee).toBe(0);
+      expect(order.total).toBe(200);
+    });
+
+    it('lets a vendor keep the manual line price and shipping fee', async () => {
+      reservations.checkAdvisoryAvailability.mockResolvedValue([]);
+
+      const order: any = await service.create(dto(), {
+        id: new Types.ObjectId().toString(),
+        email: 'store@imraaah.com',
+        role: 'VENDOR',
+        fullName: 'Vendor',
+      });
+
       expect(order.items[0].price).toBe(100);
+      expect(order.shippingFee).toBe(4);
+      expect(order.total).toBe(204);
+      expect(deliveryFees.getFeeByStoreId).not.toHaveBeenCalled();
     });
 
     it('snapshots the variant compare-at as the line originalPrice (D12)', async () => {
@@ -1513,7 +1705,7 @@ describe('OrdersService', () => {
             VARIANT_ID.toString(),
             {
               variantId: VARIANT_ID.toString(),
-              productId: '',
+              productId: PRODUCT_ID.toString(),
               storeId: null,
               sku: null,
               snapshot: null,
@@ -1618,12 +1810,17 @@ describe('OrdersService', () => {
           { provide: getModelToken(Product.name), useValue: productModel },
           { provide: DeliveryService, useValue: deliveryService },
           {
+            provide: DeliveryFeesService,
+            useValue: { getFeeByStoreId: jest.fn() },
+          },
+          {
             provide: OrderStatusesService,
             useValue: { getBySlug: jest.fn(async (slug: string) => statusConfig(slug)) },
           },
           { provide: StoresService, useValue: storesService },
           { provide: ReservationsService, useValue: reservations },
           { provide: VariantsService, useValue: variantsService },
+          { provide: AuditService, useValue: { record: jest.fn().mockResolvedValue(undefined) } },
         ],
       }).compile();
 

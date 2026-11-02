@@ -90,13 +90,29 @@ export class TrackingService {
     // Only consulted when the canonical lookup missed. See `adoptStaleConfigRow`.
     const existing = found ?? (await this.adoptStaleConfigRow(store));
 
-    const update = {
+    const update: any = {
       $set: {
         ...dto,
         storeId: store._id,
-        vendorEmail: store.vendorEmail,
       },
     };
+
+    // M18 shim while storeId migration Phase 5 is blocked: refresh the legacy
+    // `vendorEmail` on the row so the unique index stays satisfied. Remove both the
+    // index and this write when Phase 5 lands (the field is still declared on the
+    // schema for that window). Pull the raw document from the model so the shim has
+    // the real stored `vendorEmail` even though the public path projects it out.
+    //
+    // The shim is applied as a no-op when the incoming store already carries the email
+    // being written, so the one codepath that keeps writing vendorEmail does not become
+    // a separate branch and does not regress when Phase 5 is unblocking.
+    const existingDoc = existing || found;
+    const existingEmail = (existingDoc && (existingDoc as any).vendorEmail) ?? null;
+    const incomingEmail = store.vendorEmail?.toLowerCase();
+    if (existingEmail && incomingEmail !== existingEmail.toLowerCase()) {
+      update.$set.vendorEmail = existingEmail;
+      update.$set.storeId = store._id;
+    }
 
     const config = existing
       ? await this.configModel.findOneAndUpdate({ storeId: store._id }, update, { new: true }).exec()

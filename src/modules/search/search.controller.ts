@@ -1,4 +1,5 @@
 import { Controller, Get, Query } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { ProductsService } from '../products/products.service';
 import { ProductQueryDto } from '../products/dto/product-query.dto';
@@ -60,6 +61,7 @@ export class SearchController {
   ) {}
 
   @Public()
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @Get()
   @ApiOperation({ summary: 'Unified search across products and stores' })
   @ApiQuery({ name: 'q', required: true })
@@ -107,7 +109,9 @@ export class SearchController {
         status: StoreStatus.ACTIVE,
       };
 
-      const items = await this.storesService.findAllRaw(filter);
+      // Projected to public store fields: the raw documents carry `vendorEmail`, `vendorId`
+      // and contact details that must not ship with a public search result.
+      const items = await this.storesService.findAllRawPublic(filter);
       results.stores = items;
     }
 

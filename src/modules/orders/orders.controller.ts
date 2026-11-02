@@ -14,6 +14,8 @@ import { Throttle } from '@nestjs/throttler';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { Public } from '../auth/decorators/public.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { AppException } from '../../common/errors/app-exception';
+import { AppErrorCode } from '../../common/errors/error-codes.enum';
 import { Role } from '../../common/constants/roles.enum';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -58,18 +60,37 @@ export class OrdersController {
   }
 
   @Public()
+  // H10: order numbers are sequential and phone numbers come from a small national format, so
+  // this endpoint is brute-forceable. Throttle it hard per client.
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Get('track/:orderNo')
   @ApiOperation({ summary: 'Track an order by order number (public, requires phone verification)' })
   @ApiQuery({ name: 'phone', required: true, description: 'Customer phone number for verification' })
   @ApiResponse({ status: 200, description: 'Order found with carrier-neutral delivery block' })
   @ApiResponse({ status: 404, description: 'Order not found or phone mismatch' })
-  trackByOrderNo(@Param('orderNo') orderNo: string, @Query('phone') phone: string) {
-    const order = this.ordersService.findByOrderNo(orderNo, phone);
+  async trackByOrderNo(@Param('orderNo') orderNo: string, @Query('phone') phone: string) {
+    const order = await this.ordersService.findByOrderNo(orderNo, phone);
     if (!order) {
       throw new NotFoundException('Order not found or phone mismatch');
     }
     const delivery = this.buildDeliveryBlock(order);
-    return { order, delivery };
+    return { order: OrdersController.toPublicTrackingOrder(order), delivery };
+  }
+
+  /**
+   * The tracking response is a buyer-facing projection: it keeps what the order page renders
+   * and drops the seller's internal identifiers and delivery diagnostics (H10).
+   */
+  private static toPublicTrackingOrder(order: any): Record<string, unknown> {
+    const plain =
+      typeof order?.toObject === 'function' ? order.toObject() : { ...(order as object) };
+    delete plain.vendorEmail;
+    delete plain.vendorId;
+    delete plain.deliveryError;
+    delete plain.deliveryParcelId;
+    delete plain.isDeleted;
+    delete plain.deletedAt;
+    return plain;
   }
 
   private buildDeliveryBlock(order: any) {
@@ -114,12 +135,17 @@ export class OrdersController {
     };
   }
 
+  @Roles(Role.CUSTOMER, Role.VENDOR, Role.ADMIN)
   @Get('mine/:id')
   @ApiOperation({ summary: 'Get a single order for the authenticated customer' })
   @ApiResponse({ status: 200, description: 'Order found' })
   @ApiResponse({ status: 404, description: 'Order not found' })
   findOneMine(@Param('id') id: string, @Req() req: any) {
+    // Ownership is the customer phone. A principal with no phone (an OTP token used to have
+    // this shape, and a vendor account may have none) must never match an order, so refuse
+    // before the lookup instead of comparing against `undefined` (H3).
     const phone = (req.user as any)?.phoneNumber;
+    if (!phone) throw new AppException(AppErrorCode.AUTH_UNAUTHORIZED);
     return this.ordersService.findOneByCustomer(id, phone);
   }
 
@@ -152,6 +178,7 @@ export class OrdersController {
     return this.ordersService.findAll(query, req.user);
   }
 
+  @Roles(Role.CUSTOMER, Role.VENDOR, Role.ADMIN)
   @Get('mine')
   @ApiOperation({ summary: 'Get my orders (customer)' })
   @ApiQuery({ name: 'page', required: false })
@@ -164,7 +191,9 @@ export class OrdersController {
     @Query('limit') limit = 10,
     @Query('status') status?: string,
   ) {
-    const phone = (req.user as any).phoneNumber;
+    const phone = (req.user as any)?.phoneNumber;
+    // A principal without a phone would match orders whose customer phone is empty.
+    if (!phone) throw new AppException(AppErrorCode.AUTH_UNAUTHORIZED);
     return this.ordersService.findByCustomerPhone(phone, {
       page: Number(page),
       limit: Number(limit),

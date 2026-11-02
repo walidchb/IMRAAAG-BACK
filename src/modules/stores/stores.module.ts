@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Store, StoreSchema } from './schemas/store.schema';
 import { Product, ProductSchema } from '../products/schemas/product.schema';
@@ -12,7 +12,7 @@ import { UploadModule } from '../upload/upload.module';
       { name: Store.name, schema: StoreSchema },
       { name: Product.name, schema: ProductSchema },
     ]),
-    UploadModule,
+    forwardRef(() => UploadModule),
   ],
   controllers: [StoresController],
   providers: [StoresService],

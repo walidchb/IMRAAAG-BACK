@@ -10,6 +10,7 @@ import { CacheService } from '../../common/cache.service';
 import { StoresService } from '../stores/stores.service';
 import { UploadService } from '../upload/upload.service';
 import { VariantsService } from '../inventory/services/variants.service';
+import { AuditService } from '../audit/audit.service';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
 import { AppException } from '../../common/errors/app-exception';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -133,6 +134,7 @@ describe('ProductsService', () => {
         { provide: StoresService, useValue: storesService },
         { provide: UploadService, useValue: uploadService },
         { provide: VariantsService, useValue: variantsService },
+        { provide: AuditService, useValue: { record: jest.fn().mockResolvedValue(undefined) } },
       ],
     }).compile();
 

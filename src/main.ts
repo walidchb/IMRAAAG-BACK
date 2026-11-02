@@ -10,10 +10,29 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
 
 async function bootstrap() {
+  const isProduction = process.env.NODE_ENV === 'production';
+
   // Validate critical env vars before any module initialization
   const jwtSecret = process.env.JWT_SECRET;
   if (!jwtSecret || jwtSecret === 'change-me-in-production-use-a-strong-secret') {
     console.error('FATAL: JWT_SECRET environment variable is not set. Set a strong random value before starting the server.');
+    process.exit(1);
+  }
+
+  // H8: without this key `encryptRecord`/`decryptRecord` pass values through unchanged, so
+  // carrier API keys and tokens are stored (and were served) in plaintext. In production the
+  // process must refuse to start rather than silently degrade.
+  const deliveryEncryptionKey = process.env.DELIVERY_ENCRYPTION_KEY;
+  if (isProduction && !deliveryEncryptionKey) {
+    console.error(
+      'FATAL: DELIVERY_ENCRYPTION_KEY is required in production. It encrypts carrier API credentials at rest; set a 64-character hex key (32 bytes) generated with `openssl rand -hex 32`.',
+    );
+    process.exit(1);
+  }
+  if (deliveryEncryptionKey && !/^[0-9a-fA-F]{64}$/.test(deliveryEncryptionKey)) {
+    console.error(
+      'FATAL: DELIVERY_ENCRYPTION_KEY must be 64 hex characters (32 bytes). Generate one with `openssl rand -hex 32`.',
+    );
     process.exit(1);
   }
 
@@ -24,6 +43,20 @@ async function bootstrap() {
 
   // Set prefix for API routes
   app.setGlobalPrefix('api');
+
+  // H6: behind a load balancer every request otherwise appears to come from the proxy, which
+  // collapses all per-IP throttles into one shared bucket. Opt in explicitly with TRUST_PROXY
+  // (`1` for a single proxy hop, a subnet/CIDR, or `true`) - never guessed, because trusting a
+  // forwarded header without a proxy lets a client spoof its own IP.
+  const trustProxy = process.env.TRUST_PROXY;
+  if (trustProxy) {
+    const value = /^\d+$/.test(trustProxy)
+      ? Number(trustProxy)
+      : trustProxy === 'true'
+        ? true
+        : trustProxy;
+    app.getHttpAdapter().getInstance().set('trust proxy', value);
+  }
 
   // Security headers
   app.use(helmet());
@@ -61,18 +94,24 @@ async function bootstrap() {
     new TimeoutInterceptor(),
   );
 
-  // Swagger configuration
-  const config = new DocumentBuilder()
-    .setTitle('Imraaah API')
-    .setDescription('The Imraaah Multi-Vendor E-Commerce Platform API description')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+  // H9: the full API surface, DTOs and example values are not published in production unless
+  // explicitly opted in (e.g. a private staging deployment fronted by admin auth).
+  const swaggerEnabled = !isProduction || process.env.ENABLE_SWAGGER === 'true';
+  if (swaggerEnabled) {
+    const config = new DocumentBuilder()
+      .setTitle('Imraaah API')
+      .setDescription('The Imraaah Multi-Vendor E-Commerce Platform API description')
+      .setVersion('1.0')
+      .addBearerAuth()
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api/docs', app, document);
+  }
 
   await app.listen(port);
   console.log(`Application is running on: http://localhost:${port}/api`);
-  console.log(`Swagger documentation is available at: http://localhost:${port}/api/docs`);
+  if (swaggerEnabled) {
+    console.log(`Swagger documentation is available at: http://localhost:${port}/api/docs`);
+  }
 }
 bootstrap();

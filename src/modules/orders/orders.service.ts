@@ -12,6 +12,10 @@ import { UpdateOrderDto } from './dto/update-order.dto';
 import { BulkActionDto } from './dto/bulk-action.dto';
 import { BulkShipDto } from './dto/bulk-ship.dto';
 import { DeliveryService } from '../delivery/delivery.service';
+import { DeliveryFeesService } from '../delivery-fees/delivery-fees.service';
+import { AuditService } from '../audit/audit.service';
+import { AuditAction } from '../../common/constants/audit-action.enum';
+import { ResourceType } from '../../common/constants/resource-type.enum';
 import { OrderStatusesService } from './order-statuses.service';
 import { BulkOrderResult } from '../delivery/delivery-companies/interfaces/delivery-company-handler.interface';
 import { normalizeDhdCommuneSelection } from '../delivery/delivery-companies/dhd-commune';
@@ -121,6 +125,23 @@ function carrierAdvanceConflict(slug: string): string | null {
  * the vendor UI must never offer a plain "Return" action from dispatch, but the carrier can
  * report that the parcel came back after it was dispatched.
  */
+/**
+ * The only columns a PATCH may write (H11). Everything else on an order is server-owned:
+ * `status` (transition machine), `vendorEmail`/`storeId`/`vendorId` (ownership), `source`
+ * (channel), the delivery parcel link and every audit timestamp.
+ */
+const ORDERS_UPDATEABLE_FIELDS = [
+  'customer',
+  'items',
+  'shippingMethod',
+  'shippingFee',
+  'bureau',
+  'stopDeskCode',
+  'deliveryCompanyId',
+  'paymentMethod',
+  'total',
+] as const;
+
 const CARRIER_RETURN_EDGES: ReadonlySet<string> = new Set([
   `${OrderStatus.DISPATCHED}→${OrderStatus.RETURNED}`,
   `${OrderStatus.IN_TRANSIT}→${OrderStatus.RETURNED}`,
@@ -180,10 +201,12 @@ export class OrdersService {
     @InjectModel(Counter.name) private counterModel: Model<CounterDocument>,
     @InjectModel(Product.name) private productModel: Model<ProductDocument>,
     private readonly deliveryService: DeliveryService,
+    private readonly deliveryFeesService: DeliveryFeesService,
     private readonly statusesService: OrderStatusesService,
     private readonly storesService: StoresService,
     private readonly reservationsService: ReservationsService,
     private readonly variantsService: VariantsService,
+    private readonly auditService: AuditService,
   ) {}
 
   private assertVendorOrAdmin(user: RequestUser): void {
@@ -275,6 +298,38 @@ export class OrdersService {
     }
   }
 
+  /**
+   * The shipping fee a storefront checkout must be charged, resolved from the store's own
+   * delivery-fee table. The public `POST /orders` route is anonymous, so its `shippingFee`
+   * cannot be trusted: a caller could send 0 or a negative amount. A missing fee entry keeps
+   * the historical storefront behaviour of charging 0 (the client used to send 0 when the
+   * fee lookup failed), but any other read failure is surfaced rather than silently shipping
+   * for free.
+   */
+  private async resolveStoreShippingFee(
+    storeId: Types.ObjectId | null,
+    vendorEmail: string | undefined,
+    wilayaCode: string | undefined,
+    shippingMethod: string,
+  ): Promise<number> {
+    if ((!storeId && !vendorEmail) || !wilayaCode || shippingMethod === 'pickup') return 0;
+
+    try {
+      const fee = storeId
+        ? await this.deliveryFeesService.getFeeByStoreId(String(storeId), wilayaCode)
+        : await this.deliveryFeesService.getFee(vendorEmail!, wilayaCode);
+      return shippingMethod === 'stopdesk' ? fee.stopDeskDeliveryFee : fee.homeDeliveryFee;
+    } catch (err) {
+      if (err instanceof AppException && err.errorCode === AppErrorCode.FEE_NOT_FOUND_FOR_WILAYA) {
+        this.logger.warn(
+          `No delivery fee configured for store ${storeId ? String(storeId) : vendorEmail}, wilaya ${wilayaCode}; charging 0.`,
+        );
+        return 0;
+      }
+      throw err;
+    }
+  }
+
   async create(createOrderDto: CreateOrderDto, user?: RequestUser): Promise<Order> {
     // Resolve the store up front. `storeId` is preferred; the legacy `vendorEmail` is
     // still accepted so the un-migrated storefront keeps working through Phase 3.
@@ -291,6 +346,19 @@ export class OrdersService {
     }
 
     const now = new Date();
+
+    if (!user) {
+      // The storefront checkout is anonymous, so none of its audit metadata can be trusted: a
+      // caller could backdate an order (skewing numbering, analytics and reporting) or claim it
+      // was already confirmed/dispatched. Every timestamp is stamped here instead.
+      delete createOrderDto.date;
+      delete createOrderDto.createdAt;
+      delete createOrderDto.confirmedAt;
+      delete createOrderDto.confirmedBy;
+      delete createOrderDto.dispatchedAt;
+      delete createOrderDto.createdBy;
+      delete createOrderDto.statusConfirmation;
+    }
 
     if (createOrderDto.shippingMethod === 'home') {
       if (!createOrderDto.customer?.wilaya || !createOrderDto.customer?.commune) {
@@ -328,6 +396,35 @@ export class OrdersService {
         .filter((id): id is string => !!id),
     );
 
+    // A storefront line names its variant, not necessarily its product. Price must still come
+    // from that variant's product when the variant has no override of its own, so load the
+    // products reached through the snapshots as well. Only published products are sellable to
+    // the public; a vendor's manual order keeps its historical behaviour (client-editable
+    // price, product required only when the caller named one).
+    if (!user) {
+      const unresolvedProductIds = [
+        ...new Set(
+          [...snapshots.values()]
+            .map((snapshot) => snapshot.productId)
+            .filter((id) => !!id && !productMap.has(id)),
+        ),
+      ];
+      if (unresolvedProductIds.length > 0) {
+        const products = await this.productModel
+          .find({ _id: { $in: unresolvedProductIds }, published: true })
+          .select('price weight originalPrice')
+          .lean()
+          .exec();
+        for (const p of products) {
+          productMap.set(String(p._id), {
+            price: (p as any).price,
+            weight: (p as any).weight,
+            originalPrice: (p as any).originalPrice ?? null,
+          });
+        }
+      }
+    }
+
     // Every line must name a variant. Products own no stock, so a bare-product line could
     // never be reserved or fulfilled against anything - accepting one would create an order
     // the seller can never dispatch. This is the service-level backstop; the DTO also
@@ -346,19 +443,18 @@ export class OrdersService {
     // time, snapshotted on every line so analytics can later split gross from net without
     // touching currency conversions. Written even when there is none (`null` = no discount
     // recorded); never backfilled into legacy orders.
-    let productOriginalPrice: number | null = null;
     const items = (createOrderDto.items || []).map(item => {
       let price = item.price;
       let weight = item.weight;
       let originalPrice: number | null = null;
+      let product: { price: number; weight: number; originalPrice: number | null } | undefined;
 
       if (item.productId) {
-        const product = productMap.get(item.productId);
+        product = productMap.get(item.productId);
         if (!product) {
           throw new AppException(AppErrorCode.ORDER_PRODUCT_NOT_AVAILABLE, { name: item.productName });
         }
         price = product.price;
-        productOriginalPrice = product.originalPrice;
         if (!weight || weight <= 0) {
           weight = product.weight;
         }
@@ -401,11 +497,30 @@ export class OrdersService {
         variantSnapshot = snapshot.snapshot;
         image = snapshot.image ?? undefined;
         // Spec §7.4 "unit price": the price actually charged is the variant's override when
-        // it has one, falling back to the product price. Resolved server-side because the
-        // client-sent price must never win (spec §7.2 rule 7, "do not trust stock/price
-        // values sent by the client").
-        price = snapshot.priceOverride ?? price;
-        originalPrice = snapshot.compareAtPrice ?? productOriginalPrice ?? null;
+        // it has one, falling back to the product price. A storefront line is priced only from
+        // server-side data; the client-sent price must never win (spec §7.2 rule 7, "do not
+        // trust stock/price values sent by the client"). A vendor's manual order keeps its
+        // editable line price: the seller may be recording a negotiated/adjusted sale.
+        if (user) {
+          price = snapshot.priceOverride ?? price;
+          originalPrice = snapshot.compareAtPrice ?? product?.originalPrice ?? null;
+        } else {
+          const variantProduct = productMap.get(snapshot.productId);
+          if (snapshot.priceOverride === null || snapshot.priceOverride === undefined) {
+            if (!variantProduct) {
+              throw new AppException(AppErrorCode.ORDER_PRODUCT_NOT_AVAILABLE, {
+                name: item.productName,
+              });
+            }
+            price = variantProduct.price;
+            if (!weight || weight <= 0) {
+              weight = variantProduct.weight;
+            }
+          } else {
+            price = snapshot.priceOverride;
+          }
+          originalPrice = snapshot.compareAtPrice ?? variantProduct?.originalPrice ?? null;
+        }
       }
 
       itemsTotal += price * item.quantity;
@@ -435,9 +550,22 @@ export class OrdersService {
       await this.reservationsService.assertLinesInStock(items);
     }
 
-    const total = itemsTotal + (createOrderDto.shippingFee || 0);
+    // Storefront shipping is resolved from the store's fee table; a vendor's manual order keeps
+    // the fee the seller entered. Either way the stored total is derived here, never trusted
+    // from the request.
+    const shippingFee = user
+      ? createOrderDto.shippingFee || 0
+      : await this.resolveStoreShippingFee(
+          storeRef.storeId,
+          storeRef.vendorEmail,
+          createOrderDto.customer?.wilaya,
+          createOrderDto.shippingMethod,
+        );
+    const total = itemsTotal + shippingFee;
 
-    let deliveryCompanyId: string | undefined = createOrderDto.deliveryCompanyId;
+    // A public checkout may not pin the carrier: the store's wilaya attribution (or its enabled
+    // default) decides. A vendor entering an order by hand may still choose.
+    let deliveryCompanyId: string | undefined = user ? createOrderDto.deliveryCompanyId : undefined;
     if (!deliveryCompanyId && createOrderDto.vendorEmail && createOrderDto.customer?.wilaya) {
       deliveryCompanyId = (await this.deliveryService.resolveCompanyForWilaya(
         createOrderDto.vendorEmail,
@@ -478,7 +606,10 @@ export class OrdersService {
         source: user ? OrderSource.MANUAL : OrderSource.ONLINE,
         items,
         total,
+        shippingFee,
         orderNo: nextNumber,
+        // Public checkouts have had their client-supplied dates stripped above, so these fall
+        // back to `now`; a vendor's manual entry keeps the date the seller recorded.
         date: createOrderDto.date || now,
         createdAt: createOrderDto.createdAt || now,
         deliveryCompanyId: deliveryCompanyId || undefined,
@@ -1570,9 +1701,18 @@ export class OrdersService {
       history: _history,
       dhdCommune: incomingDhdCommune,
       noestCommune: incomingNoestCommune,
-      ...restDto
     } = updateOrderDto;
-    const updateData: Record<string, any> = { ...restDto, updatedAt: new Date() };
+
+    // H11: update is an explicit whitelist, never a spread of the DTO. Spreading let a caller
+    // rewrite audit/ownership columns (`vendorEmail`, `createdAt`, `confirmedAt`, `createdBy`,
+    // `statusConfirmation`, `vendorId`) that only the server may set - a vendor could reassign
+    // an order to another store's email while `storeId` stayed behind, or backdate/forward-date
+    // it. Status, timestamps, history and the store keys below are all server-derived.
+    const updateData: Record<string, any> = { updatedAt: new Date() };
+    for (const field of ORDERS_UPDATEABLE_FIELDS) {
+      const value = (updateOrderDto as Record<string, unknown>)[field];
+      if (value !== undefined) updateData[field] = value;
+    }
 
     // DHD commune mapping (DHD-COMMUNE-MAPPING-IMPLEMENTATION-PLAN.md §2.4): the selection is an
     // additive dispatch property, never a replacement for the canonical customer wilaya/commune.
@@ -1870,6 +2010,33 @@ export class OrdersService {
 
     if (!updated) throw new AppException(AppErrorCode.ORDER_NOT_FOUND, { id });
 
+    // H12: the trail records who moved an order and what changed, never the payload itself.
+    if (updateOrderDto.status && updateOrderDto.status !== existingSlug) {
+      await this.auditService.record({
+        action: AuditAction.ORDER_STATUS_CHANGE,
+        actorId: user?.id ?? null,
+        actorEmail: user?.email ?? null,
+        storeId: (existing as any).storeId ? String((existing as any).storeId) : null,
+        resourceType: ResourceType.ORDER,
+        resourceId: String(updated._id),
+        details: {
+          orderNo: updated.orderNo,
+          from: existingSlug,
+          to: updateOrderDto.status,
+        },
+      });
+    } else if (updateOrderDto.items) {
+      await this.auditService.record({
+        action: AuditAction.ORDER_UPDATE,
+        actorId: user?.id ?? null,
+        actorEmail: user?.email ?? null,
+        storeId: (existing as any).storeId ? String((existing as any).storeId) : null,
+        resourceType: ResourceType.ORDER,
+        resourceId: String(updated._id),
+        details: { orderNo: updated.orderNo, operation: 'items_edit', lineCount: updateOrderDto.items.length },
+      });
+    }
+
     return updated;
   }
 
@@ -1920,6 +2087,16 @@ export class OrdersService {
     if (!claimed) {
       throw new AppException(AppErrorCode.ORDER_ALREADY_DELETED, { id });
     }
+
+    await this.auditService.record({
+      action: AuditAction.ORDER_UPDATE,
+      actorId: user?.id ?? null,
+      actorEmail: user?.email ?? null,
+      storeId: (existing as any).storeId ? String((existing as any).storeId) : null,
+      resourceType: ResourceType.ORDER,
+      resourceId: id,
+      details: { orderNo: existing.orderNo, operation: 'delete' },
+    });
 
     return { id, deleted: true };
   }

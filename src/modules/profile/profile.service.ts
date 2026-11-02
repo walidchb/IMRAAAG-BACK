@@ -85,6 +85,8 @@ export class ProfileService {
       password: hashedPassword,
       refreshToken: null,
       refreshTokenExpiresAt: null,
+      // A password change ends every other session, not just this one (H3).
+      $inc: { tokenVersion: 1 },
     }).exec();
 
     return { message: 'Password updated successfully' };

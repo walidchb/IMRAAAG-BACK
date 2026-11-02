@@ -39,6 +39,16 @@ export class User {
   @Prop()
   refreshTokenExpiresAt: Date;
 
+  /**
+   * Session generation. Every issued access token carries the value current at login, and
+   * `JwtStrategy.validate()` refuses a token whose generation no longer matches. A password
+   * reset / change or an account deactivation increments it, which revokes every already-issued
+   * 7-day access token (H3). Tokens signed before this field existed carry no value and are
+   * treated as generation 0, so the rollout does not sign everyone out.
+   */
+  @Prop({ type: Number, default: 0 })
+  tokenVersion: number;
+
   @Prop({
     type: {
       fullName: String,
@@ -77,4 +87,8 @@ UserSchema.index(
   { unique: true, partialFilterExpression: { phoneNumber: { $exists: true, $nin: ['', null] } } }
 );
 UserSchema.index({ refreshToken: 1 });
-UserSchema.index({ refreshTokenExpiresAt: 1 }, { expireAfterSeconds: 0 });
+// NEVER add a TTL index on `refreshTokenExpiresAt`. A TTL index deletes the whole document, so
+// it silently erased every account that did not log in for ~30 days after its token expired —
+// while that user's orders (and possibly their store) stayed behind. Expiry is enforced in
+// `AuthService.refreshAccessToken`, which clears the stale token fields instead. See
+// `scripts/drop-user-refresh-ttl-index.js` for the live-index removal.

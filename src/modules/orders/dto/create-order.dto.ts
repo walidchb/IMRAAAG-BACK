@@ -162,6 +162,7 @@ export class CreateOrderDto {
   @ApiPropertyOptional({ description: 'Shipping fee' })
   @IsOptional()
   @IsNumber()
+  @Min(0)
   shippingFee?: number;
 
   @ApiProperty({ description: 'Customer details' })

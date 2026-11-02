@@ -224,8 +224,9 @@ export class DeliveryFeesController {
   @Throttle({ default: { limit: 60, ttl: 60000 } })
   @Get('jobs/:jobId')
   @ApiOperation({ summary: 'Get async fee-fetch job status and result' })
-  getJobStatus(@Param('jobId') jobId: string) {
-    const job = this.feesService.getFetchJobStatus(jobId);
+  getJobStatus(@Req() req: any, @Param('jobId') jobId: string) {
+    // Scoped to the caller: another vendor's job id answers `not_found` (H13).
+    const job = this.feesService.getFetchJobStatus(jobId, req.user.email);
     if (!job) {
       return { status: 'not_found' };
     }

@@ -205,6 +205,7 @@ describe('TrackingService', () => {
       await service.updateConfig(storeA, { metaPixelId: '555555' });
 
       const [, update] = configModel.findOneAndUpdate.mock.calls[0];
+      expect(update.$set.storeId).toBe(STORE_A);
       expect(update.$set.vendorEmail).toBe(EMAIL_A);
     });
 

@@ -16,6 +16,10 @@ export class DeliveryAttribution {
   @Prop({ type: Types.ObjectId, ref: 'Store' })
   storeId?: Types.ObjectId;
 
+  /** @deprecated Use `storeId` instead */
+  @Prop({ type: Types.ObjectId, ref: 'Store' })
+  storeId_vendorEmail?: Types.ObjectId;
+
   @Prop({ type: Map, of: String })
   attributions: Record<string, string>;
 }
@@ -24,4 +28,7 @@ export const DeliveryAttributionSchema = SchemaFactory.createForClass(DeliveryAt
 
 DeliveryAttributionSchema.index({ vendorEmail: 1 }, { unique: true });
 DeliveryAttributionSchema.index({ vendorId: 1 });
-DeliveryAttributionSchema.index({ storeId: 1 }, { unique: true, sparse: true });
+DeliveryAttributionSchema.index({ vendorId: 1, storeId: 1 }, { unique: true, sparse: true });
+
+/** @deprecated Use `storeId` on the attribution instead */
+DeliveryAttributionSchema.index({ vendorEmail: 1, storeId: 1 }, { unique: true, sparse: true });

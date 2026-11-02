@@ -248,8 +248,11 @@ export class DeliveryParcelStatusService {
   async listSummariesForStore(
     storeId: Types.ObjectId | string,
   ): Promise<DeliveryParcelStatusSummary[]> {
+    // `lean` typed with the summary shape: the projection guarantees exactly these fields,
+    // and the untyped lean result no longer matches the declared return type.
     return this.model
       .find({ storeId }, this.summaryProjection())
+      .lean<DeliveryParcelStatusSummary[]>()
       .exec();
   }
 
@@ -260,6 +263,7 @@ export class DeliveryParcelStatusService {
     if (!storeIds || storeIds.length === 0) return [];
     return this.model
       .find({ storeId: { $in: storeIds } }, this.summaryProjection())
+      .lean<DeliveryParcelStatusSummary[]>()
       .exec();
   }
 

@@ -1,6 +1,8 @@
 export const IMAGE_CONFIG = {
   quality: 80,
   maxFileSize: 10 * 1024 * 1024,
+  /** Per-store uploads allowed in a rolling day (H7). Bounds storage abuse by one tenant. */
+  dailyUploadLimitPerStore: 500,
   allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/avif'] as const,
 
   maxWidths: {

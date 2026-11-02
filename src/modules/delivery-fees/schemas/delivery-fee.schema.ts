@@ -31,3 +31,7 @@ export const DeliveryFeeSchema = SchemaFactory.createForClass(DeliveryFee);
 DeliveryFeeSchema.index({ vendorEmail: 1 }, { unique: true });
 DeliveryFeeSchema.index({ vendorId: 1 });
 DeliveryFeeSchema.index({ storeId: 1 }, { unique: true, sparse: true });
+DeliveryFeeSchema.index({ vendorId: 1, storeId: 1 }, { unique: true, sparse: true });
+
+/** @deprecated Use `storeId` on the fee instead */
+DeliveryFeeSchema.index({ vendorEmail: 1, storeId: 1 }, { unique: true, sparse: true });

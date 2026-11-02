@@ -58,32 +58,58 @@ export class UploadService {
     });
   }
 
-  async uploadProductImage(file: Express.Multer.File): Promise<UploadResult> {
+  /**
+   * Per-store upload budget (H7). In-process and per-instance: it bounds one tenant's abuse
+   * on a single API node, not a coordinated attack across replicas. A durable counter (Redis
+   * or a usage collection) is the production follow-up.
+   */
+  private readonly dailyUploads = new Map<string, { day: string; count: number }>();
+
+  private assertWithinQuota(scope: string): void {
+    const day = new Date().toISOString().slice(0, 10);
+    const entry = this.dailyUploads.get(scope);
+    const count = entry?.day === day ? entry.count : 0;
+    if (count >= IMAGE_CONFIG.dailyUploadLimitPerStore) {
+      throw new AppException(AppErrorCode.UPLOAD_QUOTA_EXCEEDED, {
+        limit: IMAGE_CONFIG.dailyUploadLimitPerStore,
+      });
+    }
+    this.dailyUploads.set(scope, { day, count: count + 1 });
+
+    // Drop yesterday's entries so the map cannot grow without bound.
+    if (this.dailyUploads.size > 1000) {
+      for (const [key, value] of this.dailyUploads) {
+        if (value.day !== day) this.dailyUploads.delete(key);
+      }
+    }
+  }
+
+  async uploadProductImage(file: Express.Multer.File, scope: string): Promise<UploadResult> {
     this.validateFile(file);
     const folder = IMAGE_CONFIG.folders.product;
     const variants = IMAGE_CONFIG.variants.product;
     const maxWidth = IMAGE_CONFIG.maxWidths.product;
-    return this.processUpload(file, folder, variants, maxWidth);
+    return this.processUpload(file, folder, variants, maxWidth, scope);
   }
 
-  async uploadProductImages(files: Express.Multer.File[]): Promise<MultiUploadResult> {
-    return Promise.all(files.map((f) => this.uploadProductImage(f)));
+  async uploadProductImages(files: Express.Multer.File[], scope: string): Promise<MultiUploadResult> {
+    return Promise.all(files.map((f) => this.uploadProductImage(f, scope)));
   }
 
-  async uploadStoreLogo(file: Express.Multer.File): Promise<UploadResult> {
+  async uploadStoreLogo(file: Express.Multer.File, scope: string): Promise<UploadResult> {
     this.validateFile(file);
     const folder = IMAGE_CONFIG.folders.storeLogo;
     const variants = IMAGE_CONFIG.variants.storeLogo;
     const maxWidth = IMAGE_CONFIG.maxWidths.storeLogo;
-    return this.processUpload(file, folder, variants, maxWidth);
+    return this.processUpload(file, folder, variants, maxWidth, scope);
   }
 
-  async uploadStoreCover(file: Express.Multer.File): Promise<UploadResult> {
+  async uploadStoreCover(file: Express.Multer.File, scope: string): Promise<UploadResult> {
     this.validateFile(file);
     const folder = IMAGE_CONFIG.folders.storeCover;
     const variants = IMAGE_CONFIG.variants.storeCover;
     const maxWidth = IMAGE_CONFIG.maxWidths.storeCover;
-    return this.processUpload(file, folder, variants, maxWidth);
+    return this.processUpload(file, folder, variants, maxWidth, scope);
   }
 
   private async processUpload(
@@ -91,9 +117,14 @@ export class UploadService {
     folder: string,
     variants: readonly VariantDef[],
     maxWidth: number,
+    scope: string,
   ): Promise<UploadResult> {
+    this.assertWithinQuota(scope);
     const id = randomUUID();
-    const baseKey = `${folder}/${id}`;
+    // Keys are namespaced by owner (`store/<storeId>/...`), so a delete can prove which
+    // tenant owns an object before touching it (H7). Objects uploaded before this change keep
+    // working through their stored URLs; only new uploads use the namespaced shape.
+    const baseKey = `store/${scope}/${folder}/${id}`;
     const baseUrl = this.publicUrl.replace(/\/+$/, '');
 
     let pipeline = sharp(file.buffer).rotate();

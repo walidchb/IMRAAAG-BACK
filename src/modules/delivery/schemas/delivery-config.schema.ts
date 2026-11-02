@@ -16,13 +16,27 @@ export class DeliveryConfig {
   @Prop({ type: Types.ObjectId, ref: 'Store' })
   storeId?: Types.ObjectId;
 
+  /** @deprecated Use `storeId` instead */
+  @Prop({ type: Types.ObjectId, ref: 'Store' })
+  storeId_vendorEmail?: Types.ObjectId;
+
   @Prop({ type: Object, default: {} })
   companies: Record<string, {
+    /** Canonical owner reference for the vendor. */
+    storeId?: Types.ObjectId;
     credentials: Record<string, string>;
     isDefault: boolean;
     status: 'enabled' | 'disabled';
     /** Per-provider pause for the carrier status poller. Absent means "follow the store". */
     statusSyncEnabled?: boolean;
+  }>;
+
+  /** @deprecated Use `storeId` on the company instead */
+  @Prop({ type: Object, default: {} })
+  companies_vendorEmail?: Record<string, {
+    /** Canonical owner reference for the vendor. */
+    storeId?: Types.ObjectId;
+    vendorEmail: string;
   }>;
 
   /**
@@ -46,6 +60,10 @@ export class DeliveryConfig {
   @Prop({ type: Object, default: {} })
   statusStateOverrides: Record<string, Record<string, string>>;
 
+  /** @deprecated Use `storeId` instead */
+  @Prop({ type: Object, default: {} })
+  statusStateOverrides_vendorEmail?: Record<string, Record<string, string>>;
+
   /**
    * Per-store order-signal overrides, namespaced by provider slug.
    *
@@ -56,9 +74,14 @@ export class DeliveryConfig {
    */
   @Prop({ type: Object, default: {} })
   statusSignalOverrides: Record<string, Record<string, string>>;
+
+  /** @deprecated Use `storeId` instead */
+  @Prop({ type: Object, default: {} })
+  statusSignalOverrides_vendorEmail?: Record<string, Record<string, string>>;
 }
 
 export const DeliveryConfigSchema = SchemaFactory.createForClass(DeliveryConfig);
 
 DeliveryConfigSchema.index({ vendorId: 1 });
+DeliveryConfigSchema.index({ vendorId: 1, storeId: 1 }, { unique: true, sparse: true });
 DeliveryConfigSchema.index({ storeId: 1 }, { unique: true, sparse: true });

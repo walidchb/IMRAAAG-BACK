@@ -159,23 +159,10 @@ export class DeliveryController {
     return this.deliveryService.getTerritories(vendorEmail);
   }
 
-  @Public()
-  @Throttle({ default: { limit: 60, ttl: 60000 } })
-  @Get('public/attributions/:vendorEmail')
-  @ApiOperation({ summary: 'Get wilaya-to-company attributions for a vendor (public, legacy)' })
-  @ApiParam({ name: 'vendorEmail', description: 'Legacy. Prefer the store route.' })
-  getPublicAttributions(@Param('vendorEmail') vendorEmail: string) {
-    return this.deliveryService.getAttributions(vendorEmail).then((doc) => doc ?? { attributions: {} });
-  }
-
-  @Public()
-  @Throttle({ default: { limit: 60, ttl: 60000 } })
-  @Get('public/configs/:vendorEmail')
-  @ApiOperation({ summary: 'Get delivery configs for a vendor (public, legacy)' })
-  @ApiParam({ name: 'vendorEmail', description: 'Legacy. Prefer the store route.' })
-  getPublicConfigs(@Param('vendorEmail') vendorEmail: string) {
-    return this.deliveryService.getConfigs(vendorEmail);
-  }
+  // The legacy `public/attributions/:vendorEmail` and `public/configs/:vendorEmail` routes are
+  // gone: a vendor email is enumerable from the public catalogue, and the store-keyed routes
+  // below cover every caller (they are 1:1 with the email). Public config reads are sanitised
+  // by the service and never include carrier credentials.
 
   @Public()
   @Throttle({ default: { limit: 60, ttl: 60000 } })

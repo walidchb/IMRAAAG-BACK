@@ -10,6 +10,7 @@ import { CacheService } from '../../common/cache.service';
 import { StoresModule } from '../stores/stores.module';
 import { UploadModule } from '../upload/upload.module';
 import { InventoryModule } from '../inventory/inventory.module';
+import { AuditModule } from '../audit/audit.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { InventoryModule } from '../inventory/inventory.module';
     // transaction rather than as a bare field copy. One-directional: InventoryModule
     // never imports ProductsModule.
     InventoryModule,
+    AuditModule,
   ],
   controllers: [ProductsController],
   providers: [ProductsService, CacheService],

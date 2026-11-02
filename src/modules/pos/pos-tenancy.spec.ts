@@ -14,6 +14,8 @@ import { ProductOption } from '../inventory/schemas/product-option.schema';
 import { ProductOptionValue } from '../inventory/schemas/product-option-value.schema';
 import { VariantOptionValue } from '../inventory/schemas/variant-option-value.schema';
 import { DeliveryService } from '../delivery/delivery.service';
+import { DeliveryFeesService } from '../delivery-fees/delivery-fees.service';
+import { AuditService } from '../audit/audit.service';
 import { OrderStatusesService } from '../orders/order-statuses.service';
 import { ReservationsService } from '../inventory/services/reservations.service';
 import { VariantsService } from '../inventory/services/variants.service';
@@ -285,6 +287,10 @@ describe('POS tenancy isolation', () => {
           },
           { provide: DeliveryService, useValue: { createDeliveryForOrder: jest.fn() } },
           {
+            provide: DeliveryFeesService,
+            useValue: { getFeeByStoreId: jest.fn() },
+          },
+          {
             provide: OrderStatusesService,
             useValue: { getBySlug: jest.fn(async (slug: string) => statusConfig(slug)) },
           },
@@ -311,6 +317,7 @@ describe('POS tenancy isolation', () => {
                 .mockResolvedValue(new Map([[VARIANT_B.toString(), foreignSnapshot()]])),
             },
           },
+          { provide: AuditService, useValue: { record: jest.fn().mockResolvedValue(undefined) } },
         ],
       }).compile();
 

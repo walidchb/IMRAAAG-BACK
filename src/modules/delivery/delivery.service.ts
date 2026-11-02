@@ -25,6 +25,9 @@ import { StoresService } from '../stores/stores.service';
 import { CARRIER_ORDER_SIGNALS, isNormalizedStatus } from './delivery-status/carrier/carrier-signal';
 import { DhdCommuneOption } from './delivery-companies/dhd-commune';
 import { NoestCommuneOption } from './delivery-companies/noest-commune';
+import { AuditService } from '../audit/audit.service';
+import { AuditAction } from '../../common/constants/audit-action.enum';
+import { ResourceType } from '../../common/constants/resource-type.enum';
 
 interface NoestDeskRaw {
   code: string;
@@ -98,6 +101,7 @@ export class DeliveryService {
     private readonly deliveryCompaniesService: DeliveryCompaniesService,
     private readonly configService: ConfigService,
     private readonly storesService: StoresService,
+    private readonly auditService: AuditService,
   ) {}
 
   private get encryptionKey(): string {
@@ -717,7 +721,9 @@ export class DeliveryService {
    */
   async getConfigsByStoreId(storeId: string): Promise<DeliveryConfig | null> {
     if (!Types.ObjectId.isValid(storeId)) return null;
-    return this.getConfigsByFilter({ storeId: new Types.ObjectId(storeId) });
+    // Public storefront read: carrier credentials must never leave the server, so this path
+    // neither decrypts them nor returns the raw (possibly encrypted) blob.
+    return this.getConfigsByFilter({ storeId: new Types.ObjectId(storeId) }, { includeCredentials: false });
   }
 
   async getAttributionsByStoreId(storeId: string): Promise<DeliveryAttribution | null> {
@@ -726,12 +732,34 @@ export class DeliveryService {
   }
 
   async getConfigs(vendorEmail: string): Promise<DeliveryConfig | null> {
-    return this.getConfigsByFilter(await this.storeFilter(vendorEmail));
+    return this.getConfigsByFilter(await this.storeFilter(vendorEmail), { includeCredentials: true });
   }
 
-  private async getConfigsByFilter(filter: Record<string, any>): Promise<DeliveryConfig | null> {
+  private async getConfigsByFilter(
+    filter: Record<string, any>,
+    options: { includeCredentials?: boolean } = {},
+  ): Promise<DeliveryConfig | null> {
     const config = await this.configModel.findOne(filter).lean().exec();
-    if (config?.companies) {
+    if (!config) return config;
+
+    // Public reads (the storefront) get a sanitised view: a `hasCredentials` flag is enough
+    // for it to reason about configuration, while the API keys/tokens stay on the server.
+    if (options.includeCredentials === false) {
+      const publicConfig: any = config;
+      delete publicConfig.vendorEmail;
+      delete publicConfig.vendorId;
+      delete publicConfig.storeId;
+      for (const company of Object.values(config.companies ?? {})) {
+        if (!company || typeof company !== 'object') continue;
+        const credentials = (company as any).credentials;
+        delete (company as any).storeId;
+        (company as any).hasCredentials = Boolean(credentials && Object.keys(credentials).length > 0);
+        delete (company as any).credentials;
+      }
+      return publicConfig as DeliveryConfig;
+    }
+
+    if (config.companies) {
       const key = this.encryptionKey;
       for (const company of Object.values(config.companies)) {
         if (company.credentials) {
@@ -799,6 +827,24 @@ export class DeliveryService {
     if (dto.isDefault === true && becomingDefault) {
       await this.applyCompanyToAllWilayas(vendorEmail, dto.companyId, storeId);
     }
+
+    // H12: credential changes are the highest-value audit event on this surface. Only the fact
+    // that credentials changed (and the non-secret settings) are recorded - never the values.
+    await this.auditService.record({
+      action: AuditAction.STORE_UPDATE,
+      actorEmail: vendorEmail,
+      storeId: storeId ? String(storeId) : null,
+      resourceType: ResourceType.STORE,
+      resourceId: storeId ? String(storeId) : null,
+      details: {
+        operation: 'delivery_config_save',
+        companyId: dto.companyId,
+        credentialsChanged: dto.credentials !== undefined,
+        status: dto.status,
+        isDefault: dto.isDefault,
+        statusSyncEnabled: dto.statusSyncEnabled,
+      },
+    });
 
     return config;
   }

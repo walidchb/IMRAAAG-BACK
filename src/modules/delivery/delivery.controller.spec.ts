@@ -10,8 +10,10 @@ describe('DeliveryController', () => {
 
   const mockDeliveryService = {
     getConfigs: jest.fn(),
+    getConfigsByStoreId: jest.fn(),
     saveConfig: jest.fn(),
     getAttributions: jest.fn(),
+    getAttributionsByStoreId: jest.fn(),
     saveAttributions: jest.fn(),
     getNoestDesks: jest.fn(),
     syncNoestDesks: jest.fn(),
@@ -189,25 +191,26 @@ describe('DeliveryController', () => {
     });
   });
 
-  describe('GET /delivery/public/attributions/:vendorEmail', () => {
-    it('returns public attributions for vendor', async () => {
-      const expected = { vendorEmail: 'vendor@test.com', attributions: { '01': 'noest' } };
-      mockDeliveryService.getAttributions.mockResolvedValue(expected);
+  describe('GET /delivery/public/attributions/store/:storeId', () => {
+    it('returns public attributions for a store', async () => {
+      const expected = { storeId: 'store-1', attributions: { '01': 'noest' } };
+      mockDeliveryService.getAttributionsByStoreId.mockResolvedValue(expected);
 
-      const result = await controller.getPublicAttributions('vendor@test.com');
+      const result = await controller.getPublicAttributionsByStore('store-1');
       expect(result).toBe(expected);
-      expect(mockDeliveryService.getAttributions).toHaveBeenCalledWith('vendor@test.com');
+      expect(mockDeliveryService.getAttributionsByStoreId).toHaveBeenCalledWith('store-1');
     });
   });
 
-  describe('GET /delivery/public/configs/:vendorEmail', () => {
-    it('returns public configs for vendor', async () => {
-      const expected = { vendorEmail: 'vendor@test.com', companies: {} };
-      mockDeliveryService.getConfigs.mockResolvedValue(expected);
+  describe('GET /delivery/public/configs/store/:storeId', () => {
+    it('returns the sanitised public store config', async () => {
+      const expected = { storeId: 'store-1', companies: { noest: { status: 'enabled', hasCredentials: true } } };
+      mockDeliveryService.getConfigsByStoreId.mockResolvedValue(expected);
 
-      const result = await controller.getPublicConfigs('vendor@test.com');
+      const result = await controller.getPublicConfigsByStore('store-1');
       expect(result).toBe(expected);
-      expect(mockDeliveryService.getConfigs).toHaveBeenCalledWith('vendor@test.com');
+      expect(mockDeliveryService.getConfigsByStoreId).toHaveBeenCalledWith('store-1');
+      expect(JSON.stringify(result)).not.toContain('credentials');
     });
   });
 });

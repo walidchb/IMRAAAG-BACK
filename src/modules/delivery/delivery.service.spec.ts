@@ -57,6 +57,7 @@ describe('DeliveryService.saveConfig — default applies to all wilayas', () => 
       {} as any,
       configService as any,
       storesService as any,
+      { record: jest.fn().mockResolvedValue(undefined) } as any,
     );
     return { service, configModel, attributionModel, wilayaModel };
   }
@@ -234,6 +235,7 @@ describe('DeliveryService.resolveDefaultStopDesk - first pickup point per carrie
       {} as any,
       { get: jest.fn() } as any,
       {} as any,
+      { record: jest.fn().mockResolvedValue(undefined) } as any,
     );
 
     return { service, noestDeskModel, ecomDeskModel, zrHubModel, dhdDeskModel };
@@ -328,6 +330,7 @@ describe('DeliveryService.getNoestCommunes', () => {
       {} as any,
       { get: jest.fn() } as any,
       storesService as any,
+      { record: jest.fn().mockResolvedValue(undefined) } as any,
     );
     return { service, registry, storesService };
   }
@@ -369,5 +372,93 @@ describe('DeliveryService.getNoestCommunes', () => {
     await expect(service.getNoestCommunes(VENDOR, '5')).rejects.toMatchObject({
       errorCode: 'DELIVERY_HANDLER_NOT_FOUND',
     });
+  });
+});
+
+/**
+ * C2 — the public delivery-config read must never expose carrier credentials.
+ *
+ * The storefront route is reachable by anyone who knows a storeId, and store ids are part of
+ * every public product payload. Credentials therefore have to be stripped server-side; the
+ * authenticated vendor read still decrypts them, because the dashboard pre-fills the editor.
+ */
+describe('DeliveryService.getConfigsByStoreId — public sanitisation', () => {
+  const STORE_ID = '6a5ac33e2274da4958b72fc7';
+
+  function makeService(config: unknown) {
+    const configModel = {
+      findOne: jest.fn().mockReturnValue({
+        lean: jest.fn().mockReturnValue({ exec: jest.fn().mockResolvedValue(config) }),
+      }),
+    };
+    const service = new DeliveryService(
+      configModel as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      { get: jest.fn().mockReturnValue('') } as any,
+      { resolveStoreIdByEmail: jest.fn().mockResolvedValue(null) } as any,
+      { record: jest.fn().mockResolvedValue(undefined) } as any,
+    );
+    return { service, configModel };
+  }
+
+  const storedConfig = () => ({
+    vendorEmail: 'vendor@test.com',
+    vendorId: 'user-1',
+    companies: {
+      noest: {
+        credentials: { api_token: 'live-noest-token' },
+        isDefault: true,
+        status: 'enabled',
+      },
+      dhd: {
+        isDefault: false,
+        status: 'disabled',
+      },
+    },
+  });
+
+  it('removes carrier credentials from the public store read', async () => {
+    const { service } = makeService(storedConfig());
+
+    const config: any = await service.getConfigsByStoreId(STORE_ID);
+
+    expect(config.companies.noest.credentials).toBeUndefined();
+    expect(JSON.stringify(config)).not.toContain('live-noest-token');
+  });
+
+  it('keeps the configured/not-configured signal for the storefront', async () => {
+    const { service } = makeService(storedConfig());
+
+    const config: any = await service.getConfigsByStoreId(STORE_ID);
+
+    expect(config.companies.noest.hasCredentials).toBe(true);
+    expect(config.companies.dhd.hasCredentials).toBe(false);
+    expect(config.companies.noest.status).toBe('enabled');
+    expect(config.companies.noest.isDefault).toBe(true);
+  });
+
+  it('does not expose the vendor identity on the public read', async () => {
+    const { service } = makeService(storedConfig());
+
+    const config: any = await service.getConfigsByStoreId(STORE_ID);
+
+    expect(config.vendorEmail).toBeUndefined();
+    expect(config.vendorId).toBeUndefined();
+  });
+
+  it('still returns the credentials on the authenticated vendor read', async () => {
+    const { service } = makeService(storedConfig());
+
+    const config: any = await service.getConfigs('vendor@test.com');
+
+    expect(config.companies.noest.credentials).toEqual({ api_token: 'live-noest-token' });
   });
 });

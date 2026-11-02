@@ -13,6 +13,9 @@ import { ProductQueryDto, VendorProductQueryDto, ProductSuggestionQueryDto, Curs
 import { CacheService } from '../../common/cache.service';
 import { StoresService } from '../stores/stores.service';
 import { UploadService } from '../upload/upload.service';
+import { AuditService } from '../audit/audit.service';
+import { AuditAction } from '../../common/constants/audit-action.enum';
+import { ResourceType } from '../../common/constants/resource-type.enum';
 import { VariantsService } from '../inventory/services/variants.service';
 
 function firstNonEmpty(...values: (string | undefined | null)[]): string {
@@ -86,6 +89,7 @@ export class ProductsService {
     private readonly storesService: StoresService,
     private readonly uploadService: UploadService,
     private readonly variantsService: VariantsService,
+    private readonly auditService: AuditService,
   ) {}
 
   private slugify(name: string): string {
@@ -286,6 +290,9 @@ export class ProductsService {
     }
     const items = await this.productModel
       .find(searchFilter)
+      // Public payload: the seller's email and user id are not part of a storefront listing,
+      // and `vendorEmail` was the identifier the removed public carrier-config route accepted.
+      .select('-vendorEmail -vendorId')
       .sort(sortOption)
       .limit(limit + 1)
       .populate('category', 'nameEn nameAr nameFr slug')
@@ -546,6 +553,7 @@ export class ProductsService {
   async findOne(id: string): Promise<Product> {
     const product = await this.productModel
       .findById(id)
+      .select('-vendorEmail -vendorId')
       .populate('category', 'nameEn nameAr nameFr slug')
       .populate('subCategory', 'nameEn nameAr nameFr slug')
       .exec();
@@ -592,6 +600,7 @@ export class ProductsService {
 
     const product = await this.productModel
       .findOne({ slug })
+      .select('-vendorEmail -vendorId')
       .populate('category', 'nameEn nameAr nameFr slug')
       .populate('subCategory', 'nameEn nameAr nameFr slug')
       .exec();
@@ -684,6 +693,36 @@ export class ProductsService {
     if (oldImageKey && newImageKey && oldImageKey !== newImageKey) {
       await this.uploadService.deleteProductImages(oldImageKey).catch((err) => {
         this.logger.warn(`Failed to delete old image ${oldImageKey}: ${err.message}`);
+      });
+    }
+
+    // H12: price and visibility changes are the two product edits that move money, so they are
+    // audited. The entry records the before/after values only for the fields that changed.
+    const auditedFields: Record<string, unknown> = {};
+    if (updateProductDto.price !== undefined && updateProductDto.price !== (existing as any).price) {
+      auditedFields.price = { from: (existing as any).price, to: updateProductDto.price };
+    }
+    if (
+      updateProductDto.originalPrice !== undefined &&
+      updateProductDto.originalPrice !== (existing as any).originalPrice
+    ) {
+      auditedFields.originalPrice = {
+        from: (existing as any).originalPrice,
+        to: updateProductDto.originalPrice,
+      };
+    }
+    if (updateProductDto.published !== undefined && updateProductDto.published !== (existing as any).published) {
+      auditedFields.published = { from: (existing as any).published, to: updateProductDto.published };
+    }
+    if (Object.keys(auditedFields).length > 0) {
+      await this.auditService.record({
+        action: AuditAction.PRODUCT_UPDATE,
+        actorId: userId ?? null,
+        actorEmail: userEmail,
+        storeId: existing.storeId ? String(existing.storeId) : null,
+        resourceType: ResourceType.PRODUCT,
+        resourceId: String(updated._id),
+        details: { operation: 'product_update', changes: auditedFields },
       });
     }
 

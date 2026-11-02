@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { ConfigService } from '@nestjs/config';
 import { AppException } from '../../common/errors/app-exception';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
@@ -42,6 +43,8 @@ interface DhdWilayaFee {
 
 interface FeeFetchJob {
   id: string;
+  /** Owner. A job is only ever visible to the vendor that started it (H13). */
+  vendorEmail: string;
   company: string;
   status: 'pending' | 'running' | 'done' | 'error';
   result?: { wilayaCode: string; homeDeliveryFee: number; stopDeskDeliveryFee: number }[];
@@ -49,12 +52,15 @@ interface FeeFetchJob {
   createdAt: Date;
 }
 
+/** Completed jobs are dropped after this long, and the map is capped regardless. */
+const FEE_JOB_TTL_MS = 30 * 60 * 1000;
+const FEE_JOB_MAX_ENTRIES = 200;
+
 @Injectable()
 export class DeliveryFeesService {
   private readonly logger = new Logger(DeliveryFeesService.name);
   private readonly noestApiBase = 'https://app.noest-dz.com';
   private readonly feeJobs = new Map<string, FeeFetchJob>();
-  private jobCounter = 0;
 
   constructor(
     @InjectModel(DeliveryFee.name)
@@ -97,9 +103,14 @@ export class DeliveryFeesService {
     company: string,
     fetchFn: () => Promise<{ wilayaCode: string; homeDeliveryFee: number; stopDeskDeliveryFee: number }[]>,
   ): Promise<{ jobId: string }> {
-    const jobId = `fee-fetch-${++this.jobCounter}-${Date.now()}`;
+    this.pruneFeeJobs();
+
+    // Unguessable id: the old `fee-fetch-<counter>-<epoch>` was predictable, so anyone could
+    // poll another vendor's job result (H13).
+    const jobId = randomUUID();
     const job: FeeFetchJob = {
       id: jobId,
+      vendorEmail,
       company,
       status: 'pending',
       createdAt: new Date(),
@@ -109,6 +120,25 @@ export class DeliveryFeesService {
     this.processFeeFetchJob(jobId, fetchFn);
 
     return { jobId };
+  }
+
+  /**
+   * Drops expired jobs (finished or not - a job cannot outlive its usefulness) and enforces a
+   * hard cap so the map cannot grow without bound. Oldest entries go first.
+   */
+  private pruneFeeJobs(): void {
+    const cutoff = Date.now() - FEE_JOB_TTL_MS;
+    for (const [id, job] of this.feeJobs) {
+      if (job.createdAt.getTime() < cutoff) this.feeJobs.delete(id);
+    }
+    if (this.feeJobs.size > FEE_JOB_MAX_ENTRIES) {
+      const oldestFirst = [...this.feeJobs.entries()].sort(
+        (a, b) => a[1].createdAt.getTime() - b[1].createdAt.getTime(),
+      );
+      for (const [id] of oldestFirst.slice(0, this.feeJobs.size - FEE_JOB_MAX_ENTRIES)) {
+        this.feeJobs.delete(id);
+      }
+    }
   }
 
   private async processFeeFetchJob(
@@ -129,8 +159,15 @@ export class DeliveryFeesService {
     }
   }
 
-  getFetchJobStatus(jobId: string): FeeFetchJob | null {
-    return this.feeJobs.get(jobId) ?? null;
+  /**
+   * A job is returned only to the vendor that created it. Another vendor's id answers
+   * `null`, which the controller renders as `not_found` - the same response as an unknown id,
+   * so the endpoint cannot be used to probe for existing jobs.
+   */
+  getFetchJobStatus(jobId: string, vendorEmail: string): FeeFetchJob | null {
+    const job = this.feeJobs.get(jobId);
+    if (!job || job.vendorEmail !== vendorEmail) return null;
+    return job;
   }
 
   async startFetchNoest(vendorEmail: string): Promise<{ jobId: string }> {

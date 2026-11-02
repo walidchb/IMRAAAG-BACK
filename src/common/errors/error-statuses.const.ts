@@ -153,6 +153,7 @@ export const ERROR_HTTP_STATUS: Record<string, number> = {
   [AppErrorCode.UPLOAD_R2_ACCESS_DENIED]: HttpStatus.INTERNAL_SERVER_ERROR,
   [AppErrorCode.UPLOAD_FAILED]: HttpStatus.INTERNAL_SERVER_ERROR,
   [AppErrorCode.UPLOAD_DELETE_FAILED]: HttpStatus.INTERNAL_SERVER_ERROR,
+  [AppErrorCode.UPLOAD_QUOTA_EXCEEDED]: HttpStatus.TOO_MANY_REQUESTS,
 
   // ─── Tracking ───
   [AppErrorCode.TRACKING_CONFIG_NOT_FOUND]: HttpStatus.NOT_FOUND,

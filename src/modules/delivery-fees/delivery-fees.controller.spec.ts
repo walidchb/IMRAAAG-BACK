@@ -170,27 +170,29 @@ describe('DeliveryFeesController', () => {
 
   describe('POST /delivery-fees/fetch-from-noest/async', () => {
     it('starts async Noest fee fetch and returns jobId', async () => {
-      mockService.startFetchNoest.mockResolvedValue({ jobId: 'fee-fetch-1-123' });
+      mockService.startFetchNoest.mockResolvedValue({ jobId: 'job-1' });
 
       const result = await controller.fetchFromNoestAsync(mockReq());
-      expect(result).toEqual({ jobId: 'fee-fetch-1-123' });
+      expect(result).toEqual({ jobId: 'job-1' });
       expect(mockService.startFetchNoest).toHaveBeenCalledWith('vendor@test.com');
     });
   });
 
   describe('GET /delivery-fees/jobs/:jobId', () => {
     it('returns job status when found', async () => {
-      const job = { id: 'fee-fetch-1-123', company: 'noest', status: 'done', result: [], createdAt: new Date() };
-      mockService.getFetchJobStatus.mockReturnValue(job);
+      const job = { id: 'job-1', company: 'noest', status: 'done', result: [], createdAt: new Date() };
+      mockService.getFetchJobStatus.mockReturnValue(job as any);
 
-      const result = await controller.getJobStatus('fee-fetch-1-123');
-      expect(result).toEqual({ id: 'fee-fetch-1-123', company: 'noest', status: 'done', result: [] });
+      const result = await controller.getJobStatus(mockReq(), 'job-1');
+      expect(result).toEqual({ id: 'job-1', company: 'noest', status: 'done', result: [] });
+      // Scoped lookup: the service receives the caller's identity, not just the job id (H13).
+      expect(mockService.getFetchJobStatus).toHaveBeenCalledWith('job-1', 'vendor@test.com');
     });
 
     it('returns not_found when job does not exist', async () => {
       mockService.getFetchJobStatus.mockReturnValue(null);
 
-      const result = await controller.getJobStatus('nonexistent');
+      const result = await controller.getJobStatus(mockReq(), 'nonexistent');
       expect(result).toEqual({ status: 'not_found' });
     });
   });

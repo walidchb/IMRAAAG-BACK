@@ -9,6 +9,8 @@ import { OrderStatusesController } from './order-statuses.controller';
 import { OrdersService } from './orders.service';
 import { OrderStatusesService } from './order-statuses.service';
 import { DeliveryModule } from '../delivery/delivery.module';
+import { DeliveryFeesModule } from '../delivery-fees/delivery-fees.module';
+import { AuditModule } from '../audit/audit.module';
 import { StoresModule } from '../stores/stores.module';
 import { InventoryModule } from '../inventory/inventory.module';
 
@@ -21,6 +23,8 @@ import { InventoryModule } from '../inventory/inventory.module';
       { name: Product.name, schema: ProductSchema },
     ]),
     forwardRef(() => DeliveryModule),
+    DeliveryFeesModule,
+    AuditModule,
     StoresModule,
     // Phase 4: `ReservationsService` is imported, not the whole inventory module, because a
     // confirm/dispatch has to reserve or deduct inside the same transaction as the status
