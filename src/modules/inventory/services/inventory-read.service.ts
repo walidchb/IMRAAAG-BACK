@@ -78,6 +78,8 @@ export interface InventoryListQuery {
   status?: string;
   page?: number;
   limit?: number;
+  /** Locale the composed variant label is rendered in (defaults to English). */
+  locale?: string;
 }
 
 export interface InventoryListResult {
@@ -302,6 +304,7 @@ export class InventoryReadService {
           (r.joins ?? []).map((j: any) => String(j.optionValueId)),
           dictionary.options,
           dictionary.values,
+          query.locale,
         ),
         sku: r.sku ?? null,
         barcode: r.barcode ?? null,

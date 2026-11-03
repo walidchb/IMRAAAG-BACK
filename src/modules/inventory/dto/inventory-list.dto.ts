@@ -26,6 +26,9 @@ export const INVENTORY_LIST_STATUSES = [
 ] as const;
 export type InventoryListStatus = (typeof INVENTORY_LIST_STATUSES)[number];
 
+/** Locales a seller-facing variant label can be rendered in. */
+export const INVENTORY_LABEL_LOCALES = ['en', 'fr', 'ar'] as const;
+
 /**
  * Query for the store-wide inventory list (spec §10.2).
  *
@@ -64,6 +67,19 @@ export class ListInventoryQueryDto {
   @Min(1)
   @Max(200)
   limit?: number;
+
+  @ApiPropertyOptional({ enum: INVENTORY_LABEL_LOCALES, description: 'Locale for the variant label' })
+  @IsOptional()
+  @IsIn(INVENTORY_LABEL_LOCALES)
+  locale?: string;
+}
+
+/** Locale for a seller-facing read that composes variant labels. */
+export class LocaleQueryDto {
+  @ApiPropertyOptional({ enum: INVENTORY_LABEL_LOCALES, description: 'Locale for the variant label' })
+  @IsOptional()
+  @IsIn(INVENTORY_LABEL_LOCALES)
+  locale?: string;
 }
 
 /**
@@ -117,6 +133,11 @@ export class ListStoreMovementsQueryDto {
   @IsOptional()
   @IsString()
   cursor?: string;
+
+  @ApiPropertyOptional({ enum: INVENTORY_LABEL_LOCALES, description: 'Locale for the variant label' })
+  @IsOptional()
+  @IsIn(INVENTORY_LABEL_LOCALES)
+  locale?: string;
 }
 
 /**

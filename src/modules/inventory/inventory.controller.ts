@@ -212,6 +212,7 @@ export class InventoryController {
       search: query.search,
       limit: query.limit,
       cursor: query.cursor,
+      locale: query.locale,
     });
   }
 

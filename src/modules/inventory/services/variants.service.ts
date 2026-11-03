@@ -1056,7 +1056,11 @@ const affected = await this.affectedVariants(productId, storeId, value._id);
    * storefront cannot order what was not created, so exposing the full cartesian product
    * here would advertise unavailable combinations as merely unlisted.
    */
-  async getMatrix(productId: string, storeId: Types.ObjectId): Promise<VariantMatrix> {
+  async getMatrix(
+    productId: string,
+    storeId: Types.ObjectId,
+    locale?: string,
+  ): Promise<VariantMatrix> {
     const product = await this.productModel.findById(productId).lean().exec();
     if (!product || String(product.storeId ?? '') !== String(storeId)) {
       throw new AppException(AppErrorCode.PRODUCT_NOT_IN_STORE, { productId });
@@ -1139,7 +1143,7 @@ const affected = await this.affectedVariants(productId, storeId, value._id);
           variantId: String(v._id),
           combinationKey: v.combinationKey,
           optionValueIds: ids,
-          label: this.labelFor(ids, options, this.valuesGrouped(values)),
+          label: this.labelFor(ids, options, this.valuesGrouped(values), locale),
           sku: v.sku ?? null,
           barcode: v.barcode ?? null,
           priceOverride: v.priceOverride ?? null,
@@ -2225,6 +2229,7 @@ private labelFor(
     optionValueIds: string[],
     options: Array<{ _id: Types.ObjectId; nameEn?: string | null; nameAr?: string | null; nameFr?: string | null; key: string }>,
     valuesByOption: Map<string, ProductOptionValueDocument[]>,
+    locale?: string,
   ): string {
     const valueById = new Map<string, LabelValue>();
     for (const list of valuesByOption.values()) {
@@ -2234,7 +2239,7 @@ private labelFor(
     const optionById = new Map<string, LabelOption>();
     for (const option of options) optionById.set(String(option._id), option);
 
-    return buildVariantLabel(optionValueIds, optionById, valueById);
+    return buildVariantLabel(optionValueIds, optionById, valueById, locale);
   }
 
   /**

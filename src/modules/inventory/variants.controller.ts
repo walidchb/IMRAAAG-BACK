@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -30,6 +31,7 @@ import {
   UpdateOptionValueDto,
   UpdateVariantDto,
 } from './dto/variants.dto';
+import { LocaleQueryDto } from './dto/inventory-list.dto';
 
 /**
  * Option, value and variant management, always nested under the product that owns them.
@@ -88,8 +90,16 @@ export class VariantsController {
 
   /** Options, values and every offered combination with its stock. */
   @Get('variants/matrix')
-  async matrix(@Param('productId') productId: string, @Req() req: any) {
-    return this.variantsService.getMatrix(productId, await this.storeIdFor(req));
+  async matrix(
+    @Param('productId') productId: string,
+    @Query() query: LocaleQueryDto,
+    @Req() req: any,
+  ) {
+    return this.variantsService.getMatrix(
+      productId,
+      await this.storeIdFor(req),
+      query.locale,
+    );
   }
 
   @Get('options')

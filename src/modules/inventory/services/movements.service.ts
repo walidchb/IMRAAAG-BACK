@@ -234,6 +234,8 @@ export class MovementsService {
       search?: string;
       limit?: number;
       cursor?: string;
+      /** Locale the composed variant label is rendered in (defaults to English). */
+      locale?: string;
     },
   ): Promise<{ data: StoreMovementView[]; nextCursor: string | null }> {
     const query: Record<string, any> = { storeId };
@@ -348,6 +350,7 @@ export class MovementsService {
           (r.joins ?? []).map((j: any) => String(j.optionValueId)),
           dictionary.options,
           dictionary.values,
+          filter.locale,
         ),
         sku: r.sku ?? null,
         actorName: r.actorName ?? null,
