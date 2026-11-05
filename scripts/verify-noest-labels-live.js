@@ -365,9 +365,9 @@ async function main() {
       }
       const otherAvailability = await requestJson('GET', '/orders/labels/availability', otherToken);
       if (otherAvailability.json?.enabled === true) {
-        fail('a non-allowlisted store reports label printing as enabled');
+        ok('a second store reports label printing as enabled (global switch)');
       } else {
-        ok('a non-allowlisted store reports label printing as disabled (rollback gate)');
+        fail('a second store reports label printing as disabled while the global flag is on');
       }
     }
 

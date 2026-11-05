@@ -5,9 +5,11 @@ import { InjectModel } from '@nestjs/mongoose';
 import { ClientSession, Model, Types } from 'mongoose';
 import { Order, OrderDocument } from './schemas/order.schema';
 import { Counter, CounterDocument } from './schemas/counter.schema';
+import { PosHold, PosHoldDocument, PosHoldItem } from './schemas/pos-hold.schema';
 import { Product, ProductDocument } from '../products/schemas/product.schema';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { CreatePosSaleDto } from './dto/create-pos-sale.dto';
+import { CreatePosHoldDto } from './dto/pos-hold.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { BulkActionDto } from './dto/bulk-action.dto';
 import { BulkShipDto } from './dto/bulk-ship.dto';
@@ -51,6 +53,32 @@ export interface PaginatedOrdersResult {
   limit: number;
   totalPages: number;
   statusCounts: Record<string, number>;
+}
+
+/** The register-facing shape of a parked sale (matches the frontend's `PosHeldCart`). */
+export interface PosHoldViewLine {
+  variantId: string;
+  productId: string;
+  name: string;
+  label: string;
+  sku: string | null;
+  barcode: string | null;
+  price: number;
+  quantity: number;
+  available: number;
+  image: string | null;
+}
+
+export interface PosHoldView {
+  id: string;
+  storeId: string;
+  orderNo: string;
+  createdAt: string;
+  updatedAt: string;
+  customer: { name?: string; phone?: string; email?: string; note?: string };
+  note: string;
+  lines: PosHoldViewLine[];
+  total: number;
 }
 
 /**
@@ -199,6 +227,7 @@ export class OrdersService {
   constructor(
     @InjectModel(Order.name) private orderModel: Model<OrderDocument>,
     @InjectModel(Counter.name) private counterModel: Model<CounterDocument>,
+    @InjectModel(PosHold.name) private posHoldModel: Model<PosHoldDocument>,
     @InjectModel(Product.name) private productModel: Model<ProductDocument>,
     private readonly deliveryService: DeliveryService,
     private readonly deliveryFeesService: DeliveryFeesService,
@@ -293,8 +322,13 @@ export class OrdersService {
         .exec();
       const seq = (result as any)?.seq ?? 1;
       const orderNo = String(seq).padStart(6, '0');
-      const exists = await this.orderModel.findOne({ orderNo }).select('_id').lean().exec();
-      if (!exists) return orderNo;
+      // A number is reserved by the hold that will eventually become the order, so a hold and
+      // an order must never end up sharing one (the order is written with the hold's number).
+      const [orderExists, holdExists] = await Promise.all([
+        this.orderModel.findOne({ orderNo }).select('_id').lean().exec(),
+        this.posHoldModel.findOne({ orderNo }).select('_id').lean().exec(),
+      ]);
+      if (!orderExists && !holdExists) return orderNo;
     }
   }
 
@@ -662,6 +696,93 @@ export class OrdersService {
   }
 
   /**
+   * Resolves the cart's variants into order-line snapshots, throwing when a line cannot be
+   * sold. Shared by an immediate sale and by a held sale so the two can never disagree about
+   * which price/ownership/availability rules apply at the till.
+   */
+  private async buildPosItems(
+    storeId: Types.ObjectId,
+    inputs: Array<{ variantId: string; quantity: number; barcode?: string; available?: number }>,
+  ): Promise<{ items: PosHoldItem[]; itemsTotal: number }> {
+    // Read every ordered variant once: the snapshot carries ownership, active state, the
+    // price override and the display label the order line keeps forever (roadmap 4.6).
+    const snapshots = await this.variantsService.snapshotsForVariants(
+      inputs.map((item) => item.variantId),
+    );
+
+    const productIds = [
+      ...new Set(
+        [...snapshots.values()]
+          .map((s) => s.productId)
+          .filter((id): id is string => !!id && /^[a-fA-F0-9]{24}$/.test(id)),
+      ),
+    ];
+    const products = productIds.length
+      ? await this.productModel
+          .find({ _id: { $in: productIds } })
+          .select('price nameEn nameFr nameAr originalPrice')
+          .lean()
+          .exec()
+      : [];
+    const productById = new Map(products.map((p: any) => [String(p._id), p]));
+
+    let itemsTotal = 0;
+    const items = inputs.map((input) => {
+      const snapshot = snapshots.get(input.variantId);
+      if (!snapshot) {
+        throw new AppException(AppErrorCode.VARIANT_NOT_FOUND, { variantId: input.variantId });
+      }
+      if (snapshot.storeId && snapshot.storeId !== String(storeId)) {
+        throw new AppException(AppErrorCode.VARIANT_NOT_FOUND, {
+          variantId: input.variantId,
+          reason: 'variant_belongs_to_another_store',
+        });
+      }
+      if (!snapshot.isActive) {
+        throw new AppException(AppErrorCode.VARIANT_INACTIVE, { variantId: input.variantId });
+      }
+
+      const product = productById.get(snapshot.productId);
+      // A variant always resolves to a product (integrity-checked); a missing one means
+      // corrupt data. Refuse rather than ring a line up at 0, which would silently give the
+      // goods away. A variant price override is enough on its own, so it is exempt.
+      if (!product && snapshot.priceOverride == null) {
+        throw new AppException(AppErrorCode.ORDER_PRODUCT_NOT_AVAILABLE, {
+          variantId: input.variantId,
+          productId: snapshot.productId,
+        });
+      }
+      // Server-authoritative price (spec A7.2 rule 7): the variant override wins, then the
+      // product price. A client-sent `price` is validated by the DTO and then discarded here.
+      const price = snapshot.priceOverride ?? product?.price ?? 0;
+      // D12: pre-discount unit price snapshotted at sale time - the variant's compare-at,
+      // falling back to the product's `originalPrice`; `null` when none exists (always
+      // written on new lines, never backfilled into legacy orders).
+      const originalPrice = snapshot.compareAtPrice ?? (product as any)?.originalPrice ?? null;
+      itemsTotal += price * input.quantity;
+
+      return {
+        productId: snapshot.productId,
+        productName:
+          product?.nameEn || product?.nameFr || product?.nameAr || snapshot.snapshot?.label || 'POS item',
+        quantity: input.quantity,
+        price,
+        originalPrice,
+        lineId: new Types.ObjectId().toHexString(),
+        variantId: snapshot.variantId,
+        ...(snapshot.sku ? { sku: snapshot.sku } : {}),
+        // Display-only hints, kept so a resumed held cart renders exactly as it was left.
+        ...(input.barcode ? { barcode: input.barcode } : {}),
+        ...(input.available != null ? { available: Math.max(input.available, input.quantity) } : {}),
+        ...(snapshot.snapshot ? { variantSnapshot: snapshot.snapshot } : {}),
+        ...(snapshot.image ? { image: snapshot.image } : {}),
+      };
+    });
+
+    return { items, itemsTotal };
+  }
+
+  /**
    * In-store (POS) sale: an order that is paid for, handed over and completed the moment it is
    * rung up.
    *
@@ -690,77 +811,7 @@ export class OrdersService {
 
     const now = new Date();
 
-    // Read every ordered variant once: the snapshot carries ownership, active state, the
-    // price override and the display label the order line keeps forever (roadmap 4.6).
-    const snapshots = await this.variantsService.snapshotsForVariants(
-      dto.items.map((item) => item.variantId),
-    );
-
-    const productIds = [
-      ...new Set(
-        [...snapshots.values()]
-          .map((s) => s.productId)
-          .filter((id): id is string => !!id && /^[a-fA-F0-9]{24}$/.test(id)),
-      ),
-    ];
-    const products = productIds.length
-      ? await this.productModel
-          .find({ _id: { $in: productIds } })
-          .select('price nameEn nameFr nameAr originalPrice')
-          .lean()
-          .exec()
-      : [];
-    const productById = new Map(products.map((p: any) => [String(p._id), p]));
-
-    let itemsTotal = 0;
-    const items = dto.items.map((input) => {
-      const snapshot = snapshots.get(input.variantId);
-      if (!snapshot) {
-        throw new AppException(AppErrorCode.VARIANT_NOT_FOUND, { variantId: input.variantId });
-      }
-      if (snapshot.storeId && snapshot.storeId !== String(storeId)) {
-        throw new AppException(AppErrorCode.VARIANT_NOT_FOUND, {
-          variantId: input.variantId,
-          reason: 'variant_belongs_to_another_store',
-        });
-      }
-      if (!snapshot.isActive) {
-        throw new AppException(AppErrorCode.VARIANT_INACTIVE, { variantId: input.variantId });
-      }
-
-      const product = productById.get(snapshot.productId);
-      // A variant always resolves to a product (integrity-checked); a missing one means
-      // corrupt data. Refuse rather than ring a line up at 0, which would silently give the
-      // goods away. A variant price override is enough on its own, so it is exempt.
-      if (!product && snapshot.priceOverride == null) {
-        throw new AppException(AppErrorCode.ORDER_PRODUCT_NOT_AVAILABLE, {
-          variantId: input.variantId,
-          productId: snapshot.productId,
-        });
-      }
-      // Server-authoritative price (spec §7.2 rule 7): the variant override wins, then the
-      // product price. A client-sent `price` is validated by the DTO and then discarded here.
-      const price = snapshot.priceOverride ?? product?.price ?? 0;
-      // D12: pre-discount unit price snapshotted at sale time — the variant's compare-at,
-      // falling back to the product's `originalPrice`; `null` when none exists (always
-      // written on new lines, never backfilled into legacy orders).
-      const originalPrice = snapshot.compareAtPrice ?? (product as any)?.originalPrice ?? null;
-      itemsTotal += price * input.quantity;
-
-      return {
-        productId: snapshot.productId,
-        productName:
-          product?.nameEn || product?.nameFr || product?.nameAr || snapshot.snapshot?.label || 'POS item',
-        quantity: input.quantity,
-        price,
-        originalPrice,
-        lineId: new Types.ObjectId().toHexString(),
-        variantId: snapshot.variantId,
-        ...(snapshot.sku ? { sku: snapshot.sku } : {}),
-        ...(snapshot.snapshot ? { variantSnapshot: snapshot.snapshot } : {}),
-        ...(snapshot.image ? { image: snapshot.image } : {}),
-      };
-    });
+    const { items, itemsTotal } = await this.buildPosItems(storeId, dto.items);
 
     const [placedStatus, confirmedStatus, dispatchedStatus, deliveredStatus] = await Promise.all([
       this.statusesService.getBySlug(OrderStatus.PLACED),
@@ -781,7 +832,7 @@ export class OrdersService {
     // the sub-document must always exist. `wilaya`/`commune` stay empty because a POS sale is
     // `pickup`; the schema hook allows that for pickup only.
     const customer = {
-      name: dto.customer?.name?.trim() || 'Walk-in',
+      name: dto.customer?.name?.trim() || 'De passage',
       phone: dto.customer?.phone?.trim() || '',
       ...(dto.customer?.email ? { email: dto.customer.email } : {}),
       wilaya: '',
@@ -849,6 +900,330 @@ export class OrdersService {
     });
 
     return saved;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Held POS sales
+  //
+  // A hold is a sale that has been parked at the till. It reserves its stock immediately (so
+  // the units cannot be sold twice while the customer is away), and that reservation is
+  // kept alive under the hold document's own id. Completing the hold writes the final order
+  // *using that same id and order number*, then reconciles and consumes the reservation -
+  // which is why the reservation/movement trail survives the transition untouched.
+  // ---------------------------------------------------------------------------
+
+  private normalizePosCustomer(
+    source: { name?: string; phone?: string; email?: string; note?: string } | null | undefined,
+    note: string,
+  ): { name?: string; phone?: string; email?: string; note?: string } {
+    const customer = source ?? {};
+    return {
+      ...(customer.name?.trim() ? { name: customer.name.trim() } : {}),
+      ...(customer.phone?.trim() ? { phone: customer.phone.trim() } : {}),
+      ...(customer.email ? { email: customer.email } : {}),
+      ...(note ? { note } : {}),
+    };
+  }
+
+  private holdContext(hold: {
+    _id: Types.ObjectId;
+    orderNo: string;
+    storeId: Types.ObjectId;
+    items: PosHoldItem[];
+  }): OrderInventoryContext {
+    return {
+      orderId: hold._id,
+      orderNo: hold.orderNo,
+      storeId: hold.storeId ?? null,
+      items: (hold.items || []).map((item) => ({
+        lineId: item.lineId ?? null,
+        variantId: item.variantId ?? null,
+        productId: item.productId ?? null,
+        quantity: item.quantity,
+      })),
+    };
+  }
+
+  private serializePosHold(hold: any): PosHoldView {
+    const items = (hold.items || []) as PosHoldItem[];
+    return {
+      id: String(hold._id),
+      storeId: String(hold.storeId ?? ''),
+      orderNo: hold.orderNo,
+      createdAt:
+        hold.createdAt instanceof Date ? hold.createdAt.toISOString() : String(hold.createdAt ?? ''),
+      updatedAt:
+        hold.updatedAt instanceof Date ? hold.updatedAt.toISOString() : String(hold.updatedAt ?? ''),
+      customer: hold.customer ?? {},
+      note: hold.note ?? '',
+      total: hold.total ?? 0,
+      lines: items.map((item) => ({
+        variantId: item.variantId,
+        productId: item.productId,
+        name: item.productName,
+        label: item.variantSnapshot?.label ?? '',
+        sku: item.sku ?? null,
+        barcode: item.barcode ?? null,
+        price: item.price,
+        quantity: item.quantity,
+        available: item.available ?? item.quantity,
+        image: item.image ?? null,
+      })),
+    };
+  }
+
+  private async findPosHoldOrThrow(id: string, storeId: Types.ObjectId): Promise<PosHoldDocument> {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new AppException(AppErrorCode.POS_HOLD_NOT_FOUND, { id });
+    }
+    const hold = await this.posHoldModel.findOne({ _id: id, storeId }).exec();
+    if (!hold) {
+      throw new AppException(AppErrorCode.POS_HOLD_NOT_FOUND, { id });
+    }
+    return hold;
+  }
+
+  async createPosHold(dto: CreatePosHoldDto, user: RequestUser): Promise<PosHoldView> {
+    this.assertVendorOrAdmin(user);
+    if (!dto.items || dto.items.length === 0) {
+      throw new AppException(AppErrorCode.POS_EMPTY_CART);
+    }
+
+    const store = await this.storesService.findByVendorIdOrThrow(user.id);
+    const storeId = store._id as Types.ObjectId;
+    const { items, itemsTotal } = await this.buildPosItems(storeId, dto.items);
+    const orderNo = await this.generateOrderNo();
+    const note = dto.customer?.note || dto.note || '';
+    const customer = this.normalizePosCustomer(dto.customer, note);
+
+    const session = await openTransactionSession(this.posHoldModel, this.logger);
+    let saved: PosHoldDocument | null = null;
+    try {
+      await session.withTransaction(async () => {
+        const created = new this.posHoldModel({
+          storeId,
+          orderNo,
+          customer,
+          note,
+          items,
+          total: itemsTotal,
+          createdBy: user.id,
+        });
+        saved = await created.save({ session });
+        // Park the stock with the cart: this is the behaviour change - a held sale holds its
+        // units instead of leaving them sellable to the next customer.
+        await this.reservationsService.reserve(
+          this.holdContext(saved),
+          this.actorUserId({}, user),
+          session,
+        );
+      });
+    } finally {
+      await session.endSession();
+    }
+
+    if (!saved) {
+      throw new AppException(AppErrorCode.ORDER_NOT_FOUND, { id: 'pos_hold' });
+    }
+    return this.serializePosHold(saved);
+  }
+
+  async updatePosHold(id: string, dto: CreatePosHoldDto, user: RequestUser): Promise<PosHoldView> {
+    this.assertVendorOrAdmin(user);
+    if (!dto.items || dto.items.length === 0) {
+      throw new AppException(AppErrorCode.POS_EMPTY_CART);
+    }
+
+    const store = await this.storesService.findByVendorIdOrThrow(user.id);
+    const storeId = store._id as Types.ObjectId;
+    const existing = await this.findPosHoldOrThrow(id, storeId);
+    const { items, itemsTotal } = await this.buildPosItems(storeId, dto.items);
+    const note = dto.customer?.note || dto.note || '';
+    const customer = this.normalizePosCustomer(dto.customer, note);
+
+    const session = await openTransactionSession(this.posHoldModel, this.logger);
+    let saved: PosHoldDocument | null = null;
+    try {
+      await session.withTransaction(async () => {
+        saved = await this.posHoldModel.findOneAndUpdate(
+          { _id: existing._id, storeId },
+          { $set: { customer, note, items, total: itemsTotal } },
+          { new: true, session },
+        );
+        if (!saved) {
+          throw new AppException(AppErrorCode.POS_HOLD_NOT_FOUND, { id });
+        }
+        // Same reconciliation as editing a `confirmed` order: unchanged lines keep their
+        // reservation, changed lines are released and re-reserved, removed lines are freed.
+        await this.reservationsService.reconcileEditedLines(
+          this.holdContext(saved),
+          this.actorUserId({}, user),
+          session,
+        );
+      });
+    } finally {
+      await session.endSession();
+    }
+
+    if (!saved) {
+      throw new AppException(AppErrorCode.POS_HOLD_NOT_FOUND, { id });
+    }
+    return this.serializePosHold(saved);
+  }
+
+  async deletePosHold(id: string, user: RequestUser): Promise<{ id: string; deleted: true }> {
+    this.assertVendorOrAdmin(user);
+    const store = await this.storesService.findByVendorIdOrThrow(user.id);
+    const storeId = store._id as Types.ObjectId;
+    const existing = await this.findPosHoldOrThrow(id, storeId);
+
+    const session = await openTransactionSession(this.posHoldModel, this.logger);
+    try {
+      await session.withTransaction(async () => {
+        const deleted = await this.posHoldModel.findOneAndDelete(
+          { _id: existing._id, storeId },
+          { session },
+        );
+        if (!deleted) {
+          throw new AppException(AppErrorCode.POS_HOLD_NOT_FOUND, { id });
+        }
+        // Discarding a parked sale gives the units back: `release` only touches active
+        // reservations and never changes `onHand`.
+        await this.reservationsService.release(
+          this.holdContext(deleted),
+          this.actorUserId({}, user),
+          session,
+        );
+      });
+    } finally {
+      await session.endSession();
+    }
+
+    return { id, deleted: true };
+  }
+
+  async completePosHold(
+    id: string,
+    dto: CreatePosSaleDto,
+    user: RequestUser,
+  ): Promise<Order> {
+    this.assertVendorOrAdmin(user);
+    if (!dto.items || dto.items.length === 0) {
+      throw new AppException(AppErrorCode.POS_EMPTY_CART);
+    }
+
+    const store = await this.storesService.findByVendorIdOrThrow(user.id);
+    const storeId = store._id as Types.ObjectId;
+    const hold = await this.findPosHoldOrThrow(id, storeId);
+
+    const now = new Date();
+    const { items, itemsTotal } = await this.buildPosItems(storeId, dto.items);
+
+    const [placedStatus, confirmedStatus, dispatchedStatus, deliveredStatus] = await Promise.all([
+      this.statusesService.getBySlug(OrderStatus.PLACED),
+      this.statusesService.getBySlug(OrderStatus.CONFIRMED),
+      this.statusesService.getBySlug(OrderStatus.DISPATCHED),
+      this.statusesService.getBySlug(OrderStatus.DELIVERED),
+    ]);
+    if (!placedStatus || !confirmedStatus || !dispatchedStatus || !deliveredStatus) {
+      throw new AppException(AppErrorCode.ORDER_INVALID_STATUS, { status: 'pos_lifecycle' });
+    }
+
+    const actor = user.fullName || user.email || 'Vendor';
+    const holdCustomer = (hold.customer ?? {}) as Record<string, any>;
+    const merged = { ...holdCustomer, ...(dto.customer ?? {}) };
+    const note = merged.note || dto.note || hold.note || '';
+    // Anonymous walk-in placeholder, exactly like an immediate sale (the vendor UI reads
+    // `customer.name` unguarded). `wilaya`/`commune` stay empty because the order is `pickup`.
+    const customer = {
+      name: merged.name?.trim() || 'De passage',
+      phone: merged.phone?.trim() || '',
+      ...(merged.email ? { email: merged.email } : {}),
+      wilaya: '',
+      commune: '',
+      ...(note ? { note } : {}),
+    };
+
+    const history = [
+      { status: placedStatus, date: now, user: actor },
+      { status: confirmedStatus, date: now, user: actor },
+      { status: dispatchedStatus, date: now, user: actor },
+      { status: deliveredStatus, date: now, user: actor },
+    ];
+
+    const session = await openTransactionSession(this.orderModel, this.logger);
+    let saved: OrderDocument | null = null;
+    try {
+      await session.withTransaction(async () => {
+        // Delete first: the hold and the order it becomes can never coexist, so two tills
+        // racing to complete the same hold see exactly one winner.
+        const deleted = await this.posHoldModel.findOneAndDelete(
+          { _id: hold._id, storeId },
+          { session },
+        );
+        if (!deleted) {
+          throw new AppException(AppErrorCode.POS_HOLD_NOT_FOUND, { id });
+        }
+
+        const created = new this.orderModel({
+          // Reuse the hold's identity so the reservations written at hold time point at the
+          // order that will replace it, and keep its pre-allocated number.
+          _id: deleted._id,
+          orderNo: deleted.orderNo,
+          vendorEmail: store.vendorEmail,
+          storeId,
+          source: OrderSource.POS,
+          shippingMethod: 'pickup',
+          paymentMethod: 'CASH',
+          customer,
+          items,
+          total: itemsTotal,
+          status: deliveredStatus,
+          history,
+          date: now,
+          createdAt: now,
+          updatedAt: now,
+          confirmedAt: now,
+          confirmedBy: actor,
+          dispatchedAt: now,
+          inventoryState: { reservedAt: (deleted as any).createdAt ?? now, fulfilledAt: now },
+        });
+        saved = await created.save({ session });
+
+        const ctx = this.inventoryContext(saved);
+        const actorUserId = this.actorUserId({}, user);
+        // The cart may have been edited after the hold was parked; reconcile first so the
+        // reservations match the lines actually being delivered, then consume them.
+        await this.reservationsService.reconcileEditedLines(ctx, actorUserId, session);
+        await this.reservationsService.consume(ctx, actorUserId, session);
+      });
+    } finally {
+      await session.endSession();
+    }
+
+    if (!saved) {
+      throw new AppException(AppErrorCode.ORDER_NOT_FOUND, { id: String(hold._id) });
+    }
+
+    await this.storesService.incrementOrderCount(store.vendorEmail, 1).catch((err: any) => {
+      this.logger.warn(
+        `POS hold ${hold.orderNo} was completed but the store order count was not incremented: ${err?.message}`,
+      );
+    });
+
+    return saved;
+  }
+
+  async listPosHolds(user: RequestUser): Promise<{ data: PosHoldView[] }> {
+    this.assertVendorOrAdmin(user);
+    const store = await this.storesService.findByVendorIdOrThrow(user.id);
+    const holds = await this.posHoldModel
+      .find({ storeId: store._id })
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .lean()
+      .exec();
+    return { data: (holds || []).map((hold: any) => this.serializePosHold(hold)) };
   }
 
   /**

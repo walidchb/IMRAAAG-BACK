@@ -72,24 +72,12 @@ export class OrderLabelsService {
     private readonly config: ConfigService,
   ) {}
 
-  async availability(user: RequestUser): Promise<OrderLabelAvailability> {
+  async availability(_user: RequestUser): Promise<OrderLabelAvailability> {
     const carriers = this.registry.getLabelCapableCompanyIds();
     if (!this.config.get<boolean>('orderLabels.enabled')) {
       return { enabled: false, carriers: [] };
     }
-    if (user.role === Role.ADMIN) {
-      return { enabled: true, carriers };
-    }
-
-    const store = await this.storesService
-      .findByVendorIdOrThrow(user.id)
-      .catch(() => null);
-    if (!store) {
-      return { enabled: false, carriers: [] };
-    }
-
-    const enabled = this.isStoreAllowed(String(store._id));
-    return { enabled, carriers: enabled ? carriers : [] };
+    return { enabled: true, carriers };
   }
 
   async generate(
@@ -112,7 +100,6 @@ export class OrderLabelsService {
     this.artifact.assertConfigured();
 
     const loaded = await this.loadScopedOrders(requestedIds, user);
-    this.assertStoreEnabled(loaded.storeId);
 
     const skipped: OrderLabelSkippedEntry[] = [...loaded.skipped];
     const failed: Array<DeliveryLabelFailure & { orderId: string; companyId: string }> = [];
@@ -937,18 +924,6 @@ export class OrderLabelsService {
     if (!this.config.get<boolean>('orderLabels.enabled')) {
       throw new AppException(AppErrorCode.ORDER_LABEL_DISABLED);
     }
-  }
-
-  private assertStoreEnabled(storeId: string): void {
-    if (!storeId) return;
-    if (!this.isStoreAllowed(storeId)) {
-      throw new AppException(AppErrorCode.ORDER_LABEL_DISABLED);
-    }
-  }
-
-  private isStoreAllowed(storeId: string): boolean {
-    const allowlist = this.config.get<string[]>('orderLabels.storeAllowlist') ?? [];
-    return allowlist.length === 0 || allowlist.includes(storeId);
   }
 
   private maxOrders(): number {

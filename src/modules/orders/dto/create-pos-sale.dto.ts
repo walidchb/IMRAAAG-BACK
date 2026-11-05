@@ -20,7 +20,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
  * identifies the SKU and the server prices it (variant override, then product price) exactly
  * as `CreateOrderDto` does, so a tampered `price` can never change what is charged.
  */
-class PosSaleItemDto {
+export class PosSaleItemDto {
   @ApiProperty({ description: 'Ordered variant id' })
   @IsString()
   @IsNotEmpty()
@@ -37,19 +37,35 @@ class PosSaleItemDto {
    * Accepted only so a client that echoes the catalog price is not rejected by the
    * `forbidNonWhitelisted` pipe. Deliberately ignored server-side.
    */
-  @ApiPropertyOptional({ description: 'Ignored — the server prices the line' })
+  @ApiPropertyOptional({ description: 'Ignored �?" the server prices the line' })
   @IsOptional()
   @IsNumber()
   @Min(0)
   price?: number;
+
+  /**
+   * Display-only hints carried by a parked sale so a resumed cart looks exactly as it was
+   * left. Ignored for pricing and stock, which are re-derived server-side.
+   */
+  @ApiPropertyOptional({ description: 'Display-only barcode of the variant' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  barcode?: string;
+
+  @ApiPropertyOptional({ description: 'Display-only availability when the sale was parked' })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  available?: number;
 }
 
 /**
  * The buyer of a walk-in sale. All fields optional: a POS sale is often anonymous, so the
- * order falls back to a "Walk-in" placeholder. There is deliberately no wilaya/commune —
+ * order falls back to a "De passage" placeholder. There is deliberately no wilaya/commune —
  * a POS sale is `pickup` and never shipped.
  */
-class PosSaleCustomerDto {
+export class PosSaleCustomerDto {
   @ApiPropertyOptional({ description: 'Customer name' })
   @IsOptional()
   @IsString()

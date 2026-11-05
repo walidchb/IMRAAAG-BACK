@@ -267,9 +267,20 @@ export class VariantsService {
     // the insert so a first option named "Default" is not blocked by the placeholder's key.
     await this.purgeAutoDefault(productId, storeId);
 
-    const nameEn = dto.nameEn?.trim();
-    const nameAr = dto.nameAr?.trim();
-    const nameFr = dto.nameFr?.trim();
+    let nameEn = dto.nameEn?.trim();
+    let nameAr = dto.nameAr?.trim();
+    let nameFr = dto.nameFr?.trim();
+    const incomingType = dto.type;
+
+    if (incomingType === 'color') {
+      nameEn = nameEn || 'Color';
+      nameAr = nameAr || 'لون';
+      nameFr = nameFr || 'Couleur';
+    } else if (incomingType === 'size') {
+      nameEn = nameEn || 'Size';
+      nameAr = nameAr || 'المقاس';
+      nameFr = nameFr || 'Taille';
+    }
 
     // The machine key is derived from the labels so the UI never has to invent slugs.
     // `key` stays the identity for every value/join row, so it is not editable later.
@@ -365,13 +376,28 @@ export class VariantsService {
 
   // ---------------------------------------------------------------- value CRUD
 
+  private fillValueLanguages(
+    en?: string | null,
+    ar?: string | null,
+    fr?: string | null,
+  ): { valueEn: string | null; valueAr: string | null; valueFr: string | null } {
+    const first = [en, ar, fr].find((v) => typeof v === 'string' && v.trim().length > 0);
+    const base = first?.trim() || null;
+    return {
+      valueEn: en?.trim() ? en.trim() : base,
+      valueAr: ar?.trim() ? ar.trim() : base,
+      valueFr: fr?.trim() ? fr.trim() : base,
+    };
+  }
+
   async createValue(productId: string, storeId: Types.ObjectId, optionId: string, dto: CreateOptionValueDto) {
     await this.assertProductInStore(productId, storeId);
     const option = await this.requireOption(optionId, productId, storeId);
 
-    const valueEn = dto.valueEn?.trim();
-    const valueAr = dto.valueAr?.trim();
-    const valueFr = dto.valueFr?.trim();
+    const filled = this.fillValueLanguages(dto.valueEn, dto.valueAr, dto.valueFr);
+    const valueEn = filled.valueEn;
+    const valueAr = filled.valueAr;
+    const valueFr = filled.valueFr;
 
     // The machine value is derived from the labels so the UI never has to invent slugs;
     // a caller may still pass an explicit machine value for legacy/scripting use.
@@ -434,9 +460,17 @@ export class VariantsService {
     }
 
     const update: Record<string, any> = {};
-    if (dto.valueEn !== undefined) update.valueEn = dto.valueEn;
-    if (dto.valueAr !== undefined) update.valueAr = dto.valueAr;
-    if (dto.valueFr !== undefined) update.valueFr = dto.valueFr;
+    const hasValueLangUpdate = dto.valueEn !== undefined || dto.valueAr !== undefined || dto.valueFr !== undefined;
+    if (hasValueLangUpdate) {
+      const filled = this.fillValueLanguages(
+        dto.valueEn !== undefined ? dto.valueEn : value.valueEn,
+        dto.valueAr !== undefined ? dto.valueAr : value.valueAr,
+        dto.valueFr !== undefined ? dto.valueFr : value.valueFr,
+      );
+      if (dto.valueEn !== undefined) update.valueEn = filled.valueEn;
+      if (dto.valueAr !== undefined) update.valueAr = filled.valueAr;
+      if (dto.valueFr !== undefined) update.valueFr = filled.valueFr;
+    }
     if (dto.color !== undefined) {
       update.color = option.type === 'color' ? this.normalizeColor(dto.color) : null;
     }
@@ -2366,10 +2400,10 @@ private mapDuplicateErrors(err: any, context: Record<string, unknown> = {}): voi
     }
     throw err;
   }
-
-  /** Resolves the canonical write/read value for `type` with a legacy tolerance. */
+  /** Resolves the canonical write/read value for `type` with a legacy tolerance.
+   */
   private optionTypeOf(option: { type?: string | null; displayType?: string | null }): OptionType {
-    if (option.type === 'color' || option.type === 'text') return option.type;
+    if (option.type === 'color' || option.type === 'text' || option.type === 'size') return option.type;
     return option.displayType === 'swatch' ? 'color' : 'text';
   }
 

@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Order, OrderSchema } from './schemas/order.schema';
 import { OrderStatus, OrderStatusSchema } from './schemas/order-status.schema';
 import { Counter, CounterSchema } from './schemas/counter.schema';
+import { PosHold, PosHoldSchema } from './schemas/pos-hold.schema';
 import { Product, ProductSchema } from '../products/schemas/product.schema';
 import { OrdersController } from './orders.controller';
 import { OrderStatusesController } from './order-statuses.controller';
@@ -20,6 +21,7 @@ import { InventoryModule } from '../inventory/inventory.module';
       { name: Order.name, schema: OrderSchema },
       { name: OrderStatus.name, schema: OrderStatusSchema },
       { name: Counter.name, schema: CounterSchema },
+      { name: PosHold.name, schema: PosHoldSchema },
       { name: Product.name, schema: ProductSchema },
     ]),
     forwardRef(() => DeliveryModule),

@@ -225,7 +225,6 @@ async function runLive() {
 
   header('1. Configuration');
   console.log(`  ORDER_LABELS_ENABLED=${process.env.ORDER_LABELS_ENABLED ?? '(unset)'}`);
-  console.log(`  ORDER_LABELS_STORE_ALLOWLIST=${process.env.ORDER_LABELS_STORE_ALLOWLIST || '(empty)'}`);
   console.log(`  encryptionKey=${encryptionKey ? 'set' : '(unset - credentials read as stored)'}`);
   console.log(`  base=${BASE_URL}`);
 

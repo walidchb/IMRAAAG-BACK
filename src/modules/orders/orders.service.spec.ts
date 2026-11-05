@@ -4,6 +4,7 @@ import { Types } from 'mongoose';
 import { OrdersService, RequestUser } from './orders.service';
 import { Order } from './schemas/order.schema';
 import { Counter } from './schemas/counter.schema';
+import { PosHold } from './schemas/pos-hold.schema';
 import { Product } from '../products/schemas/product.schema';
 import { DeliveryService } from '../delivery/delivery.service';
 import { DeliveryFeesService } from '../delivery-fees/delivery-fees.service';
@@ -115,6 +116,7 @@ describe('OrdersService', () => {
 
   let orderModel: any;
   let counterModel: any;
+  let posHoldModel: any;
   let productModel: any;
   let deliveryService: any;
   let deliveryFeesService: any;
@@ -143,6 +145,17 @@ describe('OrdersService', () => {
     };
 
     counterModel = { findOneAndUpdate: jest.fn(), find: jest.fn() };
+    posHoldModel = {
+      findOne: jest.fn().mockReturnValue(query(undefined)),
+      findOneAndUpdate: jest.fn(),
+      findOneAndDelete: jest.fn(),
+      find: jest.fn(),
+      startSession: jest.fn(() => {
+        const s = makeSession();
+        sessions.push(s);
+        return s;
+      }),
+    };
     productModel = { find: jest.fn(), findById: jest.fn() };
 
     deliveryService = {
@@ -197,6 +210,7 @@ describe('OrdersService', () => {
         OrdersService,
         { provide: getModelToken(Order.name), useValue: orderModel },
         { provide: getModelToken(Counter.name), useValue: counterModel },
+        { provide: getModelToken(PosHold.name), useValue: posHoldModel },
         { provide: getModelToken(Product.name), useValue: productModel },
         { provide: DeliveryService, useValue: deliveryService },
         { provide: DeliveryFeesService, useValue: deliveryFeesService },
@@ -1364,6 +1378,10 @@ describe('OrdersService', () => {
             provide: getModelToken(Counter.name),
             useValue: { findOneAndUpdate: jest.fn().mockReturnValue(query({ seq: 42 })) },
           },
+          {
+            provide: getModelToken(PosHold.name),
+            useValue: { findOne: jest.fn().mockReturnValue(query(undefined)) },
+          },
           { provide: getModelToken(Product.name), useValue: productModel },
           {
             provide: DeliveryService,
@@ -1739,16 +1757,23 @@ describe('OrdersService', () => {
     // and ledger effects are stubbed so the test asserts the *ordering and atomicity contract*
     // the service enforces rather than re-testing the reservation engine.
     let orderModel: any;
+    let posHoldModel: any;
     let productModel: any;
     let deliveryService: any;
     let storesService: any;
-    let reservations: { reserve: jest.Mock; consume: jest.Mock };
+    let reservations: {
+      reserve: jest.Mock;
+      consume: jest.Mock;
+      release: jest.Mock;
+      reconcileEditedLines: jest.Mock;
+    };
     let variantsService: { snapshotsForVariants: jest.Mock };
     let sessions: any[];
 
     const PRODUCT_A = new Types.ObjectId();
     const VARIANT_A = new Types.ObjectId();
     const VARIANT_B = new Types.ObjectId();
+    const HOLD_ID = new Types.ObjectId();
     const STORE = { _id: STORE_ID, vendorEmail: 'store@imraaah.com' };
 
     const snapshot = (variantId: Types.ObjectId, over: Record<string, any> = {}) => ({
@@ -1777,6 +1802,21 @@ describe('OrdersService', () => {
         return s;
       });
 
+      posHoldModel = jest.fn().mockImplementation((doc: any) => ({
+        ...doc,
+        _id: HOLD_ID,
+        save: jest.fn().mockResolvedValue({ ...doc, _id: HOLD_ID }),
+      }));
+      posHoldModel.findOne = jest.fn().mockReturnValue(query(undefined));
+      posHoldModel.findOneAndUpdate = jest.fn();
+      posHoldModel.findOneAndDelete = jest.fn();
+      posHoldModel.find = jest.fn();
+      posHoldModel.startSession = jest.fn(() => {
+        const s = makeSession();
+        sessions.push(s);
+        return s;
+      });
+
       productModel = {
         find: jest.fn().mockReturnValue(query([{ _id: PRODUCT_A, price: 250, nameEn: 'Widget' }])),
       };
@@ -1791,6 +1831,8 @@ describe('OrdersService', () => {
       reservations = {
         reserve: jest.fn().mockResolvedValue(undefined),
         consume: jest.fn().mockResolvedValue(undefined),
+        release: jest.fn().mockResolvedValue(undefined),
+        reconcileEditedLines: jest.fn().mockResolvedValue(undefined),
       };
 
       variantsService = {
@@ -1807,6 +1849,7 @@ describe('OrdersService', () => {
             provide: getModelToken(Counter.name),
             useValue: { findOneAndUpdate: jest.fn().mockReturnValue(query({ seq: 7 })) },
           },
+          { provide: getModelToken(PosHold.name), useValue: posHoldModel },
           { provide: getModelToken(Product.name), useValue: productModel },
           { provide: DeliveryService, useValue: deliveryService },
           {
@@ -1926,10 +1969,10 @@ describe('OrdersService', () => {
       expect(line.originalPrice).toBeNull();
     });
 
-    it('falls back to a Walk-in placeholder when no customer is supplied', async () => {
+    it('falls back to a De passage placeholder when no customer is supplied', async () => {
       await service.createImmediateSale(posDto(), VENDOR_USER);
 
-      expect(orderModel.mock.calls[0][0].customer).toMatchObject({ name: 'Walk-in', phone: '' });
+      expect(orderModel.mock.calls[0][0].customer).toMatchObject({ name: 'De passage', phone: '' });
     });
 
     it('refuses a line whose product vanished instead of ringing it up at zero', async () => {
@@ -2030,6 +2073,277 @@ describe('OrdersService', () => {
       const ctxArg = reservations.reserve.mock.calls[0][0];
       expect(ctxArg.items).toHaveLength(2);
       expect(ctxArg.items[0].lineId).not.toBe(ctxArg.items[1].lineId);
+    });
+  });
+
+  describe('POS holds — a parked sale reserves its stock', () => {
+    // These live in the POS describe's harness: `posHoldModel` is callable so `new
+    // posHoldModel(doc)` works, and the reservation engine is stubbed so the assertions are
+    // about *when* reserve/release/reconcile/consume run and on which identity.
+    let orderModel: any;
+    let posHoldModel: any;
+    let reservations: any;
+    let storesService: any;
+    let sessions: any[];
+
+    const PRODUCT = new Types.ObjectId();
+    const VARIANT = new Types.ObjectId();
+    const HOLD_ID = new Types.ObjectId();
+    const HOLD_STORE = { _id: STORE_ID, vendorEmail: 'store@imraaah.com' };
+
+    const holdDoc = (over: Record<string, any> = {}) => ({
+      _id: HOLD_ID,
+      orderNo: '000007',
+      storeId: STORE_ID,
+      items: [
+        {
+          variantId: VARIANT.toString(),
+          productId: PRODUCT.toString(),
+          productName: 'Widget',
+          quantity: 2,
+          price: 250,
+          originalPrice: null,
+          lineId: new Types.ObjectId().toHexString(),
+          sku: 'SKU-1',
+          variantSnapshot: { options: [], label: 'Red / M' },
+        },
+      ],
+      total: 500,
+      customer: { name: 'Ali' },
+      note: '',
+      createdAt: new Date('2026-01-01T10:00:00.000Z'),
+      updatedAt: new Date('2026-01-01T10:00:00.000Z'),
+      ...over,
+    });
+
+    const snapshot = () => ({
+      variantId: VARIANT.toString(),
+      productId: PRODUCT.toString(),
+      storeId: STORE_ID.toString(),
+      sku: 'SKU-1',
+      priceOverride: null,
+      image: null,
+      isActive: true,
+      snapshot: { options: [], label: 'Red / M' },
+    });
+
+    beforeEach(async () => {
+      sessions = [];
+
+      orderModel = jest.fn().mockImplementation((doc: any) => ({
+        ...doc,
+        save: jest.fn().mockResolvedValue({ ...doc, toObject: () => ({ ...doc }) }),
+      }));
+      orderModel.findOne = jest.fn().mockReturnValue(query(undefined));
+      orderModel.startSession = jest.fn(() => {
+        const s = makeSession();
+        sessions.push(s);
+        return s;
+      });
+
+      posHoldModel = jest.fn().mockImplementation((doc: any) => ({
+        ...doc,
+        _id: HOLD_ID,
+        save: jest.fn().mockResolvedValue({ ...doc, _id: HOLD_ID }),
+      }));
+      posHoldModel.findOne = jest.fn().mockReturnValue(query(undefined));
+      posHoldModel.findOneAndUpdate = jest.fn();
+      posHoldModel.findOneAndDelete = jest.fn();
+      posHoldModel.find = jest.fn();
+      posHoldModel.startSession = jest.fn(() => {
+        const s = makeSession();
+        sessions.push(s);
+        return s;
+      });
+
+      storesService = {
+        findByVendorIdOrThrow: jest.fn().mockResolvedValue(HOLD_STORE),
+        incrementOrderCount: jest.fn().mockResolvedValue(undefined),
+      };
+      reservations = {
+        reserve: jest.fn().mockResolvedValue(undefined),
+        consume: jest.fn().mockResolvedValue(undefined),
+        release: jest.fn().mockResolvedValue(undefined),
+        reconcileEditedLines: jest.fn().mockResolvedValue(undefined),
+      };
+
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          OrdersService,
+          { provide: getModelToken(Order.name), useValue: orderModel },
+          {
+            provide: getModelToken(Counter.name),
+            useValue: { findOneAndUpdate: jest.fn().mockReturnValue(query({ seq: 7 })) },
+          },
+          { provide: getModelToken(PosHold.name), useValue: posHoldModel },
+          {
+            provide: getModelToken(Product.name),
+            useValue: {
+              find: jest.fn().mockReturnValue(query([{ _id: PRODUCT, price: 250, nameEn: 'Widget' }])),
+            },
+          },
+          { provide: DeliveryService, useValue: { createDeliveryForOrder: jest.fn() } },
+          { provide: DeliveryFeesService, useValue: { getFeeByStoreId: jest.fn() } },
+          {
+            provide: OrderStatusesService,
+            useValue: { getBySlug: jest.fn(async (slug: string) => statusConfig(slug)) },
+          },
+          { provide: StoresService, useValue: storesService },
+          { provide: ReservationsService, useValue: reservations },
+          {
+            provide: VariantsService,
+            useValue: {
+              snapshotsForVariants: jest
+                .fn()
+                .mockResolvedValue(new Map([[VARIANT.toString(), snapshot()]])),
+            },
+          },
+          { provide: AuditService, useValue: { record: jest.fn().mockResolvedValue(undefined) } },
+        ],
+      }).compile();
+
+      service = module.get<OrdersService>(OrdersService);
+    });
+
+    const holdDto = (over: Record<string, any> = {}) =>
+      ({ items: [{ variantId: VARIANT.toString(), quantity: 2 }], ...over }) as any;
+
+    it('parks the cart, allocates the order number and reserves under the hold id', async () => {
+      const view = await service.createPosHold(holdDto(), VENDOR_USER);
+
+      expect(view).toMatchObject({
+        id: HOLD_ID.toString(),
+        storeId: STORE_ID.toString(),
+        orderNo: '000007',
+        total: 500,
+      });
+      expect(view.lines[0]).toMatchObject({
+        variantId: VARIANT.toString(),
+        name: 'Widget',
+        label: 'Red / M',
+        quantity: 2,
+        available: 2,
+      });
+
+      expect(posHoldModel.mock.calls[0][0]).toMatchObject({
+        storeId: STORE_ID,
+        orderNo: '000007',
+        total: 500,
+      });
+      const ctx = reservations.reserve.mock.calls[0][0];
+      expect(ctx).toMatchObject({ orderNo: '000007', storeId: STORE_ID });
+      expect(String(ctx.orderId)).toBe(HOLD_ID.toString());
+      // Probe session is discarded; the real one drives the hold write and its reservation.
+      expect(sessions[0].withTransaction).not.toHaveBeenCalled();
+      expect(reservations.reserve.mock.calls[0][2]).toBe(sessions[1]);
+    });
+
+    it('aborts the hold write when the stock cannot be reserved', async () => {
+      reservations.reserve.mockRejectedValueOnce(
+        new AppException(AppErrorCode.INSUFFICIENT_STOCK, { variantId: VARIANT.toString() }),
+      );
+
+      await expect(service.createPosHold(holdDto(), VENDOR_USER)).rejects.toMatchObject({
+        errorCode: AppErrorCode.INSUFFICIENT_STOCK,
+      });
+      expect(sessions[1].abortTransaction).toHaveBeenCalled();
+    });
+
+    it('reconciles the reservation when a parked cart is edited', async () => {
+      posHoldModel.findOne.mockReturnValue(query(holdDoc()));
+      posHoldModel.findOneAndUpdate.mockResolvedValue(
+        holdDoc({ total: 750, items: [{ ...holdDoc().items[0], quantity: 3 }] }),
+      );
+
+      await service.updatePosHold(
+        HOLD_ID.toString(),
+        holdDto({ items: [{ variantId: VARIANT.toString(), quantity: 3 }] }),
+        VENDOR_USER,
+      );
+
+      expect(posHoldModel.findOneAndUpdate).toHaveBeenCalledWith(
+        { _id: HOLD_ID, storeId: STORE_ID },
+        expect.objectContaining({ $set: expect.objectContaining({ total: 750 }) }),
+        expect.objectContaining({ new: true, session: sessions[1] }),
+      );
+      expect(reservations.reconcileEditedLines).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderId: HOLD_ID,
+          items: [expect.objectContaining({ quantity: 3 })],
+        }),
+        expect.anything(),
+        sessions[1],
+      );
+    });
+
+    it('releases the reservation when a parked sale is discarded', async () => {
+      posHoldModel.findOne.mockReturnValue(query(holdDoc()));
+      posHoldModel.findOneAndDelete.mockResolvedValue(holdDoc());
+
+      await expect(service.deletePosHold(HOLD_ID.toString(), VENDOR_USER)).resolves.toEqual({
+        id: HOLD_ID.toString(),
+        deleted: true,
+      });
+
+      expect(posHoldModel.findOneAndDelete).toHaveBeenCalledWith(
+        { _id: HOLD_ID, storeId: STORE_ID },
+        { session: sessions[1] },
+      );
+      expect(reservations.release).toHaveBeenCalledWith(
+        expect.objectContaining({ orderId: HOLD_ID, orderNo: '000007' }),
+        expect.anything(),
+        sessions[1],
+      );
+    });
+
+    it('completes a hold into the same order identity, reconciles and consumes', async () => {
+      posHoldModel.findOne.mockReturnValue(query(holdDoc()));
+      posHoldModel.findOneAndDelete.mockResolvedValue(holdDoc());
+
+      await service.completePosHold(HOLD_ID.toString(), holdDto(), VENDOR_USER);
+
+      const doc = orderModel.mock.calls[0][0];
+      expect(doc).toMatchObject({
+        _id: HOLD_ID,
+        orderNo: '000007',
+        source: 'POS',
+        shippingMethod: 'pickup',
+        paymentMethod: 'CASH',
+        total: 500,
+      });
+      expect(String(doc.items[0].variantId)).toBe(VARIANT.toString());
+      const orderSession = sessions[1];
+      expect(reservations.reconcileEditedLines).toHaveBeenCalledWith(
+        expect.objectContaining({ orderId: HOLD_ID, orderNo: '000007' }),
+        expect.anything(),
+        orderSession,
+      );
+      expect(reservations.consume).toHaveBeenCalledWith(
+        expect.objectContaining({ orderId: HOLD_ID, orderNo: '000007' }),
+        expect.anything(),
+        orderSession,
+      );
+      expect(storesService.incrementOrderCount).toHaveBeenCalledWith(HOLD_STORE.vendorEmail, 1);
+    });
+
+    it('lists only the session store’s holds, newest first', async () => {
+      posHoldModel.find.mockReturnValue(query([holdDoc()]));
+
+      const result = await service.listPosHolds(VENDOR_USER);
+
+      expect(posHoldModel.find).toHaveBeenCalledWith({ storeId: STORE_ID });
+      const q = posHoldModel.find.mock.results[0].value;
+      expect(q.sort).toHaveBeenCalledWith({ createdAt: -1 });
+      expect(result.data[0]).toMatchObject({ id: HOLD_ID.toString(), total: 500 });
+    });
+
+    it('refuses a hold that belongs to another store', async () => {
+      posHoldModel.findOne.mockReturnValue(query(null));
+
+      await expect(
+        service.completePosHold(HOLD_ID.toString(), holdDto(), VENDOR_USER),
+      ).rejects.toMatchObject({ errorCode: AppErrorCode.POS_HOLD_NOT_FOUND });
+      expect(reservations.consume).not.toHaveBeenCalled();
     });
   });
 

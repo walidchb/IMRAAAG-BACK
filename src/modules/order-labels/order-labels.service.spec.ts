@@ -124,7 +124,6 @@ function setup(docs: any[] = [], harnessHandlers: Record<string, any> = {}): Har
   };
   const configValues: Record<string, unknown> = {
     'orderLabels.enabled': true,
-    'orderLabels.storeAllowlist': [],
     'orderLabels.maxOrders': 100,
     'orderLabels.renderConcurrency': 2,
     'orderLabels.jobTimeoutMs': 90000,
@@ -171,20 +170,14 @@ describe('OrderLabelsService.availability', () => {
     expect(harness.stores.findByVendorIdOrThrow).not.toHaveBeenCalled();
   });
 
-  it('reflects the allowlist for a vendor store', async () => {
+  it('enables label printing for every vendor when the global flag is on', async () => {
     const harness = setup();
-    harness.configValues['orderLabels.storeAllowlist'] = [OTHER_STORE_ID];
 
-    await expect(harness.service.availability(vendor)).resolves.toEqual({
-      enabled: false,
-      carriers: [],
-    });
-
-    harness.configValues['orderLabels.storeAllowlist'] = [STORE_ID];
     await expect(harness.service.availability(vendor)).resolves.toEqual({
       enabled: true,
       carriers: LABEL_CARRIERS,
     });
+    expect(harness.stores.findByVendorIdOrThrow).not.toHaveBeenCalled();
   });
 
   it('reports availability and label-capable carriers to an admin', async () => {
@@ -622,7 +615,7 @@ describe('OrderLabelsService.generate', () => {
     expect(harness.orderModel.find).not.toHaveBeenCalled();
   });
 
-  it('refuses to generate when the feature or store allowlist is disabled', async () => {
+  it('refuses to generate only when the global flag is disabled', async () => {
     const harness = setup([order(1)]);
     harness.configValues['orderLabels.enabled'] = false;
 
@@ -635,13 +628,12 @@ describe('OrderLabelsService.generate', () => {
     expect(harness.stores.findByVendorIdOrThrow).not.toHaveBeenCalled();
 
     harness.configValues['orderLabels.enabled'] = true;
-    harness.configValues['orderLabels.storeAllowlist'] = [OTHER_STORE_ID];
     await expect(
       harness.service.generate(
         { ids: [orderId(1)], format: '10x15', grouping: 'combined' },
         vendor,
       ),
-    ).rejects.toMatchObject({ errorCode: AppErrorCode.ORDER_LABEL_DISABLED });
+    ).resolves.toMatchObject({ summary: { requested: 1, printed: 1 } });
   });
 });
 

@@ -14,7 +14,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
-export const OPTION_TYPES = ['text', 'color'] as const;
+export const OPTION_TYPES = ['text', 'color', 'size'] as const;
 export type OptionType = (typeof OPTION_TYPES)[number];
 
 /**

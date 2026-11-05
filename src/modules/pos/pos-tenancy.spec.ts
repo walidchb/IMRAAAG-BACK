@@ -7,6 +7,7 @@ import { StoresService } from '../stores/stores.service';
 import { OrdersService, RequestUser } from '../orders/orders.service';
 import { Order } from '../orders/schemas/order.schema';
 import { Counter } from '../orders/schemas/counter.schema';
+import { PosHold } from '../orders/schemas/pos-hold.schema';
 import { Product } from '../products/schemas/product.schema';
 import { ProductVariant } from '../inventory/schemas/product-variant.schema';
 import { InventoryBalance } from '../inventory/schemas/inventory-balance.schema';
@@ -280,6 +281,10 @@ describe('POS tenancy isolation', () => {
           {
             provide: getModelToken(Counter.name),
             useValue: { findOneAndUpdate: jest.fn().mockReturnValue(query({ seq: 1 })) },
+          },
+          {
+            provide: getModelToken(PosHold.name),
+            useValue: { findOne: jest.fn().mockReturnValue(query(undefined)) },
           },
           {
             provide: getModelToken(Product.name),

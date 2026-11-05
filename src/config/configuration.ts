@@ -150,15 +150,11 @@
 
   /**
    * Carrier shipping-label printing. Off by default: it renders carrier HTML/PDFs through a
-   * browser and writes expiring artifacts to R2, so it must only be enabled after a reviewed
-   * test-store rollout.
+   * browser and writes expiring artifacts to R2. `enabled` is the only switch; when it is on,
+   * every store with label-capable carrier credentials can use the feature.
    */
   orderLabels: {
     enabled: process.env.ORDER_LABELS_ENABLED === 'true',
-    storeAllowlist: (process.env.ORDER_LABELS_STORE_ALLOWLIST || '')
-      .split(',')
-      .map((v) => v.trim())
-      .filter(Boolean),
     maxOrders: parseInt(process.env.ORDER_LABELS_MAX_ORDERS || '100', 10),
     renderConcurrency: parseInt(process.env.ORDER_LABELS_RENDER_CONCURRENCY || '2', 10),
     carrierConcurrency: parseInt(process.env.ORDER_LABELS_CARRIER_CONCURRENCY || '5', 10),

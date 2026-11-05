@@ -4,13 +4,13 @@ import { Document, Types } from 'mongoose';
 export type ProductOptionDocument = ProductOption & Document;
 
 /**
- * The two supported variant types.
- * `color` means the option's values are shown as swatches; `text` renders plain labels.
+ * The supported variant types.
+ * `color` means the option's values are shown as swatches; `size` is handled like color with auto names.
  * Presentation only - the option's identity is the `key` and its values' multilingual names.
  */
-export type OptionType = 'text' | 'color';
+export type OptionType = 'text' | 'color' | 'size';
 
-const OPTION_TYPES = ['text', 'color'] as const;
+const OPTION_TYPES = ['text', 'color', 'size'] as const;
 
 @Schema({ timestamps: true })
 export class ProductOption {
@@ -30,8 +30,8 @@ export class ProductOption {
    */
   @Prop({ type: String, required: true, trim: true })
   key: string;
-
-  /** `text` or `color`. See `OptionType`. */
+  /** `text`, `color`, or `size`. See `OptionType`.
+   */
   @Prop({ type: String, default: 'text', enum: OPTION_TYPES })
   type: OptionType;
 

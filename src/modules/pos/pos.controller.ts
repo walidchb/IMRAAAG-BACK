@@ -1,4 +1,15 @@
-import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Types } from 'mongoose';
@@ -8,6 +19,7 @@ import { Role } from '../../common/constants/roles.enum';
 import { StoresService } from '../stores/stores.service';
 import { OrdersService } from '../orders/orders.service';
 import { CreatePosSaleDto } from '../orders/dto/create-pos-sale.dto';
+import { CreatePosHoldDto } from '../orders/dto/pos-hold.dto';
 import { PosService } from './pos.service';
 import { PosProductQueryDto } from './dto/pos.dto';
 
@@ -51,6 +63,47 @@ export class PosController {
   @Throttle({ default: { limit: 60, ttl: 60000 } })
   async createSale(@Body() dto: CreatePosSaleDto, @Req() req: any) {
     return this.ordersService.createImmediateSale(dto, req.user);
+  }
+
+  /** Parked sales for this store, newest first. */
+  @Get('holds')
+  async listHolds(@Req() req: any) {
+    return this.ordersService.listPosHolds(req.user);
+  }
+
+  /**
+   * Parks a sale at the till. The stock is reserved immediately, so the units cannot be sold
+   * to another customer while the cart is held.
+   */
+  @Post('holds')
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
+  async createHold(@Body() dto: CreatePosHoldDto, @Req() req: any) {
+    return this.ordersService.createPosHold(dto, req.user);
+  }
+
+  /** Replaces a parked sale's lines and reconciles the reservation in one transaction. */
+  @Patch('holds/:id')
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
+  async updateHold(@Param('id') id: string, @Body() dto: CreatePosHoldDto, @Req() req: any) {
+    return this.ordersService.updatePosHold(id, dto, req.user);
+  }
+
+  /** Discards a parked sale and releases the stock it was holding. */
+  @Delete('holds/:id')
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
+  async deleteHold(@Param('id') id: string, @Req() req: any) {
+    return this.ordersService.deletePosHold(id, req.user);
+  }
+
+  /** Completes a parked sale into a delivered POS order, consuming its reservation. */
+  @Post('holds/:id/complete')
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
+  async completeHold(
+    @Param('id') id: string,
+    @Body() dto: CreatePosSaleDto,
+    @Req() req: any,
+  ) {
+    return this.ordersService.completePosHold(id, dto, req.user);
   }
 
   /**

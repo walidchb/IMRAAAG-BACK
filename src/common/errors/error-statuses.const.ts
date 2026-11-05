@@ -219,4 +219,10 @@ export const ERROR_HTTP_STATUS: Record<string, number> = {
   [AppErrorCode.ORDER_ALREADY_RELEASED]: HttpStatus.CONFLICT,
   // ─── Inventory lookup ───
   [AppErrorCode.INVENTORY_BARCODE_NOT_FOUND]: HttpStatus.NOT_FOUND,
+
+  // Point of Sale
+  [AppErrorCode.POS_BARCODE_NOT_FOUND]: HttpStatus.NOT_FOUND,
+  [AppErrorCode.POS_ITEM_OUT_OF_STOCK]: HttpStatus.CONFLICT,
+  [AppErrorCode.POS_EMPTY_CART]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.POS_HOLD_NOT_FOUND]: HttpStatus.NOT_FOUND,
 };
