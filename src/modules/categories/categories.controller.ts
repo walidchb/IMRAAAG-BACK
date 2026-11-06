@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Delete, Req } from '@nestjs/common';
+import { Controller, Get, Post, Param, Delete, Req, Header } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { CategoriesService } from './categories.service';
@@ -23,6 +23,7 @@ export class CategoriesController {
 
   @Public()
   @Get()
+  @Header('Cache-Control', 'no-store')
   @ApiOperation({ summary: 'List all categories with subcategories' })
   @ApiResponse({ status: 200, description: 'List of categories' })
   findAll() {

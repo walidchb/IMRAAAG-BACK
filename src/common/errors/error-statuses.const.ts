@@ -163,6 +163,7 @@ export const ERROR_HTTP_STATUS: Record<string, number> = {
   [AppErrorCode.AUDIT_UNAUTHORIZED]: HttpStatus.FORBIDDEN,
 
   // ─── Infrastructure ───
+  [AppErrorCode.RATE_LIMIT_EXCEEDED]: HttpStatus.TOO_MANY_REQUESTS,
   [AppErrorCode.INTERNAL_SERVER_ERROR]: HttpStatus.INTERNAL_SERVER_ERROR,
   [AppErrorCode.VALIDATION_FAILED]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.VALIDATION_MIN_LENGTH]: HttpStatus.BAD_REQUEST,
