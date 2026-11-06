@@ -15,7 +15,9 @@
     password: process.env.SMTP_PASSWORD || '',
     from: process.env.EMAIL_FROM || 'noreply@imraaah.ma',
   },
-  frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3001',
+  frontendUrl:
+    process.env.FRONTEND_URL ||
+    (process.env.NODE_ENV === 'production' ? 'https://vendor.imraaah.com' : 'http://localhost:3001'),
   environment: process.env.NODE_ENV || 'development',
   deliveryEncryptionKey: process.env.DELIVERY_ENCRYPTION_KEY || '',
   r2: {
