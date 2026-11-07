@@ -64,6 +64,18 @@ async function bootstrap() {
   // Cookie parser (for reading JWT from cookies)
   app.use(cookieParser());
 
+  // The CORS response varies per `Origin`, but shared caches (Vercel's CDN in particular) do
+  // not reliably include `Vary: Origin` in their cache key. A response approved for one frontend
+  // can then be replayed to another, which the browser rejects with
+  // "CORS header 'Access-Control-Allow-Origin' does not match '<other origin>'". Never let a
+  // shared cache store an API response; endpoints that need caching set their own headers later.
+  // Registered before `enableCors` so preflight (OPTIONS) responses are covered too.
+  app.use((_req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('Vary', 'Origin');
+    next();
+  });
+
   // Enable CORS. `CORS_ORIGINS` is authoritative when set; otherwise production falls back to
   // the known deployed frontends so a missing variable cannot take the API down. Local
   // development additionally accepts any localhost/127.0.0.1 origin (never in production).
