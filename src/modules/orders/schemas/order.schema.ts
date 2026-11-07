@@ -301,7 +301,6 @@ OrderSchema.pre('validate', function () {
 OrderSchema.index({ orderNo: 1 });
 OrderSchema.index({ vendorEmail: 1 });
 OrderSchema.index({ storeId: 1 });
-OrderSchema.index({ vendorId: 1, storeId: 1 }, { unique: true, sparse: true });
 OrderSchema.index({ source: 1 });
 OrderSchema.index({ 'status.slug': 1 });
 OrderSchema.index({ createdAt: -1 });
