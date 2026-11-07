@@ -76,9 +76,11 @@ async function bootstrap() {
     next();
   });
 
-  // Enable CORS. `CORS_ORIGINS` is authoritative when set; otherwise production falls back to
-  // the known deployed frontends so a missing variable cannot take the API down. Local
-  // development additionally accepts any localhost/127.0.0.1 origin (never in production).
+  // Enable CORS. `CORS_ORIGINS` adds extra origins (previews, custom domains); otherwise
+  // production falls back to the known deployed frontends so a missing variable cannot take the
+  // API down. Any `https://*.imraaah.com` subdomain is always accepted (the apex and every
+  // frontend we own), and local development additionally accepts any localhost/127.0.0.1
+  // origin (never in production).
   const productionOrigins = [
     'https://imraaah.com',
     'https://www.imraaah.com',
@@ -94,13 +96,20 @@ async function bootstrap() {
   app.enableCors({
     origin: (origin, callback) => {
       const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin || '');
-      if (!origin || corsOrigins.includes(origin) || (!isProduction && isLocalhost)) {
+      const isImraaahDomain = /^https:\/\/(?:[a-z0-9-]+\.)*imraaah\.com$/i.test(origin || '');
+      if (
+        !origin ||
+        corsOrigins.includes(origin) ||
+        isImraaahDomain ||
+        (!isProduction && isLocalhost)
+      ) {
         callback(null, true);
       } else {
         callback(null, false);
       }
     },
     credentials: true,
+    maxAge: 86400,
   });
 
   // Global validation pipe

@@ -83,8 +83,21 @@ export class AllExceptionsFilter implements ExceptionFilter {
       }
     } else if (exception instanceof Error) {
       const isCastError = exception instanceof MongooseError.CastError;
+      const bodyParserError = exception as Error & {
+        type?: string;
+        status?: number;
+        statusCode?: number;
+      };
+      const isPayloadTooLarge =
+        bodyParserError.type === 'entity.too.large' ||
+        bodyParserError.status === HttpStatus.PAYLOAD_TOO_LARGE ||
+        bodyParserError.statusCode === HttpStatus.PAYLOAD_TOO_LARGE;
 
-      if (isCastError) {
+      if (isPayloadTooLarge) {
+        status = HttpStatus.PAYLOAD_TOO_LARGE;
+        message = 'Request body too large.';
+        error = 'Payload Too Large';
+      } else if (isCastError) {
         status = HttpStatus.BAD_REQUEST;
         message = 'Invalid ID format. Please provide a valid identifier.';
         error = 'Bad Request';
