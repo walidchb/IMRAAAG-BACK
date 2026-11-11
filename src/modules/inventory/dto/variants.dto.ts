@@ -180,6 +180,37 @@ export class UpdateOptionValueDto {
   isActive?: boolean;
 }
 
+/** One product-gallery image → option value link. `image: null` clears the link. */
+export class OptionValueImageAssignmentDto {
+  @ApiProperty({ description: 'Owning option of the value.' })
+  @IsString()
+  @IsNotEmpty()
+  optionId: string;
+
+  @ApiProperty({ description: 'Option value to link (or clear).' })
+  @IsString()
+  @IsNotEmpty()
+  valueId: string;
+
+  @ApiPropertyOptional({
+    nullable: true,
+    description:
+      'An exact product-gallery URL, or null/omitted to clear the link. Must belong to the product.',
+  })
+  @IsOptional()
+  @IsString()
+  image?: string | null;
+}
+
+export class SetOptionValueImagesDto {
+  @ApiProperty({ type: [OptionValueImageAssignmentDto] })
+  @IsArray()
+  @ArrayMaxSize(500)
+  @ValidateNested({ each: true })
+  @Type(() => OptionValueImageAssignmentDto)
+  assignments: OptionValueImageAssignmentDto[];
+}
+
 /** One row of the matrix preview the seller ticks. */
 export class PreviewCombinationDto {
   @ApiProperty({ description: 'Combination key of the row, from preview', example: 'a1b2...' })
@@ -298,7 +329,12 @@ export class UpdateVariantDto {
   @IsInt()
   lowStockThreshold?: number | null;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    deprecated: true,
+    description:
+      'Legacy per-variant image. Deprecated — buyers follow the product-gallery link on the option ' +
+      'value (`PATCH /products/:productId/option-value-images`) instead.',
+  })
   @IsOptional()
   @IsString()
   image?: string;

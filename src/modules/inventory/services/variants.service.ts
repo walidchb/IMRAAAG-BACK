@@ -38,6 +38,7 @@ import {
   OptionType,
   PreviewCombinationsDto,
   SelectedCombinationDto,
+  SetOptionValueImagesDto,
   UpdateOptionDto,
   UpdateOptionValueDto,
   UpdateVariantDto,
@@ -100,6 +101,7 @@ export interface VariantMatrix {
     name: { en: string; ar: string; fr: string };
     position: number;
     type: OptionType;
+    isDefault?: boolean;
     values: Array<{
       id: string;
       value: string;
@@ -109,6 +111,8 @@ export interface VariantMatrix {
       isActive: boolean;
       /** True when at least one live variant uses this value. */
       inUse: boolean;
+      /** Gallery image linked to this value, if any. */
+      image?: string | null;
     }>;
   }>;
   variants: MatrixRow[];
@@ -388,6 +392,170 @@ export class VariantsService {
       valueAr: ar?.trim() ? ar.trim() : base,
       valueFr: fr?.trim() ? fr.trim() : base,
     };
+  }
+
+  /**
+   * Links product-gallery images to option values, one image per value and one value per image
+   * on a product. `image: null` clears a link.
+   *
+   * The gallery is read from the product itself, so an image that is not in
+   * `[image, ...images]` is rejected rather than silently stored. Writes are transactional:
+   * every payload image is cleared from other values first, then the targets are set, so a
+   * move can never collide with the partial unique index. There is deliberately no sequential
+   * fallback - a deployment without transactions must not risk two values claiming one image.
+   */
+  async setOptionValueImages(
+    productId: string,
+    storeId: Types.ObjectId,
+    dto: SetOptionValueImagesDto,
+  ) {
+    const product = await this.assertProductInStore(productId, storeId);
+    const gallery = this.gallerySet(product);
+    const productObjectId = new Types.ObjectId(productId);
+
+    const assignments = (dto.assignments ?? []).map((assignment) => ({
+      optionId: String(assignment.optionId),
+      valueId: String(assignment.valueId),
+      image: this.normalizeOptionValueImage(assignment.image),
+    }));
+
+    if (assignments.length === 0) {
+      return { productId, updated: 0, assignments: [], clearedValueIds: [] };
+    }
+
+    const seenValues = new Set<string>();
+    const seenImages = new Set<string>();
+    for (const assignment of assignments) {
+      if (seenValues.has(assignment.valueId)) {
+        throw new AppException(AppErrorCode.OPTION_VALUE_IMAGE_DUPLICATE, {
+          valueId: assignment.valueId,
+        });
+      }
+      seenValues.add(assignment.valueId);
+
+      if (assignment.image) {
+        if (seenImages.has(assignment.image)) {
+          throw new AppException(AppErrorCode.OPTION_VALUE_IMAGE_DUPLICATE, {
+            image: assignment.image,
+          });
+        }
+        seenImages.add(assignment.image);
+        if (!gallery.has(assignment.image)) {
+          throw new AppException(AppErrorCode.OPTION_VALUE_IMAGE_NOT_IN_GALLERY, {
+            image: assignment.image,
+          });
+        }
+      }
+    }
+
+    const values = await this.valueModel
+      .find({ productId: productObjectId, storeId })
+      .exec();
+    const valueById = new Map(values.map((value) => [String(value._id), value]));
+
+    for (const assignment of assignments) {
+      const value = valueById.get(assignment.valueId);
+      if (!value || String(value.optionId) !== assignment.optionId) {
+        throw new AppException(AppErrorCode.OPTION_VALUE_NOT_FOUND, {
+          valueId: assignment.valueId,
+        });
+      }
+      if (assignment.image && value.isActive === false) {
+        throw new AppException(AppErrorCode.VALIDATION_INVALID_VALUE, {
+          field: 'image',
+          value: assignment.image,
+          reason: 'inactive_option_value',
+          valueId: assignment.valueId,
+        });
+      }
+    }
+
+    // Pre-existing links that this payload takes over. Computed before the transaction because
+    // `withTransaction` may retry the body.
+    const targetValueIds = new Set(assignments.map((assignment) => assignment.valueId));
+    const clearedValueIds = new Set<string>();
+    for (const assignment of assignments) {
+      if (!assignment.image) continue;
+      for (const value of values) {
+        const id = String(value._id);
+        if (id === assignment.valueId || targetValueIds.has(id)) continue;
+        if (String(value.image ?? '') === assignment.image) clearedValueIds.add(id);
+      }
+    }
+
+    const session = await this.startSession();
+    try {
+      await session.withTransaction(async () => {
+        for (const assignment of assignments) {
+          if (!assignment.image) continue;
+          await this.valueModel.updateMany(
+            {
+              productId: productObjectId,
+              storeId,
+              image: assignment.image,
+              _id: { $ne: new Types.ObjectId(assignment.valueId) },
+            },
+            { $set: { image: null } },
+            { session },
+          );
+        }
+        for (const assignment of assignments) {
+          await this.valueModel.updateOne(
+            {
+              _id: new Types.ObjectId(assignment.valueId),
+              productId: productObjectId,
+              storeId,
+            },
+            { $set: { image: assignment.image } },
+            { session },
+          );
+        }
+      });
+    } catch (err: any) {
+      if (err?.code === 11000) {
+        throw new AppException(AppErrorCode.OPTION_VALUE_IMAGE_DUPLICATE, {
+          image: err?.keyValue?.image ?? null,
+        });
+      }
+      throw err;
+    } finally {
+      await session.endSession();
+    }
+
+    return {
+      productId,
+      updated: assignments.length,
+      assignments,
+      clearedValueIds: [...clearedValueIds],
+    };
+  }
+
+  /**
+   * Clears value links for gallery URLs that left a product's gallery. Called after a product
+   * save; the caller logs failures rather than blocking the save.
+   */
+  async clearImageAssignments(
+    productId: string,
+    storeId: Types.ObjectId,
+    urls: Array<string | null | undefined>,
+  ): Promise<number> {
+    if (!Types.ObjectId.isValid(productId)) return 0;
+    const cleaned = [
+      ...new Set(
+        urls
+          .map((url) => (typeof url === 'string' ? url.trim() : ''))
+          .filter(Boolean),
+      ),
+    ];
+    if (cleaned.length === 0) return 0;
+
+    const result = await this.valueModel
+      .updateMany(
+        { productId: new Types.ObjectId(productId), storeId, image: { $in: cleaned } },
+        { $set: { image: null } },
+      )
+      .exec();
+    return result?.modifiedCount ?? 0;
   }
 
   async createValue(productId: string, storeId: Types.ObjectId, optionId: string, dto: CreateOptionValueDto) {
@@ -1150,6 +1318,7 @@ const affected = await this.affectedVariants(productId, storeId, value._id);
         name: { en: o.nameEn ?? o.key, ar: o.nameAr ?? o.key, fr: o.nameFr ?? o.key },
         position: o.position,
         type: this.optionTypeOf(o),
+        isDefault: !!o.isDefault,
         values: values
           .filter((v) => String(v.optionId) === String(o._id))
           .map((v) => ({
@@ -1160,6 +1329,7 @@ const affected = await this.affectedVariants(productId, storeId, value._id);
             position: v.position,
             isActive: v.isActive,
             inUse: inUse.has(String(v._id)),
+            image: v.image ?? null,
           })),
       })),
       variants: variants.map((v) => {
@@ -1217,7 +1387,7 @@ const affected = await this.affectedVariants(productId, storeId, value._id);
 async getPublicMatrix(productId: string) {
   const product = await this.productModel
     .findById(productId)
-    .select('_id storeId price published')
+    .select('_id storeId price published image images')
     .lean()
     .exec();
 
@@ -1229,6 +1399,7 @@ async getPublicMatrix(productId: string) {
   }
 
   const storeId = product.storeId as Types.ObjectId;
+  const gallery = this.gallerySet(product);
 
   const options = await this.optionModel
     .find({ productId: new Types.ObjectId(productId), storeId })
@@ -1284,6 +1455,7 @@ async getPublicMatrix(productId: string) {
           value: v.value,
           name: { en: v.valueEn ?? v.value, ar: v.valueAr ?? v.value, fr: v.valueFr ?? v.value },
           color: this.valueColorOf(v),
+          ...(v.image && gallery.has(v.image) ? { image: v.image } : {}),
         })),
     })),
     variants: variants.map((v) => {
@@ -1812,6 +1984,15 @@ async getAvailability(productId: string): Promise<{
     const variants = (await this.variantsForProduct(sourceProductId, storeId)).filter(
       (v) => !v.isDeleted,
     );
+    // The duplicate's gallery is copied from the source product, but only links whose URL is
+    // actually present there survive — and only once, so the target's unique index is safe.
+    const duplicateProduct = await this.productModel
+      .findById(newProductId)
+      .select('image images')
+      .lean()
+      .exec();
+    const targetGallery = this.gallerySet(duplicateProduct ?? {});
+    const usedImages = new Set<string>();
     const joins = variants.length
       ? await this.joinModel
           .find({ variantId: { $in: variants.map((v) => v._id) } })
@@ -1857,6 +2038,11 @@ async getAvailability(productId: string): Promise<{
 
         const valueIds = new Map<string, Types.ObjectId>();
         for (const value of values) {
+          const linkedImage =
+            value.image && targetGallery.has(value.image) && !usedImages.has(value.image)
+              ? value.image
+              : null;
+          if (linkedImage) usedImages.add(linkedImage);
           const created = new this.valueModel({
             storeId,
             productId,
@@ -1868,6 +2054,7 @@ async getAvailability(productId: string): Promise<{
             color: this.valueColorOf(value),
             position: value.position ?? 0,
             isActive: value.isActive ?? true,
+            image: linkedImage,
           });
           await created.save({ session });
           valueIds.set(String(value._id), created._id as Types.ObjectId);
@@ -1964,23 +2151,36 @@ async getAvailability(productId: string): Promise<{
     storeId: Types.ObjectId;
     price: number;
     originalPrice: number;
+    image?: string | null;
+    images?: string[];
   }> {
     const product = (await this.productModel
       .findById(productId)
       // `price`/`originalPrice` are read here, beside ownership, because the variant price
       // invariant (see `assertVariantPriceNotAboveInitial`) needs the product-level fallbacks.
-      .select('_id storeId price originalPrice')
+      .select('_id storeId price originalPrice image images')
       .lean()
       .exec()) as unknown as {
       _id: Types.ObjectId;
       storeId: Types.ObjectId;
       price: number;
       originalPrice: number;
+      image?: string | null;
+      images?: string[];
     } | null;
     if (!product || String(product.storeId ?? '') !== String(storeId)) {
       throw new AppException(AppErrorCode.PRODUCT_NOT_IN_STORE, { productId });
     }
     return { ...product };
+  }
+
+  /** The product's normalised gallery as a set, for validating/linking option-value images. */
+  private gallerySet(product: { image?: string | null; images?: string[] | null }): Set<string> {
+    return new Set(
+      [product.image, ...(product.images ?? [])]
+        .map((url) => (typeof url === 'string' ? url.trim() : ''))
+        .filter(Boolean),
+    );
   }
 
   /**
@@ -2424,6 +2624,13 @@ private mapDuplicateErrors(err: any, context: Record<string, unknown> = {}): voi
       throw new AppException(AppErrorCode.VALIDATION_INVALID_VALUE, { field: 'color', value: raw });
     }
     return v;
+  }
+
+  /** Normalises a gallery-image URL. Empty/whitespace becomes `null` (no link). */
+  private normalizeOptionValueImage(raw?: string | null): string | null {
+    if (raw == null) return null;
+    const value = raw.trim();
+    return value ? value : null;
   }
 
   private slug(raw: string): string {

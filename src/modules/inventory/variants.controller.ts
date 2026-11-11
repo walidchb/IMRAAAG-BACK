@@ -27,6 +27,7 @@ import {
   DeactivateVariantDto,
   GenerateCodesDto,
   PreviewCombinationsDto,
+  SetOptionValueImagesDto,
   UpdateOptionDto,
   UpdateOptionValueDto,
   UpdateVariantDto,
@@ -176,6 +177,27 @@ export class VariantsController {
   }
 
   // --------------------------------------------------------- preview and create
+
+  /**
+   * Links product-gallery images to option values (one image → one value per product).
+   *
+   * The store comes from the session; the gallery is validated against the product itself, so a
+   * seller cannot point a value at another store's image. Links are additive to the product's
+   * normal gallery behaviour: `null` clears a link and restores the default.
+   */
+  @Patch('option-value-images')
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
+  async setOptionValueImages(
+    @Param('productId') productId: string,
+    @Body() dto: SetOptionValueImagesDto,
+    @Req() req: any,
+  ) {
+    return this.variantsService.setOptionValueImages(
+      productId,
+      await this.storeIdFor(req),
+      dto,
+    );
+  }
 
   /** Cartesian preview. Creates nothing. */
   @Post('variants/preview')

@@ -27,6 +27,7 @@ import { isNormalizedStatus } from '../../delivery-status/carrier/carrier-signal
 import { createHash } from 'crypto';
 import { PDFDocument } from 'pdf-lib';
 import { isPdf, mapWithConcurrency, parseRetryAfter } from './order-label.util';
+import { describeOrderItems } from './order-item-description';
 import {
   mapNoestDiscoveryEntry,
   normalizeNoestEvent,
@@ -522,11 +523,7 @@ export class NoestHandler implements DeliveryCompanyHandler {
   ): NoestCreateOrderPayload {
     const weight = order.items?.reduce((sum, item) => sum + (item.weight || 0) * (item.quantity || 1), 0) || 1;
 
-    const produit =
-      order.items
-        ?.map((item) => item.productName || `Product ${item.productId || ''}`)
-        .filter(Boolean)
-        .join(', ') || `Order ${order.orderNo}`;
+    const produit = describeOrderItems(order);
 
     const isStopDesk = order.shippingMethod === 'stopdesk';
 

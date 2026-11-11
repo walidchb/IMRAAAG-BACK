@@ -25,6 +25,7 @@ import { Order } from '../../../orders/schemas/order.schema';
 import { decryptRecord } from '../../../../common/encryption.util';
 import { fetchWithRetry } from '../../../../common/fetch-with-retry';
 import { isPdf, mapWithConcurrency, parseRetryAfter } from './order-label.util';
+import { describeOrderItems } from './order-item-description';
 import type { SignalOverrides, StateOverrides } from '../../delivery-status/carrier/carrier-signal';
 import {
   MappedEcomHistoryEntry,
@@ -884,12 +885,7 @@ export class EcomHandler implements DeliveryCompanyHandler {
   private buildPayload(order: Order, communeName: string): EcomParcelPayload {
     const isStopDesk = order.shippingMethod === 'stopdesk';
 
-    const article =
-      order.items
-        ?.map((item) => item.productName || `Product ${item.productId || ''}`)
-        .filter(Boolean)
-        .join(', ')
-        .slice(0, 255) || `Order ${order.orderNo}`;
+    const article = describeOrderItems(order).slice(0, 255);
 
     const customerName = order.customer.name || 'Client';
     if (customerName.length > 20) {

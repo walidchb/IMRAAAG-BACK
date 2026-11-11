@@ -211,6 +211,8 @@ export const ERROR_HTTP_STATUS: Record<string, number> = {
   [AppErrorCode.OPTION_VALUE_NOT_FOUND]: HttpStatus.NOT_FOUND,
   [AppErrorCode.OPTION_KEY_IN_USE]: HttpStatus.CONFLICT,
   [AppErrorCode.OPTION_VALUE_IN_USE]: HttpStatus.CONFLICT,
+  [AppErrorCode.OPTION_VALUE_IMAGE_NOT_IN_GALLERY]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.OPTION_VALUE_IMAGE_DUPLICATE]: HttpStatus.CONFLICT,
   [AppErrorCode.INVALID_COMBINATION]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.VARIANT_DEACTIVATE_REQUIRES_CHOICE]: HttpStatus.CONFLICT,
   [AppErrorCode.VARIANT_SET_NOT_EMPTY]: HttpStatus.CONFLICT,

@@ -24,6 +24,7 @@ import { Order } from '../../../orders/schemas/order.schema';
 import { decryptRecord } from '../../../../common/encryption.util';
 import { fetchWithRetry } from '../../../../common/fetch-with-retry';
 import { isPdf, mapWithConcurrency, parseRetryAfter } from './order-label.util';
+import { describeOrderItems } from './order-item-description';
 import type { SignalOverrides, StateOverrides } from '../../delivery-status/carrier/carrier-signal';
 import {
   MappedDhdHistoryEntry,
@@ -1166,12 +1167,7 @@ export class DhdHandler implements DeliveryCompanyHandler {
     // legacy name feeds the fallback, preserving the pre-feature behaviour for truly unmapped
     // communes.
 
-    const produit =
-      order.items
-        ?.map((item) => item.productName || `Product ${item.productId || ''}`)
-        .filter(Boolean)
-        .join(', ')
-        .slice(0, 255) || `Order ${order.orderNo}`;
+    const produit = describeOrderItems(order).slice(0, 255);
 
     const weight = order.items?.reduce((sum, item) => sum + (item.weight || 0) * (item.quantity || 1), 0) || 0;
 

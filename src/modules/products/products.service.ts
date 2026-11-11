@@ -687,6 +687,36 @@ export class ProductsService {
     if (!updated) throw new AppException(AppErrorCode.PRODUCT_NOT_FOUND, { id });
     this.cacheService.clear('categories:');
 
+    // A gallery URL that left the product can no longer back an option-value link. Clear those
+    // links best-effort: the product save has already committed, so failing here must not undo it.
+    const oldGallery = new Set(
+      [(existing as any).image, ...(((existing as any).images as string[]) ?? [])]
+        .map((url) => (typeof url === 'string' ? url.trim() : ''))
+        .filter(Boolean),
+    );
+    const newGallery = new Set(
+      [(updated as any).image, ...(((updated as any).images as string[]) ?? [])]
+        .map((url) => (typeof url === 'string' ? url.trim() : ''))
+        .filter(Boolean),
+    );
+    const removedGalleryUrls = [...oldGallery].filter((url) => !newGallery.has(url));
+    const galleryStoreId = (updated as any).storeId ?? (existing as any).storeId;
+    if (removedGalleryUrls.length > 0 && galleryStoreId) {
+      try {
+        await this.variantsService.clearImageAssignments(
+          String(updated._id),
+          galleryStoreId as Types.ObjectId,
+          removedGalleryUrls,
+        );
+      } catch (err) {
+        this.logger.warn(
+          `Failed to clear option-value image links for product ${updated._id}: ${String(
+            (err as Error)?.message ?? err,
+          )}`,
+        );
+      }
+    }
+
     // Clean up old images from R2 when replaced
     const oldImageKey = this.uploadService.extractKeyFromUrl(existing.image);
     const newImageKey = updateProductDto.image ? this.uploadService.extractKeyFromUrl(updateProductDto.image) : null;

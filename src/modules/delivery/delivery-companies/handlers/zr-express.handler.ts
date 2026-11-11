@@ -25,6 +25,7 @@ import { Commune, CommuneDocument } from '../../../territories/schemas/commune.s
 import { Order } from '../../../orders/schemas/order.schema';
 import { decryptRecord } from '../../../../common/encryption.util';
 import { fetchWithRetry } from '../../../../common/fetch-with-retry';
+import { describeOrderItem } from './order-item-description';
 import {
   mapHistoryEntry,
   mapParcel,
@@ -824,7 +825,7 @@ export class ZrExpressHandler implements DeliveryCompanyHandler {
       },
       orderedProducts: order.items.map((item) => ({
         productId: crypto.randomUUID(),
-        productName: item.productName || `Product ${item.productId || ''}`,
+        productName: describeOrderItem(item),
         productSku: `SKU-${item.productId || 'unknown'}`,
         unitPrice: item.price || 0,
         quantity: item.quantity || 1,

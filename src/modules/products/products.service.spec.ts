@@ -64,6 +64,7 @@ describe('ProductsService', () => {
       | 'duplicateMatrix'
       | 'cascadeSoftDeleteForProduct'
       | 'listVariantIdsForProduct'
+      | 'clearImageAssignments'
     >
   >;
 
@@ -121,6 +122,7 @@ describe('ProductsService', () => {
       duplicateMatrix: jest.fn().mockResolvedValue({ variantsCreated: 0 }),
       cascadeSoftDeleteForProduct: jest.fn().mockResolvedValue({ variants: 0, values: 0, joins: 0 }),
       listVariantIdsForProduct: jest.fn().mockResolvedValue([]),
+      clearImageAssignments: jest.fn().mockResolvedValue(0),
     } as unknown as jest.Mocked<typeof variantsService>;
 
     const module: TestingModule = await Test.createTestingModule({

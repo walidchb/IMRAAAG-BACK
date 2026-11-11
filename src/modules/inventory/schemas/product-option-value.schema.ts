@@ -54,9 +54,26 @@ export class ProductOptionValue {
    */
   @Prop({ type: Boolean, default: true })
   isActive: boolean;
+
+  /**
+   * Gallery image shown on the storefront when this value is selected. `null` keeps the
+   * product's normal gallery behaviour. The URL must be one of the product's gallery images;
+   * the service enforces that, every write to it is store-scoped, and per product an image may
+   * belong to at most one value (partial unique index below).
+   */
+  @Prop({ type: String, default: null })
+  image?: string | null;
 }
 
 export const ProductOptionValueSchema = SchemaFactory.createForClass(ProductOptionValue);
 
 ProductOptionValueSchema.index({ optionId: 1, position: 1 });
 ProductOptionValueSchema.index({ optionId: 1, value: 1 }, { unique: true });
+ProductOptionValueSchema.index(
+  { productId: 1, image: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { image: { $type: 'string' } },
+    name: 'productId_1_image_1_unique',
+  },
+);
