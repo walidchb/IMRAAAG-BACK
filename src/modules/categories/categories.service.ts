@@ -124,8 +124,15 @@ export class CategoriesService {
     if (!Types.ObjectId.isValid(categoryId) || !Types.ObjectId.isValid(subId)) {
       throw new AppException(AppErrorCode.SUBCATEGORY_NOT_IN_STORE, { id: subId });
     }
+    // `SubCategory.categoryId` compiles to a Mixed path under Mongoose 9, so a raw string
+    // route param is NOT cast and would never match the stored ObjectId. Cast explicitly.
     const subCategory = await this.subCategoryModel
-      .findOne({ _id: subId, categoryId, storeId, isDeleted: false })
+      .findOne({
+        _id: new Types.ObjectId(subId),
+        categoryId: new Types.ObjectId(categoryId),
+        storeId,
+        isDeleted: false,
+      })
       .exec();
     if (!subCategory) {
       throw new AppException(AppErrorCode.SUBCATEGORY_NOT_IN_STORE, { id: subId });
