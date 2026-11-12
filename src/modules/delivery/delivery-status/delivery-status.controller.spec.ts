@@ -41,7 +41,7 @@ describe('DeliveryStatusController — the read endpoints (Phase 5)', () => {
     enabledProviders: jest.Mock;
     settingsFor: jest.Mock;
   };
-  let storesService: { findByVendorId: jest.Mock; findOne: jest.Mock };
+  let storesService: { findByMemberId: jest.Mock; findOne: jest.Mock };
 
   const build = (store: unknown = { _id: STORE_ID, vendorEmail: VENDOR_EMAIL }) => {
     queryService = {
@@ -61,7 +61,7 @@ describe('DeliveryStatusController — the read endpoints (Phase 5)', () => {
     };
 
     storesService = {
-      findByVendorId: jest.fn().mockResolvedValue(store),
+      findByMemberId: jest.fn().mockResolvedValue(store),
       findOne: jest.fn().mockResolvedValue({ _id: OTHER_STORE_ID, vendorEmail: 'other@example.com' }),
     };
 
@@ -78,7 +78,7 @@ describe('DeliveryStatusController — the read endpoints (Phase 5)', () => {
     it('scopes the read to the store of the session', async () => {
       await controller.getOrderStatus({ user: vendorSession }, ORDER_ID);
 
-      expect(storesService.findByVendorId).toHaveBeenCalledWith('user-1');
+      expect(storesService.findByMemberId).toHaveBeenCalledWith('user-1');
       expect(queryService.getOrderView).toHaveBeenCalledWith(STORE_ID, ORDER_ID, VENDOR_EMAIL);
     });
 
@@ -151,7 +151,7 @@ describe('DeliveryStatusController — the read endpoints (Phase 5)', () => {
 
     it('covers every store for an operator who did not narrow the scope', async () => {
       build(null);
-      storesService.findByVendorId.mockRejectedValue(new Error('no store'));
+      storesService.findByMemberId.mockRejectedValue(new Error('no store'));
 
       await controller.getSyncHealth({ user: adminSession });
 
@@ -160,7 +160,7 @@ describe('DeliveryStatusController — the read endpoints (Phase 5)', () => {
 
     it('narrows to the store an operator named', async () => {
       build(null);
-      storesService.findByVendorId.mockRejectedValue(new Error('no store'));
+      storesService.findByMemberId.mockRejectedValue(new Error('no store'));
 
       await controller.getSyncHealth({ user: adminSession }, OTHER_STORE_ID);
 
@@ -169,7 +169,7 @@ describe('DeliveryStatusController — the read endpoints (Phase 5)', () => {
 
     it('refuses an operator who named no store and has none', async () => {
       build(null);
-      storesService.findByVendorId.mockRejectedValue(new Error('no store'));
+      storesService.findByMemberId.mockRejectedValue(new Error('no store'));
 
       await expect(controller.getSyncHealth({ user: adminSession })).resolves.toBeDefined();
       // An operator sees every store — that is the answer, not an error.

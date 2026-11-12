@@ -100,8 +100,8 @@ describe('ProductsService', () => {
 
     storesService = {
       resolveStoreIdByEmail: jest.fn().mockResolvedValue(null),
-      findByVendorId: jest.fn().mockResolvedValue(null),
-      findByVendorIdOrThrow: jest.fn(),
+      findByMemberId: jest.fn().mockResolvedValue(null),
+      findByMemberIdOrThrow: jest.fn(),
       incrementProductCount: jest.fn().mockResolvedValue(undefined),
     } as unknown as jest.Mocked<StoresService>;
 
@@ -480,7 +480,10 @@ describe('ProductsService', () => {
 
   describe('update() — D3 ownership', () => {
     beforeEach(() => {
-      storesService.findByVendorId.mockResolvedValue({ _id: VENDOR_STORE_ID } as any);
+      storesService.findByMemberId.mockResolvedValue({
+        _id: VENDOR_STORE_ID,
+        vendorEmail: VENDOR_EMAIL,
+      } as any);
     });
 
     it('rejects a vendor editing another vendor\'s product', async () => {
@@ -524,10 +527,10 @@ describe('ProductsService', () => {
 
     it('falls back to the vendor email when the vendor has no store at all', async () => {
       // §8 expected STORE_NOT_FOUND here. The shipped code does not do that: it uses the
-      // non-throwing `findByVendorId`, and when there is no store ownership is decided by
+      // non-throwing `findByMemberId`, and when there is no store ownership is decided by
       // the legacy email comparison alone. Pinned so the divergence is deliberate and
       // visible — it is the one path where a mismatched `storeId` is NOT fatal.
-      storesService.findByVendorId.mockResolvedValue(null);
+      storesService.findByMemberId.mockResolvedValue(null);
       productModel.findById.mockReturnValue(query(ownedProduct({ storeId: OTHER_STORE_ID })));
       productModel.findByIdAndUpdate.mockReturnValue(query(ownedProduct()));
 
@@ -537,7 +540,7 @@ describe('ProductsService', () => {
     });
 
     it('still denies a storeless vendor whose email does not match the product', async () => {
-      storesService.findByVendorId.mockResolvedValue(null);
+      storesService.findByMemberId.mockResolvedValue(null);
       productModel.findById.mockReturnValue(query(ownedProduct({ vendorEmail: OTHER_EMAIL })));
 
       await expect(
@@ -550,7 +553,7 @@ describe('ProductsService', () => {
     it('survives a throwing store lookup without a 500', async () => {
       // The `.catch(() => null)` shim means a database blip degrades to the email path
       // rather than surfacing as an unhandled error to the vendor.
-      storesService.findByVendorId.mockRejectedValue(new Error('db down'));
+      storesService.findByMemberId.mockRejectedValue(new Error('db down'));
       productModel.findById.mockReturnValue(query(ownedProduct()));
       productModel.findByIdAndUpdate.mockReturnValue(query(ownedProduct()));
 
@@ -562,7 +565,7 @@ describe('ProductsService', () => {
 
   describe('remove() — D3 ownership', () => {
     beforeEach(() => {
-      storesService.findByVendorId.mockResolvedValue({ _id: VENDOR_STORE_ID } as any);
+      storesService.findByMemberId.mockResolvedValue({ _id: VENDOR_STORE_ID } as any);
       orderModel.countDocuments.mockReturnValue(query(0));
     });
 
@@ -635,7 +638,7 @@ describe('ProductsService', () => {
 
   describe('duplicate()', () => {
     beforeEach(() => {
-      storesService.findByVendorId.mockResolvedValue({ _id: VENDOR_STORE_ID } as any);
+      storesService.findByMemberId.mockResolvedValue({ _id: VENDOR_STORE_ID } as any);
     });
 
     it('copies storeId and resets published', async () => {
@@ -662,7 +665,7 @@ describe('ProductsService', () => {
 
   describe('searchSuggestions() — inventory autocomplete', () => {
     beforeEach(() => {
-      storesService.findByVendorIdOrThrow.mockResolvedValue({
+      storesService.findByMemberIdOrThrow.mockResolvedValue({
         _id: VENDOR_STORE_ID,
         vendorEmail: VENDOR_EMAIL,
       } as any);
@@ -672,11 +675,11 @@ describe('ProductsService', () => {
     it('resolves the store from the session vendor id, never from the query', async () => {
       await service.searchSuggestions(VENDOR_USER_ID, { q: 'VB' });
 
-      expect(storesService.findByVendorIdOrThrow).toHaveBeenCalledWith(VENDOR_USER_ID);
+      expect(storesService.findByMemberIdOrThrow).toHaveBeenCalledWith(VENDOR_USER_ID);
     });
 
     it('refuses when the caller has no store, instead of falling back to a wider scope', async () => {
-      storesService.findByVendorIdOrThrow.mockRejectedValue(
+      storesService.findByMemberIdOrThrow.mockRejectedValue(
         new AppException(AppErrorCode.STORE_NOT_FOUND, {}),
       );
 
@@ -697,7 +700,7 @@ describe('ProductsService', () => {
     });
 
     it('drops the vendorEmail branch when the store carries none, so it cannot widen the match', async () => {
-      storesService.findByVendorIdOrThrow.mockResolvedValue({
+      storesService.findByMemberIdOrThrow.mockResolvedValue({
         _id: VENDOR_STORE_ID,
       } as any);
 

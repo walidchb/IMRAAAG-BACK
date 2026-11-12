@@ -5,6 +5,8 @@ import { Types } from 'mongoose';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Role } from '../../common/constants/roles.enum';
+import { StorePermission } from '../../common/constants/store-permissions.const';
+import { RequirePermissions } from '../team/decorators/require-permissions.decorator';
 import { StoresService } from '../stores/stores.service';
 import { AnalyticsService, StoreScope } from './analytics.service';
 import { AnalyticsRangeQueryDto } from './dto/analytics-query.dto';
@@ -21,6 +23,7 @@ import { AnalyticsRangeQueryDto } from './dto/analytics-query.dto';
 @Controller('analytics')
 @UseGuards(RolesGuard)
 @Roles(Role.VENDOR, Role.ADMIN)
+@RequirePermissions(StorePermission.DASHBOARD_VIEW)
 @Throttle({ default: { limit: 120, ttl: 60000 } })
 export class AnalyticsController {
   constructor(
@@ -74,7 +77,7 @@ export class AnalyticsController {
   }
 
   private async scopeFor(req: any): Promise<StoreScope> {
-    const store = await this.storesService.findByVendorIdOrThrow(req.user?.id);
+    const store = await this.storesService.findByMemberIdOrThrow(req.user?.id);
     return {
       storeId: store._id as Types.ObjectId,
       vendorEmail: store.vendorEmail,

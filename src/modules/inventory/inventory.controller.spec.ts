@@ -11,7 +11,7 @@ import { ListInventoryQueryDto } from './dto/inventory-list.dto';
  * Authorization contract for the vendor inventory routes (spec §6).
  *
  * Every route resolves the store from the authenticated session via
- * `StoresService.findByVendorIdOrThrow(user.id)`. A store id in the query string is never
+ * `StoresService.findByMemberIdOrThrow(user.id)`. A store id in the query string is never
  * part of that path — `ListInventoryQueryDto` does not even carry the field — so Vendor A
  * cannot address Vendor B's inventory by appending `?storeId=...`.
  */
@@ -24,7 +24,7 @@ const VENDOR = { id: VENDOR_ID, email: 'vendor@test.com', role: 'VENDOR' };
 describe('InventoryController', () => {
   let controller: InventoryController;
 
-  let storesService: { findByVendorIdOrThrow: jest.Mock };
+  let storesService: { findByMemberIdOrThrow: jest.Mock };
   let readService: {
     listStoreInventory: jest.Mock;
     getStoreStats: jest.Mock;
@@ -34,7 +34,7 @@ describe('InventoryController', () => {
 
   beforeEach(async () => {
     storesService = {
-      findByVendorIdOrThrow: jest.fn().mockResolvedValue({ _id: STORE_ID }),
+      findByMemberIdOrThrow: jest.fn().mockResolvedValue({ _id: STORE_ID }),
     };
     readService = {
       listStoreInventory: jest.fn().mockResolvedValue({ data: [], total: 0 }),
@@ -60,14 +60,14 @@ describe('InventoryController', () => {
     const query: ListInventoryQueryDto = { search: 'shirt', page: 2, limit: 25 };
     await controller.listInventory(query, { user: VENDOR });
 
-    expect(storesService.findByVendorIdOrThrow).toHaveBeenCalledWith(VENDOR_ID);
+    expect(storesService.findByMemberIdOrThrow).toHaveBeenCalledWith(VENDOR_ID);
     expect(readService.listStoreInventory).toHaveBeenCalledWith(STORE_ID, query);
   });
 
   it('scopes statistics to the session store', async () => {
     await controller.getInventoryStats({ user: VENDOR });
 
-    expect(storesService.findByVendorIdOrThrow).toHaveBeenCalledWith(VENDOR_ID);
+    expect(storesService.findByMemberIdOrThrow).toHaveBeenCalledWith(VENDOR_ID);
     expect(readService.getStoreStats).toHaveBeenCalledWith(STORE_ID);
   });
 
@@ -88,7 +88,7 @@ describe('InventoryController', () => {
   });
 
   it('propagates the failure when the caller has no store', async () => {
-    storesService.findByVendorIdOrThrow.mockRejectedValue(new Error('STORE_NOT_FOUND'));
+    storesService.findByMemberIdOrThrow.mockRejectedValue(new Error('STORE_NOT_FOUND'));
 
     await expect(controller.getInventoryStats({ user: VENDOR })).rejects.toThrow(
       'STORE_NOT_FOUND',

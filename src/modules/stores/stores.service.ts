@@ -15,6 +15,9 @@ import { CreateStoreDto } from './dto/create-store.dto';
 import { UpdateStoreDto } from './dto/update-store.dto';
 import { StoreStatus } from './schemas/store-status.enum';
 import { UploadService } from '../upload/upload.service';
+import { StoreMember, StoreMemberDocument } from '../team/schemas/store-member.schema';
+import { StoreMemberStatus, StoreRole } from '../../common/constants/store-roles.enum';
+import { permissionsForRole } from '../../common/constants/store-permissions.const';
 
 export interface CursorDto {
   createdAt: string;
@@ -37,6 +40,7 @@ export class StoresService {
     @InjectModel(Product.name) private productModel: Model<ProductDocument>,
     @InjectModel(Category.name) private categoryModel: Model<CategoryDocument>,
     @InjectModel(SubCategory.name) private subCategoryModel: Model<SubCategoryDocument>,
+    @InjectModel(StoreMember.name) private storeMemberModel: Model<StoreMemberDocument>,
     private readonly uploadService: UploadService,
   ) {}
 
@@ -126,6 +130,32 @@ export class StoresService {
       await this.storeModel.findByIdAndDelete(saved._id).exec().catch(() => undefined);
       this.storeIdByEmailCache.delete(vendorEmail);
       throw err;
+    }
+
+    // Keep the Owner-membership invariant true for every *new* store: the migration backfills
+    // existing stores, and this seeds future ones. A failure here is logged, not fatal — the
+    // Owner still resolves through `Store.vendorId`.
+    try {
+      await this.storeMemberModel
+        .updateOne(
+          { storeId: saved._id, userId: new Types.ObjectId(vendorId as string) },
+          {
+            $setOnInsert: {
+              role: 'OWNER',
+              permissionOverrides: [],
+              status: StoreMemberStatus.ACTIVE,
+              joinedAt: (saved as any).createdAt ?? new Date(),
+            },
+          },
+          { upsert: true },
+        )
+        .exec();
+    } catch (err) {
+      this.logger.warn(
+        `Failed to seed the Owner membership for store ${saved._id}: ${
+          err instanceof Error ? err.message : String(err)
+        }`,
+      );
     }
 
     return saved;
@@ -333,6 +363,81 @@ export class StoresService {
     const filter = this.vendorIdFilter(vendorId);
     if (!filter) return null;
     return this.storeModel.findOne(filter).exec();
+  }
+
+  /**
+   * Resolves the store a user can act in, as **Owner or active employee**.
+   *
+   * This is the session-store lookup for every vendor-scoped endpoint after Team Management.
+   * `findByVendorId*` stays strictly Owner-only (the Owner pointer is `Store.vendorId`); this
+   * method is the one that honours a membership row.
+   *
+   * A deactivated membership never resolves a store. `findByMemberId` is the non-throwing
+   * variant.
+   */
+  async findByMemberIdOrThrow(
+    userId: string,
+    opts?: { skipStatusCheck?: boolean },
+  ): Promise<StoreDocument> {
+    const store = await this.findByMemberId(userId);
+    if (!store) {
+      throw new AppException(AppErrorCode.STORE_NOT_FOUND, { field: 'userId', value: userId });
+    }
+    if (!opts?.skipStatusCheck && store.status !== StoreStatus.ACTIVE) {
+      throw new AppException(AppErrorCode.STORE_NOT_ACTIVE, { userId });
+    }
+    return store;
+  }
+
+  /** Non-throwing owner-or-active-member store lookup. Returns null when there is none. */
+  async findByMemberId(userId: string): Promise<StoreDocument | null> {
+    if (userId && Types.ObjectId.isValid(userId)) {
+      const member = await this.storeMemberModel
+        .findOne({
+          userId: new Types.ObjectId(userId),
+          status: StoreMemberStatus.ACTIVE,
+        })
+        .select('storeId')
+        .lean()
+        .exec();
+      if (member?.storeId) {
+        const store = await this.storeModel.findById(member.storeId).exec();
+        if (store) return store;
+      }
+    }
+
+    // Legacy owner without a membership row.
+    return this.findByVendorId(userId);
+  }
+
+  /**
+   * Resolves the caller's effective store permissions without the `TeamModule` graph.
+   * Used by callers that must scope a non-static permission themselves (e.g. the upload
+   * delete route, whose folder determines the capability). `StoreAccessService` remains the
+   * primary source for route-level checks.
+   */
+  async resolvePermissionsForUser(
+    userId: string,
+  ): Promise<{ storeId: string | null; isOwner: boolean; permissions: string[] }> {
+    if (userId && Types.ObjectId.isValid(userId)) {
+      const member = await this.storeMemberModel
+        .findOne({ userId: new Types.ObjectId(userId), status: StoreMemberStatus.ACTIVE })
+        .lean()
+        .exec();
+      if (member) {
+        return {
+          storeId: String(member.storeId),
+          isOwner: member.role === StoreRole.OWNER,
+          permissions: permissionsForRole(member.role as StoreRole, member.permissionOverrides),
+        };
+      }
+    }
+
+    const store = await this.findByVendorId(userId);
+    if (store) {
+      return { storeId: String(store._id), isOwner: true, permissions: ['*'] };
+    }
+    return { storeId: null, isOwner: false, permissions: [] };
   }
 
   /**

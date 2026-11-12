@@ -10,6 +10,7 @@ import {
 import { StoresController } from './stores.controller';
 import { StoresService } from './stores.service';
 import { UploadModule } from '../upload/upload.module';
+import { StoreMember, StoreMemberSchema } from '../team/schemas/store-member.schema';
 
 @Module({
   imports: [
@@ -20,6 +21,10 @@ import { UploadModule } from '../upload/upload.module';
       // soft-delete over it. These are schema registrations only; the modules stay acyclic.
       { name: Category.name, schema: CategorySchema },
       { name: SubCategory.name, schema: SubCategorySchema },
+      // StoresService owns the owner-or-active-member lookup (`findByMemberId*`), so it needs
+      // the membership model. Registering the schema here keeps StoresModule free of a
+      // dependency on TeamModule (the schema file itself imports only enums).
+      { name: StoreMember.name, schema: StoreMemberSchema },
     ]),
     forwardRef(() => UploadModule),
   ],

@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { DeliveryFeesController } from './delivery-fees.controller';
 import { DeliveryFeesService } from './delivery-fees.service';
 import { UpdateDeliveryFeeDto, BulkUpdateDeliveryFeeDto } from './dto/manage-delivery-fees.dto';
+import { StoresService } from '../stores/stores.service';
 
 describe('DeliveryFeesController', () => {
   let controller: DeliveryFeesController;
@@ -34,6 +35,10 @@ describe('DeliveryFeesController', () => {
       controllers: [DeliveryFeesController],
       providers: [
         { provide: DeliveryFeesService, useValue: mockService },
+        {
+          provide: StoresService,
+          useValue: { findByMemberIdOrThrow: jest.fn().mockResolvedValue({ _id: 'store-1', vendorEmail: 'vendor@test.com' }) },
+        },
       ],
     }).compile();
 

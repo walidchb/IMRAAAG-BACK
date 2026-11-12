@@ -33,7 +33,7 @@ describe('AnalyticsController tenancy', () => {
     channels: jest.Mock;
     ordersStatus: jest.Mock;
   };
-  let stores: { findByVendorIdOrThrow: jest.Mock };
+  let stores: { findByMemberIdOrThrow: jest.Mock };
 
   beforeEach(async () => {
     analytics = {
@@ -43,7 +43,7 @@ describe('AnalyticsController tenancy', () => {
       ordersStatus: jest.fn().mockResolvedValue({}),
     };
     stores = {
-      findByVendorIdOrThrow: jest.fn().mockResolvedValue({
+      findByMemberIdOrThrow: jest.fn().mockResolvedValue({
         _id: STORE_A,
         vendorEmail: 'vendor-a@store.test',
       }),
@@ -69,13 +69,13 @@ describe('AnalyticsController tenancy', () => {
     const query = { preset: '7d', storeId: STORE_B.toHexString() };
     await controller.summary(query, SESSION_REQ);
 
-    expect(stores.findByVendorIdOrThrow).toHaveBeenCalledWith(VENDOR_ID);
+    expect(stores.findByMemberIdOrThrow).toHaveBeenCalledWith(VENDOR_ID);
     expect(analytics.summary).toHaveBeenCalledWith(expectedScope(), query);
     expect(analytics.summary.mock.calls[0][0].storeId).toBe(STORE_A);
   });
 
   it('propagates a store-resolution failure without touching the aggregation', async () => {
-    stores.findByVendorIdOrThrow.mockRejectedValue(
+    stores.findByMemberIdOrThrow.mockRejectedValue(
       new AppException(AppErrorCode.STORE_NOT_FOUND, { field: 'vendorId', value: VENDOR_ID }),
     );
     await expect(controller.summary({ preset: '7d' }, SESSION_REQ)).rejects.toMatchObject({

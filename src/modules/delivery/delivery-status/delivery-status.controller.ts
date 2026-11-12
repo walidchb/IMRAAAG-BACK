@@ -4,7 +4,9 @@ import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestj
 import { AppException } from '../../../common/errors/app-exception';
 import { AppErrorCode } from '../../../common/errors/error-codes.enum';
 import { Role } from '../../../common/constants/roles.enum';
+import { StorePermission } from '../../../common/constants/store-permissions.const';
 import { Roles } from '../../auth/decorators/roles.decorator';
+import { RequirePermissions } from '../../team/decorators/require-permissions.decorator';
 import { StoresService } from '../../stores/stores.service';
 import { DeliveryStatusQueryService } from './delivery-status-query.service';
 import {
@@ -65,6 +67,7 @@ export class DeliveryStatusController {
   @Roles(Role.VENDOR, Role.ADMIN)
   @Throttle({ default: { limit: 30, ttl: 60000 } })
   @Get('orders/:orderId/status')
+  @RequirePermissions(StorePermission.ORDERS_DELIVERY_STATUS_VIEW)
   @ApiOperation({ summary: "Get one order's carrier delivery status and merged timeline" })
   @ApiParam({ name: 'orderId', description: 'The platform order id' })
   async getOrderStatus(@Req() req: any, @Param('orderId') orderId: string) {
@@ -87,6 +90,7 @@ export class DeliveryStatusController {
   @Roles(Role.VENDOR, Role.ADMIN)
   @Throttle({ default: { limit: 30, ttl: 60000 } })
   @Get('parcels/:parcelId/status')
+  @RequirePermissions(StorePermission.ORDERS_DELIVERY_STATUS_VIEW)
   @ApiOperation({ summary: "Get one parcel's carrier delivery status and merged timeline" })
   @ApiParam({ name: 'parcelId', description: 'The carrier parcel id' })
   async getParcelStatus(@Req() req: any, @Param('parcelId') parcelId: string) {
@@ -114,6 +118,7 @@ export class DeliveryStatusController {
   @Roles(Role.VENDOR, Role.ADMIN)
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Get('sync/health')
+  @RequirePermissions(StorePermission.DELIVERY_VIEW)
   @ApiOperation({ summary: 'Get the delivery status sync health' })
   @ApiQuery({ name: 'storeId', required: false, description: 'Operator only: narrow to one store' })
   @ApiQuery({
@@ -187,6 +192,7 @@ export class DeliveryStatusController {
   @Roles(Role.VENDOR, Role.ADMIN)
   @Throttle({ default: { limit: 2, ttl: 60000 } })
   @Post('parcels/:parcelId/refresh')
+  @RequirePermissions(StorePermission.ORDERS_DELIVERY_STATUS_REFRESH)
   @ApiOperation({ summary: 'Re-fetch one parcel from the carrier' })
   @ApiParam({ name: 'parcelId', description: 'The carrier parcel id' })
   async refreshParcel(@Req() req: any, @Param('parcelId') parcelId: string) {
@@ -230,7 +236,7 @@ export class DeliveryStatusController {
       throw new AppException(AppErrorCode.AUTH_USER_NOT_FOUND, {});
     }
 
-    const ownStore = await this.storesService.findByVendorId(user.id).catch(() => null);
+    const ownStore = await this.storesService.findByMemberId(user.id).catch(() => null);
     if (ownStore) {
       return {
         storeId: String((ownStore as any)._id),

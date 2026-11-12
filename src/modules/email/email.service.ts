@@ -51,6 +51,48 @@ export class EmailService {
     }
   }
 
+  /**
+   * Sends a store invitation.
+   *
+   * The raw token only ever appears inside the URL that is emailed. Callers must not log the
+   * URL, the token, or its hash. English copy is the MVP decision (matching the reset email).
+   *
+   * @returns `true` when the message was accepted by the transport, `false` when SMTP is not
+   *          configured or delivery failed. The invitation row is kept either way.
+   */
+  async sendTeamInvitationEmail(
+    to: string,
+    params: {
+      storeName: string;
+      role: string;
+      invitedByName: string;
+      acceptUrl: string;
+      expiresInHours: number;
+    },
+  ): Promise<boolean> {
+    const subject = `You have been invited to join ${params.storeName} on Imraaah`;
+    const html = this.buildTeamInvitationTemplate(to, params);
+
+    if (!this.transporter) {
+      this.logger.error(
+        '[EMAIL] SMTP is not configured; the team invitation email was not sent.',
+      );
+      return false;
+    }
+
+    try {
+      const from = this.configService.get<string>('smtp.from') || 'noreply@imraaah.ma';
+      await this.transporter.sendMail({ from, to, subject, html });
+      this.logger.log(`Team invitation email sent to ${to}`);
+      return true;
+    } catch (err) {
+      this.logger.error(
+        `Team invitation email delivery failed for ${to}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+      return false;
+    }
+  }
+
   private buildResetEmailTemplate(email: string, resetUrl: string, expiresInMinutes: number): string {
     return `
       <div style="font-family: 'Georgia', serif; max-width: 480px; margin: 0 auto; padding: 32px; background: #F9F7F2; border-radius: 12px;">
@@ -78,6 +120,50 @@ export class EmailService {
         <hr style="border: none; border-top: 1px solid #ddd; margin: 24px 0;" />
         <p style="color: #aaa; font-size: 11px; text-align: center;">
           Maison El Kahia &bull; Fès, Morocco
+        </p>
+      </div>
+    `;
+  }
+
+  private buildTeamInvitationTemplate(
+    email: string,
+    params: {
+      storeName: string;
+      role: string;
+      invitedByName: string;
+      acceptUrl: string;
+      expiresInHours: number;
+    },
+  ): string {
+    return `
+      <div style="font-family: 'Georgia', serif; max-width: 480px; margin: 0 auto; padding: 32px; background: #F9F7F2; border-radius: 12px;">
+        <div style="text-align: center; margin-bottom: 24px;">
+          <span style="font-size: 28px; color: #724444; letter-spacing: 0.3em; font-weight: bold;">IMRAAAH</span>
+        </div>
+        <h2 style="color: #724444; font-size: 18px; margin-bottom: 16px;">You are invited to join a store team</h2>
+        <p style="color: #444; font-size: 14px; line-height: 1.6;">
+          ${params.invitedByName} invited you to join <strong>${params.storeName}</strong> as
+          <strong>${params.role}</strong>.
+        </p>
+        <p style="color: #724444; font-size: 14px; line-height: 1.6; text-align: center; font-weight: bold;">
+          ${email}
+        </p>
+        <p style="color: #444; font-size: 14px; line-height: 1.6;">
+          Click the button below to accept the invitation. If you do not yet have an Imraaah
+          account, you will set your own password first — we never email passwords.
+        </p>
+        <div style="text-align: center; margin: 28px 0;">
+          <a href="${params.acceptUrl}" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #724444, #C5A059); color: #fff; text-decoration: none; border-radius: 8px; font-size: 14px; font-weight: bold; letter-spacing: 0.05em;">
+            Accept Invitation
+          </a>
+        </div>
+        <p style="color: #888; font-size: 12px; line-height: 1.5;">
+          This invitation expires in ${params.expiresInHours} hours. If you were not expecting it,
+          you can ignore this email.
+        </p>
+        <hr style="border: none; border-top: 1px solid #ddd; margin: 24px 0;" />
+        <p style="color: #aaa; font-size: 11px; text-align: center;">
+          Imraaah
         </p>
       </div>
     `;

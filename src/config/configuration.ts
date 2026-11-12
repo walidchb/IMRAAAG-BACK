@@ -18,6 +18,15 @@
   frontendUrl:
     process.env.FRONTEND_URL ||
     (process.env.NODE_ENV === 'production' ? 'https://vendor.imraaah.com' : 'http://localhost:3001'),
+  /**
+   * Team Management invitations. The raw token is only ever placed in the emailed accept URL;
+   * `expiresAt` is enforced logically (there is no TTL index).
+   */
+  teamInvitation: {
+    expiryHours: parseInt(process.env.TEAM_INVITATION_EXPIRY_HOURS || '48', 10),
+    /** Optional absolute accept URL; when empty it is derived from `frontendUrl`. */
+    acceptUrl: process.env.TEAM_ACCEPT_URL || '',
+  },
   environment: process.env.NODE_ENV || 'development',
   deliveryEncryptionKey: process.env.DELIVERY_ENCRYPTION_KEY || '',
   r2: {

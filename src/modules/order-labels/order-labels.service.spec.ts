@@ -50,7 +50,7 @@ interface Harness {
   service: OrderLabelsService;
   orderModel: { find: jest.Mock };
   stores: {
-    findByVendorIdOrThrow: jest.Mock;
+    findByMemberIdOrThrow: jest.Mock;
     findOne: jest.Mock;
     resolveStoreIdByEmail: jest.Mock;
   };
@@ -72,7 +72,7 @@ function setup(docs: any[] = [], harnessHandlers: Record<string, any> = {}): Har
     })),
   };
   const stores = {
-    findByVendorIdOrThrow: jest.fn(async () => ({
+    findByMemberIdOrThrow: jest.fn(async () => ({
       _id: STORE_ID,
       vendorEmail: 'vendor@example.com',
     })),
@@ -167,7 +167,7 @@ describe('OrderLabelsService.availability', () => {
       enabled: false,
       carriers: [],
     });
-    expect(harness.stores.findByVendorIdOrThrow).not.toHaveBeenCalled();
+    expect(harness.stores.findByMemberIdOrThrow).not.toHaveBeenCalled();
   });
 
   it('enables label printing for every vendor when the global flag is on', async () => {
@@ -177,7 +177,7 @@ describe('OrderLabelsService.availability', () => {
       enabled: true,
       carriers: LABEL_CARRIERS,
     });
-    expect(harness.stores.findByVendorIdOrThrow).not.toHaveBeenCalled();
+    expect(harness.stores.findByMemberIdOrThrow).not.toHaveBeenCalled();
   });
 
   it('reports availability and label-capable carriers to an admin', async () => {
@@ -187,7 +187,7 @@ describe('OrderLabelsService.availability', () => {
       enabled: true,
       carriers: LABEL_CARRIERS,
     });
-    expect(harness.stores.findByVendorIdOrThrow).not.toHaveBeenCalled();
+    expect(harness.stores.findByMemberIdOrThrow).not.toHaveBeenCalled();
   });
 });
 
@@ -199,10 +199,11 @@ describe('OrderLabelsService.generate', () => {
       vendor,
     );
 
-    expect(harness.stores.findByVendorIdOrThrow).toHaveBeenCalledWith('vendor-1');
+    expect(harness.stores.findByMemberIdOrThrow).toHaveBeenCalledWith('vendor-1');
     expect(harness.orderModel.find).toHaveBeenCalledWith({
       _id: { $in: [expect.anything()] },
       isDeleted: { $ne: true },
+      isArchived: { $ne: true },
       $or: [{ storeId: STORE_ID }, { vendorEmail: 'vendor@example.com' }],
     });
     expect(response.summary).toMatchObject({ requested: 1, printed: 1, failed: 0, skipped: 0 });
@@ -625,7 +626,7 @@ describe('OrderLabelsService.generate', () => {
         vendor,
       ),
     ).rejects.toMatchObject({ errorCode: AppErrorCode.ORDER_LABEL_DISABLED });
-    expect(harness.stores.findByVendorIdOrThrow).not.toHaveBeenCalled();
+    expect(harness.stores.findByMemberIdOrThrow).not.toHaveBeenCalled();
 
     harness.configValues['orderLabels.enabled'] = true;
     await expect(
@@ -661,7 +662,7 @@ describe('OrderLabelsService.download', () => {
 
     await harness.service.download(JOB_ID, 'labels.zip', vendor, OTHER_STORE_ID);
 
-    expect(harness.stores.findByVendorIdOrThrow).toHaveBeenCalledWith('vendor-1');
+    expect(harness.stores.findByMemberIdOrThrow).toHaveBeenCalledWith('vendor-1');
     expect(harness.stores.findOne).not.toHaveBeenCalled();
     expect(harness.artifact.stream).toHaveBeenCalledWith(STORE_ID, JOB_ID, 'labels.zip');
   });

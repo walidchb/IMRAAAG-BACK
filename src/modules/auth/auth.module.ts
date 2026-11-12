@@ -5,8 +5,8 @@ import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthController } from './auth.controller';
+import { InvitationAcceptController } from './invitation-accept.controller';
 import { AuthService } from './auth.service';
-import { EmailService } from './email.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
@@ -14,6 +14,9 @@ import { User, UserSchema } from '../users/schemas/user.schema';
 import { PasswordResetToken, PasswordResetTokenSchema } from './schemas/password-reset-token.schema';
 import { Otp, OtpSchema } from './schemas/otp.schema';
 import { StoresModule } from '../stores/stores.module';
+import { TeamModule } from '../team/team.module';
+import { PermissionsGuard } from '../team/permissions.guard';
+import { EmailModule } from '../email/email.module';
 
 @Module({
   imports: [
@@ -32,14 +35,18 @@ import { StoresModule } from '../stores/stores.module';
       inject: [ConfigService],
     }),
     StoresModule,
+    TeamModule,
+    EmailModule,
   ],
-  controllers: [AuthController],
+  controllers: [AuthController, InvitationAcceptController],
   providers: [
     AuthService,
-    EmailService,
     JwtStrategy,
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
+    // Runs after JWT/Roles so `req.user` is populated. No @RequirePermissions metadata means
+    // allow, so the rollout leaves every existing route unchanged.
+    { provide: APP_GUARD, useClass: PermissionsGuard },
   ],
   exports: [JwtStrategy, PassportModule],
 })

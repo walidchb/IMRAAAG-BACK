@@ -14,6 +14,7 @@ import { DeliveryFeesModule } from '../delivery-fees/delivery-fees.module';
 import { AuditModule } from '../audit/audit.module';
 import { StoresModule } from '../stores/stores.module';
 import { InventoryModule } from '../inventory/inventory.module';
+import { TeamModule } from '../team/team.module';
 
 @Module({
   imports: [
@@ -28,6 +29,9 @@ import { InventoryModule } from '../inventory/inventory.module';
     DeliveryFeesModule,
     AuditModule,
     StoresModule,
+    // `OrdersService` enforces the status-target/bulk-action store permissions itself, because
+    // the allowed capability depends on the request body rather than the route alone.
+    TeamModule,
     // Phase 4: `ReservationsService` is imported, not the whole inventory module, because a
     // confirm/dispatch has to reserve or deduct inside the same transaction as the status
     // claim. `InventoryModule` does not import this one back, so no `forwardRef` is needed.

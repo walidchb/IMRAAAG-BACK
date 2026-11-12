@@ -17,6 +17,8 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Public } from '../auth/decorators/public.decorator';
 import { Role } from '../../common/constants/roles.enum';
+import { StorePermission } from '../../common/constants/store-permissions.const';
+import { RequirePermissions } from '../team/decorators/require-permissions.decorator';
 import { StoresService } from '../stores/stores.service';
 import { VariantsService } from './services/variants.service';
 import { BarcodeService } from './services/barcode.service';
@@ -50,6 +52,7 @@ import { LocaleQueryDto } from './dto/inventory-list.dto';
 @Controller('products/:productId')
 @UseGuards(RolesGuard)
 @Roles(Role.VENDOR, Role.ADMIN)
+@RequirePermissions(StorePermission.PRODUCTS_VARIANTS_MANAGE)
 export class VariantsController {
   constructor(
     private readonly variantsService: VariantsService,
@@ -91,6 +94,7 @@ export class VariantsController {
 
   /** Options, values and every offered combination with its stock. */
   @Get('variants/matrix')
+  @RequirePermissions(StorePermission.PRODUCTS_VIEW)
   async matrix(
     @Param('productId') productId: string,
     @Query() query: LocaleQueryDto,
@@ -104,6 +108,7 @@ export class VariantsController {
   }
 
   @Get('options')
+  @RequirePermissions(StorePermission.PRODUCTS_VIEW)
   async options(@Param('productId') productId: string, @Req() req: any) {
     return this.variantsService.listOptions(productId, await this.storeIdFor(req));
   }
@@ -237,6 +242,7 @@ export class VariantsController {
    * body, so a seller cannot mint codes into another store's series (§9.4).
    */
   @Post('variants/generate-codes')
+  @RequirePermissions(StorePermission.PRODUCTS_BARCODES_GENERATE)
   @Throttle({ default: { limit: 20, ttl: 60000 } })
   async generateCodes(
     @Param('productId') productId: string,
@@ -293,7 +299,7 @@ export class VariantsController {
   }
 
   private async storeIdFor(req: any): Promise<Types.ObjectId> {
-    const store = await this.storesService.findByVendorIdOrThrow(req.user?.id);
+    const store = await this.storesService.findByMemberIdOrThrow(req.user?.id);
     return store._id as Types.ObjectId;
   }
 }

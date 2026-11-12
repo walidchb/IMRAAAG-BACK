@@ -21,6 +21,7 @@ import { OrderStatusesService } from '../orders/order-statuses.service';
 import { ReservationsService } from '../inventory/services/reservations.service';
 import { VariantsService } from '../inventory/services/variants.service';
 import { AppException } from '../../common/errors/app-exception';
+import { StoreAccessService } from '../team/store-access.service';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
 import { StatusConfig } from '../../common/constants/order-statuses.const';
 
@@ -110,7 +111,7 @@ describe('POS tenancy isolation', () => {
         findByBarcode: jest.fn(),
         searchCustomers: jest.fn().mockResolvedValue({ data: [] }),
       };
-      storesService = { findByVendorIdOrThrow: jest.fn().mockResolvedValue({ _id: STORE_A }) };
+      storesService = { findByMemberIdOrThrow: jest.fn().mockResolvedValue({ _id: STORE_A }) };
       ordersService = { createImmediateSale: jest.fn() };
 
       const module: TestingModule = await Test.createTestingModule({
@@ -128,7 +129,7 @@ describe('POS tenancy isolation', () => {
     it('scopes catalogue search to the session store and ignores a smuggled storeId', async () => {
       await controller.search({ q: 'shirt', storeId: STORE_B.toString() } as any, req);
 
-      expect(storesService.findByVendorIdOrThrow).toHaveBeenCalledWith(VENDOR_A.id);
+      expect(storesService.findByMemberIdOrThrow).toHaveBeenCalledWith(VENDOR_A.id);
       expect(posService.searchProducts).toHaveBeenCalledWith(STORE_A, expect.any(Object));
       // The session store — not the storeId the caller put in the query — is what scoped the read.
       expect(posService.searchProducts.mock.calls[0][0]).not.toBe(STORE_B);
@@ -137,14 +138,14 @@ describe('POS tenancy isolation', () => {
     it('scopes the barcode scan to the session store', async () => {
       await controller.byBarcode('B-ONLY-CODE', req);
 
-      expect(storesService.findByVendorIdOrThrow).toHaveBeenCalledWith(VENDOR_A.id);
+      expect(storesService.findByMemberIdOrThrow).toHaveBeenCalledWith(VENDOR_A.id);
       expect(posService.findByBarcode).toHaveBeenCalledWith(STORE_A, 'B-ONLY-CODE');
     });
 
     it('scopes the customer autofill to the session store', async () => {
       await controller.customers('ali', req);
 
-      expect(storesService.findByVendorIdOrThrow).toHaveBeenCalledWith(VENDOR_A.id);
+      expect(storesService.findByMemberIdOrThrow).toHaveBeenCalledWith(VENDOR_A.id);
       expect(posService.searchCustomers).toHaveBeenCalledWith(STORE_A, 'ali');
     });
 
@@ -163,7 +164,7 @@ describe('POS tenancy isolation', () => {
     });
 
     it('surfaces a store-resolution failure without touching the catalogue', async () => {
-      storesService.findByVendorIdOrThrow.mockRejectedValue(
+      storesService.findByMemberIdOrThrow.mockRejectedValue(
         new AppException(AppErrorCode.STORE_NOT_FOUND),
       );
 
@@ -302,7 +303,7 @@ describe('POS tenancy isolation', () => {
           {
             provide: StoresService,
             useValue: {
-              findByVendorIdOrThrow: jest.fn().mockResolvedValue({ _id: STORE_A, vendorEmail: 'a@store.test' }),
+              findByMemberIdOrThrow: jest.fn().mockResolvedValue({ _id: STORE_A, vendorEmail: 'a@store.test' }),
               incrementOrderCount: jest.fn().mockResolvedValue(undefined),
             },
           },
@@ -323,6 +324,14 @@ describe('POS tenancy isolation', () => {
             },
           },
           { provide: AuditService, useValue: { record: jest.fn().mockResolvedValue(undefined) } },
+          {
+            provide: StoreAccessService,
+            useValue: {
+              assertPermission: jest.fn().mockResolvedValue(undefined),
+              resolveForUserOrThrow: jest.fn(),
+              hasPermission: jest.fn().mockReturnValue(true),
+            },
+          },
         ],
       }).compile();
 

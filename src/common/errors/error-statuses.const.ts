@@ -34,6 +34,25 @@ export const ERROR_HTTP_STATUS: Record<string, number> = {
   [AppErrorCode.AUTH_STORE_OWNER_ONLY]: HttpStatus.FORBIDDEN,
   [AppErrorCode.AUTH_PRODUCT_OWNER_ONLY]: HttpStatus.FORBIDDEN,
   [AppErrorCode.AUTH_ORDER_OWNER_ONLY]: HttpStatus.FORBIDDEN,
+  [AppErrorCode.AUTH_STORE_ACCESS_REVOKED]: HttpStatus.FORBIDDEN,
+
+  // ─── Team management ───
+  [AppErrorCode.TEAM_MEMBER_NOT_FOUND]: HttpStatus.NOT_FOUND,
+  [AppErrorCode.TEAM_MEMBER_ALREADY_EXISTS]: HttpStatus.CONFLICT,
+  [AppErrorCode.TEAM_OWNER_PROTECTED]: HttpStatus.FORBIDDEN,
+  [AppErrorCode.TEAM_CANNOT_MODIFY_SELF]: HttpStatus.FORBIDDEN,
+  [AppErrorCode.TEAM_ROLE_INVALID]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.TEAM_INVITATION_NOT_FOUND]: HttpStatus.NOT_FOUND,
+  [AppErrorCode.TEAM_INVITATION_EXPIRED]: HttpStatus.GONE,
+  [AppErrorCode.TEAM_INVITATION_ALREADY_ACCEPTED]: HttpStatus.CONFLICT,
+  [AppErrorCode.TEAM_INVITATION_REVOKED]: HttpStatus.GONE,
+  [AppErrorCode.TEAM_INVITATION_NOT_PENDING]: HttpStatus.CONFLICT,
+  [AppErrorCode.TEAM_INVITATION_PENDING_EXISTS]: HttpStatus.CONFLICT,
+  [AppErrorCode.TEAM_INVITATION_EMAIL_MISMATCH]: HttpStatus.FORBIDDEN,
+  [AppErrorCode.TEAM_INVITATION_OWNER_EMAIL]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.TEAM_USER_ALREADY_MEMBER]: HttpStatus.CONFLICT,
+  [AppErrorCode.TEAM_ACCOUNT_EXISTS_USE_LOGIN]: HttpStatus.CONFLICT,
+  [AppErrorCode.TEAM_INVITATION_EMAIL_FAILED]: HttpStatus.BAD_GATEWAY,
 
   // ─── User ───
   [AppErrorCode.USER_NOT_FOUND]: HttpStatus.NOT_FOUND,

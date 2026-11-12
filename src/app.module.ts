@@ -28,6 +28,7 @@ import { InventoryModule } from './modules/inventory/inventory.module';
 import { PosModule } from './modules/pos/pos.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { OrderLabelsModule } from './modules/order-labels/order-labels.module';
+import { TeamModule } from './modules/team/team.module';
 
 @Module({
   imports: [
@@ -68,6 +69,7 @@ import { OrderLabelsModule } from './modules/order-labels/order-labels.module';
     PosModule,
     AnalyticsModule,
     OrderLabelsModule,
+    TeamModule,
   ],
   controllers: [AppController],
   providers: [AppService, CacheService, { provide: APP_GUARD, useClass: AppThrottlerGuard }],

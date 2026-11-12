@@ -21,7 +21,12 @@ describe('UploadController tenancy', () => {
       uploadProductImage: jest.fn().mockResolvedValue({ key: `store/${storeId}/products/${FILE_ID}.webp` }),
     };
     const storesService = {
-      findByVendorIdOrThrow: jest.fn().mockResolvedValue({ _id: storeId }),
+      findByMemberIdOrThrow: jest.fn().mockResolvedValue({ _id: storeId }),
+      resolvePermissionsForUser: jest.fn().mockResolvedValue({
+        storeId,
+        isOwner: true,
+        permissions: ['*'],
+      }),
     };
     const controller = new UploadController(uploadService as any, storesService as any);
     return { controller, uploadService, storesService };

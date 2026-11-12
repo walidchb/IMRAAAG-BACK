@@ -218,7 +218,7 @@ export class ProductsService {
     // Prefer the session's vendor id (a stable ownership key) and fall back to the legacy
     // email lookup only when the caller has no store record yet.
     const sessionStore = userId
-      ? await this.storesService.findByVendorId(userId).catch(() => null)
+      ? await this.storesService.findByMemberId(userId).catch(() => null)
       : null;
     const storeId =
       sessionStore?._id ??
@@ -481,13 +481,14 @@ export class ProductsService {
     userEmail: string,
     action: string,
   ): Promise<void> {
-    const store = userId ? await this.storesService.findByVendorId(userId).catch(() => null) : null;
+    const store = userId ? await this.storesService.findByMemberId(userId).catch(() => null) : null;
 
     if (store) {
       const docStoreId = doc.storeId ? String(doc.storeId) : null;
       if (docStoreId === String(store._id)) return;
-      // Document predates the migration: allow the legacy email match, otherwise deny.
-      if (!docStoreId && this.sameEmail(doc.vendorEmail, userEmail)) return;
+      // Document predates the migration: compare against the *store's* vendorEmail. An
+      // employee's login email is never the tenant key, so `userEmail` would wrongly deny.
+      if (!docStoreId && this.sameEmail(doc.vendorEmail, store.vendorEmail)) return;
       throw new AppException(AppErrorCode.PRODUCT_ACCESS_DENIED, { action });
     }
 
@@ -516,7 +517,7 @@ export class ProductsService {
     vendorId: string,
     query: ProductSuggestionQueryDto,
   ): Promise<ProductSuggestion[]> {
-    const store = await this.storesService.findByVendorIdOrThrow(vendorId);
+    const store = await this.storesService.findByMemberIdOrThrow(vendorId);
 
     const q = (query.q ?? '').trim();
     if (!q) return [];

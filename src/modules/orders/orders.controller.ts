@@ -17,6 +17,8 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { AppException } from '../../common/errors/app-exception';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
 import { Role } from '../../common/constants/roles.enum';
+import { StorePermission } from '../../common/constants/store-permissions.const';
+import { RequirePermissions } from '../team/decorators/require-permissions.decorator';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
@@ -42,6 +44,7 @@ export class OrdersController {
   }
 
   @Roles(Role.VENDOR, Role.ADMIN)
+  @RequirePermissions(StorePermission.ORDERS_CREATE)
   @Post('vendor')
   @ApiOperation({ summary: 'Create a new order (vendor)' })
   @ApiResponse({ status: 201, description: 'Order created successfully', type: Order })
@@ -51,6 +54,7 @@ export class OrdersController {
   }
 
   @Roles(Role.VENDOR, Role.ADMIN)
+  @RequirePermissions(StorePermission.ORDERS_UPDATE)
   @Patch('vendor/:id')
   @ApiOperation({ summary: 'Update order (vendor)' })
   @ApiResponse({ status: 200, description: 'Order updated', type: Order })
@@ -153,6 +157,7 @@ export class OrdersController {
   }
 
   @Roles(Role.VENDOR, Role.ADMIN)
+  @RequirePermissions(StorePermission.ORDERS_VIEW)
   @Get()
   @ApiOperation({ summary: 'List all orders' })
   @ApiQuery({ name: 'vendorEmail', required: false })
@@ -206,6 +211,7 @@ export class OrdersController {
   }
 
   @Roles(Role.VENDOR, Role.ADMIN)
+  @RequirePermissions(StorePermission.ORDERS_VIEW)
   @Post('bulk')
   @ApiOperation({ summary: 'Bulk action on orders (confirm, cancel, archive, restore, delete)' })
   @ApiResponse({ status: 200, description: 'Bulk action completed' })
@@ -214,6 +220,7 @@ export class OrdersController {
   }
 
   @Roles(Role.VENDOR, Role.ADMIN)
+  @RequirePermissions(StorePermission.ORDERS_DISPATCH)
   @Post('bulk-ship')
   @ApiOperation({ summary: 'Bulk ship orders grouped by delivery company' })
   @ApiResponse({ status: 200, description: 'Bulk ship completed with per-order results' })
@@ -228,6 +235,7 @@ export class OrdersController {
    * segment, so it cannot swallow this path.
    */
   @Roles(Role.VENDOR, Role.ADMIN)
+  @RequirePermissions(StorePermission.ORDERS_INVENTORY_VIEW)
   @Get(':id/inventory')
   @ApiOperation({
     summary: 'Reservation and deduction state for one order',
@@ -247,6 +255,7 @@ export class OrdersController {
    * on-hand alone. Only a dispatched order qualifies.
    */
   @Roles(Role.VENDOR, Role.ADMIN)
+  @RequirePermissions(StorePermission.ORDERS_RETURNS_RECEIVE)
   @Post(':id/inventory/receive-return')
   @ApiOperation({
     summary: 'Receive returned goods and restock or write them off',
@@ -261,6 +270,7 @@ export class OrdersController {
   }
 
   @Roles(Role.VENDOR, Role.ADMIN)
+  @RequirePermissions(StorePermission.ORDERS_ARCHIVE)
   @Post(':id/archive')
   @ApiOperation({ summary: 'Archive an order' })
   @ApiResponse({ status: 200, description: 'Order archived' })
@@ -271,6 +281,7 @@ export class OrdersController {
   }
 
   @Roles(Role.VENDOR, Role.ADMIN)
+  @RequirePermissions(StorePermission.ORDERS_ARCHIVE)
   @Post(':id/restore')
   @ApiOperation({ summary: 'Restore an archived order' })
   @ApiResponse({ status: 200, description: 'Order restored' })
@@ -281,6 +292,7 @@ export class OrdersController {
   }
 
   @Roles(Role.VENDOR, Role.ADMIN)
+  @RequirePermissions(StorePermission.ORDERS_VIEW)
   @Get(':id')
   @ApiOperation({ summary: 'Get order by ID' })
   @ApiResponse({ status: 200, description: 'Order found', type: Order })
@@ -290,6 +302,7 @@ export class OrdersController {
   }
 
   @Roles(Role.VENDOR, Role.ADMIN)
+  @RequirePermissions(StorePermission.ORDERS_UPDATE)
   @Patch(':id')
   @ApiOperation({ summary: 'Update order by ID' })
   @ApiResponse({ status: 200, description: 'Order updated', type: Order })
@@ -299,6 +312,7 @@ export class OrdersController {
   }
 
   @Roles(Role.VENDOR, Role.ADMIN)
+  @RequirePermissions(StorePermission.ORDERS_DELETE)
   @Delete(':id')
   @ApiOperation({ summary: 'Delete order by ID' })
   @ApiResponse({ status: 200, description: 'Order deleted', schema: { properties: { id: { type: 'string' }, deleted: { type: 'boolean' } } } })

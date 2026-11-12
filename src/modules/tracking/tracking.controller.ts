@@ -8,6 +8,8 @@ import { UpdateTrackingConfigDto } from './dto/tracking-config.dto';
 import { Public } from '../auth/decorators/public.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../../common/constants/roles.enum';
+import { StorePermission } from '../../common/constants/store-permissions.const';
+import { RequirePermissions } from '../team/decorators/require-permissions.decorator';
 import { AppException } from '../../common/errors/app-exception';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
 
@@ -40,11 +42,12 @@ export class TrackingController {
 
   private async storeOf(req: Request) {
     const userId = (req.user as { id: string })?.id;
-    return this.storesService.findByVendorIdOrThrow(userId);
+    return this.storesService.findByMemberIdOrThrow(userId);
   }
 
   @Get('config')
   @Roles(Role.VENDOR, Role.ADMIN)
+  @RequirePermissions(StorePermission.TRACKING_VIEW)
   @ApiOperation({ summary: 'Get tracking pixel config for the authenticated vendor' })
   async getConfig(@Req() req: Request) {
     return this.trackingService.getConfig(await this.storeOf(req));
@@ -52,6 +55,7 @@ export class TrackingController {
 
   @Patch('config')
   @Roles(Role.VENDOR, Role.ADMIN)
+  @RequirePermissions(StorePermission.TRACKING_UPDATE)
   @ApiOperation({ summary: 'Update tracking pixel config for the authenticated vendor' })
   async updateConfig(
     @Req() req: Request,
@@ -90,6 +94,7 @@ export class TrackingController {
    */
   @Post('test')
   @Roles(Role.VENDOR, Role.ADMIN)
+  @RequirePermissions(StorePermission.TRACKING_UPDATE)
   @HttpCode(200)
   @ApiOperation({ summary: 'Validate a pixel ID without waiting for an event to fire' })
   async testConfig(

@@ -3,6 +3,7 @@ import { DeliveryController } from './delivery.controller';
 import { DeliveryService } from './delivery.service';
 import { DeliveryCompaniesService } from './delivery-companies.service';
 import { SaveDeliveryConfigDto, SaveAttributionsDto } from './dto/save-delivery-config.dto';
+import { StoresService } from '../stores/stores.service';
 
 describe('DeliveryController', () => {
   let controller: DeliveryController;
@@ -36,6 +37,10 @@ describe('DeliveryController', () => {
       providers: [
         { provide: DeliveryService, useValue: mockDeliveryService },
         { provide: DeliveryCompaniesService, useValue: mockCompaniesService },
+        {
+          provide: StoresService,
+          useValue: { findByMemberIdOrThrow: jest.fn().mockResolvedValue({ _id: 'store-1', vendorEmail: 'vendor@test.com' }) },
+        },
       ],
     }).compile();
 

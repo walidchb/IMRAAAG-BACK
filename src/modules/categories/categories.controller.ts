@@ -16,6 +16,8 @@ import { CategoriesService } from './categories.service';
 import { Public } from '../auth/decorators/public.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../../common/constants/roles.enum';
+import { StorePermission } from '../../common/constants/store-permissions.const';
+import { RequirePermissions } from '../team/decorators/require-permissions.decorator';
 import { StoresService } from '../stores/stores.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
@@ -33,11 +35,12 @@ export class CategoriesController {
 
   /** Resolves the owning store from the session only; a body/query `storeId` is ignored. */
   private async storeFor(req: any) {
-    return this.storesService.findByVendorIdOrThrow(String(req.user.id));
+    return this.storesService.findByMemberIdOrThrow(String(req.user.id));
   }
 
   // Declared before `GET :id` so Express does not treat `mine` as a category id.
   @Roles(Role.VENDOR, Role.ADMIN)
+  @RequirePermissions(StorePermission.PRODUCTS_VIEW)
   @Throttle({ default: { limit: 120, ttl: 60000 } })
   @Get('mine')
   @ApiOperation({ summary: "List the session store's categories with all-product counts" })
@@ -66,6 +69,7 @@ export class CategoriesController {
   }
 
   @Roles(Role.VENDOR, Role.ADMIN)
+  @RequirePermissions(StorePermission.PRODUCTS_CATEGORIES_MANAGE)
   @Throttle({ default: { limit: 30, ttl: 60000 } })
   @Post()
   @ApiOperation({ summary: 'Create a category (optionally with nested subcategories)' })
@@ -75,6 +79,7 @@ export class CategoriesController {
   }
 
   @Roles(Role.VENDOR, Role.ADMIN)
+  @RequirePermissions(StorePermission.PRODUCTS_CATEGORIES_MANAGE)
   @Throttle({ default: { limit: 30, ttl: 60000 } })
   @Patch(':id')
   @ApiOperation({ summary: 'Edit a category / publish toggle' })
@@ -84,6 +89,7 @@ export class CategoriesController {
   }
 
   @Roles(Role.VENDOR, Role.ADMIN)
+  @RequirePermissions(StorePermission.PRODUCTS_CATEGORIES_MANAGE)
   @Throttle({ default: { limit: 30, ttl: 60000 } })
   @Delete(':id')
   @ApiOperation({ summary: 'Soft-delete a category and its subcategories' })
@@ -93,6 +99,7 @@ export class CategoriesController {
   }
 
   @Roles(Role.VENDOR, Role.ADMIN)
+  @RequirePermissions(StorePermission.PRODUCTS_CATEGORIES_MANAGE)
   @Throttle({ default: { limit: 30, ttl: 60000 } })
   @Post(':id/subcategories')
   @ApiOperation({ summary: 'Create a subcategory under a category' })
@@ -106,6 +113,7 @@ export class CategoriesController {
   }
 
   @Roles(Role.VENDOR, Role.ADMIN)
+  @RequirePermissions(StorePermission.PRODUCTS_CATEGORIES_MANAGE)
   @Throttle({ default: { limit: 30, ttl: 60000 } })
   @Patch(':id/subcategories/:subId')
   @ApiOperation({ summary: 'Edit a subcategory / publish toggle' })
@@ -126,6 +134,7 @@ export class CategoriesController {
   }
 
   @Roles(Role.VENDOR, Role.ADMIN)
+  @RequirePermissions(StorePermission.PRODUCTS_CATEGORIES_MANAGE)
   @Throttle({ default: { limit: 30, ttl: 60000 } })
   @Delete(':id/subcategories/:subId')
   @ApiOperation({ summary: 'Soft-delete a subcategory' })

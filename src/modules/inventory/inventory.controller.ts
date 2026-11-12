@@ -5,6 +5,8 @@ import { Types } from 'mongoose';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Role } from '../../common/constants/roles.enum';
+import { StorePermission } from '../../common/constants/store-permissions.const';
+import { RequirePermissions } from '../team/decorators/require-permissions.decorator';
 import { StoresService } from '../stores/stores.service';
 import { InventoryService } from './services/inventory.service';
 import { InventoryReadService } from './services/inventory-read.service';
@@ -34,6 +36,7 @@ import { AppErrorCode } from '../../common/errors/error-codes.enum';
 @ApiTags('inventory')
 @Controller('inventory')
 @UseGuards(RolesGuard)
+@RequirePermissions(StorePermission.INVENTORY_VIEW)
 export class InventoryController {
   constructor(
     private readonly inventoryService: InventoryService,
@@ -45,6 +48,7 @@ export class InventoryController {
   /** Absolute set-on-hand for one variant. */
   @Patch('variants/:variantId/stock')
   @Roles(Role.VENDOR, Role.ADMIN)
+  @RequirePermissions(StorePermission.INVENTORY_ADJUST)
   async setOnHand(
     @Param('variantId') variantId: string,
     @Body() dto: SetOnHandDto,
@@ -64,6 +68,7 @@ export class InventoryController {
   /** Signed adjustment for one variant. */
   @Patch('variants/:variantId/adjust')
   @Roles(Role.VENDOR, Role.ADMIN)
+  @RequirePermissions(StorePermission.INVENTORY_ADJUST)
   async adjust(
     @Param('variantId') variantId: string,
     @Body() dto: AdjustDeltaDto,
@@ -89,6 +94,7 @@ export class InventoryController {
    */
   @Post('bulk-adjust')
   @Roles(Role.VENDOR, Role.ADMIN)
+  @RequirePermissions(StorePermission.INVENTORY_BULK_ADJUST)
   @Throttle({ default: { limit: 60, ttl: 60000 } })
   async bulkAdjust(@Body() dto: BulkAdjustDto, @Req() req: any) {
     return this.inventoryService.bulkAdjust(
@@ -113,6 +119,7 @@ export class InventoryController {
   /** Movement history for one variant, newest first, cursor-paginated. */
   @Get('variants/:variantId/movements')
   @Roles(Role.VENDOR, Role.ADMIN)
+  @RequirePermissions(StorePermission.INVENTORY_MOVEMENTS_VIEW)
   async listMovements(
     @Param('variantId') variantId: string,
     @Query() query: ListMovementsQueryDto,
@@ -189,6 +196,7 @@ export class InventoryController {
    */
   @Get('movements')
   @Roles(Role.VENDOR, Role.ADMIN)
+  @RequirePermissions(StorePermission.INVENTORY_MOVEMENTS_VIEW)
   async listStoreMovements(
     @Query() query: ListStoreMovementsQueryDto,
     @Req() req: any,
@@ -219,6 +227,7 @@ export class InventoryController {
   /** Sets or clears a low-stock threshold for one variant, or a product-wide default. */
   @Patch('threshold')
   @Roles(Role.VENDOR, Role.ADMIN)
+  @RequirePermissions(StorePermission.INVENTORY_THRESHOLD_UPDATE)
   async setThreshold(@Body() dto: SetThresholdDto, @Req() req: any) {
     const hasVariant = !!dto.variantId;
     const hasProduct = !!dto.productId;
@@ -260,7 +269,7 @@ export class InventoryController {
   }
 
   private async storeIdFor(user: { id: string }): Promise<Types.ObjectId> {
-    return (await this.storesService.findByVendorIdOrThrow(user.id))._id as Types.ObjectId;
+    return (await this.storesService.findByMemberIdOrThrow(user.id))._id as Types.ObjectId;
   }
 
   /**

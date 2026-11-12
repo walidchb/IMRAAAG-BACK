@@ -27,6 +27,8 @@ import { DELIVERY_STATUS_CONFLICT_CODES } from '../../common/constants/delivery-
 import { OrderSource } from '../../common/constants/order-sources.const';
 import { Role } from '../../common/constants/roles.enum';
 import { StoresService } from '../stores/stores.service';
+import { StoreAccessService } from '../team/store-access.service';
+import { StorePermission, hasStorePermission } from '../../common/constants/store-permissions.const';
 import {
   AdvisoryLine,
   OrderInventoryContext,
@@ -177,6 +179,28 @@ const CARRIER_RETURN_EDGES: ReadonlySet<string> = new Set([
 ]);
 
 /**
+ * The store permission each status target requires (Team Management §7.3). A status-only save
+ * is checked here because `PATCH /orders/:id` is one route whose required capability depends
+ * on the requested target.
+ */
+const ORDER_STATUS_TARGET_PERMISSION: Record<string, string> = {
+  [OrderStatus.CONFIRMED]: StorePermission.ORDERS_CONFIRM,
+  [OrderStatus.CANCELLED]: StorePermission.ORDERS_CANCEL,
+  [OrderStatus.DISPATCHED]: StorePermission.ORDERS_DISPATCH,
+  [OrderStatus.IN_TRANSIT]: StorePermission.ORDERS_UPDATE_STATUS,
+  [OrderStatus.DELIVERED]: StorePermission.ORDERS_UPDATE_STATUS,
+};
+
+/** The store permission each bulk action requires. */
+const BULK_ACTION_PERMISSION: Record<string, string> = {
+  confirm: StorePermission.ORDERS_CONFIRM,
+  cancel: StorePermission.ORDERS_CANCEL,
+  archive: StorePermission.ORDERS_ARCHIVE,
+  restore: StorePermission.ORDERS_ARCHIVE,
+  delete: StorePermission.ORDERS_DELETE,
+};
+
+/**
  * The conflict a carrier action creates for a given **target**, not just the current status.
  *
  * The old `carrierAdvanceConflict` only knew "this status is terminal", which would have
@@ -233,6 +257,7 @@ export class OrdersService {
     private readonly deliveryFeesService: DeliveryFeesService,
     private readonly statusesService: OrderStatusesService,
     private readonly storesService: StoresService,
+    private readonly storeAccessService: StoreAccessService,
     private readonly reservationsService: ReservationsService,
     private readonly variantsService: VariantsService,
     private readonly auditService: AuditService,
@@ -242,6 +267,31 @@ export class OrdersService {
     if (user.role !== Role.VENDOR && user.role !== Role.ADMIN) {
       throw new AppException(AppErrorCode.AUTH_VENDOR_ONLY);
     }
+  }
+
+  /** Enforces the store permission a status target needs. Admin bypasses. */
+  private async assertStatusTargetPermission(
+    user: RequestUser,
+    targetSlug: string,
+  ): Promise<void> {
+    if (user.role === Role.ADMIN) return;
+    const permission = ORDER_STATUS_TARGET_PERMISSION[targetSlug];
+    if (!permission) return;
+    await this.storeAccessService.assertPermission(
+      { id: user.id, role: user.role },
+      permission,
+    );
+  }
+
+  /** Enforces the store permission a bulk action needs. Admin bypasses. */
+  private async assertBulkActionPermission(user: RequestUser, action: string): Promise<void> {
+    if (user.role === Role.ADMIN) return;
+    const permission = BULK_ACTION_PERMISSION[action];
+    if (!permission) return;
+    await this.storeAccessService.assertPermission(
+      { id: user.id, role: user.role },
+      permission,
+    );
   }
 
   /**
@@ -259,6 +309,18 @@ export class OrdersService {
   }
 
   /**
+   * Tenant filter for the *session* user. Employees identify by their own login email, which
+   * is not the store's `vendorEmail`, so the store is resolved first and its canonical
+   * `vendorEmail` is used for the legacy pre-migration fallback.
+   */
+  private async vendorScopedFilter(user: RequestUser): Promise<Record<string, any>> {
+    const store = user.id
+      ? await this.storesService.findByMemberId(user.id).catch(() => null)
+      : null;
+    return this.vendorOrderFilter(store?.vendorEmail ?? user.email);
+  }
+
+  /**
    * D3 ownership check: compares the order's stable `storeId` against the caller's store
    * rather than the mutable `vendorEmail`. Falls back to the email comparison only for
    * orders written before the migration (no `storeId`) or callers with no store yet.
@@ -267,11 +329,17 @@ export class OrdersService {
     if (user.role === Role.ADMIN) return;
 
     const store = user.id
-      ? await this.storesService.findByVendorId(user.id).catch(() => null)
+      ? await this.storesService.findByMemberId(user.id).catch(() => null)
       : null;
 
-    if (store && order.storeId) {
-      if (String(order.storeId) === String(store._id)) return;
+    if (store) {
+      if (order.storeId) {
+        if (String(order.storeId) === String(store._id)) return;
+        throw new AppException(AppErrorCode.AUTH_ORDER_OWNER_ONLY, { orderNo: order.orderNo });
+      }
+      // Pre-migration order: compare against the *store's* vendorEmail, not the employee's
+      // login email (which is never the tenant key).
+      if (order.vendorEmail?.toLowerCase() === store.vendorEmail?.toLowerCase()) return;
       throw new AppException(AppErrorCode.AUTH_ORDER_OWNER_ONLY, { orderNo: order.orderNo });
     }
 
@@ -374,8 +442,22 @@ export class OrdersService {
 
     if (user) {
       this.assertVendorOrAdmin(user);
-      if (user.role === Role.VENDOR && storeRef.vendorEmail?.toLowerCase() !== user.email?.toLowerCase()) {
-        throw new AppException(AppErrorCode.AUTH_ORDER_OWNER_ONLY);
+      if (user.role === Role.VENDOR) {
+        // The actor must actually belong to the store the order is filed against. An
+        // employee's login email is not the store's `vendorEmail`, so ownership is compared
+        // on the resolved store id, with the pre-migration email fallback.
+        const actorStore = user.id
+          ? await this.storesService.findByMemberId(user.id).catch(() => null)
+          : null;
+        const sameStore =
+          !!storeRef.storeId && !!actorStore && String(storeRef.storeId) === String(actorStore._id);
+        const sameLegacyEmail =
+          !storeRef.storeId &&
+          !!actorStore &&
+          storeRef.vendorEmail?.toLowerCase() === actorStore.vendorEmail?.toLowerCase();
+        if (!sameStore && !sameLegacyEmail) {
+          throw new AppException(AppErrorCode.AUTH_ORDER_OWNER_ONLY);
+        }
       }
     }
 
@@ -806,7 +888,7 @@ export class OrdersService {
       throw new AppException(AppErrorCode.POS_EMPTY_CART);
     }
 
-    const store = await this.storesService.findByVendorIdOrThrow(user.id);
+    const store = await this.storesService.findByMemberIdOrThrow(user.id);
     const storeId = store._id as Types.ObjectId;
 
     const now = new Date();
@@ -989,7 +1071,7 @@ export class OrdersService {
       throw new AppException(AppErrorCode.POS_EMPTY_CART);
     }
 
-    const store = await this.storesService.findByVendorIdOrThrow(user.id);
+    const store = await this.storesService.findByMemberIdOrThrow(user.id);
     const storeId = store._id as Types.ObjectId;
     const { items, itemsTotal } = await this.buildPosItems(storeId, dto.items);
     const orderNo = await this.generateOrderNo();
@@ -1034,7 +1116,7 @@ export class OrdersService {
       throw new AppException(AppErrorCode.POS_EMPTY_CART);
     }
 
-    const store = await this.storesService.findByVendorIdOrThrow(user.id);
+    const store = await this.storesService.findByMemberIdOrThrow(user.id);
     const storeId = store._id as Types.ObjectId;
     const existing = await this.findPosHoldOrThrow(id, storeId);
     const { items, itemsTotal } = await this.buildPosItems(storeId, dto.items);
@@ -1073,7 +1155,7 @@ export class OrdersService {
 
   async deletePosHold(id: string, user: RequestUser): Promise<{ id: string; deleted: true }> {
     this.assertVendorOrAdmin(user);
-    const store = await this.storesService.findByVendorIdOrThrow(user.id);
+    const store = await this.storesService.findByMemberIdOrThrow(user.id);
     const storeId = store._id as Types.ObjectId;
     const existing = await this.findPosHoldOrThrow(id, storeId);
 
@@ -1112,7 +1194,7 @@ export class OrdersService {
       throw new AppException(AppErrorCode.POS_EMPTY_CART);
     }
 
-    const store = await this.storesService.findByVendorIdOrThrow(user.id);
+    const store = await this.storesService.findByMemberIdOrThrow(user.id);
     const storeId = store._id as Types.ObjectId;
     const hold = await this.findPosHoldOrThrow(id, storeId);
 
@@ -1216,7 +1298,7 @@ export class OrdersService {
 
   async listPosHolds(user: RequestUser): Promise<{ data: PosHoldView[] }> {
     this.assertVendorOrAdmin(user);
-    const store = await this.storesService.findByVendorIdOrThrow(user.id);
+    const store = await this.storesService.findByMemberIdOrThrow(user.id);
     const holds = await this.posHoldModel
       .find({ storeId: store._id })
       .sort({ createdAt: -1 })
@@ -1274,7 +1356,7 @@ export class OrdersService {
     if (user) {
       this.assertVendorOrAdmin(user);
       if (user.role === Role.VENDOR) {
-        ownershipScope = await this.vendorOrderFilter(user.email);
+        ownershipScope = await this.vendorScopedFilter(user);
       } else if (query.vendorEmail) {
         filter.vendorEmail = query.vendorEmail;
       }
@@ -2087,6 +2169,10 @@ export class OrdersService {
 
     const existingSlug = this.getStatusSlug(existing.status);
 
+    if (user && updateOrderDto.status && updateOrderDto.status !== existingSlug) {
+      await this.assertStatusTargetPermission(user, updateOrderDto.status);
+    }
+
     const {
       status: _,
       expectedUpdatedAt: __,
@@ -2542,7 +2628,7 @@ export class OrdersService {
     const archivedAt = new Date();
     const and: Record<string, any>[] = [];
     if (user.role !== Role.ADMIN) {
-      const ownership = await this.vendorOrderFilter(user.email);
+      const ownership = await this.vendorScopedFilter(user);
       if (Object.keys(ownership).length > 0) and.push(ownership);
     }
     and.push({
@@ -2608,7 +2694,7 @@ export class OrdersService {
 
     const filter: Record<string, any> = { _id: id, isDeleted: { $ne: true }, isArchived: true };
     if (user.role !== Role.ADMIN) {
-      const ownership = await this.vendorOrderFilter(user.email);
+      const ownership = await this.vendorScopedFilter(user);
       if (Object.keys(ownership).length > 0) Object.assign(filter, ownership);
     }
 
@@ -2650,7 +2736,8 @@ export class OrdersService {
     if (user) {
       this.assertVendorOrAdmin(user);
       if (user.role === Role.VENDOR) {
-        Object.assign(baseFilter, await this.vendorOrderFilter(user.email));
+        await this.assertBulkActionPermission(user, action);
+        Object.assign(baseFilter, await this.vendorScopedFilter(user));
       }
     }
 
@@ -2814,7 +2901,11 @@ export class OrdersService {
     if (user) {
       this.assertVendorOrAdmin(user);
       if (user.role === Role.VENDOR) {
-        Object.assign(baseFilter, await this.vendorOrderFilter(user.email));
+        await this.storeAccessService.assertPermission(
+          { id: user.id, role: user.role },
+          StorePermission.ORDERS_DISPATCH,
+        );
+        Object.assign(baseFilter, await this.vendorScopedFilter(user));
       }
     }
 

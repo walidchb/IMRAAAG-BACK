@@ -20,8 +20,12 @@ import { ResetPasswordPhoneDto } from './dto/reset-password-phone.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { RefreshDto } from './dto/refresh.dto';
-import { EmailService } from './email.service';
+import { AcceptInvitationDto } from './dto/accept-invitation.dto';
+import { EmailService } from '../email/email.service';
 import { StoresService } from '../stores/stores.service';
+import { StoreAccessService } from '../team/store-access.service';
+import { InvitationsService } from '../team/invitations.service';
+import { StoreRole } from '../../common/constants/store-roles.enum';
 
 const FAKE_EMAIL_SUFFIX = '@customer.imraaah';
 
@@ -43,6 +47,8 @@ export class AuthService {
     private configService: ConfigService,
     private emailService: EmailService,
     private storesService: StoresService,
+    private storeAccessService: StoreAccessService,
+    private invitationsService: InvitationsService,
   ) {}
 
   private generateRefreshToken(): { rawToken: string; tokenHash: string } {
@@ -78,15 +84,6 @@ export class AuthService {
     const user = created.toObject();
     const userId = user._id.toString();
 
-    const token = this.jwtService.sign({
-      sub: userId,
-      email: user.email,
-      role: user.role,
-      tokenVersion: user.tokenVersion ?? 0,
-    });
-    const refreshToken = await this.storeRefreshToken(userId);
-
-    let storeId: string | null = null;
     try {
       const store = await this.storesService.create(
         {
@@ -106,29 +103,174 @@ export class AuthService {
         // `findByVendorIdOrThrow()` could not match - see `vendorIdFilter()`.
         userId,
       );
-      storeId = String(store._id);
+      const storeId = String(store._id);
+      return this.issueSession(user, storeId);
     } catch (err) {
-      // Rollback user creation if store creation fails
+      // Rollback user creation if store creation fails. No token has been issued yet.
       await this.userModel.findByIdAndDelete(userId).exec();
       throw err;
     }
+  }
+
+  /**
+   * Issues a normal session for a user and resolves their store access.
+   *
+   * Used by login, refresh, signup and the invitation accept flows so the payload shape is
+   * identical everywhere: `storeId`, `storeRole`, `isOwner` and `permissions` are always
+   * present. A deactivated employee cannot obtain a session (`AUTH_STORE_ACCESS_REVOKED`);
+   * a legacy vendor with no store at all is still allowed to sign in (storeId `null`).
+   */
+  async issueSession(user: any, knownStoreId?: string) {
+    const userId = String(user._id ?? user.id);
+    const access = await this.storeAccessService.resolveForUser(userId, user.role);
+
+    if (user.role === Role.VENDOR && !access) {
+      const revoked = await this.storeAccessService.hasDeactivatedMembership(userId);
+      if (revoked) {
+        throw new AppException(AppErrorCode.AUTH_STORE_ACCESS_REVOKED);
+      }
+    }
+
+    const token = this.jwtService.sign({
+      sub: userId,
+      email: user.email,
+      role: user.role,
+      tokenVersion: user.tokenVersion ?? 0,
+    });
+    const refreshToken = await this.storeRefreshToken(userId);
 
     return {
       token,
       refreshToken,
-      user: {
-        id: user._id.toString(),
-        fullName: user.fullName,
-        email: sanitizeEmail(user.email),
-        phoneNumber: user.phoneNumber,
-        role: user.role,
-        gender: user.gender ? user.gender.toLowerCase() : null,
-        address: user.address || null,
-        savedProductIds: (user.savedProductIds || []).map((id) => id.toString()),
-        profileImage: user.profileImage || null,
-        storeId,
-      },
+      user: this.buildUserPayload(user, access, knownStoreId),
     };
+  }
+
+  private buildUserPayload(
+    user: any,
+    access: Awaited<ReturnType<StoreAccessService['resolveForUser']>>,
+    knownStoreId?: string,
+  ) {
+    return {
+      id: user._id ?? user.id,
+      fullName: user.fullName,
+      email: sanitizeEmail(user.email),
+      phoneNumber: user.phoneNumber,
+      role: user.role,
+      gender: user.gender ? user.gender.toLowerCase() : null,
+      address: user.address || null,
+      savedProductIds: (user.savedProductIds || []).map((id: any) => id.toString()),
+      profileImage: user.profileImage || null,
+      storeId: knownStoreId ?? (access?.storeId ? String(access.storeId) : null),
+      storeRole: access?.storeRole ?? (knownStoreId ? StoreRole.OWNER : null),
+      isOwner: access?.isOwner ?? !!knownStoreId,
+      permissions: access?.permissions ?? (knownStoreId ? ['*'] : []),
+    };
+  }
+
+  // --- Team invitation acceptance ---
+
+  getInvitationInfo(token: string) {
+    return this.invitationsService.validateToken(token);
+  }
+
+  /**
+   * Accepts an invitation and creates the invitee's account. No store is created: the new
+   * user is a `VENDOR` whose store access comes from the membership row.
+   */
+  async acceptInvitationNewAccount(dto: AcceptInvitationDto, token: string) {
+    const info = await this.invitationsService.validateToken(token);
+    if (!info.requiresAccount) {
+      throw new AppException(AppErrorCode.TEAM_ACCOUNT_EXISTS_USE_LOGIN);
+    }
+    if (dto.password !== dto.confirmPassword) {
+      throw new AppException(AppErrorCode.USER_PASSWORDS_DO_NOT_MATCH);
+    }
+
+    const existing = await this.userModel.findOne({ email: info.email }).select('_id').lean().exec();
+    if (existing) {
+      throw new AppException(AppErrorCode.TEAM_ACCOUNT_EXISTS_USE_LOGIN);
+    }
+
+    // Claim before creating anything: the atomic claim is what makes the token single-use.
+    const claimed = await this.invitationsService.claim(token, info.email);
+
+    let createdUserId: string | null = null;
+    try {
+      const hashedPassword = await bcrypt.hash(dto.password, 10);
+      const created = await this.userModel.create({
+        fullName: dto.fullName,
+        email: info.email,
+        phoneNumber: '',
+        password: hashedPassword,
+        role: Role.VENDOR,
+        isActive: true,
+      });
+      createdUserId = created._id.toString();
+
+      await this.invitationsService.join(claimed, createdUserId, {
+        id: createdUserId,
+        email: info.email,
+        fullName: dto.fullName,
+      });
+
+      return this.issueSession(created.toObject());
+    } catch (err) {
+      // No orphan account and no burned token: undo both where possible.
+      if (createdUserId) {
+        await this.userModel.findByIdAndDelete(createdUserId).exec().catch(() => undefined);
+      }
+      await this.invitationsService.releaseClaim(claimed).catch(() => undefined);
+      throw err;
+    }
+  }
+
+  /**
+   * Accepts an invitation for an account that already exists. Email ownership is proven by
+   * the authenticated session, and it must match the invitation email.
+   */
+  async acceptInvitationExisting(user: { id: string }, token: string) {
+    const fresh = await this.userModel.findById(user.id);
+    if (!fresh) {
+      throw new AppException(AppErrorCode.USER_NOT_FOUND, { id: user.id });
+    }
+
+    const info = await this.invitationsService.validateToken(token);
+    if ((fresh.email || '').toLowerCase() !== info.email.toLowerCase()) {
+      throw new AppException(AppErrorCode.TEAM_INVITATION_EMAIL_MISMATCH);
+    }
+
+    const claimed = await this.invitationsService.claim(
+      token,
+      fresh.email,
+      fresh._id.toString(),
+    );
+    await this.invitationsService.join(claimed, fresh._id.toString(), {
+      id: fresh._id.toString(),
+      email: fresh.email,
+      fullName: fresh.fullName,
+    });
+
+    // Unresolved decision #6 default: a CUSTOMER accepting becomes a VENDOR on the same User.
+    if (fresh.role === Role.CUSTOMER) {
+      fresh.role = Role.VENDOR;
+      await fresh.save();
+    }
+
+    return this.issueSession(fresh);
+  }
+
+  /** The current user, with the same session payload shape as login/refresh. */
+  async getMe(userId: string) {
+    const user = await this.userModel.findById(userId);
+    if (!user) {
+      throw new AppException(AppErrorCode.USER_NOT_FOUND, { id: userId });
+    }
+    const access = await this.storeAccessService.resolveForUser(
+      user._id.toString(),
+      user.role,
+    );
+    return this.buildUserPayload(user, access);
   }
 
   async login(dto: LoginDto) {
@@ -158,45 +300,7 @@ export class AuthService {
         : {}),
     });
 
-    const token = this.jwtService.sign({
-      sub: user._id,
-      email: user.email,
-      role: user.role,
-      tokenVersion: user.tokenVersion ?? 0,
-    });
-    const refreshToken = await this.storeRefreshToken(user._id.toString());
-
-    return {
-      token,
-      refreshToken,
-      user: {
-        id: user._id,
-        fullName: user.fullName,
-        email: sanitizeEmail(user.email),
-        phoneNumber: user.phoneNumber,
-        role: user.role,
-        gender: user.gender ? user.gender.toLowerCase() : null,
-        address: user.address || null,
-        savedProductIds: (user.savedProductIds || []).map((id) => id.toString()),
-        profileImage: user.profileImage || null,
-        storeId: await this.resolveStoreId(user._id.toString(), user.role),
-      },
-    };
-  }
-
-  /**
-   * storeId migration shim: resolves the authenticated user's store so the frontend can
-   * hydrate its storeId without an extra `GET /stores/mine` round-trip.
-   * Returns null for customers and for vendors that have not created a store yet.
-   */
-  private async resolveStoreId(userId: string, role: string): Promise<string | null> {
-    if (role !== Role.VENDOR) return null;
-    try {
-      const store = await this.storesService.findByVendorId(userId);
-      return store ? String(store._id) : null;
-    } catch {
-      return null;
-    }
+    return this.issueSession(user);
   }
 
   async refreshAccessToken(dto: RefreshDto) {
@@ -214,32 +318,7 @@ export class AuthService {
       throw new AppException(AppErrorCode.AUTH_REFRESH_TOKEN_EXPIRED);
     }
 
-    const token = this.jwtService.sign({
-      sub: user._id,
-      email: user.email,
-      role: user.role,
-      tokenVersion: user.tokenVersion ?? 0,
-    });
-    const newRefreshToken = await this.storeRefreshToken(user._id.toString());
-
-    return {
-      token,
-      refreshToken: newRefreshToken,
-      // Same payload as login/signup so the client can hydrate `storeId` on reload
-      // without an extra `GET /stores/mine` round-trip.
-      user: {
-        id: user._id,
-        fullName: user.fullName,
-        email: sanitizeEmail(user.email),
-        phoneNumber: user.phoneNumber,
-        role: user.role,
-        gender: user.gender ? user.gender.toLowerCase() : null,
-        address: user.address || null,
-        savedProductIds: (user.savedProductIds || []).map((id) => id.toString()),
-        profileImage: user.profileImage || null,
-        storeId: await this.resolveStoreId(user._id.toString(), user.role),
-      },
-    };
+    return this.issueSession(user);
   }
 
   async forgotPassword(dto: ForgotPasswordDto) {

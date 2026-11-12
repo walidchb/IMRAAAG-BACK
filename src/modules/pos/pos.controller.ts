@@ -16,6 +16,8 @@ import { Types } from 'mongoose';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Role } from '../../common/constants/roles.enum';
+import { StorePermission } from '../../common/constants/store-permissions.const';
+import { RequirePermissions } from '../team/decorators/require-permissions.decorator';
 import { StoresService } from '../stores/stores.service';
 import { OrdersService } from '../orders/orders.service';
 import { CreatePosSaleDto } from '../orders/dto/create-pos-sale.dto';
@@ -34,6 +36,7 @@ import { PosProductQueryDto } from './dto/pos.dto';
 @Controller('pos')
 @UseGuards(RolesGuard)
 @Roles(Role.VENDOR, Role.ADMIN)
+@RequirePermissions(StorePermission.POS_ACCESS)
 @Throttle({ default: { limit: 120, ttl: 60000 } })
 export class PosController {
   constructor(
@@ -60,6 +63,7 @@ export class PosController {
    * transaction, so a sold-out line rejects the whole sale rather than overdrawing stock.
    */
   @Post('sales')
+  @RequirePermissions(StorePermission.POS_CREATE_SALE)
   @Throttle({ default: { limit: 60, ttl: 60000 } })
   async createSale(@Body() dto: CreatePosSaleDto, @Req() req: any) {
     return this.ordersService.createImmediateSale(dto, req.user);
@@ -76,6 +80,7 @@ export class PosController {
    * to another customer while the cart is held.
    */
   @Post('holds')
+  @RequirePermissions(StorePermission.POS_MANAGE_HOLDS)
   @Throttle({ default: { limit: 60, ttl: 60000 } })
   async createHold(@Body() dto: CreatePosHoldDto, @Req() req: any) {
     return this.ordersService.createPosHold(dto, req.user);
@@ -83,6 +88,7 @@ export class PosController {
 
   /** Replaces a parked sale's lines and reconciles the reservation in one transaction. */
   @Patch('holds/:id')
+  @RequirePermissions(StorePermission.POS_MANAGE_HOLDS)
   @Throttle({ default: { limit: 60, ttl: 60000 } })
   async updateHold(@Param('id') id: string, @Body() dto: CreatePosHoldDto, @Req() req: any) {
     return this.ordersService.updatePosHold(id, dto, req.user);
@@ -90,6 +96,7 @@ export class PosController {
 
   /** Discards a parked sale and releases the stock it was holding. */
   @Delete('holds/:id')
+  @RequirePermissions(StorePermission.POS_MANAGE_HOLDS)
   @Throttle({ default: { limit: 60, ttl: 60000 } })
   async deleteHold(@Param('id') id: string, @Req() req: any) {
     return this.ordersService.deletePosHold(id, req.user);
@@ -97,6 +104,7 @@ export class PosController {
 
   /** Completes a parked sale into a delivered POS order, consuming its reservation. */
   @Post('holds/:id/complete')
+  @RequirePermissions(StorePermission.POS_MANAGE_HOLDS, StorePermission.POS_CREATE_SALE)
   @Throttle({ default: { limit: 60, ttl: 60000 } })
   async completeHold(
     @Param('id') id: string,
@@ -114,12 +122,12 @@ export class PosController {
   @Get('customers')
   @Throttle({ default: { limit: 120, ttl: 60000 } })
   async customers(@Query('q') q: string | undefined, @Req() req: any) {
-    const store = await this.storesService.findByVendorIdOrThrow(req.user?.id);
+    const store = await this.storesService.findByMemberIdOrThrow(req.user?.id);
     return this.posService.searchCustomers(store._id as Types.ObjectId, q);
   }
 
   private async storeIdFor(req: any): Promise<Types.ObjectId> {
-    const store = await this.storesService.findByVendorIdOrThrow(req.user?.id);
+    const store = await this.storesService.findByMemberIdOrThrow(req.user?.id);
     return store._id as Types.ObjectId;
   }
 }

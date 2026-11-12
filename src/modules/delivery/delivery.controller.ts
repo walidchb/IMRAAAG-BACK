@@ -7,6 +7,9 @@ import { SaveDeliveryConfigDto, SaveAttributionsDto } from './dto/save-delivery-
 import { Public } from '../auth/decorators/public.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../../common/constants/roles.enum';
+import { StorePermission } from '../../common/constants/store-permissions.const';
+import { RequirePermissions } from '../team/decorators/require-permissions.decorator';
+import { StoresService } from '../stores/stores.service';
 
 @ApiTags('Delivery')
 @ApiBearerAuth()
@@ -15,7 +18,18 @@ export class DeliveryController {
   constructor(
     private readonly deliveryService: DeliveryService,
     private readonly deliveryCompaniesService: DeliveryCompaniesService,
+    private readonly storesService: StoresService,
   ) {}
+
+  /**
+   * Delivery configs/fees are keyed on the store's `vendorEmail`. An employee's login email is
+   * not that key, so resolve the store first and use its canonical email everywhere.
+   */
+  private async storeEmailFor(req: any): Promise<string> {
+    const user = req.user as { id: string };
+    const store = await this.storesService.findByMemberIdOrThrow(user.id);
+    return store.vendorEmail;
+  }
 
   @Public()
   @Get('companies')
@@ -25,40 +39,44 @@ export class DeliveryController {
   }
 
   @Roles(Role.VENDOR)
+  @RequirePermissions(StorePermission.DELIVERY_VIEW)
   @Throttle({ default: { limit: 30, ttl: 60000 } })
   @Get('configs')
   @ApiOperation({ summary: 'Get delivery configs for current vendor' })
-  getConfigs(@Req() req: any) {
-    const vendorEmail = req.user.email;
+  async getConfigs(@Req() req: any) {
+    const vendorEmail = await this.storeEmailFor(req);
     return this.deliveryService.getConfigs(vendorEmail);
   }
 
   @Roles(Role.VENDOR)
+  @RequirePermissions(StorePermission.DELIVERY_CONFIGURE)
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Patch('configs')
   @ApiOperation({ summary: 'Save delivery config for a company' })
-  saveConfig(@Req() req: any, @Body() dto: SaveDeliveryConfigDto) {
-    const vendorEmail = req.user.email;
+  async saveConfig(@Req() req: any, @Body() dto: SaveDeliveryConfigDto) {
+    const vendorEmail = await this.storeEmailFor(req);
     return this.deliveryService.saveConfig(vendorEmail, dto);
   }
 
   @Roles(Role.VENDOR)
+  @RequirePermissions(StorePermission.DELIVERY_VIEW)
   @Throttle({ default: { limit: 30, ttl: 60000 } })
   @Get('attributions')
   @ApiOperation({ summary: 'Get wilaya-to-company attributions for current vendor' })
-  getAttributions(@Req() req: any) {
-    const vendorEmail = req.user.email;
+  async getAttributions(@Req() req: any) {
+    const vendorEmail = await this.storeEmailFor(req);
     // A vendor with no attributions document has none — answer `{ attributions: {} }`, never an
     // empty 200 body (which the client's `res.json()` cannot parse).
     return this.deliveryService.getAttributions(vendorEmail).then((doc) => doc ?? { attributions: {} });
   }
 
   @Roles(Role.VENDOR)
+  @RequirePermissions(StorePermission.DELIVERY_ATTRIBUTIONS_UPDATE)
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Patch('attributions')
   @ApiOperation({ summary: 'Save wilaya-to-company attributions' })
-  saveAttributions(@Req() req: any, @Body() dto: SaveAttributionsDto) {
-    const vendorEmail = req.user.email;
+  async saveAttributions(@Req() req: any, @Body() dto: SaveAttributionsDto) {
+    const vendorEmail = await this.storeEmailFor(req);
     return this.deliveryService.saveAttributions(vendorEmail, dto);
   }
 
@@ -71,11 +89,12 @@ export class DeliveryController {
   }
 
   @Roles(Role.VENDOR)
+  @RequirePermissions(StorePermission.DELIVERY_SYNC)
   @Throttle({ default: { limit: 2, ttl: 60000 } })
   @Post('noest-desks/sync')
   @ApiOperation({ summary: 'Sync Noest stop desks from API' })
-  syncNoestDesks(@Req() req: any) {
-    const vendorEmail = req.user.email;
+  async syncNoestDesks(@Req() req: any) {
+    const vendorEmail = await this.storeEmailFor(req);
     return this.deliveryService.syncNoestDesks(vendorEmail);
   }
 
@@ -88,11 +107,12 @@ export class DeliveryController {
   }
 
   @Roles(Role.VENDOR)
+  @RequirePermissions(StorePermission.DELIVERY_SYNC)
   @Throttle({ default: { limit: 2, ttl: 60000 } })
   @Post('ecom-desks/sync')
   @ApiOperation({ summary: 'Sync Ecom Delivery stop desks from API' })
-  syncEcomDesks(@Req() req: any) {
-    const vendorEmail = req.user.email;
+  async syncEcomDesks(@Req() req: any) {
+    const vendorEmail = await this.storeEmailFor(req);
     return this.deliveryService.syncEcomDesks(vendorEmail);
   }
 
@@ -105,22 +125,24 @@ export class DeliveryController {
   }
 
   @Roles(Role.VENDOR)
+  @RequirePermissions(StorePermission.DELIVERY_VIEW)
   @Throttle({ default: { limit: 30, ttl: 60000 } })
   @Get('dhd-communes')
   @ApiOperation({ summary: 'Get DHD communes for a wilaya' })
   @ApiQuery({ name: 'wilayaCode', required: true, description: 'Wilaya numeric code (1-58)' })
   async getDhdCommunes(@Req() req: any, @Query('wilayaCode') wilayaCode: string) {
-    const communes = await this.deliveryService.getDhdCommunes(req.user.email, wilayaCode);
+    const communes = await this.deliveryService.getDhdCommunes(await this.storeEmailFor(req), wilayaCode);
     return { wilayaCode, communes };
   }
 
   @Roles(Role.VENDOR)
+  @RequirePermissions(StorePermission.DELIVERY_VIEW)
   @Throttle({ default: { limit: 30, ttl: 60000 } })
   @Get('noest-communes')
   @ApiOperation({ summary: 'Get Noest communes for a wilaya' })
   @ApiQuery({ name: 'wilayaCode', required: true, description: 'Wilaya numeric code (1-58)' })
   async getNoestCommunes(@Req() req: any, @Query('wilayaCode') wilayaCode: string) {
-    const communes = await this.deliveryService.getNoestCommunes(req.user.email, wilayaCode);
+    const communes = await this.deliveryService.getNoestCommunes(await this.storeEmailFor(req), wilayaCode);
     return { wilayaCode, communes };
   }
 
@@ -133,29 +155,32 @@ export class DeliveryController {
   }
 
   @Roles(Role.VENDOR)
+  @RequirePermissions(StorePermission.DELIVERY_SYNC)
   @Throttle({ default: { limit: 2, ttl: 60000 } })
   @Post('zr-hubs/sync')
   @ApiOperation({ summary: 'Sync ZR Express hubs from API' })
-  syncZRHubs(@Req() req: any) {
-    const vendorEmail = req.user.email;
+  async syncZRHubs(@Req() req: any) {
+    const vendorEmail = await this.storeEmailFor(req);
     return this.deliveryService.syncZRHubs(vendorEmail);
   }
 
   @Roles(Role.VENDOR)
+  @RequirePermissions(StorePermission.DELIVERY_SYNC)
   @Throttle({ default: { limit: 2, ttl: 60000 } })
   @Post('zr-territories/sync')
   @ApiOperation({ summary: 'Sync ZR Express territories and update Wilaya/Commune UUIDs' })
-  syncZRTerritories(@Req() req: any) {
-    const vendorEmail = req.user.email;
+  async syncZRTerritories(@Req() req: any) {
+    const vendorEmail = await this.storeEmailFor(req);
     return this.deliveryService.syncZRTerritories(vendorEmail);
   }
 
   @Roles(Role.VENDOR)
+  @RequirePermissions(StorePermission.DELIVERY_VIEW)
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Get('zr-territories')
   @ApiOperation({ summary: 'Fetch ZR Express territories' })
-  getZRTerritories(@Req() req: any) {
-    const vendorEmail = req.user.email;
+  async getZRTerritories(@Req() req: any) {
+    const vendorEmail = await this.storeEmailFor(req);
     return this.deliveryService.getTerritories(vendorEmail);
   }
 

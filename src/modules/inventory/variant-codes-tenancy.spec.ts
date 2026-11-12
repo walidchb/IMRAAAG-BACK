@@ -71,7 +71,7 @@ describe('Variant codes tenancy — barcodes/SKUs are minted per store', () => {
       barcodeService = {
         generateCodes: jest.fn().mockResolvedValue({ productId: PRODUCT_A.toString(), updated: 0, skipped: 0, variants: [] }),
       };
-      storesService = { findByVendorIdOrThrow: jest.fn().mockResolvedValue({ _id: STORE_A }) };
+      storesService = { findByMemberIdOrThrow: jest.fn().mockResolvedValue({ _id: STORE_A }) };
 
       const module: TestingModule = await Test.createTestingModule({
         controllers: [VariantsController],
@@ -90,14 +90,14 @@ describe('Variant codes tenancy — barcodes/SKUs are minted per store', () => {
 
       await controller.generateCodes(PRODUCT_A.toString(), dto, { user: VENDOR_A });
 
-      expect(storesService.findByVendorIdOrThrow).toHaveBeenCalledWith(VENDOR_A.id);
+      expect(storesService.findByMemberIdOrThrow).toHaveBeenCalledWith(VENDOR_A.id);
       expect(barcodeService.generateCodes).toHaveBeenCalledWith(PRODUCT_A.toString(), STORE_A, dto);
       // The session store — not the storeId the caller put in the body — is what was used.
       expect(barcodeService.generateCodes.mock.calls[0][1]).not.toBe(STORE_B);
     });
 
     it('surfaces a store-resolution failure without generating anything', async () => {
-      storesService.findByVendorIdOrThrow.mockRejectedValue(
+      storesService.findByMemberIdOrThrow.mockRejectedValue(
         new AppException(AppErrorCode.STORE_NOT_FOUND),
       );
 

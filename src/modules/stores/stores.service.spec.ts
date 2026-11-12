@@ -3,6 +3,7 @@ import { getModelToken } from '@nestjs/mongoose';
 import { Types } from 'mongoose';
 import { StoresService } from './stores.service';
 import { Store } from './schemas/store.schema';
+import { StoreMember } from '../team/schemas/store-member.schema';
 import { Product } from '../products/schemas/product.schema';
 import { Category } from '../categories/schemas/category.schema';
 import { SubCategory } from '../categories/schemas/sub-category.schema';
@@ -94,6 +95,13 @@ describe('StoresService', () => {
         { provide: getModelToken(Product.name), useValue: productModel },
         { provide: getModelToken(Category.name), useValue: categoryModel },
         { provide: getModelToken(SubCategory.name), useValue: subCategoryModel },
+        {
+          provide: getModelToken(StoreMember.name),
+          useValue: {
+            findOne: jest.fn().mockReturnValue(query(null)),
+            updateOne: jest.fn().mockReturnValue(query({})),
+          },
+        },
         { provide: UploadService, useValue: {} },
       ],
     }).compile();

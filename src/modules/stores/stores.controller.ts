@@ -18,6 +18,8 @@ import { Store } from './schemas/store.schema';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 import { Role } from '../../common/constants/roles.enum';
+import { StorePermission } from '../../common/constants/store-permissions.const';
+import { RequirePermissions } from '../team/decorators/require-permissions.decorator';
 import { AppException } from '../../common/errors/app-exception';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
 
@@ -39,23 +41,35 @@ export class StoresController {
     // `vendorId` is invisible to `findByVendorIdOrThrow()`, which is what tracking
     // settings resolve against - so a vendor whose store predates this would be locked
     // out of their own pixel config with a 404.
+    //
+    // No `@RequirePermissions(store.create)` here on purpose: the caller by definition has
+    // no store to resolve permissions against yet, and the permission is Owner-only. The
+    // existence check below is the real guard (one store per user), and signup normally
+    // creates the store already.
     createStoreDto.vendorEmail = user.email;
-    return this.storesService.create(createStoreDto, user.id);
+    return this.storesService
+      .findByMemberId(user.id)
+      .then((existing) => {
+        if (existing) throw new AppException(AppErrorCode.STORE_ALREADY_EXISTS);
+        return this.storesService.create(createStoreDto, user.id);
+      });
   }
 
   @Roles(Role.VENDOR)
   @Get('mine')
+  @RequirePermissions(StorePermission.STORE_VIEW)
   @ApiOperation({ summary: 'Get own store' })
   @ApiResponse({ status: 200, description: 'Store found', type: Store })
   @ApiResponse({ status: 404, description: 'Store not found' })
   findMine(@Req() req: any) {
-    const user = req.user as { email: string };
-    return this.storesService.findByEmail(user.email, { skipStatusCheck: true });
+    const user = req.user as { id: string };
+    return this.storesService.findByMemberIdOrThrow(user.id, { skipStatusCheck: true });
   }
 
   @Roles(Role.VENDOR)
   @Throttle({ default: { limit: 30, ttl: 60000 } })
   @Patch('mine')
+  @RequirePermissions(StorePermission.STORE_UPDATE)
   @ApiOperation({ summary: 'Update own store' })
   @ApiResponse({ status: 200, description: 'Store updated', type: Store })
   @ApiResponse({ status: 404, description: 'Store not found' })
@@ -71,20 +85,25 @@ export class StoresController {
         throw new AppException(AppErrorCode.VALIDATION_REQUIRED, { field });
       }
     }
-    const user = req.user as { email: string };
-    const store = await this.storesService.findByEmail(user.email, { skipStatusCheck: true }) as any;
+    const user = req.user as { id: string };
+    const store = await this.storesService.findByMemberIdOrThrow(user.id, {
+      skipStatusCheck: true,
+    }) as any;
     return this.storesService.update(store._id.toString(), updateStoreDto);
   }
 
   @Roles(Role.VENDOR)
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Patch('mine/toggle-status')
+  @RequirePermissions(StorePermission.STORE_TOGGLE_STATUS)
   @ApiOperation({ summary: 'Toggle own store status Active/Paused' })
   @ApiResponse({ status: 200, description: 'Status toggled', type: Store })
   @ApiResponse({ status: 404, description: 'Store not found' })
   async toggleStatus(@Req() req: any) {
-    const user = req.user as { email: string };
-    const store = await this.storesService.findByEmail(user.email, { skipStatusCheck: true }) as any;
+    const user = req.user as { id: string };
+    const store = await this.storesService.findByMemberIdOrThrow(user.id, {
+      skipStatusCheck: true,
+    }) as any;
     return this.storesService.toggleStatus(store._id.toString());
   }
 

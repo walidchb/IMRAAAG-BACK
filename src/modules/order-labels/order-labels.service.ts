@@ -512,7 +512,7 @@ export class OrderLabelsService {
       };
     }
 
-    store = await this.storesService.findByVendorIdOrThrow(user.id);
+    store = await this.storesService.findByMemberIdOrThrow(user.id);
     const filter: Record<string, any> = {
       _id: { $in: objectIds },
       isDeleted: { $ne: true },
@@ -907,7 +907,7 @@ export class OrderLabelsService {
       }
       return store;
     }
-    return this.storesService.findByVendorIdOrThrow(user.id);
+    return this.storesService.findByMemberIdOrThrow(user.id);
   }
 
   private validateRequest(dto: GenerateOrderLabelsDto): void {

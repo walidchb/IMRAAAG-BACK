@@ -16,12 +16,15 @@ import { Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../../common/constants/roles.enum';
+import { StorePermission } from '../../common/constants/store-permissions.const';
+import { RequirePermissions } from '../team/decorators/require-permissions.decorator';
 import { OrderLabelsService } from './order-labels.service';
 import { GenerateOrderLabelsDto } from './dto/generate-order-labels.dto';
 
 @ApiTags('Order Labels')
 @Controller('orders/labels')
 @Roles(Role.VENDOR, Role.ADMIN)
+@RequirePermissions(StorePermission.ORDERS_LABELS_GENERATE)
 export class OrderLabelsController {
   constructor(private readonly orderLabelsService: OrderLabelsService) {}
 

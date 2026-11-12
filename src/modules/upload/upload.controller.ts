@@ -19,6 +19,8 @@ import { UploadService } from './upload.service';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../../common/constants/roles.enum';
 import { StoresService } from '../stores/stores.service';
+import { StorePermission, hasStorePermission } from '../../common/constants/store-permissions.const';
+import { RequirePermissions } from '../team/decorators/require-permissions.decorator';
 import { IMAGE_CONFIG } from './image.config';
 
 @ApiTags('Upload')
@@ -41,11 +43,12 @@ export class UploadController {
     if (user?.role === Role.ADMIN) {
       return `admin/${String(user.id ?? user.email)}`;
     }
-    const store = await this.storesService.findByVendorIdOrThrow(String(user.id));
+    const store = await this.storesService.findByMemberIdOrThrow(String(user.id));
     return String(store._id);
   }
 
   @Post('product-image')
+  @RequirePermissions(StorePermission.PRODUCTS_UPDATE)
   @HttpCode(HttpStatus.OK)
   @UseInterceptors(FileInterceptor('file', { limits: { fileSize: IMAGE_CONFIG.maxFileSize } }))
   @ApiOperation({ summary: 'Upload a single product image' })
@@ -56,6 +59,7 @@ export class UploadController {
   }
 
   @Post('product-images')
+  @RequirePermissions(StorePermission.PRODUCTS_UPDATE)
   @HttpCode(HttpStatus.OK)
   @UseInterceptors(
     FilesInterceptor('files', 10, { limits: { fileSize: IMAGE_CONFIG.maxFileSize, files: 10 } }),
@@ -72,6 +76,7 @@ export class UploadController {
   }
 
   @Post('store-logo')
+  @RequirePermissions(StorePermission.STORE_UPDATE)
   @HttpCode(HttpStatus.OK)
   @UseInterceptors(FileInterceptor('file', { limits: { fileSize: IMAGE_CONFIG.maxFileSize } }))
   @ApiOperation({ summary: 'Upload a store logo' })
@@ -82,6 +87,7 @@ export class UploadController {
   }
 
   @Post('store-cover')
+  @RequirePermissions(StorePermission.STORE_UPDATE)
   @HttpCode(HttpStatus.OK)
   @UseInterceptors(FileInterceptor('file', { limits: { fileSize: IMAGE_CONFIG.maxFileSize } }))
   @ApiOperation({ summary: 'Upload a store cover image' })
@@ -92,6 +98,7 @@ export class UploadController {
   }
 
   @Post('category-image')
+  @RequirePermissions(StorePermission.PRODUCTS_CATEGORIES_MANAGE)
   @HttpCode(HttpStatus.OK)
   @UseInterceptors(FileInterceptor('file', { limits: { fileSize: IMAGE_CONFIG.maxFileSize } }))
   @ApiOperation({ summary: 'Upload a category image' })
@@ -107,8 +114,30 @@ export class UploadController {
   async deleteFile(@Req() req: any, @Body('key') key: string) {
     if (!key) throw new AppException(AppErrorCode.UPLOAD_NO_KEY_PROVIDED);
     this.assertAllowedKey(key, await this.scopeFor(req));
+    await this.assertDeletePermission(req, key);
     await this.uploadService.deleteFile(key);
     return { message: 'File deleted' };
+  }
+
+  /**
+   * A delete carries no static capability: the key's folder namespaces it. Product images need
+   * `products.update`, category images `products.categories.manage`, store branding
+   * `store.update`; profile avatars are self-service and need no store permission.
+   */
+  private async assertDeletePermission(req: any, key: string): Promise<void> {
+    const user = req.user;
+    if (user?.role === Role.ADMIN) return;
+
+    let permission: string | null = null;
+    if (key.includes('/products/')) permission = StorePermission.PRODUCTS_UPDATE;
+    else if (key.includes('/categories/')) permission = StorePermission.PRODUCTS_CATEGORIES_MANAGE;
+    else if (key.includes('/stores/')) permission = StorePermission.STORE_UPDATE;
+    if (!permission) return;
+
+    const access = await this.storesService.resolvePermissionsForUser(String(user?.id ?? ''));
+    if (!hasStorePermission(access.permissions, permission)) {
+      throw new AppException(AppErrorCode.AUTH_INSUFFICIENT_PERMISSIONS, { permission });
+    }
   }
 
   /**

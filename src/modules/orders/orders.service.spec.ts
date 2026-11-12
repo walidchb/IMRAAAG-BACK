@@ -11,6 +11,7 @@ import { DeliveryFeesService } from '../delivery-fees/delivery-fees.service';
 import { AuditService } from '../audit/audit.service';
 import { OrderStatusesService } from './order-statuses.service';
 import { StoresService } from '../stores/stores.service';
+import { StoreAccessService } from '../team/store-access.service';
 import { ReservationsService } from '../inventory/services/reservations.service';
 import { VariantsService } from '../inventory/services/variants.service';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
@@ -189,6 +190,8 @@ describe('OrdersService', () => {
     storesService = {
       findByVendorId: jest.fn().mockResolvedValue(null),
       findByVendorIdOrThrow: jest.fn(),
+      findByMemberId: jest.fn().mockResolvedValue(null),
+      findByMemberIdOrThrow: jest.fn(),
       resolveStoreIdByEmail: jest.fn().mockResolvedValue(null),
     };
 
@@ -216,6 +219,14 @@ describe('OrdersService', () => {
         { provide: DeliveryFeesService, useValue: deliveryFeesService },
         { provide: OrderStatusesService, useValue: statusesService },
         { provide: StoresService, useValue: storesService },
+        {
+          provide: StoreAccessService,
+          useValue: {
+            assertPermission: jest.fn().mockResolvedValue(undefined),
+            resolveForUserOrThrow: jest.fn().mockResolvedValue({ permissions: ['*'] }),
+            hasPermission: jest.fn().mockReturnValue(true),
+          },
+        },
         { provide: ReservationsService, useValue: reservationsService },
         { provide: VariantsService, useValue: variantsService },
         { provide: AuditService, useValue: { record: jest.fn().mockResolvedValue(undefined) } },
@@ -1006,19 +1017,19 @@ describe('OrdersService', () => {
     it('allows the owning vendor through to the write', async () => {
       const existing = makeOrder();
       const updated = makeOrder({ total: 500 });
-      storesService.findByVendorId.mockResolvedValue({ _id: STORE_ID });
+      storesService.findByMemberId.mockResolvedValue({ _id: STORE_ID });
       orderModel.findById.mockReturnValue(query(existing));
       orderModel.findByIdAndUpdate.mockReturnValue(query(updated));
 
       await service.update(ORDER_ID.toString(), { total: 500 } as UpdateOrderDto, VENDOR_USER);
 
-      expect(storesService.findByVendorId).toHaveBeenCalledWith(VENDOR_USER.id);
+      expect(storesService.findByMemberId).toHaveBeenCalledWith(VENDOR_USER.id);
       expect(orderModel.findByIdAndUpdate).toHaveBeenCalled();
     });
 
     it("refuses a vendor touching another store's order", async () => {
       const existing = makeOrder();
-      storesService.findByVendorId.mockResolvedValue({ _id: OTHER_STORE_ID });
+      storesService.findByMemberId.mockResolvedValue({ _id: OTHER_STORE_ID });
       orderModel.findById.mockReturnValue(query(existing));
 
       await expect(
@@ -1031,7 +1042,7 @@ describe('OrdersService', () => {
     it('falls back to the legacy vendorEmail for an un-migrated order', async () => {
       const existing = makeOrder({ storeId: undefined, vendorEmail: VENDOR_USER.email });
       const updated = makeOrder({ total: 500 });
-      storesService.findByVendorId.mockResolvedValue({ _id: STORE_ID });
+      storesService.findByMemberId.mockResolvedValue({ _id: STORE_ID, vendorEmail: VENDOR_USER.email });
       orderModel.findById.mockReturnValue(query(existing));
       orderModel.findByIdAndUpdate.mockReturnValue(query(updated));
 
@@ -1042,7 +1053,7 @@ describe('OrdersService', () => {
 
     it("refuses the email fallback when the emails don't match either", async () => {
       const existing = makeOrder({ storeId: undefined, vendorEmail: 'someone-else@test.com' });
-      storesService.findByVendorId.mockResolvedValue(null);
+      storesService.findByMemberId.mockResolvedValue(null);
       orderModel.findById.mockReturnValue(query(existing));
 
       await expect(
@@ -1058,7 +1069,7 @@ describe('OrdersService', () => {
 
       await service.update(ORDER_ID.toString(), { total: 500 } as UpdateOrderDto, ADMIN_USER);
 
-      expect(storesService.findByVendorId).not.toHaveBeenCalled();
+      expect(storesService.findByMemberId).not.toHaveBeenCalled();
       expect(orderModel.findByIdAndUpdate).toHaveBeenCalled();
     });
 
@@ -1396,8 +1407,18 @@ describe('OrdersService', () => {
             provide: StoresService,
             useValue: {
               findOne: jest.fn().mockResolvedValue({ _id: STORE_ID, vendorEmail: 'store@imraaah.com' }),
+              findByMemberId: jest.fn().mockResolvedValue({ _id: STORE_ID, vendorEmail: 'store@imraaah.com' }),
+              findByMemberIdOrThrow: jest.fn().mockResolvedValue({ _id: STORE_ID, vendorEmail: 'store@imraaah.com' }),
               incrementOrderCount: jest.fn().mockResolvedValue(undefined),
               resolveStoreIdByEmail: jest.fn().mockResolvedValue(null),
+            },
+          },
+          {
+            provide: StoreAccessService,
+            useValue: {
+              assertPermission: jest.fn().mockResolvedValue(undefined),
+              resolveForUserOrThrow: jest.fn().mockResolvedValue({ permissions: ['*'] }),
+              hasPermission: jest.fn().mockReturnValue(true),
             },
           },
           { provide: ReservationsService, useValue: reservations },
@@ -1825,6 +1846,8 @@ describe('OrdersService', () => {
 
       storesService = {
         findByVendorIdOrThrow: jest.fn().mockResolvedValue(STORE),
+        findByMemberId: jest.fn().mockResolvedValue(STORE),
+        findByMemberIdOrThrow: jest.fn().mockResolvedValue(STORE),
         incrementOrderCount: jest.fn().mockResolvedValue(undefined),
       };
 
@@ -1861,6 +1884,14 @@ describe('OrdersService', () => {
             useValue: { getBySlug: jest.fn(async (slug: string) => statusConfig(slug)) },
           },
           { provide: StoresService, useValue: storesService },
+          {
+            provide: StoreAccessService,
+            useValue: {
+              assertPermission: jest.fn().mockResolvedValue(undefined),
+              resolveForUserOrThrow: jest.fn().mockResolvedValue({ permissions: ['*'] }),
+              hasPermission: jest.fn().mockReturnValue(true),
+            },
+          },
           { provide: ReservationsService, useValue: reservations },
           { provide: VariantsService, useValue: variantsService },
           { provide: AuditService, useValue: { record: jest.fn().mockResolvedValue(undefined) } },
@@ -1995,7 +2026,7 @@ describe('OrdersService', () => {
       await expect(
         service.createImmediateSale(posDto(), { ...VENDOR_USER, role: 'CUSTOMER' }),
       ).rejects.toMatchObject({ errorCode: AppErrorCode.AUTH_VENDOR_ONLY });
-      expect(storesService.findByVendorIdOrThrow).not.toHaveBeenCalled();
+      expect(storesService.findByMemberIdOrThrow).not.toHaveBeenCalled();
     });
 
     it('refuses a variant owned by another store without opening a transaction', async () => {
@@ -2050,7 +2081,7 @@ describe('OrdersService', () => {
 
       await service.createImmediateSale(body, VENDOR_USER);
 
-      expect(storesService.findByVendorIdOrThrow).toHaveBeenCalledWith(VENDOR_USER.id);
+      expect(storesService.findByMemberIdOrThrow).toHaveBeenCalledWith(VENDOR_USER.id);
       expect(orderModel.mock.calls[0][0].storeId).toBe(STORE_ID);
       expect(orderModel.mock.calls[0][0].vendorEmail).toBe(STORE.vendorEmail);
     });
@@ -2158,6 +2189,8 @@ describe('OrdersService', () => {
 
       storesService = {
         findByVendorIdOrThrow: jest.fn().mockResolvedValue(HOLD_STORE),
+        findByMemberId: jest.fn().mockResolvedValue(HOLD_STORE),
+        findByMemberIdOrThrow: jest.fn().mockResolvedValue(HOLD_STORE),
         incrementOrderCount: jest.fn().mockResolvedValue(undefined),
       };
       reservations = {
@@ -2189,6 +2222,14 @@ describe('OrdersService', () => {
             useValue: { getBySlug: jest.fn(async (slug: string) => statusConfig(slug)) },
           },
           { provide: StoresService, useValue: storesService },
+          {
+            provide: StoreAccessService,
+            useValue: {
+              assertPermission: jest.fn().mockResolvedValue(undefined),
+              resolveForUserOrThrow: jest.fn().mockResolvedValue({ permissions: ['*'] }),
+              hasPermission: jest.fn().mockReturnValue(true),
+            },
+          },
           { provide: ReservationsService, useValue: reservations },
           {
             provide: VariantsService,
@@ -2395,7 +2436,7 @@ describe('OrdersService', () => {
       makeOrder({ status: statusConfig(slug), ...over });
 
     beforeEach(() => {
-      storesService.findByVendorId.mockResolvedValue(null);
+      storesService.findByMemberId.mockResolvedValue(null);
     });
 
     it.each([
@@ -2493,7 +2534,7 @@ describe('OrdersService', () => {
 
     it('denies archive and restore across stores, but allows an admin', async () => {
       const foreign = orderWith(OrderStatus.CANCELLED, { storeId: OTHER_STORE_ID });
-      storesService.findByVendorId.mockResolvedValue({ _id: STORE_ID });
+      storesService.findByMemberId.mockResolvedValue({ _id: STORE_ID });
       orderModel.findById.mockReturnValue(query(foreign));
 
       await expect(service.archive(ORDER_ID.toString(), VENDOR_USER)).rejects.toMatchObject({

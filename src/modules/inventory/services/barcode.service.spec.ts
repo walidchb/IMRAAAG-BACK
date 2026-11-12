@@ -274,7 +274,7 @@ describe('BarcodeService — EAN-13 + SKU generation', () => {
 describe('VariantsController — generate-codes tenancy', () => {
   it('resolves the store from the session and ignores any smuggled store id', async () => {
     const barcodeService = { generateCodes: jest.fn().mockResolvedValue({ updated: 0, skipped: 0, variants: [] }) };
-    const storesService = { findByVendorIdOrThrow: jest.fn().mockResolvedValue({ _id: STORE_ID }) };
+    const storesService = { findByMemberIdOrThrow: jest.fn().mockResolvedValue({ _id: STORE_ID }) };
     const controller = new VariantsController(
       {} as any,
       barcodeService as any,
@@ -284,7 +284,7 @@ describe('VariantsController — generate-codes tenancy', () => {
     const dto = { variantIds: [String(new Types.ObjectId())], storeId: 'evil-store' } as any;
     await controller.generateCodes(PRODUCT_ID.toHexString(), dto, { user: { id: 'vendor-1' } });
 
-    expect(storesService.findByVendorIdOrThrow).toHaveBeenCalledWith('vendor-1');
+    expect(storesService.findByMemberIdOrThrow).toHaveBeenCalledWith('vendor-1');
     expect(barcodeService.generateCodes).toHaveBeenCalledWith(
       PRODUCT_ID.toHexString(),
       STORE_ID,
