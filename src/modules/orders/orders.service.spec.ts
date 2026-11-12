@@ -2368,10 +2368,11 @@ describe('OrdersService', () => {
       await service.findAll({ source: 'POS' }, VENDOR_USER);
 
       expect(filterOf().source).toBe('POS');
-      expect(filterOf().$or).toEqual([
-        { storeId: STORE_ID },
-        { vendorEmail: VENDOR_USER.email },
-      ]);
+      // Ownership and search/date predicates are combined under `$and`, so neither can
+      // overwrite the other (previously both were assigned to `filter.$or`).
+      expect(filterOf().$and).toContainEqual({
+        $or: [{ storeId: STORE_ID }, { vendorEmail: VENDOR_USER.email }],
+      });
     });
 
     it('does not constrain source when the query omits it', async () => {
@@ -2386,6 +2387,162 @@ describe('OrdersService', () => {
       expect(filterOf().source).toBe('MANUAL');
       expect(filterOf().storeId).toBeUndefined();
       expect(filterOf().vendorEmail).toBeUndefined();
+    });
+  });
+
+  describe('archive() / restore() — reversible hiding', () => {
+    const orderWith = (slug: string, over: Record<string, any> = {}) =>
+      makeOrder({ status: statusConfig(slug), ...over });
+
+    beforeEach(() => {
+      storesService.findByVendorId.mockResolvedValue(null);
+    });
+
+    it.each([
+      OrderStatus.PLACED,
+      OrderStatus.CANCELLED,
+      OrderStatus.RETURNED,
+      OrderStatus.DELIVERED,
+    ])('archives a %s order and writes only the archive fields', async (slug) => {
+      const existing = orderWith(slug);
+      orderModel.findById.mockReturnValue(query(existing));
+      orderModel.findOneAndUpdate.mockReturnValue(query({ ...existing, isArchived: true }));
+
+      const result = await service.archive(ORDER_ID.toString(), VENDOR_USER);
+
+      expect(result).toMatchObject({ id: ORDER_ID.toString(), archived: true });
+      const [filter, update] = orderModel.findOneAndUpdate.mock.calls[0];
+      expect(filter).toMatchObject({
+        _id: ORDER_ID.toString(),
+        isDeleted: { $ne: true },
+        isArchived: { $ne: true },
+      });
+      expect(update).toEqual({
+        $set: {
+          isArchived: true,
+          archivedAt: expect.any(Date),
+          archivedBy: VENDOR_USER.email,
+        },
+      });
+      // Archive has no inventory effect and does not touch status/history.
+      expect(reservationsService.release).not.toHaveBeenCalled();
+      expect(reservationsService.consume).not.toHaveBeenCalled();
+      expect(update.$set.status).toBeUndefined();
+      expect(update.$push?.history).toBeUndefined();
+    });
+
+    it.each([OrderStatus.CONFIRMED, OrderStatus.DISPATCHED, OrderStatus.IN_TRANSIT])(
+      'refuses to archive a %s order until it is cancelled',
+      async (slug) => {
+        orderModel.findById.mockReturnValue(query(orderWith(slug)));
+
+        await expect(service.archive(ORDER_ID.toString(), VENDOR_USER)).rejects.toMatchObject({
+          errorCode: AppErrorCode.ORDER_ARCHIVE_NOT_ALLOWED,
+          errorParams: expect.objectContaining({ status: slug }),
+        });
+        expect(orderModel.findOneAndUpdate).not.toHaveBeenCalled();
+      },
+    );
+
+    it('refuses an unknown status with ORDER_ARCHIVE_INVALID_STATUS', async () => {
+      orderModel.findById.mockReturnValue(query(orderWith('mystery')));
+
+      await expect(service.archive(ORDER_ID.toString(), VENDOR_USER)).rejects.toMatchObject({
+        errorCode: AppErrorCode.ORDER_ARCHIVE_INVALID_STATUS,
+      });
+      expect(orderModel.findOneAndUpdate).not.toHaveBeenCalled();
+    });
+
+    it('is idempotent for an already archived order', async () => {
+      const existing = orderWith(OrderStatus.CANCELLED, {
+        isArchived: true,
+        archivedAt: new Date('2026-01-01T00:00:00Z'),
+      });
+      orderModel.findById.mockReturnValue(query(existing));
+
+      const result = await service.archive(ORDER_ID.toString(), VENDOR_USER);
+
+      expect(result).toMatchObject({ archived: true });
+      expect(orderModel.findOneAndUpdate).not.toHaveBeenCalled();
+    });
+
+    it('restore clears only the three archive fields', async () => {
+      const existing = orderWith(OrderStatus.DELIVERED, {
+        isArchived: true,
+        archivedAt: new Date('2026-01-01T00:00:00Z'),
+        archivedBy: VENDOR_USER.email,
+      });
+      orderModel.findById.mockReturnValue(query(existing));
+      orderModel.findOneAndUpdate.mockReturnValue(query({ ...existing, isArchived: false }));
+
+      const result = await service.restore(ORDER_ID.toString(), VENDOR_USER);
+
+      expect(result).toEqual({ id: ORDER_ID.toString(), archived: false });
+      const [filter, update] = orderModel.findOneAndUpdate.mock.calls[0];
+      expect(filter).toMatchObject({
+        _id: ORDER_ID.toString(),
+        isDeleted: { $ne: true },
+        isArchived: true,
+      });
+      expect(update).toEqual({
+        $set: { isArchived: false, archivedAt: null, archivedBy: null },
+      });
+      expect(update.$set.status).toBeUndefined();
+      expect(update.$push).toBeUndefined();
+    });
+
+    it('denies archive and restore across stores, but allows an admin', async () => {
+      const foreign = orderWith(OrderStatus.CANCELLED, { storeId: OTHER_STORE_ID });
+      storesService.findByVendorId.mockResolvedValue({ _id: STORE_ID });
+      orderModel.findById.mockReturnValue(query(foreign));
+
+      await expect(service.archive(ORDER_ID.toString(), VENDOR_USER)).rejects.toMatchObject({
+        errorCode: AppErrorCode.AUTH_ORDER_OWNER_ONLY,
+      });
+      await expect(service.restore(ORDER_ID.toString(), VENDOR_USER)).rejects.toMatchObject({
+        errorCode: AppErrorCode.AUTH_ORDER_OWNER_ONLY,
+      });
+      expect(orderModel.findOneAndUpdate).not.toHaveBeenCalled();
+
+      orderModel.findOneAndUpdate.mockReturnValue(query({ ...foreign, isArchived: true }));
+      await expect(service.archive(ORDER_ID.toString(), ADMIN_USER)).resolves.toMatchObject({
+        archived: true,
+      });
+      // The admin claim keeps the status predicate but adds no store scope.
+      expect(orderModel.findOneAndUpdate.mock.calls[0][0].$and).toEqual([
+        {
+          $or: [
+            { 'status.slug': { $in: expect.any(Array) } },
+            { status: { $in: expect.any(Array) } },
+          ],
+        },
+      ]);
+    });
+
+    it('findAll scopes archived rows and keeps vendor search store-bound', async () => {
+      orderModel.find = jest.fn().mockReturnValue(query([]));
+      orderModel.countDocuments = jest.fn().mockReturnValue(query(0));
+      orderModel.aggregate = jest.fn().mockReturnValue(query([]));
+      storesService.resolveStoreIdByEmail.mockResolvedValue(STORE_ID);
+
+      const filterOf = () => orderModel.find.mock.calls[0][0];
+
+      await service.findAll({}, VENDOR_USER);
+      expect(filterOf().isArchived).toEqual({ $ne: true });
+
+      orderModel.find.mockClear();
+      await service.findAll({ archived: 'true' }, VENDOR_USER);
+      expect(filterOf().isArchived).toBe(true);
+
+      orderModel.find.mockClear();
+      await service.findAll({ search: 'ORD-1' }, VENDOR_USER);
+      const filter = filterOf();
+      expect(filter.$and).toEqual(
+        expect.arrayContaining([
+          { $or: [{ storeId: STORE_ID }, { vendorEmail: VENDOR_USER.email }] },
+          expect.objectContaining({ $or: expect.any(Array) }),
+        ]),
+      );
     });
   });
 

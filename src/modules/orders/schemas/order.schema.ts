@@ -248,6 +248,15 @@ export class Order {
   @Prop({ type: Date })
   deletedAt: Date;
 
+  @Prop({ type: Boolean, default: false })
+  isArchived: boolean;
+
+  @Prop({ type: Date, default: null })
+  archivedAt: Date | null;
+
+  @Prop({ type: String, default: null })
+  archivedBy: string | null;
+
   @Prop({
     type: {
       reservedAt: { type: Date },
@@ -311,3 +320,7 @@ OrderSchema.index({ 'customer.phone': 1 });
 // single-field indexes means the scan never falls back to fetching the whole store's orders
 // to sort/filter in memory (Phase 8, LO-5). `_id` ties `createdAt` for stable pagination.
 OrderSchema.index({ storeId: 1, isDeleted: 1, createdAt: -1, _id: -1 });
+// Archive-aware hot reads: the active list excludes archived rows, the archived view
+// lists only archived rows ordered by their archive date.
+OrderSchema.index({ storeId: 1, isDeleted: 1, isArchived: 1, createdAt: -1, _id: -1 });
+OrderSchema.index({ storeId: 1, isDeleted: 1, isArchived: 1, archivedAt: -1, _id: -1 });

@@ -21,6 +21,22 @@ export interface StatusConfig {
   sortOrder: number;
 }
 
+/**
+ * Statuses whose orders may be archived. Kept next to the transition map so a new
+ * status is deliberately reviewed before it becomes archivable. The backend is the
+ * authority; the frontend mirrors this list only to show/hide the action.
+ */
+export const ARCHIVABLE_ORDER_STATUSES: string[] = [
+  OrderStatus.PLACED,
+  OrderStatus.DELIVERED,
+  OrderStatus.CANCELLED,
+  OrderStatus.RETURNED,
+];
+
+export function isArchivableStatus(slug: string | null | undefined): boolean {
+  return !!slug && ARCHIVABLE_ORDER_STATUSES.includes(slug);
+}
+
 export const ORDER_STATUS_TRANSITIONS: Record<string, string[]> = {
   [OrderStatus.PLACED]: [OrderStatus.CONFIRMED, OrderStatus.CANCELLED],
   [OrderStatus.CONFIRMED]: [OrderStatus.DISPATCHED, OrderStatus.CANCELLED],

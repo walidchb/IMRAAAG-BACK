@@ -220,6 +220,11 @@ export const ERROR_HTTP_STATUS: Record<string, number> = {
   [AppErrorCode.NO_ACTIVE_VALUES]: HttpStatus.CONFLICT,
   [AppErrorCode.ORDER_ALREADY_FULFILLED]: HttpStatus.CONFLICT,
   [AppErrorCode.ORDER_ALREADY_RELEASED]: HttpStatus.CONFLICT,
+  [AppErrorCode.ORDER_ARCHIVE_NOT_ALLOWED]: HttpStatus.CONFLICT,
+  [AppErrorCode.ORDER_ALREADY_ARCHIVED]: HttpStatus.CONFLICT,
+  [AppErrorCode.ORDER_NOT_ARCHIVED]: HttpStatus.CONFLICT,
+  [AppErrorCode.ORDER_ARCHIVED]: HttpStatus.CONFLICT,
+  [AppErrorCode.ORDER_ARCHIVE_INVALID_STATUS]: HttpStatus.BAD_REQUEST,
   // ─── Inventory lookup ───
   [AppErrorCode.INVENTORY_BARCODE_NOT_FOUND]: HttpStatus.NOT_FOUND,
 

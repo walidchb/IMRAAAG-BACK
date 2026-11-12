@@ -475,7 +475,7 @@ export class OrderLabelsService {
 
     if (user.role === Role.ADMIN) {
       const docs = await this.orderModel
-        .find({ _id: { $in: objectIds }, isDeleted: { $ne: true } })
+        .find({ _id: { $in: objectIds }, isDeleted: { $ne: true }, isArchived: { $ne: true } })
         .lean()
         .exec();
       const resolved = await this.resolveAdminStore(docs);
@@ -516,6 +516,7 @@ export class OrderLabelsService {
     const filter: Record<string, any> = {
       _id: { $in: objectIds },
       isDeleted: { $ne: true },
+      isArchived: { $ne: true },
     };
     if (store.vendorEmail) {
       filter.$or = [{ storeId: store._id }, { vendorEmail: store.vendorEmail }];

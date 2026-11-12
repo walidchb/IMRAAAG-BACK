@@ -8,8 +8,11 @@ export class BulkActionDto {
   @IsNotEmpty({ each: true })
   ids: string[];
 
-  @ApiProperty({ enum: ['confirm', 'cancel', 'delete'], description: 'Action to perform' })
+  @ApiProperty({
+    enum: ['confirm', 'cancel', 'delete', 'archive', 'restore'],
+    description: 'Action to perform (delete is deprecated in favour of archive)',
+  })
   @IsString()
-  @IsIn(['confirm', 'cancel', 'delete'])
-  action: 'confirm' | 'cancel' | 'delete';
+  @IsIn(['confirm', 'cancel', 'delete', 'archive', 'restore'])
+  action: 'confirm' | 'cancel' | 'delete' | 'archive' | 'restore';
 }

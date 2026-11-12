@@ -22,7 +22,7 @@ import { OrderStatusesService } from './order-statuses.service';
 import { BulkOrderResult } from '../delivery/delivery-companies/interfaces/delivery-company-handler.interface';
 import { normalizeDhdCommuneSelection } from '../delivery/delivery-companies/dhd-commune';
 import { normalizeNoestCommuneSelection } from '../delivery/delivery-companies/noest-commune';
-import { ORDER_STATUS_VALUES, ORDER_STATUS_TRANSITIONS, OrderStatus } from '../../common/constants/order-statuses.const';
+import { ORDER_STATUS_VALUES, ORDER_STATUS_TRANSITIONS, ARCHIVABLE_ORDER_STATUSES, OrderStatus } from '../../common/constants/order-statuses.const';
 import { DELIVERY_STATUS_CONFLICT_CODES } from '../../common/constants/delivery-status.const';
 import { OrderSource } from '../../common/constants/order-sources.const';
 import { Role } from '../../common/constants/roles.enum';
@@ -1250,18 +1250,31 @@ export class OrdersService {
     const filter: Record<string, any> = {};
     const orConditions: Record<string, any>[] = [];
 
-    if (query.showDeleted !== 'true') {
+    const archivedMode = query.archived === 'true';
+    if (archivedMode) {
+      // Archived orders are never soft-deleted tombstones; force the guard regardless of
+      // showDeleted so a deleted+archived row could never be revived through this view.
       filter.isDeleted = { $ne: true };
+      filter.isArchived = true;
+    } else {
+      if (query.showDeleted !== 'true') {
+        filter.isDeleted = { $ne: true };
+      }
+      filter.isArchived = { $ne: true };
     }
 
     const page = Math.max(1, parseInt(query.page, 10) || 1);
     const limit = Math.min(100, Math.max(1, parseInt(query.limit, 10) || 10));
     const skip = (page - 1) * limit;
 
+    // Ownership scope is kept separate from the search/date `$or` so neither can overwrite
+    // the other (the previous code assigned both to `filter.$or`, letting a search term drop
+    // tenant scoping). Both are combined under `$and` below.
+    let ownershipScope: Record<string, any> | null = null;
     if (user) {
       this.assertVendorOrAdmin(user);
       if (user.role === Role.VENDOR) {
-        Object.assign(filter, await this.vendorOrderFilter(user.email));
+        ownershipScope = await this.vendorOrderFilter(user.email);
       } else if (query.vendorEmail) {
         filter.vendorEmail = query.vendorEmail;
       }
@@ -1344,15 +1357,17 @@ export class OrdersService {
       if (query.maxTotal) filter.total.$lte = Number(query.maxTotal);
     }
 
-    if (orConditions.length > 0) {
-      filter.$or = orConditions;
-    }
+    const andConditions: Record<string, any>[] = [];
+    if (ownershipScope && Object.keys(ownershipScope).length > 0) andConditions.push(ownershipScope);
+    if (orConditions.length > 0) andConditions.push({ $or: orConditions });
+    if (andConditions.length > 0) filter.$and = andConditions;
 
     const statusCountsFilter = { ...filter };
     delete statusCountsFilter['status.slug'];
 
-    const allowedSortFields = ['createdAt', 'updatedAt', 'orderNo', 'total', 'date', 'customer.name', 'customer.phone', 'customer.wilaya', 'shippingMethod', 'source'];
-    const sortField = allowedSortFields.includes(query.sortBy) ? query.sortBy : 'createdAt';
+    const allowedSortFields = ['createdAt', 'updatedAt', 'orderNo', 'total', 'date', 'customer.name', 'customer.phone', 'customer.wilaya', 'shippingMethod', 'source', 'archivedAt'];
+    const defaultSortField = archivedMode ? 'archivedAt' : 'createdAt';
+    const sortField = allowedSortFields.includes(query.sortBy) ? query.sortBy : defaultSortField;
     const sortOrder = query.order === 'asc' ? 1 : -1;
     const [data, total, statusCountsRaw] = await Promise.all([
       this.orderModel.find(filter).sort({ [sortField]: sortOrder }).skip(skip).limit(limit).exec(),
@@ -1466,6 +1481,7 @@ export class OrdersService {
     user?: RequestUser,
   ): Promise<{ results: ReturnResult[]; inventory: OrderInventoryDiagnostic }> {
     const order = await this.findOne(id, user) as OrderDocument;
+    this.assertNotArchived(order);
     const slug = this.getStatusSlug(order.status);
 
     const RECEIVABLE: ReadonlySet<string> = new Set([OrderStatus.DISPATCHED, OrderStatus.IN_TRANSIT, OrderStatus.DELIVERED, OrderStatus.RETURNED]);
@@ -2067,6 +2083,7 @@ export class OrdersService {
     if (user) {
       await this.assertOrderOwnership(existing, user);
     }
+    this.assertNotArchived(existing);
 
     const existingSlug = this.getStatusSlug(existing.status);
 
@@ -2455,6 +2472,9 @@ export class OrdersService {
     if (existing.isDeleted) {
       throw new AppException(AppErrorCode.ORDER_ALREADY_DELETED, { id });
     }
+    if (existing.isArchived) {
+      throw new AppException(AppErrorCode.ORDER_ARCHIVED, { orderNo: existing.orderNo });
+    }
 
     // The soft-delete and the release of the units the order was still holding commit together,
     // so deleting a `confirmed` order gives its stock back exactly like a cancellation does.
@@ -2476,6 +2496,153 @@ export class OrdersService {
     return { id, deleted: true };
   }
 
+  /**
+   * Archive is a reversible hiding operation. It writes *only* the three archive fields and never
+   * touches status, history, inventory or delivery state: an order that is still holding stock
+   * must be cancelled first (which releases the reservations) rather than archived.
+   */
+  private assertArchivable(order: any): void {
+    const raw = order?.status;
+    const slug = typeof raw === 'string' ? raw : raw?.slug;
+    if (!slug || !ORDER_STATUS_VALUES.includes(slug)) {
+      throw new AppException(AppErrorCode.ORDER_ARCHIVE_INVALID_STATUS, { orderNo: order?.orderNo });
+    }
+    if (!ARCHIVABLE_ORDER_STATUSES.includes(slug)) {
+      throw new AppException(AppErrorCode.ORDER_ARCHIVE_NOT_ALLOWED, {
+        orderNo: order?.orderNo,
+        status: slug,
+      });
+    }
+  }
+
+  private assertNotArchived(order: any): void {
+    if (order?.isArchived === true) {
+      throw new AppException(AppErrorCode.ORDER_ARCHIVED, { orderNo: order?.orderNo });
+    }
+  }
+
+  async archive(
+    id: string,
+    user?: RequestUser,
+  ): Promise<{ id: string; archived: true; archivedAt: Date }> {
+    if (!user) throw new AppException(AppErrorCode.AUTH_UNAUTHORIZED);
+    this.assertVendorOrAdmin(user);
+
+    const existing = await this.orderModel.findById(id).exec();
+    if (!existing || existing.isDeleted) {
+      throw new AppException(AppErrorCode.ORDER_NOT_FOUND, { id });
+    }
+    await this.assertOrderOwnership(existing, user);
+
+    if (existing.isArchived) {
+      return { id, archived: true, archivedAt: existing.archivedAt ?? new Date() };
+    }
+    this.assertArchivable(existing);
+
+    const archivedAt = new Date();
+    const and: Record<string, any>[] = [];
+    if (user.role !== Role.ADMIN) {
+      const ownership = await this.vendorOrderFilter(user.email);
+      if (Object.keys(ownership).length > 0) and.push(ownership);
+    }
+    and.push({
+      $or: [
+        { 'status.slug': { $in: ARCHIVABLE_ORDER_STATUSES } },
+        { status: { $in: ARCHIVABLE_ORDER_STATUSES } },
+      ],
+    });
+
+    const updated = await this.orderModel
+      .findOneAndUpdate(
+        { _id: id, isDeleted: { $ne: true }, isArchived: { $ne: true }, $and: and },
+        { $set: { isArchived: true, archivedAt, archivedBy: user.email ?? null } },
+        { new: true },
+      )
+      .exec();
+
+    if (!updated) {
+      // Lost the race (or the status moved). Re-read and report the real reason instead of a
+      // generic conflict, so a concurrent cancel is not mistaken for a failed archive.
+      const current = await this.orderModel.findById(id).exec();
+      if (!current || current.isDeleted) {
+        throw new AppException(AppErrorCode.ORDER_NOT_FOUND, { id });
+      }
+      await this.assertOrderOwnership(current, user);
+      if (current.isArchived) {
+        return { id, archived: true, archivedAt: current.archivedAt ?? archivedAt };
+      }
+      this.assertArchivable(current);
+      throw new AppException(AppErrorCode.ORDER_CONFLICT, { id });
+    }
+
+    await this.auditService.record({
+      action: AuditAction.ORDER_UPDATE,
+      actorId: user.id ?? null,
+      actorEmail: user.email ?? null,
+      storeId: (existing as any).storeId ? String((existing as any).storeId) : null,
+      resourceType: ResourceType.ORDER,
+      resourceId: id,
+      details: {
+        orderNo: existing.orderNo,
+        operation: 'archive',
+        status: this.getStatusSlug(existing.status),
+      },
+    });
+
+    return { id, archived: true, archivedAt };
+  }
+
+  async restore(id: string, user?: RequestUser): Promise<{ id: string; archived: false }> {
+    if (!user) throw new AppException(AppErrorCode.AUTH_UNAUTHORIZED);
+    this.assertVendorOrAdmin(user);
+
+    const existing = await this.orderModel.findById(id).exec();
+    if (!existing || existing.isDeleted) {
+      throw new AppException(AppErrorCode.ORDER_NOT_FOUND, { id });
+    }
+    await this.assertOrderOwnership(existing, user);
+
+    if (!existing.isArchived) {
+      return { id, archived: false };
+    }
+
+    const filter: Record<string, any> = { _id: id, isDeleted: { $ne: true }, isArchived: true };
+    if (user.role !== Role.ADMIN) {
+      const ownership = await this.vendorOrderFilter(user.email);
+      if (Object.keys(ownership).length > 0) Object.assign(filter, ownership);
+    }
+
+    const updated = await this.orderModel
+      .findOneAndUpdate(
+        filter,
+        { $set: { isArchived: false, archivedAt: null, archivedBy: null } },
+        { new: true },
+      )
+      .exec();
+
+    if (!updated) {
+      const current = await this.orderModel.findById(id).exec();
+      if (!current || current.isDeleted) {
+        throw new AppException(AppErrorCode.ORDER_NOT_FOUND, { id });
+      }
+      await this.assertOrderOwnership(current, user);
+      if (!current.isArchived) return { id, archived: false };
+      throw new AppException(AppErrorCode.ORDER_CONFLICT, { id });
+    }
+
+    await this.auditService.record({
+      action: AuditAction.ORDER_UPDATE,
+      actorId: user.id ?? null,
+      actorEmail: user.email ?? null,
+      storeId: (existing as any).storeId ? String((existing as any).storeId) : null,
+      resourceType: ResourceType.ORDER,
+      resourceId: id,
+      details: { orderNo: existing.orderNo, operation: 'restore' },
+    });
+
+    return { id, archived: false };
+  }
+
   async bulkAction(bulkActionDto: BulkActionDto, user?: RequestUser): Promise<{ modifiedCount: number; errors?: string[] }> {
     const { ids, action } = bulkActionDto;
 
@@ -2493,7 +2660,9 @@ export class OrdersService {
       // do, and a per-order loop lets the batch report which orders failed instead of silently
       // skipping them.
       const actorUserId = this.actorUserId({}, user);
-      const orders = await this.orderModel.find({ ...baseFilter, isDeleted: { $ne: true } }).exec();
+      const orders = await this.orderModel
+        .find({ ...baseFilter, isDeleted: { $ne: true }, isArchived: { $ne: true } })
+        .exec();
       const deleteErrors: string[] = [];
       let deleteCount = 0;
 
@@ -2515,10 +2684,49 @@ export class OrdersService {
       return deleteResponse;
     }
 
+    if (action === 'archive' || action === 'restore') {
+      const orders = await this.orderModel
+        .find({ ...baseFilter, isDeleted: { $ne: true } })
+        .exec();
+      const archiveErrors: string[] = [];
+      let archiveCount = 0;
+
+      for (const order of orders) {
+        try {
+          if (action === 'archive' && order.isArchived) {
+            archiveErrors.push(`Order ${order.orderNo}: already archived, skipped`);
+            continue;
+          }
+          if (action === 'restore' && !order.isArchived) {
+            archiveErrors.push(`Order ${order.orderNo}: not archived, skipped`);
+            continue;
+          }
+          if (action === 'archive') {
+            await this.archive(String(order._id), user);
+          } else {
+            await this.restore(String(order._id), user);
+          }
+          archiveCount += 1;
+        } catch (err: any) {
+          const reason =
+            err?.errorCode === AppErrorCode.ORDER_ARCHIVE_NOT_ALLOWED
+              ? 'cancel the order before archiving'
+              : err?.message ?? 'Archive operation failed';
+          archiveErrors.push(`Order ${order.orderNo}: ${reason}`);
+        }
+      }
+
+      const archiveResponse: { modifiedCount: number; errors?: string[] } = {
+        modifiedCount: archiveCount,
+      };
+      if (archiveErrors.length > 0) archiveResponse.errors = archiveErrors;
+      return archiveResponse;
+    }
+
     const targetSlug: OrderStatus = action === 'confirm' ? OrderStatus.CONFIRMED : OrderStatus.CANCELLED;
     const now = new Date();
 
-    const orders = await this.orderModel.find(baseFilter).exec();
+    const orders = await this.orderModel.find({ ...baseFilter, isArchived: { $ne: true } }).exec();
     const errors: string[] = [];
 
     const targetStatusConfig = (await this.statusesService.getBySlug(targetSlug))!;
@@ -2610,7 +2818,7 @@ export class OrdersService {
       }
     }
 
-    const orders = await this.orderModel.find(baseFilter).exec();
+    const orders = await this.orderModel.find({ ...baseFilter, isArchived: { $ne: true } }).exec();
 
     if (orders.length === 0) {
       return [];

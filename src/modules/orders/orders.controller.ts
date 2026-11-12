@@ -90,6 +90,9 @@ export class OrdersController {
     delete plain.deliveryParcelId;
     delete plain.isDeleted;
     delete plain.deletedAt;
+    delete plain.isArchived;
+    delete plain.archivedAt;
+    delete plain.archivedBy;
     return plain;
   }
 
@@ -153,6 +156,7 @@ export class OrdersController {
   @Get()
   @ApiOperation({ summary: 'List all orders' })
   @ApiQuery({ name: 'vendorEmail', required: false })
+  @ApiQuery({ name: 'archived', required: false, description: 'When true, list archived orders only' })
   @ApiQuery({ name: 'orderStatus', required: false })
   @ApiQuery({ name: 'search', required: false })
   @ApiQuery({ name: 'client', required: false })
@@ -203,7 +207,7 @@ export class OrdersController {
 
   @Roles(Role.VENDOR, Role.ADMIN)
   @Post('bulk')
-  @ApiOperation({ summary: 'Bulk action on orders (confirm, cancel, delete)' })
+  @ApiOperation({ summary: 'Bulk action on orders (confirm, cancel, archive, restore, delete)' })
   @ApiResponse({ status: 200, description: 'Bulk action completed' })
   bulkAction(@Body() bulkActionDto: BulkActionDto, @Req() req: any) {
     return this.ordersService.bulkAction(bulkActionDto, req.user);
@@ -254,6 +258,26 @@ export class OrdersController {
   @ApiResponse({ status: 409, description: 'Order was never dispatched, or line not fulfilled' })
   receiveReturn(@Param('id') id: string, @Body() dto: ReceiveReturnDto, @Req() req: any) {
     return this.ordersService.receiveReturn(id, dto, req.user);
+  }
+
+  @Roles(Role.VENDOR, Role.ADMIN)
+  @Post(':id/archive')
+  @ApiOperation({ summary: 'Archive an order' })
+  @ApiResponse({ status: 200, description: 'Order archived' })
+  @ApiResponse({ status: 404, description: 'Order not found' })
+  @ApiResponse({ status: 409, description: 'Order status cannot be archived' })
+  archive(@Param('id') id: string, @Req() req: any) {
+    return this.ordersService.archive(id, req.user);
+  }
+
+  @Roles(Role.VENDOR, Role.ADMIN)
+  @Post(':id/restore')
+  @ApiOperation({ summary: 'Restore an archived order' })
+  @ApiResponse({ status: 200, description: 'Order restored' })
+  @ApiResponse({ status: 404, description: 'Order not found' })
+  @ApiResponse({ status: 409, description: 'Order is not archived' })
+  restore(@Param('id') id: string, @Req() req: any) {
+    return this.ordersService.restore(id, req.user);
   }
 
   @Roles(Role.VENDOR, Role.ADMIN)
