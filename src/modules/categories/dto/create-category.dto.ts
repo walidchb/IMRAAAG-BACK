@@ -1,49 +1,50 @@
-import { IsString, IsNotEmpty, IsArray, IsOptional, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-
-export class CreateSubCategoryDto {
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  nameEn: string;
-
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  nameAr: string;
-
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  nameFr: string;
-
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  slug: string;
-}
+import {
+  IsArray,
+  IsBoolean,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+  ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+import { CreateSubCategoryDto } from './create-sub-category.dto';
 
 export class CreateCategoryDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
+  @MaxLength(100)
   nameEn: string;
 
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
+  @MaxLength(100)
   nameAr: string;
 
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
+  @MaxLength(100)
   nameFr: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional({ description: 'Optional; generated from the name when omitted' })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  slug: string;
+  @MaxLength(120)
+  slug?: string;
+
+  @ApiPropertyOptional({ description: 'Uploaded category image URL' })
+  @IsOptional()
+  @IsString()
+  image?: string;
+
+  @ApiPropertyOptional({ default: true })
+  @IsOptional()
+  @IsBoolean()
+  isPublished?: boolean;
 
   @ApiPropertyOptional({ type: [CreateSubCategoryDto] })
   @IsOptional()

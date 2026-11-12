@@ -2,5 +2,7 @@ export enum ResourceType {
   USER = 'USER',
   STORE = 'STORE',
   PRODUCT = 'PRODUCT',
+  CATEGORY = 'CATEGORY',
+  SUBCATEGORY = 'SUBCATEGORY',
   ORDER = 'ORDER'
 }

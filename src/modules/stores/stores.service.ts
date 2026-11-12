@@ -5,6 +5,12 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Store, StoreDocument } from './schemas/store.schema';
 import { Product, ProductDocument } from '../products/schemas/product.schema';
+import { Category, CategoryDocument } from '../categories/schemas/category.schema';
+import {
+  SubCategory,
+  SubCategoryDocument,
+} from '../categories/schemas/sub-category.schema';
+import { ensureDefaultCategoriesForStore } from '../categories/default-categories';
 import { CreateStoreDto } from './dto/create-store.dto';
 import { UpdateStoreDto } from './dto/update-store.dto';
 import { StoreStatus } from './schemas/store-status.enum';
@@ -29,6 +35,8 @@ export class StoresService {
   constructor(
     @InjectModel(Store.name) private storeModel: Model<StoreDocument>,
     @InjectModel(Product.name) private productModel: Model<ProductDocument>,
+    @InjectModel(Category.name) private categoryModel: Model<CategoryDocument>,
+    @InjectModel(SubCategory.name) private subCategoryModel: Model<SubCategoryDocument>,
     private readonly uploadService: UploadService,
   ) {}
 
@@ -93,6 +101,33 @@ export class StoresService {
 
     const saved = await created.save();
     this.storeIdByEmailCache.set(vendorEmail, { id: saved._id, at: Date.now() });
+
+    // Every store owns a General/General category tree from the moment it exists. A failure
+    // here must not leave a store with no taxonomy, and on the signup path it must roll the
+    // user back with the store - so delete the just-created store and rethrow.
+    try {
+      await ensureDefaultCategoriesForStore(this.categoryModel, this.subCategoryModel, saved._id);
+    } catch (err) {
+      this.logger.error(
+        `Default categories failed for store ${saved._id}; rolling the store back. ${String(
+          (err as Error)?.message ?? err,
+        )}`,
+      );
+      // A half-created taxonomy would be orphaned by the store deletion, so remove it with
+      // the store. Nothing public ever referenced this store yet.
+      await this.subCategoryModel
+        .deleteMany({ storeId: saved._id })
+        .exec()
+        .catch(() => undefined);
+      await this.categoryModel
+        .deleteMany({ storeId: saved._id })
+        .exec()
+        .catch(() => undefined);
+      await this.storeModel.findByIdAndDelete(saved._id).exec().catch(() => undefined);
+      this.storeIdByEmailCache.delete(vendorEmail);
+      throw err;
+    }
+
     return saved;
   }
 
@@ -440,6 +475,38 @@ export class StoresService {
   async remove(id: string): Promise<void> {
     const result = await this.storeModel.findByIdAndDelete(id).exec();
     if (!result) throw new AppException(AppErrorCode.STORE_NOT_FOUND, { id });
+
+    // The taxonomy belongs to the store. Soft-delete the whole tree so no orphan
+    // category/subcategory can outlive (or later be attached to) a deleted store.
+    const storeId = new Types.ObjectId(String(result._id));
+    const now = new Date();
+    const categories = await this.categoryModel
+      .find({ storeId, isDeleted: false })
+      .select('_id image')
+      .lean()
+      .exec();
+    if (categories.length > 0) {
+      await this.subCategoryModel
+        .updateMany(
+          { storeId, isDeleted: false },
+          { $set: { isDeleted: true, deletedAt: now } },
+        )
+        .exec();
+      await this.categoryModel
+        .updateMany(
+          { storeId, isDeleted: false },
+          { $set: { isDeleted: true, deletedAt: now } },
+        )
+        .exec();
+      const imageKeys = categories
+        .map((category) => this.uploadService.extractKeyFromUrl(category.image ?? ''))
+        .filter((key): key is string => !!key && key.startsWith(`store/${String(storeId)}/categories/`));
+      if (imageKeys.length > 0) {
+        await this.uploadService.deleteFiles(imageKeys).catch((err) => {
+          this.logger.warn(`Failed to delete category images: ${err.message}`);
+        });
+      }
+    }
 
     // Clean up store images from R2
     const imageKeys = [result.storeLogo, result.coverImage]

@@ -68,6 +68,10 @@ export const ERROR_HTTP_STATUS: Record<string, number> = {
   [AppErrorCode.SUBCATEGORY_NOT_FOUND]: HttpStatus.NOT_FOUND,
   [AppErrorCode.SUBCATEGORY_HAS_PRODUCTS]: HttpStatus.CONFLICT,
   [AppErrorCode.SUBCATEGORY_ALREADY_EXISTS]: HttpStatus.CONFLICT,
+  [AppErrorCode.CATEGORY_NOT_IN_STORE]: HttpStatus.NOT_FOUND,
+  [AppErrorCode.SUBCATEGORY_NOT_IN_STORE]: HttpStatus.NOT_FOUND,
+  [AppErrorCode.SUBCATEGORY_PARENT_MISMATCH]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.PRODUCT_CATEGORY_NOT_IN_STORE]: HttpStatus.BAD_REQUEST,
 
   // ─── Order ───
   [AppErrorCode.ORDER_NOT_FOUND]: HttpStatus.NOT_FOUND,

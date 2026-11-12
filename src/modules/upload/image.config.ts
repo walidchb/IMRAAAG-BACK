@@ -38,5 +38,6 @@ export const IMAGE_CONFIG = {
     storeLogo: 'stores/logos',
     storeCover: 'stores/covers',
     profileAvatar: 'profiles',
+    category: 'categories',
   } as const,
 } as const;

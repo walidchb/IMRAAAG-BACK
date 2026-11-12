@@ -127,7 +127,78 @@ export class ProductsService {
     }
   }
 
-  async create(createProductDto: CreateProductDto, vendorEmail: string): Promise<Product> {
+  /**
+   * Store-owned taxonomy invariant: a product may only reference a category and
+   * subcategory that are non-deleted, belong to the product's store, and whose parent
+   * relationship matches. Every product write calls this with the *effective* pair.
+   */
+  private async assertProductCategories(
+    storeId: string | Types.ObjectId,
+    categoryId: string | Types.ObjectId | undefined | null,
+    subCategoryId?: string | Types.ObjectId | null,
+  ): Promise<void> {
+    // `CreateProductDto`/`UpdateProductDto` guarantee a valid ObjectId on the HTTP path. The
+    // optional branch keeps internal/service-level callers that carry no category unchanged.
+    if (!categoryId) return;
+    if (!Types.ObjectId.isValid(String(categoryId))) {
+      throw new AppException(AppErrorCode.PRODUCT_CATEGORY_NOT_IN_STORE, { categoryId });
+    }
+    const category = await this.categoryModel
+      .findOne({ _id: categoryId, storeId, isDeleted: false })
+      .select('_id')
+      .lean()
+      .exec();
+    if (!category) {
+      throw new AppException(AppErrorCode.PRODUCT_CATEGORY_NOT_IN_STORE, { categoryId });
+    }
+
+    if (!subCategoryId) return;
+    if (!Types.ObjectId.isValid(String(subCategoryId))) {
+      throw new AppException(AppErrorCode.PRODUCT_CATEGORY_NOT_IN_STORE, {
+        subCategoryId,
+      });
+    }
+    const subCategory = await this.subCategoryModel
+      .findOne({ _id: subCategoryId, storeId, isDeleted: false })
+      .select('_id categoryId')
+      .lean()
+      .exec();
+    if (!subCategory) {
+      throw new AppException(AppErrorCode.PRODUCT_CATEGORY_NOT_IN_STORE, { subCategoryId });
+    }
+    if (String(subCategory.categoryId) !== String(categoryId)) {
+      throw new AppException(AppErrorCode.SUBCATEGORY_PARENT_MISMATCH, {
+        categoryId: String(categoryId),
+        subCategoryId: String(subCategoryId),
+        parentId: String(subCategory.categoryId),
+      });
+    }
+  }
+
+  private async filterInStore(
+    storeId: Types.ObjectId,
+    categoryId?: string,
+    subCategoryId?: string,
+  ): Promise<boolean> {
+    if (!categoryId && !subCategoryId) return true;
+    if (categoryId && !(await this.categoryModel.exists({ _id: categoryId, storeId, isDeleted: false }))) {
+      return false;
+    }
+    if (!subCategoryId) return true;
+    const subFilter: Record<string, unknown> = {
+      _id: subCategoryId,
+      storeId,
+      isDeleted: false,
+    };
+    if (categoryId) subFilter.categoryId = categoryId;
+    return !!(await this.subCategoryModel.exists(subFilter));
+  }
+
+  async create(
+    createProductDto: CreateProductDto,
+    vendorEmail: string,
+    userId?: string,
+  ): Promise<Product> {
     this.assertPriceNotAboveOriginal(
       createProductDto.price ?? createProductDto.originalPrice,
       createProductDto.originalPrice,
@@ -144,7 +215,18 @@ export class ProductsService {
     }
 
     // storeId migration shim: dual-write the canonical store reference alongside vendorEmail.
-    const storeId = await this.storesService.resolveStoreIdByEmail(vendorEmail).catch(() => null);
+    // Prefer the session's vendor id (a stable ownership key) and fall back to the legacy
+    // email lookup only when the caller has no store record yet.
+    const sessionStore = userId
+      ? await this.storesService.findByVendorId(userId).catch(() => null)
+      : null;
+    const storeId =
+      sessionStore?._id ??
+      (await this.storesService.resolveStoreIdByEmail(vendorEmail).catch(() => null));
+
+    if (storeId) {
+      await this.assertProductCategories(storeId, createProductDto.category, createProductDto.subCategory);
+    }
 
     const created = new this.productModel({
       ...createProductDto,
@@ -242,7 +324,15 @@ export class ProductsService {
         },
       ];
 
+      // A category/subcategory label match must never pull another store's products in.
+      const categoryScope: Record<string, unknown> = {
+        isDeleted: false,
+        isPublished: true,
+      };
+      if (query.storeId) categoryScope.storeId = new Types.ObjectId(query.storeId);
+
       const matchingCategories = await this.categoryModel.find({
+        ...categoryScope,
         $or: [
           { nameEn: regex },
           { nameAr: regex },
@@ -255,6 +345,7 @@ export class ProductsService {
       }
 
       const matchingSubCategories = await this.subCategoryModel.find({
+        ...categoryScope,
         $or: [
           { nameEn: regex },
           { nameAr: regex },
@@ -295,8 +386,8 @@ export class ProductsService {
       .select('-vendorEmail -vendorId')
       .sort(sortOption)
       .limit(limit + 1)
-      .populate('category', 'nameEn nameAr nameFr slug')
-      .populate('subCategory', 'nameEn nameAr nameFr slug')
+      .populate('category', 'nameEn nameAr nameFr slug image isPublished')
+      .populate('subCategory', 'nameEn nameAr nameFr slug isPublished categoryId')
       // Lean, because `variantSummary` is computed and has no schema path. On a hydrated
       // document `set()` on an undeclared path is dropped by strict mode, and the summary
       // would silently vanish from the response.
@@ -463,6 +554,24 @@ export class ProductsService {
       ? { $or: [{ storeId }, { vendorEmail }] }
       : { vendorEmail };
 
+    // Offset pagination, mirroring `OrdersService.findAll`: the vendor page renders a page
+    // selector and a total, both of which a cursor response cannot express.
+    const page = Math.max(1, query.page ?? 1);
+    const limit = Math.min(100, Math.max(1, query.limit ?? 20));
+
+    // A category/subcategory filter from another store can never match; answer with an
+    // empty page instead of silently ignoring the filter and showing the whole catalogue.
+    if (storeId && (query.category || query.subCategory)) {
+      const allowed = await this.filterInStore(
+        storeId,
+        query.category,
+        query.subCategory,
+      );
+      if (!allowed) {
+        return { products: [], total: 0, page, limit, totalPages: 0 };
+      }
+    }
+
     if (query.category) filter.category = query.category;
     if (query.subCategory) filter.subCategory = query.subCategory;
     if (query.published !== undefined) filter.published = query.published === 'true';
@@ -472,10 +581,6 @@ export class ProductsService {
       if (query.maxPrice !== undefined) filter.price.$lte = query.maxPrice;
     }
 
-    // Offset pagination, mirroring `OrdersService.findAll`: the vendor page renders a page
-    // selector and a total, both of which a cursor response cannot express.
-    const page = Math.max(1, query.page ?? 1);
-    const limit = Math.min(100, Math.max(1, query.limit ?? 20));
     const skip = (page - 1) * limit;
 
     let sortOption: Record<string, any>;
@@ -528,8 +633,8 @@ export class ProductsService {
         .sort(sortOption)
         .skip(skip)
         .limit(limit)
-        .populate('category', 'nameEn nameAr nameFr slug')
-        .populate('subCategory', 'nameEn nameAr nameFr slug')
+        .populate('category', 'nameEn nameAr nameFr slug image isPublished')
+        .populate('subCategory', 'nameEn nameAr nameFr slug isPublished categoryId')
         // Lean, for the same reason as findAll: `variantSummary` is computed and has no schema
         // path, and on a hydrated document assigning it is dropped by strict mode.
         .lean()
@@ -554,8 +659,8 @@ export class ProductsService {
     const product = await this.productModel
       .findById(id)
       .select('-vendorEmail -vendorId')
-      .populate('category', 'nameEn nameAr nameFr slug')
-      .populate('subCategory', 'nameEn nameAr nameFr slug')
+      .populate('category', 'nameEn nameAr nameFr slug image isPublished')
+      .populate('subCategory', 'nameEn nameAr nameFr slug isPublished categoryId')
       .exec();
     if (!product) throw new AppException(AppErrorCode.PRODUCT_NOT_FOUND, { id });
 
@@ -601,8 +706,8 @@ export class ProductsService {
     const product = await this.productModel
       .findOne({ slug })
       .select('-vendorEmail -vendorId')
-      .populate('category', 'nameEn nameAr nameFr slug')
-      .populate('subCategory', 'nameEn nameAr nameFr slug')
+      .populate('category', 'nameEn nameAr nameFr slug image isPublished')
+      .populate('subCategory', 'nameEn nameAr nameFr slug isPublished categoryId')
       .exec();
 
     if (!product) throw new AppException(AppErrorCode.PRODUCT_NOT_FOUND, { slug });
@@ -678,10 +783,27 @@ export class ProductsService {
       updateData.originalPrice ?? (existing as any).originalPrice,
     );
 
+    // The product's store is immutable here (never accepted from the DTO), so validate the
+    // effective pair against the stored owner. Changing only the category also validates the
+    // stored subcategory against it, which is exactly the parent-mismatch case.
+    if (existing.storeId) {
+      const effectiveCategory =
+        (updateData.category as string | undefined) ?? (existing as any).category;
+      const effectiveSubCategory =
+        updateData.subCategory !== undefined
+          ? (updateData.subCategory as string | undefined)
+          : (existing as any).subCategory;
+      await this.assertProductCategories(
+        existing.storeId,
+        effectiveCategory,
+        effectiveSubCategory,
+      );
+    }
+
     const updated = await this.productModel
       .findByIdAndUpdate(id, updateData, { new: true })
-      .populate('category', 'nameEn nameAr nameFr slug')
-      .populate('subCategory', 'nameEn nameAr nameFr slug')
+      .populate('category', 'nameEn nameAr nameFr slug image isPublished')
+      .populate('subCategory', 'nameEn nameAr nameFr slug isPublished categoryId')
       .exec();
 
     if (!updated) throw new AppException(AppErrorCode.PRODUCT_NOT_FOUND, { id });
@@ -789,8 +911,8 @@ export class ProductsService {
     const safeFilter: Record<string, any> = { published: true, ...filter };
     return this.productModel
       .find(safeFilter)
-      .populate('category', 'nameEn nameAr nameFr slug')
-      .populate('subCategory', 'nameEn nameAr nameFr slug')
+      .populate('category', 'nameEn nameAr nameFr slug image isPublished')
+      .populate('subCategory', 'nameEn nameAr nameFr slug isPublished categoryId')
       .sort(sort || { createdAt: -1 })
       .limit(50)
       .exec();
@@ -876,6 +998,16 @@ export class ProductsService {
     const original = await this.productModel.findById(id).exec();
     if (!original) throw new AppException(AppErrorCode.PRODUCT_NOT_FOUND, { id });
     await this.assertOwnership(original, userId, userEmail, 'duplicate');
+
+    // The copy inherits the original's category pair, so the pair must still be valid for
+    // the store (a category could have been removed since the original was saved).
+    if (original.storeId) {
+      await this.assertProductCategories(
+        original.storeId,
+        original.category,
+        original.subCategory,
+      );
+    }
 
     const baseName = firstNonEmpty(original.nameEn, original.nameAr, original.nameFr);
     let slug = `${this.slugify(baseName)}-copy`;

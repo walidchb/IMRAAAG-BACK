@@ -91,6 +91,16 @@ export class UploadController {
     return this.uploadService.uploadStoreCover(file, await this.scopeFor(req));
   }
 
+  @Post('category-image')
+  @HttpCode(HttpStatus.OK)
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: IMAGE_CONFIG.maxFileSize } }))
+  @ApiOperation({ summary: 'Upload a category image' })
+  @ApiConsumes('multipart/form-data')
+  async uploadCategoryImage(@UploadedFile() file: Express.Multer.File, @Req() req: any) {
+    if (!file) throw new AppException(AppErrorCode.UPLOAD_NO_FILE_PROVIDED);
+    return this.uploadService.uploadCategoryImage(file, await this.scopeFor(req));
+  }
+
   @Delete()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Delete an uploaded image by key' })

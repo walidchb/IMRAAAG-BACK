@@ -4,6 +4,8 @@ import { Types } from 'mongoose';
 import { StoresService } from './stores.service';
 import { Store } from './schemas/store.schema';
 import { Product } from '../products/schemas/product.schema';
+import { Category } from '../categories/schemas/category.schema';
+import { SubCategory } from '../categories/schemas/sub-category.schema';
 import { StoreStatus } from './schemas/store-status.enum';
 import { UploadService } from '../upload/upload.service';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
@@ -63,11 +65,35 @@ describe('StoresService', () => {
 
     productModel = { aggregate: jest.fn().mockReturnValue(query([])) };
 
+    // Store creation seeds General/General. The upsert stubs return a real id so the
+    // subcategory step can reference the just-created category.
+    const generalId = new Types.ObjectId();
+    const categoryModel = {
+      findOne: jest.fn().mockReturnValue(query(null)),
+      findOneAndUpdate: jest
+        .fn()
+        .mockReturnValue(query({ _id: generalId, slug: 'general' })),
+      find: jest.fn().mockReturnValue(query([])),
+      updateMany: jest.fn().mockReturnValue(query({ modifiedCount: 0 })),
+      deleteMany: jest.fn().mockReturnValue(query({ deletedCount: 0 })),
+    };
+    const subCategoryModel = {
+      findOne: jest.fn().mockReturnValue(query(null)),
+      findOneAndUpdate: jest
+        .fn()
+        .mockReturnValue(query({ _id: new Types.ObjectId(), categoryId: generalId, slug: 'general' })),
+      find: jest.fn().mockReturnValue(query([])),
+      updateMany: jest.fn().mockReturnValue(query({ modifiedCount: 0 })),
+      deleteMany: jest.fn().mockReturnValue(query({ deletedCount: 0 })),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         StoresService,
         { provide: getModelToken(Store.name), useValue: model },
         { provide: getModelToken(Product.name), useValue: productModel },
+        { provide: getModelToken(Category.name), useValue: categoryModel },
+        { provide: getModelToken(SubCategory.name), useValue: subCategoryModel },
         { provide: UploadService, useValue: {} },
       ],
     }).compile();

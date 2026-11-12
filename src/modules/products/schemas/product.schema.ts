@@ -112,6 +112,9 @@ ProductSchema.index({ vendorEmail: 1 });
 ProductSchema.index({ vendorId: 1 });
 ProductSchema.index({ storeId: 1 });
 ProductSchema.index({ category: 1, subCategory: 1 });
+// Store-owned taxonomy: category/subcategory ids are unique across the platform, but the
+// owning store is the tenant boundary, so the list/detail paths can scope by it in one scan.
+ProductSchema.index({ storeId: 1, category: 1, subCategory: 1 });
 ProductSchema.index({ price: 1 });
 ProductSchema.index({ published: 1 });
 // Cursor pagination indexes

@@ -112,6 +112,18 @@ export class UploadService {
     return this.processUpload(file, folder, variants, maxWidth, scope);
   }
 
+  /**
+   * One 800px WebP for a category card. Categories have no thumbnail/medium/large
+   * derivatives, so the variant list is deliberately empty; the returned thumbnail/medium/
+   * large fields fall back to the main URL.
+   */
+  async uploadCategoryImage(file: Express.Multer.File, scope: string): Promise<UploadResult> {
+    this.validateFile(file);
+    const folder = IMAGE_CONFIG.folders.category;
+    const maxWidth = IMAGE_CONFIG.maxWidths.category;
+    return this.processUpload(file, folder, [], maxWidth, scope);
+  }
+
   private async processUpload(
     file: Express.Multer.File,
     folder: string,

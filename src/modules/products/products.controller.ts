@@ -40,8 +40,8 @@ export class ProductsController {
     // was nonetheless client-settable through the body, which is a privilege-escalation
     // hole of the same shape as the one closed on `CreateStoreDto.vendorId`. Seller
     // identity is `storeId`, resolved from the session by the service.
-    const user = req.user as { email: string };
-    return this.productsService.create(createProductDto, user.email);
+    const user = req.user as { id: string; email: string };
+    return this.productsService.create(createProductDto, user.email, user.id);
   }
 
   @Public()
