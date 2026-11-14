@@ -762,6 +762,79 @@ export class ReservationsService {
   }
 
   /**
+   * Read-only availability map for a set of variants (cart quote / strict cart create).
+   *
+   * Single source of the `available = max(0, onHand - reserved)` rule so the cart cannot invent
+   * its own balance math. Missing balances read as 0, exactly like the advisory check.
+   */
+  async getAvailabilityForVariants(variantIds: string[]): Promise<Map<string, number>> {
+    const ids = [
+      ...new Set(
+        variantIds
+          .map((id) => this.toObjectId(id))
+          .filter((id): id is Types.ObjectId => id !== null)
+          .map((id) => String(id)),
+      ),
+    ].map((id) => new Types.ObjectId(id));
+
+    if (ids.length === 0) return new Map();
+
+    const balances = await this.balanceModel.find({ variantId: { $in: ids } }).lean().exec();
+    const map = new Map<string, number>();
+    for (const balance of balances) {
+      map.set(String(balance.variantId), Math.max(0, balance.onHand - balance.reserved));
+    }
+    return map;
+  }
+
+  /**
+   * Strict all-or-none availability gate for a cart submission.
+   *
+   * Unlike `checkAdvisoryAvailability` this **blocks**: a cart is a firm multi-line order, so a
+   * short line refuses the whole cart and no order is written. Quantities are aggregated per
+   * variant first, so two lines of the same variant cannot each pass on their own and oversell.
+   * The thrown params keep the legacy `variantId/sku/available/requested` pair (the direct
+   * checkout toast reads them) and add the full `items[]` list for the cart UI.
+   */
+  async assertCartAvailability(
+    items: Array<{ variantId: string; quantity: number }>,
+  ): Promise<void> {
+    const totals = new Map<string, number>();
+    for (const item of items) {
+      totals.set(item.variantId, (totals.get(item.variantId) ?? 0) + item.quantity);
+    }
+
+    const availableByVariant = await this.getAvailabilityForVariants([...totals.keys()]);
+
+    const short: Array<{
+      variantId: string;
+      sku: string | null;
+      requested: number;
+      available: number;
+    }> = [];
+    for (const [variantId, requested] of totals) {
+      const available = availableByVariant.get(variantId) ?? 0;
+      if (available < requested) short.push({ variantId, sku: null, requested, available });
+    }
+
+    if (short.length === 0) return;
+
+    const skus = await this.skusFor(short.map((line) => line.variantId));
+    for (const line of short) {
+      line.sku = skus.get(line.variantId) ?? null;
+    }
+
+    const first = short[0];
+    throw new AppException(AppErrorCode.INSUFFICIENT_STOCK, {
+      variantId: first.variantId,
+      sku: first.sku,
+      requested: first.requested,
+      available: first.available,
+      items: short,
+    });
+  }
+
+  /**
    * Reservation state for one order (roadmap §4.5 `GET /orders/:orderId/inventory`).
    *
    * Diagnostic rather than authoritative: balances are the truth, this explains them.

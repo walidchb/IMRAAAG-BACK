@@ -151,6 +151,10 @@ export interface VariantOrderSnapshot {
   compareAtPrice?: number | null;
   image: string | null;
   isActive: boolean;
+  /** Present on live reads; `true` for a soft-deleted variant, which must never be sold. */
+  isDeleted?: boolean;
+  /** The option-value ids behind `snapshot.options`; the cart quotes them back. */
+  optionValueIds?: string[];
   snapshot: {
     options: Array<{ optionKey: string; optionName: string; value: string; valueName: string }>;
     label: string;
@@ -2381,6 +2385,7 @@ async cascadeSoftDeleteForProduct(
  */
 async snapshotsForVariants(
   variantIds: string[],
+  locale?: string,
 ): Promise<Map<string, VariantOrderSnapshot>> {
   const ids = variantIds
     .filter((id) => Types.ObjectId.isValid(id))
@@ -2445,9 +2450,11 @@ async snapshotsForVariants(
       compareAtPrice: variant.compareAtPrice ?? null,
       image: variant.image ?? null,
       isActive: !!variant.isActive,
+      isDeleted: !!variant.isDeleted,
+      optionValueIds,
       snapshot: {
         options: snapshotOptions,
-        label: this.labelFor(optionValueIds, options as any, valuesGrouped),
+        label: this.labelFor(optionValueIds, options as any, valuesGrouped, locale),
       },
     });
   }

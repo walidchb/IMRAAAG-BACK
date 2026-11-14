@@ -21,6 +21,7 @@ import { StorePermission } from '../../common/constants/store-permissions.const'
 import { RequirePermissions } from '../team/decorators/require-permissions.decorator';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
+import { CartValidationDto, CreateCartOrderDto } from './dto/create-cart-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { CreateVendorOrderDto } from './dto/create-vendor-order.dto';
 import { UpdateVendorOrderDto } from './dto/update-vendor-order.dto';
@@ -41,6 +42,27 @@ export class OrdersController {
   @ApiResponse({ status: 201, description: 'Order created successfully', type: Order })
   create(@Body() createOrderDto: CreateOrderDto, @Req() req: any) {
     return this.ordersService.create(createOrderDto, req.user);
+  }
+
+  /**
+   * Cart quote: read-only, authoritative. Declared before the cart create so the two literal
+   * paths can never be mistaken for a parameterised route.
+   */
+  @Public()
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
+  @Post('cart/validate')
+  @ApiOperation({ summary: 'Validate a shopping cart (public, read-only authoritative quote)' })
+  validateCart(@Body() dto: CartValidationDto) {
+    return this.ordersService.validateCart(dto);
+  }
+
+  /** Strict multi-line cart checkout: one store, one order, server-priced, idempotent. */
+  @Public()
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Post('cart')
+  @ApiOperation({ summary: 'Create a multi-line cart order (public, strict COD checkout)' })
+  createCartOrder(@Body() dto: CreateCartOrderDto) {
+    return this.ordersService.createCartOrder(dto);
   }
 
   @Roles(Role.VENDOR, Role.ADMIN)

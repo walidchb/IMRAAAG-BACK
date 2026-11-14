@@ -39,6 +39,14 @@ export class Order {
   @Prop({ type: String, enum: ORDER_SOURCE_VALUES, default: OrderSource.ONLINE })
   source: string;
 
+  /**
+   * Client-generated idempotency key for cart checkout. Server-set from the (validated) DTO; a
+   * replay of the same key returns the original order instead of creating a second COD order.
+   * Absent on direct/POS/vendor orders, and the partial unique index excludes those documents.
+   */
+  @Prop({ type: String })
+  clientRequestId?: string;
+
   @Prop({ type: Date })
   confirmedAt: Date;
 
@@ -324,3 +332,10 @@ OrderSchema.index({ storeId: 1, isDeleted: 1, createdAt: -1, _id: -1 });
 // lists only archived rows ordered by their archive date.
 OrderSchema.index({ storeId: 1, isDeleted: 1, isArchived: 1, createdAt: -1, _id: -1 });
 OrderSchema.index({ storeId: 1, isDeleted: 1, isArchived: 1, archivedAt: -1, _id: -1 });
+// Cart idempotency: one order per (store, client key). Partial so the many legacy/direct/POS
+// documents without a key never collide on the missing field. `storeId` is a Mixed path under
+// this build, so the service queries it with an explicit `Types.ObjectId`.
+OrderSchema.index(
+  { storeId: 1, clientRequestId: 1 },
+  { unique: true, partialFilterExpression: { clientRequestId: { $type: 'string' } } },
+);

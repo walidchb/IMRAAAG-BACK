@@ -8,6 +8,7 @@ import { Counter, CounterDocument } from './schemas/counter.schema';
 import { PosHold, PosHoldDocument, PosHoldItem } from './schemas/pos-hold.schema';
 import { Product, ProductDocument } from '../products/schemas/product.schema';
 import { CreateOrderDto } from './dto/create-order.dto';
+import { CartItemDto, CartValidationDto, CreateCartOrderDto } from './dto/create-cart-order.dto';
 import { CreatePosSaleDto } from './dto/create-pos-sale.dto';
 import { CreatePosHoldDto } from './dto/pos-hold.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
@@ -55,6 +56,69 @@ export interface PaginatedOrdersResult {
   limit: number;
   totalPages: number;
   statusCounts: Record<string, number>;
+}
+
+/** Non-throwing display codes the cart validator returns per line. */
+export type CartLineIssueCode =
+  | 'PRODUCT_UNAVAILABLE'
+  | 'VARIANT_UNAVAILABLE'
+  | 'VARIANT_INACTIVE'
+  | 'STORE_MISMATCH'
+  | 'OUT_OF_STOCK'
+  | 'INSUFFICIENT_STOCK';
+
+export interface CartQuoteLine {
+  lineKey: string;
+  productId: string;
+  variantId: string;
+  productName: string;
+  productSlug: string;
+  image: string | null;
+  variantLabel: string;
+  optionValueIds: string[];
+  unitPrice: number;
+  compareAtPrice: number | null;
+  quantity: number;
+  lineTotal: number;
+  available: number;
+  isAvailable: boolean;
+  issues: CartLineIssueCode[];
+}
+
+export interface CartQuote {
+  storeId: string;
+  storeName: string;
+  storeSlug: string;
+  currency: string;
+  lines: CartQuoteLine[];
+  subtotal: number;
+  hasBlockingIssues: boolean;
+}
+
+interface ResolvedCartResult {
+  quote: CartQuote;
+  /** The lines that can actually be ordered, already priced/snapshotted, for order creation. */
+  orderable: Array<{
+    variantId: string;
+    productId: string;
+    productName: string;
+    productSlug: string;
+    image: string | null;
+    variantLabel: string;
+    quantity: number;
+    unitPrice: number;
+    compareAtPrice: number | null;
+  }>;
+}
+
+type OrderCreationMode = 'legacy' | 'cart';
+
+interface CreateOrderOptions {
+  mode: OrderCreationMode;
+  /** Resolved, status-checked store for cart orders (never resolved from the request). */
+  store?: { _id?: any; vendorEmail: string };
+  locale?: 'en' | 'ar' | 'fr';
+  idempotencyKey?: string;
 }
 
 /** The register-facing shape of a parked sale (matches the frontend's `PosHeldCart`). */
@@ -433,12 +497,42 @@ export class OrdersService {
   }
 
   async create(createOrderDto: CreateOrderDto, user?: RequestUser): Promise<Order> {
+    return this.createOrderInternal(createOrderDto, user, { mode: 'legacy' });
+  }
+
+  /**
+   * Shared order-creation core.
+   *
+   * `legacy` is the direct/vendor checkout exactly as it has always behaved (advisory stock,
+   * client/legacy pricing rules, no idempotency). `cart` is the strict multi-line path: the
+   * store was already resolved and status-checked, every line has already been validated and
+   * priced by `resolveCartLines`, stock is gated all-or-none, and a `clientRequestId` makes a
+   * replay return the original order.
+   */
+  private async createOrderInternal(
+    createOrderDto: CreateOrderDto,
+    user: RequestUser | undefined,
+    options: CreateOrderOptions,
+  ): Promise<Order> {
+    const isCart = options.mode === 'cart';
     // Resolve the store up front. `storeId` is preferred; the legacy `vendorEmail` is
     // still accepted so the un-migrated storefront keeps working through Phase 3.
     // Both end up on the document, so downstream vendor scoping is identical either way.
-    const storeRef = await this.resolveOrderStore(createOrderDto);
+    // Cart orders arrive with an already-resolved, active store and never let the request
+    // choose an inactive one.
+    const storeRef = isCart && options.store
+      ? { storeId: new Types.ObjectId(String(options.store._id)), vendorEmail: options.store.vendorEmail }
+      : await this.resolveOrderStore(createOrderDto);
     createOrderDto.storeId = storeRef.storeId?.toString();
     createOrderDto.vendorEmail = storeRef.vendorEmail;
+
+    // Idempotency replay: the same key+store returns the original order before any work.
+    if (isCart && options.idempotencyKey && storeRef.storeId) {
+      const existing = await this.orderModel
+        .findOne({ storeId: new Types.ObjectId(String(storeRef.storeId)), clientRequestId: options.idempotencyKey })
+        .exec();
+      if (existing) return existing;
+    }
 
     if (user) {
       this.assertVendorOrAdmin(user);
@@ -611,7 +705,9 @@ export class OrdersService {
         variantId = snapshot.variantId;
         sku = snapshot.sku ?? undefined;
         variantSnapshot = snapshot.snapshot;
-        image = snapshot.image ?? undefined;
+        // Cart lines carry a pre-resolved `image` = variant image ?? product image, so a variant
+        // without its own gallery link still keeps the catalogue shot on a historical order.
+        image = snapshot.image ?? (isCart ? (item as any).image ?? undefined : undefined);
         // Spec §7.4 "unit price": the price actually charged is the variant's override when
         // it has one, falling back to the product price. A storefront line is priced only from
         // server-side data; the client-sent price must never win (spec §7.2 rule 7, "do not
@@ -732,6 +828,7 @@ export class OrdersService {
         status: placedStatus,
         history: [{ status: placedStatus, date: now, user: createOrderDto.createdBy || (user ? 'Vendor' : 'Customer') }],
         updatedAt: now,
+        ...(isCart && options.idempotencyKey ? { clientRequestId: options.idempotencyKey } : {}),
       });
 
       try {
@@ -741,40 +838,303 @@ export class OrdersService {
         }
         break;
       } catch (err: any) {
-        if (err.code === 11000 && retries < 3) {
-          retries++;
-          continue;
+        if (err.code === 11000) {
+          // A replay that lost the insert race: return the order the other request created.
+          const isIdempotencyDup =
+            isCart &&
+            !!options.idempotencyKey &&
+            !!storeId &&
+            (err?.keyPattern?.clientRequestId || err?.keyValue?.clientRequestId);
+          if (isIdempotencyDup) {
+            const existing = await this.orderModel
+              .findOne({ storeId: new Types.ObjectId(String(storeId)), clientRequestId: options.idempotencyKey })
+              .exec();
+            if (existing) return existing;
+          }
+          if (retries < 3) {
+            retries++;
+            continue;
+          }
         }
         throw err;
       }
     }
 
-    // Phase 4 (roadmap 4.7): advisory stock check at `placed`.
-    //
-    // Deliberately does NOT block the order. A storefront may legitimately sell a
-    // combination that sold out moments ago, and this platform is cash-on-delivery in a
-    // market where a seller's own count is often already stale - refusing the order here
-    // would lose the sale and teach the customer nothing. The real enforcement point is
-    // reservation, at confirmation; this only tells the vendor early.
-    const availability = await this.reservationsService
-      .checkAdvisoryAvailability(this.inventoryContext(saved))
-      .catch((err: any) => {
-        // Never let a diagnostic read turn a placed order into a failed request.
-        this.logger.warn(`Advisory availability check failed for order ${saved.orderNo}: ${err?.message}`);
-        return [] as AdvisoryLine[];
-      });
+    if (!isCart) {
+      // Phase 4 (roadmap 4.7): advisory stock check at `placed`.
+      //
+      // Deliberately does NOT block the order. A storefront may legitimately sell a
+      // combination that sold out moments ago, and this platform is cash-on-delivery in a
+      // market where a seller's own count is often already stale - refusing the order here
+      // would lose the sale and teach the customer nothing. The real enforcement point is
+      // reservation, at confirmation; this only tells the vendor early.
+      const availability = await this.reservationsService
+        .checkAdvisoryAvailability(this.inventoryContext(saved))
+        .catch((err: any) => {
+          // Never let a diagnostic read turn a placed order into a failed request.
+          this.logger.warn(`Advisory availability check failed for order ${saved.orderNo}: ${err?.message}`);
+          return [] as AdvisoryLine[];
+        });
 
-    // HI-7 (b): the short lines ride back on the response as an additive `availability` array,
-    // so the storefront can warn the shopper that stock is tight. Placement logic is unchanged -
-    // this is the same advisory the logger reports, surfaced to the buyer's client. Anything
-    // else returns the untouched document exactly as before.
-    if (availability.some((line) => line.isShort)) {
-      const view = saved.toObject() as Order & { availability?: AdvisoryLine[] };
-      view.availability = availability.filter((line) => line.isShort);
-      return view;
+      // HI-7 (b): the short lines ride back on the response as an additive `availability` array,
+      // so the storefront can warn the shopper that stock is tight. Placement logic is unchanged -
+      // this is the same advisory the logger reports, surfaced to the buyer's client. Anything
+      // else returns the untouched document exactly as before.
+      if (availability.some((line) => line.isShort)) {
+        const view = saved.toObject() as Order & { availability?: AdvisoryLine[] };
+        view.availability = availability.filter((line) => line.isShort);
+        return view;
+      }
     }
 
     return saved;
+  }
+
+  /**
+   * Read-only authoritative cart quote (`POST /orders/cart/validate`).
+   *
+   * Returns localized names/labels, server-resolved prices/images, live availability and
+   * non-throwing per-line issues. It writes nothing.
+   */
+  async validateCart(dto: CartValidationDto): Promise<CartQuote & { validatedAt: string }> {
+    if (!dto.items?.length) throw new AppException(AppErrorCode.CART_EMPTY);
+    const store = await this.resolveActiveStore(dto.storeId);
+    const { quote } = await this.resolveCartLines(
+      new Types.ObjectId(dto.storeId),
+      store,
+      dto.items,
+      dto.locale ?? 'en',
+    );
+    return { ...quote, validatedAt: new Date().toISOString() };
+  }
+
+  /**
+   * Strict cart checkout (`POST /orders/cart`).
+   *
+   * One store, many lines, one `placed` COD order. Every line is re-validated and re-priced
+   * server-side; any invalid line refuses the whole cart (`CART_ITEMS_INVALID`) and any short
+   * line refuses it too (`INSUFFICIENT_STOCK`). Nothing is reserved here — reservation still
+   * happens atomically at vendor confirmation.
+   */
+  async createCartOrder(dto: CreateCartOrderDto): Promise<Order> {
+    if (!dto.items?.length) throw new AppException(AppErrorCode.CART_EMPTY);
+
+    // Replay first: a retried request must return the order it already created, even if stock
+    // has moved since. The core repeats this lookup to close the insert race.
+    const replay = await this.orderModel
+      .findOne({
+        storeId: new Types.ObjectId(dto.storeId),
+        clientRequestId: dto.idempotencyKey,
+      })
+      .exec();
+    if (replay) return replay;
+
+    if (dto.shippingMethod === 'home' && !dto.customer?.address?.trim()) {
+      throw new AppException(AppErrorCode.VALIDATION_REQUIRED, { field: 'customer.address' });
+    }
+
+    const store = await this.resolveActiveStore(dto.storeId);
+    const locale = dto.locale ?? 'en';
+    const resolved = await this.resolveCartLines(
+      new Types.ObjectId(dto.storeId),
+      store,
+      dto.items,
+      locale,
+    );
+
+    const invalid = resolved.quote.lines.flatMap((line) =>
+      line.issues
+        .filter((code) => code !== 'INSUFFICIENT_STOCK' && code !== 'OUT_OF_STOCK')
+        .map((code) => ({ lineKey: line.lineKey, variantId: line.variantId, code })),
+    );
+    if (invalid.length > 0) {
+      throw new AppException(AppErrorCode.CART_ITEMS_INVALID, { issues: invalid });
+    }
+
+    // Strict, all-or-none stock gate. A short line means no order and no stock movement.
+    await this.reservationsService.assertCartAvailability(dto.items);
+
+    const internalDto = {
+      storeId: dto.storeId,
+      vendorEmail: store.vendorEmail,
+      shippingMethod: dto.shippingMethod,
+      paymentMethod: 'COD',
+      customer: {
+        name: dto.customer.name,
+        phone: dto.customer.phone,
+        email: dto.customer.email,
+        wilaya: dto.customer.wilaya,
+        commune: dto.customer.commune,
+        address: dto.shippingMethod === 'home' ? dto.customer.address?.trim() : '',
+        note: dto.customer.note,
+      },
+      items: resolved.orderable.map((line) => ({
+        productId: line.productId,
+        productName: line.productName,
+        price: line.unitPrice,
+        quantity: line.quantity,
+        variantId: line.variantId,
+        variantDetails: line.variantLabel,
+        // Pre-resolved fallback (variant image ?? product image); the core preserves it for carts.
+        image: line.image ?? undefined,
+      })),
+      total: resolved.quote.subtotal,
+      stopDeskCode: dto.stopDeskCode,
+    } as unknown as CreateOrderDto;
+
+    return this.createOrderInternal(internalDto, undefined, {
+      mode: 'cart',
+      store,
+      locale,
+      idempotencyKey: dto.idempotencyKey,
+    });
+  }
+
+  /** Resolves and status-checks a store for the cart. Throws STORE_NOT_FOUND / STORE_NOT_ACTIVE. */
+  private async resolveActiveStore(storeId: string) {
+    return this.storesService.findOne(storeId);
+  }
+
+  /**
+   * Shared cart resolution used by both the read-only quote and the strict create. It never
+   * throws for an invalid/unavailable line — it reports `issues` — so the review page can show
+   * exactly what is wrong while the create path turns the same data into a 409.
+   */
+  private async resolveCartLines(
+    storeId: Types.ObjectId,
+    store: any,
+    items: CartItemDto[],
+    locale: 'en' | 'ar' | 'fr',
+  ): Promise<ResolvedCartResult> {
+    const storeKey = String(storeId);
+
+    const snapshots = await this.variantsService.snapshotsForVariants(
+      items.map((item) => item.variantId),
+      locale,
+    );
+
+    const productIds = [
+      ...new Set(
+        [...snapshots.values()]
+          .map((snapshot) => snapshot.productId)
+          .filter((id) => !!id && /^[a-fA-F0-9]{24}$/.test(id)),
+      ),
+    ];
+    const products = productIds.length
+      ? await this.productModel
+          .find({ _id: { $in: productIds } })
+          .select('nameEn nameAr nameFr slug image images price originalPrice published storeId')
+          .lean()
+          .exec()
+      : [];
+    const productById = new Map<string, any>(products.map((p: any) => [String(p._id), p]));
+
+    const availability = await this.reservationsService.getAvailabilityForVariants(
+      items.map((item) => item.variantId),
+    );
+
+    // Aggregate per variant so two lines of the same variant cannot each pass on their own.
+    const requestedByVariant = new Map<string, number>();
+    for (const item of items) {
+      requestedByVariant.set(
+        item.variantId,
+        (requestedByVariant.get(item.variantId) ?? 0) + item.quantity,
+      );
+    }
+
+    const localizedName = (product: any): string => {
+      if (!product) return '';
+      if (locale === 'ar') return product.nameAr || product.nameEn || '';
+      if (locale === 'fr') return product.nameFr || product.nameEn || '';
+      return product.nameEn || '';
+    };
+
+    const quoteLines: CartQuoteLine[] = [];
+    const orderable: ResolvedCartResult['orderable'] = [];
+
+    for (const item of items) {
+      const snapshot = snapshots.get(item.variantId);
+      const product = snapshot ? productById.get(snapshot.productId) : undefined;
+
+      const issues: CartLineIssueCode[] = [];
+      if (!snapshot) {
+        issues.push('VARIANT_UNAVAILABLE');
+      } else {
+        if (snapshot.storeId !== storeKey) issues.push('STORE_MISMATCH');
+        if (snapshot.isDeleted) issues.push('VARIANT_UNAVAILABLE');
+        if (!snapshot.isActive) issues.push('VARIANT_INACTIVE');
+        if (!product) {
+          issues.push('PRODUCT_UNAVAILABLE');
+        } else {
+          if (product.storeId && String(product.storeId) !== storeKey) issues.push('STORE_MISMATCH');
+          if (product.published !== true) issues.push('PRODUCT_UNAVAILABLE');
+        }
+      }
+
+      const available = availability.get(item.variantId) ?? 0;
+      const requested = requestedByVariant.get(item.variantId) ?? item.quantity;
+      if (issues.length === 0) {
+        if (available <= 0) issues.push('OUT_OF_STOCK');
+        else if (available < requested) issues.push('INSUFFICIENT_STOCK');
+      }
+
+      const productId = snapshot?.productId ?? '';
+      const productName = localizedName(product);
+      const productSlug = product?.slug ?? '';
+      const unitPrice = snapshot?.priceOverride ?? product?.price ?? 0;
+      const compareAtPrice = snapshot?.compareAtPrice ?? product?.originalPrice ?? null;
+      const image = snapshot?.image ?? product?.image ?? product?.images?.[0] ?? null;
+      const variantLabel = snapshot?.snapshot?.label ?? '';
+      const optionValueIds = snapshot?.optionValueIds ?? [];
+
+      const line: CartQuoteLine = {
+        lineKey: `${productId}:${item.variantId}`,
+        productId,
+        variantId: item.variantId,
+        productName,
+        productSlug,
+        image,
+        variantLabel,
+        optionValueIds,
+        unitPrice,
+        compareAtPrice,
+        quantity: item.quantity,
+        lineTotal: unitPrice * item.quantity,
+        available,
+        isAvailable: issues.length === 0,
+        issues: [...new Set(issues)],
+      };
+      quoteLines.push(line);
+
+      if (line.isAvailable) {
+        orderable.push({
+          variantId: item.variantId,
+          productId,
+          productName,
+          productSlug,
+          image,
+          variantLabel,
+          quantity: item.quantity,
+          unitPrice,
+          compareAtPrice,
+        });
+      }
+    }
+
+    const subtotal = quoteLines.reduce((sum, line) => sum + line.lineTotal, 0);
+
+    return {
+      quote: {
+        storeId: storeKey,
+        storeName: store?.storeName ?? '',
+        storeSlug: store?.storeSlug ?? '',
+        currency: 'DZD',
+        lines: quoteLines,
+        subtotal,
+        hasBlockingIssues: quoteLines.some((line) => !line.isAvailable),
+      },
+      orderable,
+    };
   }
 
   /**

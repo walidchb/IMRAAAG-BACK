@@ -256,4 +256,8 @@ export const ERROR_HTTP_STATUS: Record<string, number> = {
   [AppErrorCode.POS_ITEM_OUT_OF_STOCK]: HttpStatus.CONFLICT,
   [AppErrorCode.POS_EMPTY_CART]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.POS_HOLD_NOT_FOUND]: HttpStatus.NOT_FOUND,
+
+  // Cart checkout
+  [AppErrorCode.CART_EMPTY]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.CART_ITEMS_INVALID]: HttpStatus.CONFLICT,
 };
