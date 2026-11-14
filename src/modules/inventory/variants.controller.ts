@@ -94,7 +94,7 @@ export class VariantsController {
 
   /** Options, values and every offered combination with its stock. */
   @Get('variants/matrix')
-  @RequirePermissions(StorePermission.PRODUCTS_VIEW)
+  @RequirePermissions(StorePermission.PRODUCTS_BROWSE)
   async matrix(
     @Param('productId') productId: string,
     @Query() query: LocaleQueryDto,
@@ -108,7 +108,7 @@ export class VariantsController {
   }
 
   @Get('options')
-  @RequirePermissions(StorePermission.PRODUCTS_VIEW)
+  @RequirePermissions(StorePermission.PRODUCTS_BROWSE)
   async options(@Param('productId') productId: string, @Req() req: any) {
     return this.variantsService.listOptions(productId, await this.storeIdFor(req));
   }

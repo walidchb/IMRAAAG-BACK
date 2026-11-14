@@ -40,7 +40,7 @@ export class CategoriesController {
 
   // Declared before `GET :id` so Express does not treat `mine` as a category id.
   @Roles(Role.VENDOR, Role.ADMIN)
-  @RequirePermissions(StorePermission.PRODUCTS_VIEW)
+  @RequirePermissions(StorePermission.PRODUCTS_BROWSE)
   @Throttle({ default: { limit: 120, ttl: 60000 } })
   @Get('mine')
   @ApiOperation({ summary: "List the session store's categories with all-product counts" })

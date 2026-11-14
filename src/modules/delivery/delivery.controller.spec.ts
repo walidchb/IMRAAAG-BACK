@@ -48,7 +48,10 @@ describe('DeliveryController', () => {
     jest.clearAllMocks();
   });
 
-  const mockReq = (email = 'vendor@test.com') => ({ user: { email } });
+  const mockReq = (email = 'vendor@test.com') => ({
+    user: { email },
+    storeAccess: { permissions: ['delivery.configure'] },
+  });
 
   describe('GET /delivery/companies', () => {
     it('returns all delivery companies', async () => {
@@ -67,7 +70,9 @@ describe('DeliveryController', () => {
 
       const result = await controller.getConfigs(mockReq());
       expect(result).toBe(expected);
-      expect(mockDeliveryService.getConfigs).toHaveBeenCalledWith('vendor@test.com');
+      expect(mockDeliveryService.getConfigs).toHaveBeenCalledWith('vendor@test.com', {
+        includeCredentials: true,
+      });
     });
   });
 

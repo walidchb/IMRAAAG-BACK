@@ -15,7 +15,14 @@ export const StorePermission = {
   STORE_TOGGLE_STATUS: 'store.toggle_status',
   STORE_CREATE: 'store.create',
 
+  /** Opens the Products and Categories management pages. */
   PRODUCTS_VIEW: 'products.view',
+  /**
+   * Reads the store's catalogue (product list, variant matrix/options, category tree) without
+   * opening the management pages. Order staff need it to compose order lines; it must not grant
+   * the Products/Categories screens.
+   */
+  PRODUCTS_BROWSE: 'products.browse',
   PRODUCTS_CREATE: 'products.create',
   PRODUCTS_UPDATE: 'products.update',
   PRODUCTS_DELETE: 'products.delete',
@@ -95,7 +102,10 @@ export const STORE_ROLE_PERMISSIONS: Record<Exclude<StoreRole, StoreRole.OWNER>,
   ),
 
   [StoreRole.ORDER_CONFIRMER]: [
-    StorePermission.PRODUCTS_VIEW,
+    StorePermission.STORE_VIEW,
+    // Read-only catalogue data for the order-line picker. Deliberately NOT `products.view`:
+    // this role works from the Orders page only and must never open Products/Categories.
+    StorePermission.PRODUCTS_BROWSE,
     StorePermission.ORDERS_VIEW,
     StorePermission.ORDERS_CREATE,
     StorePermission.ORDERS_UPDATE,
@@ -107,10 +117,19 @@ export const STORE_ROLE_PERMISSIONS: Record<Exclude<StoreRole, StoreRole.OWNER>,
     StorePermission.ORDERS_LABELS_GENERATE,
     StorePermission.ORDERS_DELIVERY_STATUS_VIEW,
     StorePermission.ORDERS_DELIVERY_STATUS_REFRESH,
+    // Read-only delivery options are required to create/dispatch an order: the enabled
+    // companies, the wilaya attributions, the shipping fees and the DHD/Noest communes.
+    // These are reads only — `delivery.configure` / `delivery.attributions.update` /
+    // `delivery.sync` stay Owner/Partner-only.
+    StorePermission.DELIVERY_VIEW,
+    StorePermission.DELIVERY_FEES_VIEW,
   ],
 
   [StoreRole.INVENTORY_STAFF]: [
+    StorePermission.STORE_VIEW,
+    // `products.view` opens the management pages; `products.browse` backs their read endpoints.
     StorePermission.PRODUCTS_VIEW,
+    StorePermission.PRODUCTS_BROWSE,
     StorePermission.PRODUCTS_CREATE,
     StorePermission.PRODUCTS_UPDATE,
     StorePermission.PRODUCTS_DUPLICATE,
@@ -126,9 +145,16 @@ export const STORE_ROLE_PERMISSIONS: Record<Exclude<StoreRole, StoreRole.OWNER>,
     StorePermission.INVENTORY_BULK_ADJUST,
     StorePermission.INVENTORY_MOVEMENTS_VIEW,
     StorePermission.INVENTORY_THRESHOLD_UPDATE,
+    // The orders page and the return dialog read the store's delivery options (company names,
+    // shipping fee). Read-only; writes remain Owner/Partner-only.
+    StorePermission.DELIVERY_VIEW,
+    StorePermission.DELIVERY_FEES_VIEW,
   ],
 
   [StoreRole.CASHIER]: [
+    // The register's shell reads the store identity (name/logo); POS itself needs no delivery
+    // or order capability.
+    StorePermission.STORE_VIEW,
     StorePermission.POS_ACCESS,
     StorePermission.POS_CREATE_SALE,
     StorePermission.POS_MANAGE_HOLDS,

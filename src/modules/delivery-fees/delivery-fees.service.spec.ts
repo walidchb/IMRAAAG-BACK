@@ -12,6 +12,8 @@ import { AppErrorCode } from '../../common/errors/error-codes.enum';
 describe('DeliveryFeesService — fee import uses the chosen company only', () => {
   let service: DeliveryFeesService;
   let configFindOne: jest.Mock;
+  let feeFindOne: jest.Mock;
+  let feeUpdateOne: jest.Mock;
   const originalFetch = global.fetch;
 
   /**
@@ -31,13 +33,15 @@ describe('DeliveryFeesService — fee import uses the chosen company only', () =
 
   beforeEach(async () => {
     configFindOne = jest.fn();
+    feeFindOne = jest.fn();
+    feeUpdateOne = jest.fn().mockReturnValue({ exec: async () => ({}) });
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         DeliveryFeesService,
-        { provide: getModelToken(DeliveryFee.name), useValue: {} },
+        { provide: getModelToken(DeliveryFee.name), useValue: { findOne: feeFindOne, updateOne: feeUpdateOne } },
         { provide: getModelToken(DeliveryConfig.name), useValue: { findOne: configFindOne } },
-        { provide: CacheService, useValue: { get: jest.fn(), set: jest.fn() } },
+        { provide: CacheService, useValue: { get: jest.fn(), set: jest.fn(), clear: jest.fn() } },
         { provide: ConfigService, useValue: { get: jest.fn().mockReturnValue(undefined) } },
         { provide: StoresService, useValue: { resolveStoreIdByEmail: jest.fn().mockResolvedValue(null) } },
       ],
@@ -151,5 +155,67 @@ describe('DeliveryFeesService — fee import uses the chosen company only', () =
       expect(err).toBeInstanceOf(AppException);
       expect(err).toMatchObject({ errorCode: AppErrorCode.FEE_API_ERROR });
     }, 20_000);
+  });
+
+  describe('seedDefaults — never overwrites existing fees (fees is a Mongoose Map)', () => {
+    const stubFeeDoc = (doc: unknown) =>
+      feeFindOne.mockReturnValue({ lean: () => ({ exec: async () => doc }) });
+
+    it('only seeds codes that are missing, leaving saved fees untouched', async () => {
+      stubFeeDoc({ fees: { '16': { homeDeliveryFee: 400, stopDeskDeliveryFee: 300 } } });
+
+      await service.seedDefaults('vendor@test.com', ['16', '31']);
+
+      const setField = feeUpdateOne.mock.calls[0][1].$set;
+      expect(setField).toEqual({ 'fees.31': { homeDeliveryFee: 0, stopDeskDeliveryFee: 0 } });
+      expect(setField['fees.16']).toBeUndefined();
+    });
+
+    it('does not write at all when every code already exists', async () => {
+      stubFeeDoc({ fees: { '16': { homeDeliveryFee: 400, stopDeskDeliveryFee: 300 } } });
+
+      await service.seedDefaults('vendor@test.com', ['16']);
+
+      expect(feeUpdateOne).not.toHaveBeenCalled();
+    });
+
+    it('seeds every code when no fee document exists yet', async () => {
+      stubFeeDoc(null);
+
+      await service.seedDefaults('vendor@test.com', ['16', '31']);
+
+      const setField = feeUpdateOne.mock.calls[0][1].$set;
+      expect(setField['fees.16']).toEqual({ homeDeliveryFee: 0, stopDeskDeliveryFee: 0 });
+      expect(setField['fees.31']).toEqual({ homeDeliveryFee: 0, stopDeskDeliveryFee: 0 });
+    });
+
+    it('reads existing codes from a hydrated Mongoose Map (never resets them)', async () => {
+      stubFeeDoc({ fees: new Map([['16', { homeDeliveryFee: 400, stopDeskDeliveryFee: 300 }]]) });
+
+      await service.seedDefaults('vendor@test.com', ['16', '31']);
+
+      const setField = feeUpdateOne.mock.calls[0][1].$set;
+      expect(setField).toEqual({ 'fees.31': { homeDeliveryFee: 0, stopDeskDeliveryFee: 0 } });
+      expect(setField['fees.16']).toBeUndefined();
+    });
+  });
+
+  describe('updateFee — partial PATCH keeps the untouched field', () => {
+    const stubFeeDoc = (doc: unknown) => {
+      const exec = async () => doc;
+      feeFindOne.mockReturnValue({ lean: () => ({ exec }) });
+      const feeFindOneAndUpdate = jest.fn().mockReturnValue({ exec: async () => doc });
+      (service as unknown as { feeModel: { findOneAndUpdate: jest.Mock } }).feeModel.findOneAndUpdate = feeFindOneAndUpdate;
+      return feeFindOneAndUpdate;
+    };
+
+    it('does not blank stopdesk when only home is supplied', async () => {
+      const findOneAndUpdate = stubFeeDoc({ fees: { '16': { homeDeliveryFee: 400, stopDeskDeliveryFee: 300 } } });
+
+      await service.updateFee('vendor@test.com', '16', { homeDeliveryFee: 450 });
+
+      const setField = findOneAndUpdate.mock.calls[0][1].$set;
+      expect(setField['fees.16']).toEqual({ homeDeliveryFee: 450, stopDeskDeliveryFee: 300 });
+    });
   });
 });

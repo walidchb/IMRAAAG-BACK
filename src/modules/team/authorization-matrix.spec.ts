@@ -45,8 +45,8 @@ describe('Authorization matrix — route wiring', () => {
     [OrdersController, 'receiveReturn', [StorePermission.ORDERS_RETURNS_RECEIVE]],
 
     [ProductsController, 'create', [StorePermission.PRODUCTS_CREATE]],
-    [ProductsController, 'findVendorProducts', [StorePermission.PRODUCTS_VIEW]],
-    [ProductsController, 'searchSuggestions', [StorePermission.PRODUCTS_VIEW]],
+    [ProductsController, 'findVendorProducts', [StorePermission.PRODUCTS_BROWSE]],
+    [ProductsController, 'searchSuggestions', [StorePermission.PRODUCTS_BROWSE]],
     [ProductsController, 'update', [StorePermission.PRODUCTS_UPDATE]],
     [ProductsController, 'remove', [StorePermission.PRODUCTS_DELETE]],
     [ProductsController, 'duplicate', [StorePermission.PRODUCTS_DUPLICATE]],
@@ -60,8 +60,8 @@ describe('Authorization matrix — route wiring', () => {
     [InventoryController, 'listStoreMovements', [StorePermission.INVENTORY_MOVEMENTS_VIEW]],
     [InventoryController, 'setThreshold', [StorePermission.INVENTORY_THRESHOLD_UPDATE]],
 
-    [VariantsController, 'matrix', [StorePermission.PRODUCTS_VIEW]],
-    [VariantsController, 'options', [StorePermission.PRODUCTS_VIEW]],
+    [VariantsController, 'matrix', [StorePermission.PRODUCTS_BROWSE]],
+    [VariantsController, 'options', [StorePermission.PRODUCTS_BROWSE]],
     [VariantsController, 'createOption', [StorePermission.PRODUCTS_VARIANTS_MANAGE]],
     [VariantsController, 'generateCodes', [StorePermission.PRODUCTS_BARCODES_GENERATE]],
 
@@ -107,7 +107,7 @@ describe('Authorization matrix — route wiring', () => {
     [StoresController, 'toggleStatus', [StorePermission.STORE_TOGGLE_STATUS]],
 
     [AnalyticsController, 'summary', [StorePermission.DASHBOARD_VIEW]],
-    [CategoriesController, 'findMine', [StorePermission.PRODUCTS_VIEW]],
+    [CategoriesController, 'findMine', [StorePermission.PRODUCTS_BROWSE]],
     [CategoriesController, 'create', [StorePermission.PRODUCTS_CATEGORIES_MANAGE]],
     [OrderLabelsController, 'generate', [StorePermission.ORDERS_LABELS_GENERATE]],
   ];
@@ -139,20 +139,37 @@ describe('Authorization matrix — role capabilities', () => {
   it('Order Confirmer confirms/dispatches but cannot delete, adjust stock or change settings', () => {
     expect(can(StoreRole.ORDER_CONFIRMER, StorePermission.ORDERS_CONFIRM)).toBe(true);
     expect(can(StoreRole.ORDER_CONFIRMER, StorePermission.ORDERS_DISPATCH)).toBe(true);
+    // The role works from the Orders page only: catalogue data is readable for the order-line
+    // picker, but the Products/Categories management pages (gated on `products.view`) are not.
+    expect(can(StoreRole.ORDER_CONFIRMER, StorePermission.PRODUCTS_BROWSE)).toBe(true);
+    expect(can(StoreRole.ORDER_CONFIRMER, StorePermission.PRODUCTS_VIEW)).toBe(false);
+    // Read-only store/delivery data is required to create and dispatch an order.
+    expect(can(StoreRole.ORDER_CONFIRMER, StorePermission.STORE_VIEW)).toBe(true);
+    expect(can(StoreRole.ORDER_CONFIRMER, StorePermission.DELIVERY_VIEW)).toBe(true);
+    expect(can(StoreRole.ORDER_CONFIRMER, StorePermission.DELIVERY_FEES_VIEW)).toBe(true);
     expect(can(StoreRole.ORDER_CONFIRMER, StorePermission.ORDERS_DELETE)).toBe(false);
     expect(can(StoreRole.ORDER_CONFIRMER, StorePermission.INVENTORY_ADJUST)).toBe(false);
     expect(can(StoreRole.ORDER_CONFIRMER, StorePermission.DELIVERY_CONFIGURE)).toBe(false);
+    expect(can(StoreRole.ORDER_CONFIRMER, StorePermission.DELIVERY_ATTRIBUTIONS_UPDATE)).toBe(false);
     expect(can(StoreRole.ORDER_CONFIRMER, StorePermission.ORDERS_RETURNS_RECEIVE)).toBe(false);
   });
 
   it('Inventory Staff cannot confirm/dispatch/delete orders', () => {
     expect(can(StoreRole.INVENTORY_STAFF, StorePermission.INVENTORY_ADJUST)).toBe(true);
     expect(can(StoreRole.INVENTORY_STAFF, StorePermission.PRODUCTS_VARIANTS_MANAGE)).toBe(true);
+    // Inventory staff still open the Products/Categories pages and read their data.
+    expect(can(StoreRole.INVENTORY_STAFF, StorePermission.PRODUCTS_VIEW)).toBe(true);
+    expect(can(StoreRole.INVENTORY_STAFF, StorePermission.PRODUCTS_BROWSE)).toBe(true);
     expect(can(StoreRole.INVENTORY_STAFF, StorePermission.ORDERS_VIEW)).toBe(true);
+    // Read-only delivery data for the orders page / return dialog.
+    expect(can(StoreRole.INVENTORY_STAFF, StorePermission.STORE_VIEW)).toBe(true);
+    expect(can(StoreRole.INVENTORY_STAFF, StorePermission.DELIVERY_VIEW)).toBe(true);
+    expect(can(StoreRole.INVENTORY_STAFF, StorePermission.DELIVERY_FEES_VIEW)).toBe(true);
     expect(can(StoreRole.INVENTORY_STAFF, StorePermission.ORDERS_CONFIRM)).toBe(false);
     expect(can(StoreRole.INVENTORY_STAFF, StorePermission.ORDERS_DISPATCH)).toBe(false);
     expect(can(StoreRole.INVENTORY_STAFF, StorePermission.ORDERS_DELETE)).toBe(false);
     expect(can(StoreRole.INVENTORY_STAFF, StorePermission.PRODUCTS_DELETE)).toBe(false);
+    expect(can(StoreRole.INVENTORY_STAFF, StorePermission.DELIVERY_CONFIGURE)).toBe(false);
   });
 
   it('Cashier is POS-only', () => {

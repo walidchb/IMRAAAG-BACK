@@ -731,8 +731,13 @@ export class DeliveryService {
     return this.attributionModel.findOne({ storeId: new Types.ObjectId(storeId) }).exec();
   }
 
-  async getConfigs(vendorEmail: string): Promise<DeliveryConfig | null> {
-    return this.getConfigsByFilter(await this.storeFilter(vendorEmail), { includeCredentials: true });
+  async getConfigs(
+    vendorEmail: string,
+    options: { includeCredentials?: boolean } = {},
+  ): Promise<DeliveryConfig | null> {
+    return this.getConfigsByFilter(await this.storeFilter(vendorEmail), {
+      includeCredentials: options.includeCredentials ?? true,
+    });
   }
 
   private async getConfigsByFilter(

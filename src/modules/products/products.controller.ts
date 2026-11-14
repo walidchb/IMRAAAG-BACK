@@ -79,7 +79,7 @@ export class ProductsController {
   }
 
   @Get('vendor')
-  @RequirePermissions(StorePermission.PRODUCTS_VIEW)
+  @RequirePermissions(StorePermission.PRODUCTS_BROWSE)
   @ApiOperation({ summary: 'List vendor\'s own products (protected, offset pagination)' })
   @ApiQuery({ name: 'limit', required: false, description: 'Items per page (default 20, max 100)' })
   @ApiQuery({ name: 'page', required: false, description: 'Page number (default 1)' })
@@ -110,7 +110,7 @@ export class ProductsController {
    * and `search` would otherwise be swallowed by the `:id` parameter route.
    */
   @Roles(Role.VENDOR, Role.ADMIN)
-  @RequirePermissions(StorePermission.PRODUCTS_VIEW)
+  @RequirePermissions(StorePermission.PRODUCTS_BROWSE)
   @Throttle({ default: { limit: 120, ttl: 60000 } })
   @Get('search')
   @ApiOperation({ summary: 'Lightweight product suggestions for the current store (inventory search)' })

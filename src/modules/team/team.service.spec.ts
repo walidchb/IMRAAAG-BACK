@@ -1,6 +1,7 @@
 import { Types } from 'mongoose';
 import { TeamService } from './team.service';
 import { StoreRole, StoreMemberStatus } from '../../common/constants/store-roles.enum';
+import { Role } from '../../common/constants/roles.enum';
 
 function q<T>(result: T): any {
   const chain: any = {
@@ -35,6 +36,7 @@ describe('TeamService', () => {
   let memberModel: any;
   let userModel: any;
   let auditService: any;
+  let storesService: any;
   let service: TeamService;
 
   function memberDoc(overrides: Record<string, any> = {}) {
@@ -60,10 +62,12 @@ describe('TeamService', () => {
     userModel = {
       find: jest.fn(() => q([])),
       findById: jest.fn(() => q(null)),
+      findByIdAndDelete: jest.fn(() => q({ _id: new Types.ObjectId() })),
       updateOne: jest.fn(() => q({ modifiedCount: 1 })),
     };
     auditService = { record: jest.fn() };
-    service = new TeamService(memberModel, userModel, auditService);
+    storesService = { findByVendorId: jest.fn(async () => null) };
+    service = new TeamService(memberModel, userModel, auditService, storesService);
   });
 
   it('lists the owner first even when no owner row exists (legacy)', async () => {
@@ -162,18 +166,63 @@ describe('TeamService', () => {
     expect(userModel.updateOne).not.toHaveBeenCalled();
   });
 
-  it('removes a member, bumps their tokenVersion and keeps the User', async () => {
+  it('removes a member and deletes the now-unshared employee account', async () => {
     const member = memberDoc();
-    memberModel.findOne.mockReturnValue(q(member));
+    // First `findOne` is the scoped member; the second (after deletion) checks for others.
+    memberModel.findOne.mockReturnValueOnce(q(member)).mockReturnValueOnce(q(null));
+    userModel.findById.mockReturnValue(q({ _id: member.userId, role: Role.VENDOR }));
 
     await service.removeMember(access, { id: actorId }, String(member._id));
 
     expect(memberModel.deleteOne).toHaveBeenCalledWith({ _id: member._id, storeId });
+    expect(storesService.findByVendorId).toHaveBeenCalledWith(String(member.userId));
+    expect(userModel.findByIdAndDelete).toHaveBeenCalledWith(member.userId);
+    expect(userModel.updateOne).not.toHaveBeenCalled();
+  });
+
+  it('keeps the account of a store Owner and only revokes their sessions', async () => {
+    const member = memberDoc();
+    memberModel.findOne.mockReturnValue(q(member));
+    userModel.findById.mockReturnValue(q({ _id: member.userId, role: Role.VENDOR }));
+    storesService.findByVendorId.mockResolvedValue({ _id: new Types.ObjectId() });
+
+    await service.removeMember(access, { id: actorId }, String(member._id));
+
+    expect(userModel.findByIdAndDelete).not.toHaveBeenCalled();
     expect(userModel.updateOne).toHaveBeenCalledWith(
       { _id: member.userId },
       expect.objectContaining({ $inc: { tokenVersion: 1 } }),
     );
-    expect(userModel.findById).not.toHaveBeenCalled();
+  });
+
+  it('keeps the account of a user who is still a member elsewhere', async () => {
+    const member = memberDoc();
+    memberModel.findOne
+      .mockReturnValueOnce(q(member))
+      .mockReturnValueOnce(q({ _id: new Types.ObjectId() }));
+    userModel.findById.mockReturnValue(q({ _id: member.userId, role: Role.VENDOR }));
+
+    await service.removeMember(access, { id: actorId }, String(member._id));
+
+    expect(userModel.findByIdAndDelete).not.toHaveBeenCalled();
+    expect(userModel.updateOne).toHaveBeenCalledWith(
+      { _id: member.userId },
+      expect.objectContaining({ $inc: { tokenVersion: 1 } }),
+    );
+  });
+
+  it('keeps a non-vendor account (a customer who joined) and revokes its sessions', async () => {
+    const member = memberDoc();
+    memberModel.findOne.mockReturnValue(q(member));
+    userModel.findById.mockReturnValue(q({ _id: member.userId, role: Role.CUSTOMER }));
+
+    await service.removeMember(access, { id: actorId }, String(member._id));
+
+    expect(userModel.findByIdAndDelete).not.toHaveBeenCalled();
+    expect(userModel.updateOne).toHaveBeenCalledWith(
+      { _id: member.userId },
+      expect.objectContaining({ $inc: { tokenVersion: 1 } }),
+    );
   });
 
   it('refuses removal of the Owner', async () => {

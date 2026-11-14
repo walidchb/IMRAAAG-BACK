@@ -45,7 +45,13 @@ export class DeliveryController {
   @ApiOperation({ summary: 'Get delivery configs for current vendor' })
   async getConfigs(@Req() req: any) {
     const vendorEmail = await this.storeEmailFor(req);
-    return this.deliveryService.getConfigs(vendorEmail);
+    // Read-only roles (Order Confirmer / Inventory Staff) need the enabled companies and the
+    // default flag to create an order, but carrier credentials are secrets. Only a caller who
+    // may actually configure delivery receives them; everyone else gets the sanitised view.
+    const permissions: string[] = req.storeAccess?.permissions ?? [];
+    const includeCredentials =
+      permissions.includes('*') || permissions.includes(StorePermission.DELIVERY_CONFIGURE);
+    return this.deliveryService.getConfigs(vendorEmail, { includeCredentials });
   }
 
   @Roles(Role.VENDOR)

@@ -236,10 +236,23 @@ export class DeliveryFeesService {
     return result;
   }
 
+  /**
+   * `fees` is a Mongoose `Map`, so on a hydrated document bracket access returns `undefined`
+   * and `Object.keys()` yields the Map's internal keys instead of wilaya codes. Normalise to a
+   * plain object so reads are correct for both hydrated docs and `.lean()` results.
+   */
+  private feeEntries(doc: any): Record<string, { homeDeliveryFee: number; stopDeskDeliveryFee: number }> {
+    const fees = doc?.fees;
+    if (!fees) return {};
+    if (fees instanceof Map) return Object.fromEntries(fees);
+    if (typeof fees.toObject === 'function') return fees.toObject();
+    return fees;
+  }
+
   async updateFee(vendorEmail: string, wilayaCode: string, dto: UpdateDeliveryFeeDto): Promise<DeliveryFee> {
     this.cacheService.clear(`delivery-fees:${vendorEmail}`);
-    const doc = await this.feeModel.findOne(await this.storeFilter(vendorEmail)).exec();
-    const current = doc?.fees?.[wilayaCode] || { homeDeliveryFee: 0, stopDeskDeliveryFee: 0 };
+    const doc = await this.feeModel.findOne(await this.storeFilter(vendorEmail)).lean().exec();
+    const current = this.feeEntries(doc)[wilayaCode] || { homeDeliveryFee: 0, stopDeskDeliveryFee: 0 };
     const storeId = doc?.storeId ?? (await this.storeIdFor(vendorEmail));
     return this.feeModel.findOneAndUpdate(
       { vendorEmail },
@@ -279,8 +292,11 @@ export class DeliveryFeesService {
 
   async seedDefaults(vendorEmail: string, wilayaCodes: string[]): Promise<void> {
     this.cacheService.clear(`delivery-fees:${vendorEmail}`);
-    const doc = await this.feeModel.findOne(await this.storeFilter(vendorEmail)).exec();
-    const existingCodes = new Set(Object.keys(doc?.fees || {}));
+    const doc = await this.feeModel.findOne(await this.storeFilter(vendorEmail)).lean().exec();
+    // Use `feeEntries`: `fees` is a Mongoose Map, and `Object.keys()` on a hydrated document
+    // yields the Map's internal keys — so every code looked missing and the seed overwrote
+    // real fees with 0 (the "fees reset on a new tab" bug).
+    const existingCodes = new Set(Object.keys(this.feeEntries(doc)));
     const missing = wilayaCodes.filter(c => !existingCodes.has(c));
     if (missing.length === 0) return;
     const setFields: Record<string, any> = {};

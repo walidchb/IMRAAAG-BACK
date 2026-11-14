@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { AppException } from '../../common/errors/app-exception';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
+import { Role } from '../../common/constants/roles.enum';
 import { AuditService } from '../audit/audit.service';
 import { AuditAction } from '../../common/constants/audit-action.enum';
 import { ResourceType } from '../../common/constants/resource-type.enum';
@@ -12,6 +13,7 @@ import {
   StoreRole,
 } from '../../common/constants/store-roles.enum';
 import { StorePermission, hasStorePermission } from '../../common/constants/store-permissions.const';
+import { StoresService } from '../stores/stores.service';
 import { User, UserDocument } from '../users/schemas/user.schema';
 import { StoreMember, StoreMemberDocument } from './schemas/store-member.schema';
 import { UpdateMemberDto } from './dto/update-member.dto';
@@ -54,6 +56,7 @@ export class TeamService {
     @InjectModel(User.name)
     private readonly userModel: Model<UserDocument>,
     private readonly auditService: AuditService,
+    private readonly storesService: StoresService,
   ) {}
 
   async listMembers(access: StoreAccess): Promise<TeamMemberView[]> {
@@ -214,7 +217,15 @@ export class TeamService {
     this.assertNotSelf(member, actor.id);
 
     await this.memberModel.deleteOne({ _id: member._id, storeId: store._id }).exec();
-    await this.revokeUserSessions(String(member.userId));
+
+    const targetUserId = String(member.userId);
+    // An employee account created for this team owns nothing else, so leaving it behind would
+    // allow a login that resolves to no store. Delete it outright; a shared account (another
+    // store's owner or member) is kept and only signed out.
+    const accountDeleted = await this.deleteEmployeeAccountIfUnshared(targetUserId);
+    if (!accountDeleted) {
+      await this.revokeUserSessions(targetUserId);
+    }
 
     this.auditService.record({
       action: AuditAction.TEAM_MEMBER_REMOVED,
@@ -222,11 +233,39 @@ export class TeamService {
       actorEmail: actor.email ?? null,
       storeId: String(store._id),
       resourceType: ResourceType.USER,
-      resourceId: String(member.userId),
-      details: { memberId: String(member._id) },
+      resourceId: targetUserId,
+      details: { memberId: String(member._id), accountDeleted },
     });
 
     return { removed: true };
+  }
+
+  /**
+   * Deletes the `User` of a removed employee when that account exists only for the team.
+   *
+   * Guards keep shared identities intact: a store Owner (`Store.vendorId`) or a user with any
+   * other membership row may be a member/owner elsewhere, so their account is never deleted.
+   * Returns `true` only when the user document was actually removed.
+   */
+  private async deleteEmployeeAccountIfUnshared(userId: string): Promise<boolean> {
+    if (!Types.ObjectId.isValid(userId)) return false;
+    const userObjectId = new Types.ObjectId(userId);
+
+    const user = await this.userModel.findById(userObjectId).select('role').lean().exec();
+    if (!user || user.role !== Role.VENDOR) return false;
+
+    const ownedStore = await this.storesService.findByVendorId(userId);
+    if (ownedStore) return false;
+
+    const otherMembership = await this.memberModel
+      .findOne({ userId: userObjectId })
+      .select('_id')
+      .lean()
+      .exec();
+    if (otherMembership) return false;
+
+    await this.userModel.findByIdAndDelete(userObjectId).exec();
+    return true;
   }
 
   private async findScopedMember(
