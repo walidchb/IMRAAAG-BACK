@@ -114,7 +114,11 @@ describe('InvitationsService', () => {
   });
 
   describe('accept link', () => {
-    async function acceptUrlWith(config: { acceptUrl?: string; frontendUrl?: string }) {
+    async function acceptUrlWith(config: {
+      acceptUrl?: string;
+      frontendUrl?: string;
+      locale?: 'en' | 'fr' | 'ar';
+    }) {
       configService.get.mockImplementation((key: string) => {
         if (key === 'teamInvitation.expiryHours') return 48;
         if (key === 'teamInvitation.acceptUrl') return config.acceptUrl ?? '';
@@ -128,6 +132,7 @@ describe('InvitationsService', () => {
       await service.create(store, actor, {
         email: 'employee@example.com',
         role: StoreRole.ORDER_CONFIRMER,
+        locale: config.locale,
       });
 
       return emailService.sendTeamInvitationEmail.mock.calls[0][1].acceptUrl as string;
@@ -149,6 +154,27 @@ describe('InvitationsService', () => {
       const url = await acceptUrlWith({ acceptUrl: 'https://shop.example.com/' });
       expect(url).toMatch(
         /^https:\/\/shop\.example\.com\/en\/accept-invitation\?token=/,
+      );
+    });
+
+    it('uses the page locale for the derived link and the email copy', async () => {
+      const url = await acceptUrlWith({
+        frontendUrl: 'https://vendor.example.com',
+        locale: 'fr',
+      });
+      expect(url).toMatch(
+        /^https:\/\/vendor\.example\.com\/fr\/accept-invitation\?token=[0-9a-f]+$/,
+      );
+      expect(emailService.sendTeamInvitationEmail.mock.calls[0][1].locale).toBe('fr');
+    });
+
+    it('swaps the locale segment of a configured accept page', async () => {
+      const url = await acceptUrlWith({
+        acceptUrl: 'https://shop.example.com/en/accept-invitation',
+        locale: 'ar',
+      });
+      expect(url).toMatch(
+        /^https:\/\/shop\.example\.com\/ar\/accept-invitation\?token=/,
       );
     });
   });
@@ -229,6 +255,17 @@ describe('InvitationsService', () => {
     expect(doc.sendCount).toBe(2);
     expect(result.emailDelivered).toBe(true);
     expect(emailService.sendTeamInvitationEmail).toHaveBeenCalled();
+  });
+
+  it('resend sends the email in the supplied locale', async () => {
+    const doc = pendingDoc();
+    invitationModel.findOne.mockReturnValue(q(doc));
+
+    await service.resend(store, actor, String(doc._id), 'fr');
+
+    const emailArgs = emailService.sendTeamInvitationEmail.mock.calls[0][1];
+    expect(emailArgs.locale).toBe('fr');
+    expect(emailArgs.acceptUrl).toContain('/fr/accept-invitation?token=');
   });
 
   it('revoke refuses a non-pending invitation', async () => {

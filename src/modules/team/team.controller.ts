@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -13,6 +14,7 @@ import { Throttle } from '@nestjs/throttler';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../../common/constants/roles.enum';
 import { StorePermission } from '../../common/constants/store-permissions.const';
+import type { AppLocale } from '../../common/constants/locales.const';
 import { AppException } from '../../common/errors/app-exception';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
 import { RequirePermissions } from './decorators/require-permissions.decorator';
@@ -86,9 +88,18 @@ export class TeamController {
   @RequirePermissions(StorePermission.TEAM_RESEND_INVITATION)
   @Throttle({ default: { limit: 60, ttl: 60000 } })
   @ApiOperation({ summary: 'Resend a pending invitation (rotates its token)' })
-  async resend(@Param('id') id: string, @Req() req: any) {
+  async resend(
+    @Param('id') id: string,
+    @Query('locale') locale: string | undefined,
+    @Req() req: any,
+  ) {
     const access = await this.accessFor(req);
-    return this.invitationsService.resend(this.storeOf(access), req.user, id);
+    return this.invitationsService.resend(
+      this.storeOf(access),
+      req.user,
+      id,
+      locale as AppLocale | undefined,
+    );
   }
 
   @Delete('invitations/:id')

@@ -24,6 +24,11 @@ import {
 } from './schemas/store-invitation.schema';
 import { StoreMember, StoreMemberDocument } from './schemas/store-member.schema';
 import { InviteEmployeeDto } from './dto/invite-employee.dto';
+import {
+  AppLocale,
+  normalizeLocale,
+  SUPPORTED_LOCALES,
+} from '../../common/constants/locales.const';
 import type { AccessUser } from './store-access.service';
 
 export interface InvitationView {
@@ -120,7 +125,14 @@ export class InvitationsService {
     );
 
     const invitedByName = actor.fullName || actor.email || 'A store owner';
-    const emailDelivered = await this.sendInvitationEmail(store, email, dto.role, invitedByName, rawToken);
+    const emailDelivered = await this.sendInvitationEmail(
+      store,
+      email,
+      dto.role,
+      invitedByName,
+      rawToken,
+      dto.locale,
+    );
 
     this.auditService.record({
       action: AuditAction.TEAM_INVITATION_CREATED,
@@ -139,6 +151,7 @@ export class InvitationsService {
     store: StoreDocument,
     actor: InviterActor,
     invitationId: string,
+    locale?: AppLocale,
   ): Promise<{ invitation: InvitationView; emailDelivered: boolean }> {
     const invitation = await this.findScoped(store, invitationId);
     if (invitation.status !== StoreInvitationStatus.PENDING) {
@@ -161,6 +174,7 @@ export class InvitationsService {
       invitation.role,
       invitedByName,
       rawToken,
+      locale,
     );
 
     this.auditService.record({
@@ -480,9 +494,11 @@ export class InvitationsService {
     role: StoreRole,
     invitedByName: string,
     rawToken: string,
+    locale?: string,
   ): Promise<boolean> {
     const hours = this.configService.get<number>('teamInvitation.expiryHours') ?? 48;
-    const acceptUrl = this.buildAcceptUrl(rawToken);
+    const normalizedLocale = normalizeLocale(locale);
+    const acceptUrl = this.buildAcceptUrl(rawToken, normalizedLocale);
 
     try {
       return await this.emailService.sendTeamInvitationEmail(email, {
@@ -491,6 +507,7 @@ export class InvitationsService {
         invitedByName,
         acceptUrl,
         expiresInHours: hours,
+        locale: normalizedLocale,
       });
     } catch (err) {
       // Never log the URL/token. Delivery failure keeps the invitation row.
@@ -502,28 +519,48 @@ export class InvitationsService {
   }
 
   /**
-   * Builds the emailed accept link.
+   * Builds the emailed accept link in the language the invitation was sent in.
    *
    * `TEAM_ACCEPT_URL` wins when set. It may be the full accept page
    * (e.g. `https://vendor.example.com/en/accept-invitation`) or just the dashboard origin
    * (e.g. `https://vendor.example.com`), in which case the localized accept path is appended.
-   * Otherwise the link is derived from `FRONTEND_URL` (the dashboard origin).
+   * A full page whose first path segment is a supported locale has that segment replaced, so
+   * the acceptance page always matches the email. Otherwise the link is derived from
+   * `FRONTEND_URL` (the dashboard origin).
    */
-  private buildAcceptUrl(rawToken: string): string {
+  private buildAcceptUrl(rawToken: string, locale: AppLocale): string {
     const configured = (this.configService.get<string>('teamInvitation.acceptUrl') ?? '').trim();
     const frontendUrl = (
       this.configService.get<string>('frontendUrl') || 'http://localhost:3001'
     ).replace(/\/+$/, '');
 
     if (!configured) {
-      return `${frontendUrl}/en/accept-invitation?token=${rawToken}`;
+      return `${frontendUrl}/${locale}/accept-invitation?token=${rawToken}`;
     }
 
     const base = configured.replace(/\/+$/, '');
     const originOnly = /^https?:\/\/[^/?#]+$/i.test(base);
-    const acceptPage = originOnly ? `${base}/en/accept-invitation` : base;
+    const acceptPage = originOnly
+      ? `${base}/${locale}/accept-invitation`
+      : this.replaceLocaleSegment(base, locale);
 
     return `${acceptPage}${acceptPage.includes('?') ? '&' : '?'}token=${rawToken}`;
+  }
+
+  /** Swaps the leading locale segment of an absolute URL; leaves an unlocalized path intact. */
+  private replaceLocaleSegment(url: string, locale: AppLocale): string {
+    try {
+      const parsed = new URL(url);
+      const segments = parsed.pathname.split('/').filter(Boolean);
+      if (!segments.length || !(SUPPORTED_LOCALES as readonly string[]).includes(segments[0])) {
+        return url;
+      }
+      segments[0] = locale;
+      parsed.pathname = `/${segments.join('/')}`;
+      return parsed.toString().replace(/\/+$/, '');
+    } catch {
+      return url;
+    }
   }
 
   private async findByRawToken(rawToken: string): Promise<StoreInvitationDocument> {

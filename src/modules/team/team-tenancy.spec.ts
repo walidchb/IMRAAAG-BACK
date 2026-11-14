@@ -62,13 +62,14 @@ describe('TeamController tenancy', () => {
       new AppException(AppErrorCode.TEAM_INVITATION_NOT_FOUND, { id: 'foreign' }),
     );
 
-    await expect(controller.resend('foreign', req())).rejects.toMatchObject({
+    await expect(controller.resend('foreign', undefined, req())).rejects.toMatchObject({
       errorCode: 'TEAM_INVITATION_NOT_FOUND',
     });
     expect(invitationsService.resend).toHaveBeenCalledWith(
       accessA.store,
       expect.objectContaining({ id: String(ownerA) }),
       'foreign',
+      undefined,
     );
   });
 

@@ -1,6 +1,93 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
+import { AppLocale, normalizeLocale } from '../../common/constants/locales.const';
+import { StoreRole } from '../../common/constants/store-roles.enum';
+
+interface TeamInvitationCopy {
+  dir: 'ltr' | 'rtl';
+  subject: (storeName: string) => string;
+  heading: string;
+  intro: (invitedByName: string, storeName: string, roleLabel: string) => string;
+  instructions: string;
+  button: string;
+  expiry: (hours: number) => string;
+  roles: Record<StoreRole, string>;
+}
+
+const TEAM_INVITATION_COPY: Record<AppLocale, TeamInvitationCopy> = {
+  en: {
+    dir: 'ltr',
+    subject: (storeName) => `You have been invited to join ${storeName} on Imraaah`,
+    heading: 'You are invited to join a store team',
+    intro: (invitedByName, storeName, roleLabel) =>
+      `${invitedByName} invited you to join <strong>${storeName}</strong> as <strong>${roleLabel}</strong>.`,
+    instructions:
+      'Click the button below to accept the invitation. If you do not yet have an Imraaah account, you will set your own password first — we never email passwords.',
+    button: 'Accept Invitation',
+    expiry: (hours) =>
+      `This invitation expires in ${hours} hours. If you were not expecting it, you can ignore this email.`,
+    roles: {
+      [StoreRole.OWNER]: 'Owner',
+      [StoreRole.PARTNER]: 'Partner',
+      [StoreRole.ORDER_CONFIRMER]: 'Order Confirmer',
+      [StoreRole.INVENTORY_STAFF]: 'Inventory Staff',
+      [StoreRole.CASHIER]: 'Cashier',
+    },
+  },
+  fr: {
+    dir: 'ltr',
+    subject: (storeName) => `Vous êtes invité à rejoindre ${storeName} sur Imraaah`,
+    heading: "Vous êtes invité à rejoindre l'équipe d'une boutique",
+    intro: (invitedByName, storeName, roleLabel) =>
+      `${invitedByName} vous a invité à rejoindre <strong>${storeName}</strong> en tant que <strong>${roleLabel}</strong>.`,
+    instructions:
+      "Cliquez sur le bouton ci-dessous pour accepter l'invitation. Si vous n'avez pas encore de compte Imraaah, vous définirez d'abord votre mot de passe — nous n'envoyons jamais de mots de passe par e-mail.",
+    button: "Accepter l'invitation",
+    expiry: (hours) =>
+      `Cette invitation expire dans ${hours} heures. Si vous ne l'attendiez pas, vous pouvez ignorer cet e-mail.`,
+    roles: {
+      [StoreRole.OWNER]: 'Propriétaire',
+      [StoreRole.PARTNER]: 'Partenaire',
+      [StoreRole.ORDER_CONFIRMER]: 'Confirmation des commandes',
+      [StoreRole.INVENTORY_STAFF]: 'Gestion du stock',
+      [StoreRole.CASHIER]: 'Caissier',
+    },
+  },
+  ar: {
+    dir: 'rtl',
+    subject: (storeName) => `تمت دعوتك للانضمام إلى ${storeName} على Imraaah`,
+    heading: 'تمت دعوتك للانضمام إلى فريق متجر',
+    intro: (invitedByName, storeName, roleLabel) =>
+      `دعاك ${invitedByName} للانضمام إلى <strong>${storeName}</strong> بصفة <strong>${roleLabel}</strong>.`,
+    instructions:
+      'اضغط على الزر أدناه لقبول الدعوة. إذا لم يكن لديك حساب Imraaah بعد، فستحدد كلمة المرور الخاصة بك أولاً — نحن لا نرسل كلمات المرور عبر البريد الإلكتروني.',
+    button: 'قبول الدعوة',
+    expiry: (hours) =>
+      `تنتهي صلاحية هذه الدعوة خلال ${hours} ساعة. إذا لم تكن تتوقعها، يمكنك تجاهل هذا البريد.`,
+    roles: {
+      [StoreRole.OWNER]: 'المالك',
+      [StoreRole.PARTNER]: 'شريك',
+      [StoreRole.ORDER_CONFIRMER]: 'مؤكد الطلبات',
+      [StoreRole.INVENTORY_STAFF]: 'موظف المخزون',
+      [StoreRole.CASHIER]: 'أمين الصندوق',
+    },
+  },
+};
+
+function escapeHtml(value: string): string {
+  return String(value ?? '').replace(
+    /[&<>"']/g,
+    (char) =>
+      ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+      })[char] ?? char,
+  );
+}
 
 @Injectable()
 export class EmailService {
@@ -55,7 +142,8 @@ export class EmailService {
    * Sends a store invitation.
    *
    * The raw token only ever appears inside the URL that is emailed. Callers must not log the
-   * URL, the token, or its hash. English copy is the MVP decision (matching the reset email).
+   * URL, the token, or its hash. Copy is rendered in the language the invitation was sent
+   * from (English when no supported locale is supplied).
    *
    * @returns `true` when the message was accepted by the transport, `false` when SMTP is not
    *          configured or delivery failed. The invitation row is kept either way.
@@ -68,9 +156,11 @@ export class EmailService {
       invitedByName: string;
       acceptUrl: string;
       expiresInHours: number;
+      locale?: AppLocale;
     },
   ): Promise<boolean> {
-    const subject = `You have been invited to join ${params.storeName} on Imraaah`;
+    const copy = TEAM_INVITATION_COPY[normalizeLocale(params.locale)];
+    const subject = copy.subject(params.storeName);
     const html = this.buildTeamInvitationTemplate(to, params);
 
     if (!this.transporter) {
@@ -133,33 +223,38 @@ export class EmailService {
       invitedByName: string;
       acceptUrl: string;
       expiresInHours: number;
+      locale?: AppLocale;
     },
   ): string {
+    const copy = TEAM_INVITATION_COPY[normalizeLocale(params.locale)];
+    const roleLabel = copy.roles[params.role as StoreRole] ?? params.role;
+    const invitedByName = escapeHtml(params.invitedByName);
+    const storeName = escapeHtml(params.storeName);
+    const acceptUrl = escapeHtml(params.acceptUrl);
+    const recipient = escapeHtml(email);
+
     return `
-      <div style="font-family: 'Georgia', serif; max-width: 480px; margin: 0 auto; padding: 32px; background: #F9F7F2; border-radius: 12px;">
+      <div dir="${copy.dir}" style="font-family: 'Georgia', serif; max-width: 480px; margin: 0 auto; padding: 32px; background: #F9F7F2; border-radius: 12px; text-align: start;">
         <div style="text-align: center; margin-bottom: 24px;">
           <span style="font-size: 28px; color: #724444; letter-spacing: 0.3em; font-weight: bold;">IMRAAAH</span>
         </div>
-        <h2 style="color: #724444; font-size: 18px; margin-bottom: 16px;">You are invited to join a store team</h2>
+        <h2 style="color: #724444; font-size: 18px; margin-bottom: 16px;">${copy.heading}</h2>
         <p style="color: #444; font-size: 14px; line-height: 1.6;">
-          ${params.invitedByName} invited you to join <strong>${params.storeName}</strong> as
-          <strong>${params.role}</strong>.
+          ${copy.intro(invitedByName, storeName, escapeHtml(roleLabel))}
         </p>
         <p style="color: #724444; font-size: 14px; line-height: 1.6; text-align: center; font-weight: bold;">
-          ${email}
+          ${recipient}
         </p>
         <p style="color: #444; font-size: 14px; line-height: 1.6;">
-          Click the button below to accept the invitation. If you do not yet have an Imraaah
-          account, you will set your own password first — we never email passwords.
+          ${copy.instructions}
         </p>
         <div style="text-align: center; margin: 28px 0;">
-          <a href="${params.acceptUrl}" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #724444, #C5A059); color: #fff; text-decoration: none; border-radius: 8px; font-size: 14px; font-weight: bold; letter-spacing: 0.05em;">
-            Accept Invitation
+          <a href="${acceptUrl}" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #724444, #C5A059); color: #fff; text-decoration: none; border-radius: 8px; font-size: 14px; font-weight: bold; letter-spacing: 0.05em;">
+            ${copy.button}
           </a>
         </div>
         <p style="color: #888; font-size: 12px; line-height: 1.5;">
-          This invitation expires in ${params.expiresInHours} hours. If you were not expecting it,
-          you can ignore this email.
+          ${copy.expiry(params.expiresInHours)}
         </p>
         <hr style="border: none; border-top: 1px solid #ddd; margin: 24px 0;" />
         <p style="color: #aaa; font-size: 11px; text-align: center;">
