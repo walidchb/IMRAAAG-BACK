@@ -482,10 +482,7 @@ export class InvitationsService {
     rawToken: string,
   ): Promise<boolean> {
     const hours = this.configService.get<number>('teamInvitation.expiryHours') ?? 48;
-    const configuredBase = this.configService.get<string>('teamInvitation.acceptUrl') ?? '';
-    const frontendUrl = this.configService.get<string>('frontendUrl') || 'http://localhost:3001';
-    const base = configuredBase || `${frontendUrl}/en/accept-invitation`;
-    const acceptUrl = `${base}${base.includes('?') ? '&' : '?'}token=${rawToken}`;
+    const acceptUrl = this.buildAcceptUrl(rawToken);
 
     try {
       return await this.emailService.sendTeamInvitationEmail(email, {
@@ -502,6 +499,31 @@ export class InvitationsService {
       );
       return false;
     }
+  }
+
+  /**
+   * Builds the emailed accept link.
+   *
+   * `TEAM_ACCEPT_URL` wins when set. It may be the full accept page
+   * (e.g. `https://vendor.example.com/en/accept-invitation`) or just the dashboard origin
+   * (e.g. `https://vendor.example.com`), in which case the localized accept path is appended.
+   * Otherwise the link is derived from `FRONTEND_URL` (the dashboard origin).
+   */
+  private buildAcceptUrl(rawToken: string): string {
+    const configured = (this.configService.get<string>('teamInvitation.acceptUrl') ?? '').trim();
+    const frontendUrl = (
+      this.configService.get<string>('frontendUrl') || 'http://localhost:3001'
+    ).replace(/\/+$/, '');
+
+    if (!configured) {
+      return `${frontendUrl}/en/accept-invitation?token=${rawToken}`;
+    }
+
+    const base = configured.replace(/\/+$/, '');
+    const originOnly = /^https?:\/\/[^/?#]+$/i.test(base);
+    const acceptPage = originOnly ? `${base}/en/accept-invitation` : base;
+
+    return `${acceptPage}${acceptPage.includes('?') ? '&' : '?'}token=${rawToken}`;
   }
 
   private async findByRawToken(rawToken: string): Promise<StoreInvitationDocument> {

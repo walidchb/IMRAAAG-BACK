@@ -15,9 +15,12 @@
     password: process.env.SMTP_PASSWORD || '',
     from: process.env.EMAIL_FROM || 'noreply@imraaah.ma',
   },
-  frontendUrl:
-    process.env.FRONTEND_URL ||
-    (process.env.NODE_ENV === 'production' ? 'https://vendor.imraaah.com' : 'http://localhost:3001'),
+  /**
+   * Absolute origin of the vendor dashboard (scheme + host, no trailing slash). Used by
+   * password-reset links and, unless `TEAM_ACCEPT_URL` overrides it, by team-invitation
+   * links. Configure `FRONTEND_URL` in every environment — there is no baked-in domain.
+   */
+  frontendUrl: (process.env.FRONTEND_URL || 'http://localhost:3001').replace(/\/+$/, ''),
   /**
    * Team Management invitations. The raw token is only ever placed in the emailed accept URL;
    * `expiresAt` is enforced logically (there is no TTL index).

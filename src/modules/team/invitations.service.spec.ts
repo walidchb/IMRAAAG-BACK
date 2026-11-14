@@ -113,6 +113,46 @@ describe('InvitationsService', () => {
     expect(emailArgs[1].acceptUrl).toContain('token=');
   });
 
+  describe('accept link', () => {
+    async function acceptUrlWith(config: { acceptUrl?: string; frontendUrl?: string }) {
+      configService.get.mockImplementation((key: string) => {
+        if (key === 'teamInvitation.expiryHours') return 48;
+        if (key === 'teamInvitation.acceptUrl') return config.acceptUrl ?? '';
+        if (key === 'frontendUrl') return config.frontendUrl ?? 'http://localhost:3001';
+        return undefined;
+      });
+      userModel.findOne.mockReturnValue(q(null));
+      invitationModel.findOne.mockReturnValue(q(null));
+      invitationModel.create.mockResolvedValue(pendingDoc());
+
+      await service.create(store, actor, {
+        email: 'employee@example.com',
+        role: StoreRole.ORDER_CONFIRMER,
+      });
+
+      return emailService.sendTeamInvitationEmail.mock.calls[0][1].acceptUrl as string;
+    }
+
+    it('derives the link from FRONTEND_URL', async () => {
+      const url = await acceptUrlWith({ frontendUrl: 'https://vendor.example.com/' });
+      expect(url).toMatch(
+        /^https:\/\/vendor\.example\.com\/en\/accept-invitation\?token=[0-9a-f]+$/,
+      );
+    });
+
+    it('uses TEAM_ACCEPT_URL verbatim when it already carries a path', async () => {
+      const url = await acceptUrlWith({ acceptUrl: 'https://shop.example.com/accept' });
+      expect(url).toMatch(/^https:\/\/shop\.example\.com\/accept\?token=/);
+    });
+
+    it('appends the accept path when TEAM_ACCEPT_URL is only an origin', async () => {
+      const url = await acceptUrlWith({ acceptUrl: 'https://shop.example.com/' });
+      expect(url).toMatch(
+        /^https:\/\/shop\.example\.com\/en\/accept-invitation\?token=/,
+      );
+    });
+  });
+
   it('keeps the invitation and reports emailDelivered=false when mail fails', async () => {
     userModel.findOne.mockReturnValue(q(null));
     invitationModel.findOne.mockReturnValue(q(null));

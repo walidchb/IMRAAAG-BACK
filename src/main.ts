@@ -36,6 +36,14 @@ async function bootstrap() {
     process.exit(1);
   }
 
+  // Password-reset and team-invitation emails link back to the vendor dashboard. Without
+  // FRONTEND_URL those links point at localhost, which is unreachable from a real inbox.
+  if (isProduction && !process.env.FRONTEND_URL) {
+    console.warn(
+      'WARN: FRONTEND_URL is not set. Password-reset and team-invitation links will point at http://localhost:3001. Set FRONTEND_URL to the vendor dashboard origin (e.g. https://vendor.example.com).',
+    );
+  }
+
   const app = await NestFactory.create(AppModule);
   
   const configService = app.get(ConfigService);
