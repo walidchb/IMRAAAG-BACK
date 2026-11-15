@@ -26,8 +26,34 @@ export class UpdateVendorOrderDto extends UpdateOrderDto {
   updatedAt?: string;
 
   /** The sales channel (ONLINE/POS/MANUAL) is server-assigned at creation. The dashboards
-   *  echo the order verbatim, so it is accepted for validation but stripped before update —
+   *  echo the order verbatim, so it is accepted for validation but stripped before update �?"
    *  a caller can never relabel an order's channel. */
   @Allow()
   source?: string;
+
+  /**
+   * Server-stamped audit fields echoed back by the dashboard. Accepted so the verbatim echo
+   * does not fail whitelist validation, then stripped by the controller: attribution is
+   * always resolved from the session (`confirmedBy`, `dispatchedBy`, `cancelledBy`, history).
+   */
+  @Allow()
+  dispatchedBy?: string;
+
+  @Allow()
+  cancelledAt?: string;
+
+  @Allow()
+  cancelledBy?: string;
+
+  @Allow()
+  isArchived?: boolean;
+
+  @Allow()
+  archivedAt?: string | null;
+
+  @Allow()
+  archivedBy?: string | null;
+
+  @Allow()
+  deliveryStatus?: string;
 }

@@ -46,6 +46,11 @@ describe('OrdersController — updateVendor strips server-owned fields', () => {
       deliveryParcelId: 'parcel-9',
       deliveryError: 'boom',
       updatedAt: '2026-10-15T00:00:00.000Z',
+      createdBy: 'owner@shop.test',
+      confirmedBy: 'owner@shop.test',
+      dispatchedBy: 'owner@shop.test',
+      cancelledBy: 'owner@shop.test',
+      history: [{ status: 'placed', date: '2026-10-15T00:00:00.000Z', user: 'owner@shop.test' }],
       status: 'confirmed',
       expectedUpdatedAt: '2026-10-15T00:00:00.000Z',
     } as any;
@@ -58,7 +63,10 @@ describe('OrdersController — updateVendor strips server-owned fields', () => {
     expect(user).toBe(vendor);
 
     // Every server-owned field is gone…
-    for (const key of ['source', 'storeId', 'id', 'orderNo', '_id', 'deliveryParcelId', 'deliveryError', 'updatedAt']) {
+    for (const key of [
+      'source', 'storeId', 'id', 'orderNo', '_id', 'deliveryParcelId', 'deliveryError', 'updatedAt',
+      'createdBy', 'confirmedBy', 'dispatchedBy', 'cancelledBy', 'history',
+    ]) {
       expect(cleanDto).not.toHaveProperty(key);
     }
     // …while genuine edit fields survive.

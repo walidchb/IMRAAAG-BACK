@@ -816,6 +816,9 @@ export class OrdersService {
         // vendor entering an order is a manual sale, an unauthenticated storefront checkout
         // is an online one. POS sales are created by their own service.
         source: user ? OrderSource.MANUAL : OrderSource.ONLINE,
+        // Attribution is server-derived: the acting team member's identity, never the
+        // client-supplied `createdBy` (which a dashboard echoes back from the stored order).
+        ...(user ? { createdBy: this.actorLabel(user) } : {}),
         items,
         total,
         shippingFee,
@@ -826,7 +829,7 @@ export class OrdersService {
         createdAt: createOrderDto.createdAt || now,
         deliveryCompanyId: deliveryCompanyId || undefined,
         status: placedStatus,
-        history: [{ status: placedStatus, date: now, user: createOrderDto.createdBy || (user ? 'Vendor' : 'Customer') }],
+        history: [{ status: placedStatus, date: now, user: user ? this.actorLabel(user) : 'Customer' }],
         updatedAt: now,
         ...(isCart && options.idempotencyKey ? { clientRequestId: options.idempotencyKey } : {}),
       });
@@ -1265,7 +1268,7 @@ export class OrdersService {
       throw new AppException(AppErrorCode.ORDER_INVALID_STATUS, { status: 'pos_lifecycle' });
     }
 
-    const actor = user.fullName || user.email || 'Vendor';
+    const actor = this.actorLabel(user);
     const orderNo = await this.generateOrderNo();
     const orderId = new Types.ObjectId();
     const note = dto.customer?.note || dto.note;
@@ -1309,9 +1312,11 @@ export class OrdersService {
           date: now,
           createdAt: now,
           updatedAt: now,
+          createdBy: actor,
           confirmedAt: now,
           confirmedBy: actor,
           dispatchedAt: now,
+          dispatchedBy: actor,
           inventoryState: { reservedAt: now, fulfilledAt: now },
         });
 
@@ -1571,7 +1576,7 @@ export class OrdersService {
       throw new AppException(AppErrorCode.ORDER_INVALID_STATUS, { status: 'pos_lifecycle' });
     }
 
-    const actor = user.fullName || user.email || 'Vendor';
+    const actor = this.actorLabel(user);
     const holdCustomer = (hold.customer ?? {}) as Record<string, any>;
     const merged = { ...holdCustomer, ...(dto.customer ?? {}) };
     const note = merged.note || dto.note || hold.note || '';
@@ -1625,9 +1630,11 @@ export class OrdersService {
           date: now,
           createdAt: now,
           updatedAt: now,
+          createdBy: actor,
           confirmedAt: now,
           confirmedBy: actor,
           dispatchedAt: now,
+          dispatchedBy: actor,
           inventoryState: { reservedAt: (deleted as any).createdAt ?? now, fulfilledAt: now },
         });
         saved = await created.save({ session });
@@ -1744,6 +1751,8 @@ export class OrdersService {
     if (query.shippingMethod) filter.shippingMethod = query.shippingMethod;
     if (query.createdBy) filter.createdBy = { $regex: query.createdBy.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' };
     if (query.confirmedBy) filter.confirmedBy = { $regex: query.confirmedBy.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' };
+    if (query.dispatchedBy) filter.dispatchedBy = { $regex: query.dispatchedBy.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' };
+    if (query.cancelledBy) filter.cancelledBy = { $regex: query.cancelledBy.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' };
     if (query.bureau) filter.bureau = { $regex: query.bureau.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' };
     if (query.phone) filter['customer.phone'] = { $regex: query.phone.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' };
     if (query.note) filter['customer.note'] = { $regex: query.note.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' };
@@ -1784,6 +1793,17 @@ export class OrdersService {
       if (query.dispatchedAtFrom) dateFilter.$gte = new Date(query.dispatchedAtFrom);
       if (query.dispatchedAtTo) dateFilter.$lte = new Date(query.dispatchedAtTo);
       filter.dispatchedAt = dateFilter;
+    }
+    if (query.cancelledAt) {
+      const date = new Date(query.cancelledAt);
+      const next = new Date(date);
+      next.setDate(next.getDate() + 1);
+      filter.cancelledAt = { $gte: date, $lt: next };
+    } else if (query.cancelledAtFrom || query.cancelledAtTo) {
+      const dateFilter: Record<string, any> = {};
+      if (query.cancelledAtFrom) dateFilter.$gte = new Date(query.cancelledAtFrom);
+      if (query.cancelledAtTo) dateFilter.$lte = new Date(query.cancelledAtTo);
+      filter.cancelledAt = dateFilter;
     }
     if (query.statusConfirmation) {
       const term = query.statusConfirmation.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -1957,7 +1977,7 @@ export class OrdersService {
             history: {
               status: returnedStatus,
               date: new Date(),
-              user: user?.email || 'Vendor',
+              user: this.actorLabel(user),
             },
           },
         });
@@ -2311,7 +2331,13 @@ export class OrdersService {
 
         const now = new Date();
         const updateData: Record<string, any> = {
-          $set: { status: statusConfig, updatedAt: now },
+          $set: {
+            status: statusConfig,
+            updatedAt: now,
+            ...(step === OrderStatus.CANCELLED
+              ? { cancelledAt: now, cancelledBy: actor.user }
+              : {}),
+          },
           $push: {
             history: {
               status: statusConfig,
@@ -2686,19 +2712,31 @@ export class OrdersService {
       if (!statusConfig) throw new AppException(AppErrorCode.ORDER_INVALID_STATUS, { status: updateOrderDto.status });
       updateData.status = statusConfig;
 
+      // Attribution is the *acting* user, resolved from the session. `updateOrderDto.createdBy`
+      // is deliberately ignored here: the dashboard echoes the stored order back, so trusting
+      // it credited the order's original creator (or the literal fallback `'Vendor'`) for a
+      // confirm/dispatch performed by somebody else.
+      const actor = this.actorLabel(user);
+
       if (updateOrderDto.status === 'confirmed') {
         updateData.confirmedAt = new Date();
-        updateData.confirmedBy = updateOrderDto.createdBy || 'Vendor';
+        updateData.confirmedBy = actor;
       }
 
       if (updateOrderDto.status === 'dispatched') {
         updateData.dispatchedAt = new Date();
+        updateData.dispatchedBy = actor;
+      }
+
+      if (updateOrderDto.status === 'cancelled') {
+        updateData.cancelledAt = new Date();
+        updateData.cancelledBy = actor;
       }
 
       const newHistoryEntry = {
         status: updateData.status,
         date: new Date(),
-        user: updateOrderDto.createdBy || user?.email || 'Vendor',
+        user: actor,
       };
       updateData.$push = { history: newHistoryEntry };
     }
@@ -2898,6 +2936,24 @@ export class OrdersService {
     }
   }
 
+  /**
+   * The human-readable identity recorded for an order action.
+   *
+   * Always derived from the authenticated session — never from the request body — so a team
+   * member's confirm/dispatch/cancel is attributed to that member, not to the store or to
+   * whoever created the order. The login email is included because two employees can share a
+   * display name and the email is what the team screen lists them by.
+   */
+  private actorLabel(user?: RequestUser | null): string {
+    if (!user) return 'Vendor';
+    const name = (user.fullName ?? '').trim();
+    const email = (user.email ?? '').trim();
+    if (name && email && name.toLowerCase() !== email.toLowerCase()) {
+      return `${name} (${email})`;
+    }
+    return name || email || 'Vendor';
+  }
+
   /** The acting user id for movement attribution; null when the caller is anonymous. */
   private actorUserId(dto: { createdBy?: string }, user?: RequestUser): Types.ObjectId | null {
     const raw = user?.id ?? dto.createdBy;
@@ -3001,7 +3057,7 @@ export class OrdersService {
     const updated = await this.orderModel
       .findOneAndUpdate(
         { _id: id, isDeleted: { $ne: true }, isArchived: { $ne: true }, $and: and },
-        { $set: { isArchived: true, archivedAt, archivedBy: user.email ?? null } },
+        { $set: { isArchived: true, archivedAt, archivedBy: this.actorLabel(user) } },
         { new: true },
       )
       .exec();
@@ -3177,6 +3233,7 @@ export class OrdersService {
     const errors: string[] = [];
 
     const targetStatusConfig = (await this.statusesService.getBySlug(targetSlug))!;
+    const actor = this.actorLabel(user);
 
     // D-2: `bulkWrite` sent an unconditional `{ _id }` filter, so the transition legality
     // checked above was advisory only. Any order that moved between the `find()` and the
@@ -3219,14 +3276,14 @@ export class OrdersService {
               status: targetStatusConfig,
               updatedAt: now,
               ...(targetSlug === OrderStatus.CONFIRMED
-                ? { confirmedAt: now, confirmedBy: user?.email || 'Vendor' }
-                : {}),
+                ? { confirmedAt: now, confirmedBy: actor }
+                : { cancelledAt: now, cancelledBy: actor }),
             },
             $push: {
               history: {
                 status: targetStatusConfig,
                 date: now,
-                user: user?.email || 'Vendor',
+                user: actor,
               },
             },
           },
@@ -3242,6 +3299,17 @@ export class OrdersService {
 
       if (claimed) {
         modifiedCount += 1;
+        // The bulk path used to skip the audit trail entirely, leaving a batch confirm/cancel
+        // attributable only through the order's own history. Record it like a single update.
+        await this.auditService.record({
+          action: AuditAction.ORDER_STATUS_CHANGE,
+          actorId: user?.id ?? null,
+          actorEmail: user?.email ?? null,
+          storeId: order.storeId ? String(order.storeId) : null,
+          resourceType: ResourceType.ORDER,
+          resourceId: String(order._id),
+          details: { orderNo: order.orderNo, from: slug, to: targetSlug, operation: 'bulk' },
+        });
       } else {
         // Lost the race - another actor already moved this order. Report it rather than
         // counting it, so `modifiedCount` never claims a transition that did not happen.
@@ -3278,6 +3346,7 @@ export class OrdersService {
     const dispatchedStatus = (await this.statusesService.getBySlug(OrderStatus.DISPATCHED))!;
     const now = new Date();
     const actorUserId = this.actorUserId({}, user);
+    const actor = this.actorLabel(user);
 
     // Book the parcels *before* any status is claimed. As in `update()`, the courier booking is
     // a precondition for dispatching rather than a retryable side effect: an order whose parcel
@@ -3350,6 +3419,7 @@ export class OrdersService {
             $set: {
               status: dispatchedStatus,
               dispatchedAt: now,
+              dispatchedBy: actor,
               updatedAt: now,
               deliveryParcelId: booking.parcelId,
               deliveryError: null,
@@ -3361,7 +3431,7 @@ export class OrdersService {
               history: {
                 status: dispatchedStatus,
                 date: now,
-                user: user?.email || 'Vendor',
+                user: actor,
               },
             },
           },
@@ -3383,6 +3453,20 @@ export class OrdersService {
 
       if (claimed) {
         results.push({ orderNo: order.orderNo, success: true, parcelId: booking.parcelId });
+        await this.auditService.record({
+          action: AuditAction.ORDER_STATUS_CHANGE,
+          actorId: user?.id ?? null,
+          actorEmail: user?.email ?? null,
+          storeId: order.storeId ? String(order.storeId) : null,
+          resourceType: ResourceType.ORDER,
+          resourceId: String(order._id),
+          details: {
+            orderNo: order.orderNo,
+            from: OrderStatus.CONFIRMED,
+            to: OrderStatus.DISPATCHED,
+            operation: 'bulk-ship',
+          },
+        });
       } else {
         this.logger.warn(
           `Order ${order.orderNo}: parcel ${booking.parcelId} was booked but the dispatch claim lost; order not moved`,

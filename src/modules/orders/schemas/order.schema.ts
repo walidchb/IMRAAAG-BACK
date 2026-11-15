@@ -56,6 +56,21 @@ export class Order {
   @Prop({ type: Date })
   dispatchedAt: Date;
 
+  /**
+   * Who dispatched the order — the acting team member's display label (`Name (email)`),
+   * server-stamped from the session. Mirrors `confirmedBy` so the dashboard can show the
+   * dispatcher without replaying the history array.
+   */
+  @Prop()
+  dispatchedBy: string;
+
+  @Prop({ type: Date })
+  cancelledAt: Date;
+
+  /** Who cancelled the order — server-stamped from the session, like `confirmedBy`. */
+  @Prop()
+  cancelledBy: string;
+
   @Prop()
   statusConfirmation: string;
 

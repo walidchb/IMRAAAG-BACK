@@ -146,6 +146,11 @@ export class UpdateOrderDto {
   @ApiPropertyOptional() @IsOptional() @IsString()
   createdAt?: string;
 
+  /**
+   * @deprecated Accepted for backwards compatibility only. Attribution is resolved from the
+   * authenticated session — the acting team member — never from the request body. A dashboard
+   * echoes the stored order verbatim, so trusting this field credited the wrong person.
+   */
   @ApiPropertyOptional() @IsOptional() @IsString()
   createdBy?: string;
 

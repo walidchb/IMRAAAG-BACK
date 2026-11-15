@@ -81,7 +81,34 @@ export class OrdersController {
   @ApiOperation({ summary: 'Update order (vendor)' })
   @ApiResponse({ status: 200, description: 'Order updated', type: Order })
   updateVendor(@Param('id') id: string, @Body() dto: UpdateVendorOrderDto, @Req() req: any) {
-    const { storeId: _storeId, id: _unusedId, orderNo: _unusedOrderNo, _id: __id, deliveryParcelId: _parcelId, deliveryError: _err, updatedAt: _updatedAt, source: _source, ...cleanDto } = dto;
+    const {
+      storeId: _storeId,
+      id: _unusedId,
+      orderNo: _unusedOrderNo,
+      _id: __id,
+      deliveryParcelId: _parcelId,
+      deliveryError: _err,
+      updatedAt: _updatedAt,
+      source: _source,
+      // Server-owned audit columns: attribution is derived from the session, never the body.
+      date: _date,
+      createdAt: _createdAt,
+      createdBy: _createdBy,
+      confirmedAt: _confirmedAt,
+      confirmedBy: _confirmedBy,
+      dispatchedAt: _dispatchedAt,
+      dispatchedBy: _dispatchedBy,
+      cancelledAt: _cancelledAt,
+      cancelledBy: _cancelledBy,
+      statusConfirmation: _statusConfirmation,
+      history: _history,
+      isArchived: _isArchived,
+      archivedAt: _archivedAt,
+      archivedBy: _archivedBy,
+      deliveryStatus: _deliveryStatus,
+      vendorEmail: _vendorEmail,
+      ...cleanDto
+    } = dto;
     return this.ordersService.update(id, cleanDto as UpdateOrderDto, req.user);
   }
 
@@ -119,6 +146,14 @@ export class OrdersController {
     delete plain.isArchived;
     delete plain.archivedAt;
     delete plain.archivedBy;
+    // Internal staff attribution is never buyer-facing: a team member's name/login email
+    // must not leak through the public tracking endpoint. The buyer-facing timeline is built
+    // separately in `buildDeliveryBlock`, without the actor.
+    delete plain.createdBy;
+    delete plain.confirmedBy;
+    delete plain.dispatchedBy;
+    delete plain.cancelledBy;
+    delete plain.history;
     return plain;
   }
 
@@ -131,12 +166,13 @@ export class OrdersController {
     // Build timeline from order history (order events only)
     const timeline = (order.history ?? [])
       .filter((e: any) => e.status?.slug)
+      // Deliberately no `user`: this payload is public, and the history now records the
+      // acting team member's name + login email.
       .map((e: any) => ({
         kind: 'order' as const,
         at: e.date ?? null,
         orderStatus: e.status?.slug ?? null,
         orderStatusLabel: e.status?.displayName ?? null,
-        user: e.user ?? null,
       }));
 
     // If the order has a parcel, add a synthetic "parcel created" anchor
@@ -194,6 +230,8 @@ export class OrdersController {
   @ApiQuery({ name: 'shippingMethod', required: false })
   @ApiQuery({ name: 'createdBy', required: false })
   @ApiQuery({ name: 'confirmedBy', required: false })
+  @ApiQuery({ name: 'dispatchedBy', required: false })
+  @ApiQuery({ name: 'cancelledBy', required: false })
   @ApiQuery({ name: 'bureau', required: false })
   @ApiQuery({ name: 'phone', required: false })
   @ApiQuery({ name: 'note', required: false })

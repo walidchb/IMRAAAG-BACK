@@ -400,6 +400,100 @@ describe('OrdersService', () => {
     });
   });
 
+  describe('update() — attribution (who performed the action)', () => {
+    const ACTOR: RequestUser = {
+      id: new Types.ObjectId().toString(),
+      email: 'nadia@shop.test',
+      role: 'VENDOR',
+      fullName: 'Nadia Benali',
+    };
+    const ACTOR_LABEL = 'Nadia Benali (nadia@shop.test)';
+
+    beforeEach(() => {
+      // Ownership resolves through the membership row, so the actor is a team member of the
+      // order's store rather than the legacy `vendorEmail` owner.
+      storesService.findByMemberId.mockResolvedValue({
+        _id: STORE_ID,
+        vendorEmail: VENDOR_USER.email,
+      });
+    });
+
+    it('credits the confirming team member, ignoring a client-supplied createdBy', async () => {
+      const existing = makeOrder();
+      const claimed = makeOrder({ status: statusConfig(OrderStatus.CONFIRMED) });
+      orderModel.findById.mockReturnValue(query(existing));
+      orderModel.findOneAndUpdate.mockReturnValue(query(claimed));
+
+      await service.update(
+        ORDER_ID.toString(),
+        // A dashboard echoes the stored order, whose createdBy is the original creator.
+        { status: OrderStatus.CONFIRMED, createdBy: 'owner@shop.test' } as UpdateOrderDto,
+        ACTOR,
+      );
+
+      const write = orderModel.findOneAndUpdate.mock.calls[0][1];
+      expect(write.confirmedBy).toBe(ACTOR_LABEL);
+      expect(write.$push.history.user).toBe(ACTOR_LABEL);
+    });
+
+    it('credits the dispatching team member on dispatchedBy', async () => {
+      const existing = makeOrder({ status: statusConfig(OrderStatus.CONFIRMED) });
+      const claimed = makeOrder({ status: statusConfig(OrderStatus.DISPATCHED) });
+      orderModel.findById.mockReturnValue(query(existing));
+      orderModel.findOneAndUpdate.mockReturnValue(query(claimed));
+
+      await service.update(
+        ORDER_ID.toString(),
+        { status: OrderStatus.DISPATCHED } as UpdateOrderDto,
+        ACTOR,
+      );
+
+      const write = orderModel.findOneAndUpdate.mock.calls[0][1];
+      expect(write.dispatchedBy).toBe(ACTOR_LABEL);
+      expect(write.dispatchedAt).toBeInstanceOf(Date);
+      expect(write.$push.history.user).toBe(ACTOR_LABEL);
+    });
+
+    it('credits the cancelling team member on cancelledBy', async () => {
+      const existing = makeOrder({ status: statusConfig(OrderStatus.CONFIRMED) });
+      const claimed = makeOrder({ status: statusConfig(OrderStatus.CANCELLED) });
+      orderModel.findById.mockReturnValue(query(existing));
+      orderModel.findOneAndUpdate.mockReturnValue(query(claimed));
+
+      await service.update(
+        ORDER_ID.toString(),
+        { status: OrderStatus.CANCELLED } as UpdateOrderDto,
+        ACTOR,
+      );
+
+      const write = orderModel.findOneAndUpdate.mock.calls[0][1];
+      expect(write.cancelledBy).toBe(ACTOR_LABEL);
+      expect(write.cancelledAt).toBeInstanceOf(Date);
+      expect(write.$push.history.user).toBe(ACTOR_LABEL);
+    });
+
+    it('attributes a bulk confirm/dispatch to the acting team member and audits it', async () => {
+      const placed = makeOrder();
+      const confirmed = makeOrder({ status: statusConfig(OrderStatus.CONFIRMED) });
+      orderModel.find.mockReturnValue(query([placed]));
+      orderModel.findOneAndUpdate.mockReturnValue(query(confirmed));
+      const audit = (service as any).auditService.record as jest.Mock;
+
+      await service.bulkAction({ ids: [ORDER_ID.toString()], action: 'confirm' } as any, ACTOR);
+
+      const write = orderModel.findOneAndUpdate.mock.calls[0][1];
+      expect(write.$set.confirmedBy).toBe(ACTOR_LABEL);
+      expect(write.$push.history.user).toBe(ACTOR_LABEL);
+      expect(audit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          actorEmail: ACTOR.email,
+          actorId: ACTOR.id,
+          details: expect.objectContaining({ to: OrderStatus.CONFIRMED, operation: 'bulk' }),
+        }),
+      );
+    });
+  });
+
   describe('update() — guard rails around a save', () => {
     it('D-5: locks items once the order leaves the editable window', async () => {
       const existing = makeOrder({ status: statusConfig(OrderStatus.DISPATCHED) });
@@ -1528,6 +1622,22 @@ describe('OrdersService', () => {
       expect(order.source).toBe('MANUAL');
     });
 
+    it('stamps the acting team member as createdBy, not a client-supplied value', async () => {
+      reservations.checkAdvisoryAvailability.mockResolvedValue([]);
+      const payload: any = dto();
+      payload.createdBy = 'owner@imraaah.com';
+
+      const order: any = await service.create(payload, {
+        id: new Types.ObjectId().toString(),
+        email: 'nadia@imraaah.com',
+        role: 'VENDOR',
+        fullName: 'Nadia Benali',
+      });
+
+      expect(order.createdBy).toBe('Nadia Benali (nadia@imraaah.com)');
+      expect(order.history[0].user).toBe('Nadia Benali (nadia@imraaah.com)');
+    });
+
     it('refuses a vendor-entered order naming a variant with nothing left to ship', async () => {
       reservations.checkAdvisoryAvailability.mockResolvedValue([]);
       reservations.assertLinesInStock.mockRejectedValueOnce(
@@ -2462,7 +2572,7 @@ describe('OrdersService', () => {
         $set: {
           isArchived: true,
           archivedAt: expect.any(Date),
-          archivedBy: VENDOR_USER.email,
+          archivedBy: 'Vendor (vendor@test.com)',
         },
       });
       // Archive has no inventory effect and does not touch status/history.
