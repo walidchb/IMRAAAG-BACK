@@ -78,6 +78,9 @@ export const ERROR_HTTP_STATUS: Record<string, number> = {
   [AppErrorCode.PRODUCT_ACCESS_DENIED]: HttpStatus.FORBIDDEN,
   [AppErrorCode.PRODUCT_CANNOT_DELETE_HAS_ORDERS]: HttpStatus.CONFLICT,
   [AppErrorCode.PRODUCT_PRICE_EXCEEDS_ORIGINAL_PRICE]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.PRODUCT_ARCHIVE_HAS_ACTIVE_ORDERS]: HttpStatus.CONFLICT,
+  [AppErrorCode.PRODUCT_ARCHIVED]: HttpStatus.CONFLICT,
+  [AppErrorCode.PRODUCT_CONFLICT]: HttpStatus.CONFLICT,
 
   // ─── Category ───
   [AppErrorCode.CATEGORY_NOT_FOUND]: HttpStatus.NOT_FOUND,
@@ -248,6 +251,7 @@ export const ERROR_HTTP_STATUS: Record<string, number> = {
   [AppErrorCode.ORDER_NOT_ARCHIVED]: HttpStatus.CONFLICT,
   [AppErrorCode.ORDER_ARCHIVED]: HttpStatus.CONFLICT,
   [AppErrorCode.ORDER_ARCHIVE_INVALID_STATUS]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.ORDER_PRODUCT_ARCHIVED]: HttpStatus.CONFLICT,
   // ─── Inventory lookup ───
   [AppErrorCode.INVENTORY_BARCODE_NOT_FOUND]: HttpStatus.NOT_FOUND,
 

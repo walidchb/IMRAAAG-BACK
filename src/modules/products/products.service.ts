@@ -17,6 +17,7 @@ import { AuditService } from '../audit/audit.service';
 import { AuditAction } from '../../common/constants/audit-action.enum';
 import { ResourceType } from '../../common/constants/resource-type.enum';
 import { VariantsService } from '../inventory/services/variants.service';
+import { NOT_ARCHIVED_PRODUCT_FILTER } from '../../common/constants/product.const';
 
 function firstNonEmpty(...values: (string | undefined | null)[]): string {
   return values.find((v) => typeof v === 'string' && v.trim().length > 0) || '';
@@ -272,7 +273,7 @@ export class ProductsService {
   }
 
   async findAll(query: ProductQueryDto): Promise<CursorPaginatedResult<Product>> {
-    const filter: Record<string, any> = { published: true };
+    const filter: Record<string, any> = { published: true, ...NOT_ARCHIVED_PRODUCT_FILTER };
 
     // `storeId` is preferred and takes precedence. The legacy `vendorEmail` remains
     // supported so the un-migrated storefront keeps working through Phase 3.
@@ -383,7 +384,7 @@ export class ProductsService {
       .find(searchFilter)
       // Public payload: the seller's email and user id are not part of a storefront listing,
       // and `vendorEmail` was the identifier the removed public carrier-config route accepted.
-      .select('-vendorEmail -vendorId')
+      .select('-vendorEmail -vendorId -archivedBy')
       .sort(sortOption)
       .limit(limit + 1)
       .populate('category', 'nameEn nameAr nameFr slug image isPublished')
@@ -533,6 +534,7 @@ export class ProductsService {
         $and: [
           { $or: ownership },
           { $or: [{ nameEn: regex }, { nameAr: regex }, { nameFr: regex }, { slug: regex }] },
+          NOT_ARCHIVED_PRODUCT_FILTER,
         ],
       })
       .select('_id nameEn nameAr nameFr slug image')
@@ -554,6 +556,11 @@ export class ProductsService {
     const filter: Record<string, any> = storeId
       ? { $or: [{ storeId }, { vendorEmail }] }
       : { vendorEmail };
+
+    // Archived products are a separate listing (the archived view). The default vendor list
+    // must never show them; `archived=true` shows only them.
+    const archivedMode = query.archived === 'true';
+    filter.isArchived = archivedMode ? true : { $ne: true };
 
     // Offset pagination, mirroring `OrdersService.findAll`: the vendor page renders a page
     // selector and a total, both of which a cursor response cannot express.
@@ -586,6 +593,9 @@ export class ProductsService {
 
     let sortOption: Record<string, any>;
     let searchFilter: Record<string, any>;
+    const defaultSort = archivedMode
+      ? { archivedAt: -1, _id: -1 }
+      : { createdAt: -1, _id: -1 };
 
     if (query.search) {
       const regex = { $regex: escapeRegex(query.search), $options: 'i' };
@@ -614,7 +624,7 @@ export class ProductsService {
       }
 
       searchFilter = { $and: [filter, { $or: orConditions }] };
-      sortOption = { createdAt: -1, _id: -1 };
+      sortOption = defaultSort;
     } else {
       const sortMapping: Record<string, any> = {
         price_asc: { price: 1, createdAt: -1, _id: -1 },
@@ -624,7 +634,7 @@ export class ProductsService {
       };
 
       searchFilter = { ...filter };
-      sortOption = sortMapping[query.sortBy || 'newest'] || { createdAt: -1, _id: -1 };
+      sortOption = sortMapping[query.sortBy || 'newest'] || defaultSort;
     }
 
     const [total, items] = await Promise.all([
@@ -658,8 +668,8 @@ export class ProductsService {
 
   async findOne(id: string): Promise<Product> {
     const product = await this.productModel
-      .findById(id)
-      .select('-vendorEmail -vendorId')
+      .findOne({ _id: id, ...NOT_ARCHIVED_PRODUCT_FILTER })
+      .select('-vendorEmail -vendorId -archivedBy')
       .populate('category', 'nameEn nameAr nameFr slug image isPublished')
       .populate('subCategory', 'nameEn nameAr nameFr slug isPublished categoryId')
       .exec();
@@ -705,8 +715,8 @@ export class ProductsService {
     }
 
     const product = await this.productModel
-      .findOne({ slug })
-      .select('-vendorEmail -vendorId')
+      .findOne({ slug, ...NOT_ARCHIVED_PRODUCT_FILTER })
+      .select('-vendorEmail -vendorId -archivedBy')
       .populate('category', 'nameEn nameAr nameFr slug image isPublished')
       .populate('subCategory', 'nameEn nameAr nameFr slug isPublished categoryId')
       .exec();
@@ -725,6 +735,7 @@ export class ProductsService {
     const existing = await this.productModel.findById(id).exec();
     if (!existing) throw new AppException(AppErrorCode.PRODUCT_NOT_FOUND, { id });
     await this.assertOwnership(existing, userId, userEmail, 'update');
+    this.assertNotArchived(existing, id);
 
     const updateData: Record<string, any> = {};
 
@@ -802,12 +813,22 @@ export class ProductsService {
     }
 
     const updated = await this.productModel
-      .findByIdAndUpdate(id, updateData, { new: true })
+      .findOneAndUpdate(
+        { _id: id, ...NOT_ARCHIVED_PRODUCT_FILTER },
+        updateData,
+        { new: true },
+      )
       .populate('category', 'nameEn nameAr nameFr slug image isPublished')
       .populate('subCategory', 'nameEn nameAr nameFr slug isPublished categoryId')
       .exec();
 
-    if (!updated) throw new AppException(AppErrorCode.PRODUCT_NOT_FOUND, { id });
+    if (!updated) {
+      // Lost a race with an archive or a delete between the pre-check and the write.
+      const current = await this.productModel.findById(id).exec();
+      if (!current) throw new AppException(AppErrorCode.PRODUCT_NOT_FOUND, { id });
+      this.assertNotArchived(current, id);
+      throw new AppException(AppErrorCode.PRODUCT_CONFLICT, { id });
+    }
     this.cacheService.clear('categories:');
 
     // A gallery URL that left the product can no longer back an option-value link. Clear those
@@ -901,7 +922,7 @@ export class ProductsService {
 
   async getMaxPrice(): Promise<number> {
     const result = await this.productModel
-      .findOne({ published: true })
+      .findOne({ published: true, ...NOT_ARCHIVED_PRODUCT_FILTER })
       .sort({ price: -1 })
       .select('price')
       .exec();
@@ -909,7 +930,11 @@ export class ProductsService {
   }
 
   async findAllRaw(filter: Record<string, any>, sort?: Record<string, any>): Promise<Product[]> {
-    const safeFilter: Record<string, any> = { published: true, ...filter };
+    const safeFilter: Record<string, any> = {
+      published: true,
+      ...NOT_ARCHIVED_PRODUCT_FILTER,
+      ...filter,
+    };
     return this.productModel
       .find(safeFilter)
       .populate('category', 'nameEn nameAr nameFr slug image isPublished')
@@ -917,6 +942,186 @@ export class ProductsService {
       .sort(sort || { createdAt: -1 })
       .limit(50)
       .exec();
+  }
+
+  /** An archived product is read-only until restored. */
+  private assertNotArchived(product: { isArchived?: boolean | null }, id: string): void {
+    if (product.isArchived === true) {
+      throw new AppException(AppErrorCode.PRODUCT_ARCHIVED, { id });
+    }
+  }
+
+  /**
+   * Counts orders that still reference the product and are neither archived nor soft-deleted.
+   *
+   * Archived and soft-deleted orders are deliberately exempt: their lines are history, not
+   * live dependencies. Variant-only lines are covered through the product's variant ids
+   * (tombstones included), the same way the permanent-delete guard looks at them.
+   */
+  private async countActiveOrdersForProduct(
+    productId: string,
+    storeId?: string | null,
+  ): Promise<number> {
+    const or: Record<string, unknown>[] = [{ 'items.productId': productId }];
+    if (storeId) {
+      const variantIds = await this.variantsService.listVariantIdsForProduct(productId, storeId);
+      if (variantIds.length > 0) {
+        or.push({ 'items.variantId': { $in: variantIds } });
+      }
+    }
+    return this.orderModel
+      .countDocuments({
+        $or: or,
+        isDeleted: { $ne: true },
+        isArchived: { $ne: true },
+      })
+      .exec();
+  }
+
+  /**
+   * Reversibly hides a product. Never changes `published`, variants, inventory, movements,
+   * images or order lines. Refused while a live (not archived, not deleted) order references it.
+   */
+  async archive(
+    id: string,
+    userEmail: string,
+    userId?: string,
+  ): Promise<{ id: string; archived: true; archivedAt: Date }> {
+    const existing = await this.productModel.findById(id).exec();
+    if (!existing) throw new AppException(AppErrorCode.PRODUCT_NOT_FOUND, { id });
+    await this.assertOwnership(existing, userId, userEmail, 'archive');
+
+    if (existing.isArchived === true) {
+      return {
+        id: String(existing._id),
+        archived: true,
+        archivedAt: existing.archivedAt ?? new Date(),
+      };
+    }
+
+    const storeId = existing.storeId ? String(existing.storeId) : null;
+    const blockedCount = await this.countActiveOrdersForProduct(id, storeId);
+    if (blockedCount > 0) {
+      throw new AppException(AppErrorCode.PRODUCT_ARCHIVE_HAS_ACTIVE_ORDERS, {
+        id,
+        count: blockedCount,
+      });
+    }
+
+    const archivedAt = new Date();
+    const claimed = await this.productModel
+      .findOneAndUpdate(
+        {
+          _id: id,
+          isArchived: { $ne: true },
+          ...(existing.storeId
+            ? { storeId: existing.storeId }
+            : { vendorEmail: existing.vendorEmail }),
+        },
+        { $set: { isArchived: true, archivedAt, archivedBy: userEmail } },
+        { new: true },
+      )
+      .exec();
+
+    if (!claimed) {
+      const current = await this.productModel.findById(id).exec();
+      if (!current) throw new AppException(AppErrorCode.PRODUCT_NOT_FOUND, { id });
+      if (current.isArchived === true) {
+        return {
+          id: String(current._id),
+          archived: true,
+          archivedAt: current.archivedAt ?? archivedAt,
+        };
+      }
+      throw new AppException(AppErrorCode.PRODUCT_CONFLICT, { id });
+    }
+
+    // Re-count after the claim: an order can land between the first count and the claim.
+    // Only this claim is rolled back; nothing else was written.
+    const postClaimCount = await this.countActiveOrdersForProduct(id, storeId);
+    if (postClaimCount > 0) {
+      await this.productModel
+        .updateOne(
+          { _id: id, isArchived: true, archivedAt },
+          { $set: { isArchived: false, archivedAt: null, archivedBy: null } },
+        )
+        .exec();
+      throw new AppException(AppErrorCode.PRODUCT_ARCHIVE_HAS_ACTIVE_ORDERS, {
+        id,
+        count: postClaimCount,
+      });
+    }
+
+    await this.auditService.record({
+      action: AuditAction.PRODUCT_UPDATE,
+      actorId: userId ?? null,
+      actorEmail: userEmail,
+      storeId,
+      resourceType: ResourceType.PRODUCT,
+      resourceId: String(claimed._id),
+      details: {
+        operation: 'archive',
+        published: existing.published === true,
+        storeId,
+      },
+    });
+    this.cacheService.clear('categories:');
+
+    return { id: String(claimed._id), archived: true, archivedAt };
+  }
+
+  /**
+   * Makes an archived product visible again. Restores no data, because archiving removed none.
+   * A restored product re-enters the storefront only if it was published before archiving.
+   */
+  async restore(
+    id: string,
+    userEmail: string,
+    userId?: string,
+  ): Promise<{ id: string; archived: false }> {
+    const existing = await this.productModel.findById(id).exec();
+    if (!existing) throw new AppException(AppErrorCode.PRODUCT_NOT_FOUND, { id });
+    await this.assertOwnership(existing, userId, userEmail, 'restore');
+
+    if (existing.isArchived !== true) {
+      return { id: String(existing._id), archived: false };
+    }
+
+    const restored = await this.productModel
+      .findOneAndUpdate(
+        {
+          _id: id,
+          isArchived: true,
+          ...(existing.storeId
+            ? { storeId: existing.storeId }
+            : { vendorEmail: existing.vendorEmail }),
+        },
+        { $set: { isArchived: false, archivedAt: null, archivedBy: null } },
+        { new: true },
+      )
+      .exec();
+
+    if (!restored) {
+      const current = await this.productModel.findById(id).exec();
+      if (!current) throw new AppException(AppErrorCode.PRODUCT_NOT_FOUND, { id });
+      if (current.isArchived !== true) {
+        return { id: String(current._id), archived: false };
+      }
+      throw new AppException(AppErrorCode.PRODUCT_CONFLICT, { id });
+    }
+
+    await this.auditService.record({
+      action: AuditAction.PRODUCT_UPDATE,
+      actorId: userId ?? null,
+      actorEmail: userEmail,
+      storeId: existing.storeId ? String(existing.storeId) : null,
+      resourceType: ResourceType.PRODUCT,
+      resourceId: String(restored._id),
+      details: { operation: 'restore', published: existing.published === true },
+    });
+    this.cacheService.clear('categories:');
+
+    return { id: String(restored._id), archived: false };
   }
 
   async remove(id: string, userEmail: string, userId?: string): Promise<{ id: string; deleted: true }> {
@@ -999,6 +1204,7 @@ export class ProductsService {
     const original = await this.productModel.findById(id).exec();
     if (!original) throw new AppException(AppErrorCode.PRODUCT_NOT_FOUND, { id });
     await this.assertOwnership(original, userId, userEmail, 'duplicate');
+    this.assertNotArchived(original, id);
 
     // The copy inherits the original's category pair, so the pair must still be valid for
     // the store (a category could have been removed since the original was saved).

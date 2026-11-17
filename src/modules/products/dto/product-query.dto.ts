@@ -128,6 +128,11 @@ export class VendorProductQueryDto {
   @IsOptional()
   @IsString()
   published?: string;
+
+  @ApiPropertyOptional({ enum: ['true', 'false'], description: 'List archived products only' })
+  @IsOptional()
+  @IsIn(['true', 'false'])
+  archived?: string;
 }
 
 /**

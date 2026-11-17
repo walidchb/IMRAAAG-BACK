@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, PipelineStage, Types } from 'mongoose';
 import { Product, ProductDocument } from '../../products/schemas/product.schema';
+import { NOT_ARCHIVED_PRODUCT_FILTER } from '../../../common/constants/product.const';
 import {
   InventoryBalance,
   InventoryBalanceDocument,
@@ -422,6 +423,7 @@ export class InventoryReadService {
         },
       },
       { $unwind: { path: '$prod', preserveNullAndEmptyArrays: true } },
+      { $match: { 'prod.isArchived': NOT_ARCHIVED_PRODUCT_FILTER.isArchived } },
       {
         $lookup: {
           from: this.joinModel.collection.name,
@@ -563,7 +565,7 @@ export class InventoryReadService {
       throw new AppException(AppErrorCode.INVENTORY_BARCODE_NOT_FOUND, { barcode });
     }
     const product = await this.productModel
-      .findOne({ _id: variant.productId, storeId })
+      .findOne({ _id: variant.productId, storeId, ...NOT_ARCHIVED_PRODUCT_FILTER })
       .select('nameEn nameAr nameFr')
       .lean()
       .exec();

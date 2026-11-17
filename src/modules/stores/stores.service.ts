@@ -6,6 +6,7 @@ import { Model, Types } from 'mongoose';
 import { Store, StoreDocument } from './schemas/store.schema';
 import { Product, ProductDocument } from '../products/schemas/product.schema';
 import { Category, CategoryDocument } from '../categories/schemas/category.schema';
+import { NOT_ARCHIVED_PRODUCT_FILTER } from '../../common/constants/product.const';
 import {
   SubCategory,
   SubCategoryDocument,
@@ -298,7 +299,7 @@ export class StoresService {
 
     const rows = await this.productModel
       .aggregate<{ _id: Types.ObjectId; count: number }>([
-        { $match: { storeId: { $in: ids }, published: true } },
+        { $match: { storeId: { $in: ids }, published: true, ...NOT_ARCHIVED_PRODUCT_FILTER } },
         { $group: { _id: '$storeId', count: { $sum: 1 } } },
       ])
       .exec();

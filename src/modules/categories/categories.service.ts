@@ -15,6 +15,7 @@ import { UploadService } from '../upload/upload.service';
 import { AuditService } from '../audit/audit.service';
 import { AuditAction } from '../../common/constants/audit-action.enum';
 import { ResourceType } from '../../common/constants/resource-type.enum';
+import { NOT_ARCHIVED_PRODUCT_FILTER } from '../../common/constants/product.const';
 import { ensureDefaultCategoriesForStore, GENERAL_CATEGORY } from './default-categories';
 
 const DUPLICATE_KEY = 11000;
@@ -239,7 +240,7 @@ export class CategoriesService {
     byCategory: Map<string, number>;
     bySubCategory: Map<string, number>;
   }> {
-    const match: Record<string, unknown> = { storeId };
+    const match: Record<string, unknown> = { storeId, ...NOT_ARCHIVED_PRODUCT_FILTER };
     if (publishedOnly) match.published = true;
 
     const rows = await this.productModel

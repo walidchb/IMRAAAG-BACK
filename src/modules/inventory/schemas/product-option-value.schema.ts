@@ -19,10 +19,12 @@ export class ProductOptionValue {
   optionId: Types.ObjectId;
 
   /**
-   * Canonical machine value, unique per option. This participates in a variant's
-   * `combinationKey`, so renaming a *label* below is safe while changing `value` is not.
+   * Canonical machine value, unique per option. It is the slug of the value's English label
+   * and is re-derived whenever that label is renamed, so retiring a name (Red → Purple) frees
+   * it for a genuinely new value.
    *
-   * Derived by the service from the English label when the client omits it.
+   * Variant identity is built from value **ids**, not this slug: `combinationKey` hashes the
+   * sorted join ids, so a rename never re-keys a variant.
    */
   @Prop({ type: String, required: true, trim: true })
   value: string;

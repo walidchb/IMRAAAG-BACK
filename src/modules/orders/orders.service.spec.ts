@@ -1463,7 +1463,7 @@ describe('OrdersService', () => {
 
       productModel = {
         find: jest.fn().mockReturnValue(
-          query([{ _id: PRODUCT_ID, price: 100, weight: 1, originalPrice: null }]),
+          query([{ _id: PRODUCT_ID, price: 100, weight: 1, originalPrice: null, published: true }]),
         ),
       };
 
@@ -1752,7 +1752,7 @@ describe('OrdersService', () => {
     it('charges the product price, never the client price, when the variant carries no override', async () => {
       reservations.checkAdvisoryAvailability.mockResolvedValue([]);
       productModel.find.mockReturnValue(
-        query([{ _id: PRODUCT_ID, price: 250, weight: 1, originalPrice: null }]),
+        query([{ _id: PRODUCT_ID, price: 250, weight: 1, originalPrice: null, published: true }]),
       );
 
       // `dto()` sends price: 100 and omits a usable productId; the line must still be priced
@@ -1880,6 +1880,33 @@ describe('OrdersService', () => {
       // Presence marks a covered line; a `null` value is a recorded zero discount.
       expect(order.items[0]).toHaveProperty('originalPrice');
       expect(order.items[0].originalPrice).toBeNull();
+    });
+
+    it('refuses a public checkout that reaches an archived product', async () => {
+      productModel.find.mockReturnValue(
+        query([{ _id: PRODUCT_ID, price: 100, weight: 1, originalPrice: null, published: true, isArchived: true }]),
+      );
+
+      await expect(service.create(dto())).rejects.toMatchObject({
+        errorCode: AppErrorCode.ORDER_PRODUCT_NOT_AVAILABLE,
+      });
+    });
+
+    it('refuses a vendor order whose variant-only line reaches an archived product', async () => {
+      productModel.find.mockReturnValue(
+        query([{ _id: PRODUCT_ID, price: 100, weight: 1, originalPrice: null, published: false, isArchived: true }]),
+      );
+
+      await expect(
+        service.create(dto(), {
+          id: new Types.ObjectId().toString(),
+          email: 'store@imraaah.com',
+          role: 'VENDOR',
+          fullName: 'Vendor',
+        }),
+      ).rejects.toMatchObject({
+        errorCode: AppErrorCode.ORDER_PRODUCT_NOT_AVAILABLE,
+      });
     });
   });
 
@@ -2547,6 +2574,8 @@ describe('OrdersService', () => {
 
     beforeEach(() => {
       storesService.findByMemberId.mockResolvedValue(null);
+      variantsService.snapshotsForVariants = jest.fn().mockResolvedValue(new Map());
+      productModel.find.mockReturnValue(query([]));
     });
 
     it.each([
@@ -2640,6 +2669,49 @@ describe('OrdersService', () => {
       });
       expect(update.$set.status).toBeUndefined();
       expect(update.$push).toBeUndefined();
+    });
+
+    it('refuses to restore an order while one of its products is archived', async () => {
+      const productId = new Types.ObjectId();
+      const existing = orderWith(OrderStatus.DELIVERED, {
+        isArchived: true,
+        items: [{ productId: productId.toString(), productName: 'P', quantity: 1, price: 10 }],
+      });
+      orderModel.findById.mockReturnValue(query(existing));
+      productModel.find.mockReturnValue(query([{ _id: productId }]));
+
+      await expect(service.restore(ORDER_ID.toString(), VENDOR_USER)).rejects.toMatchObject({
+        errorCode: AppErrorCode.ORDER_PRODUCT_ARCHIVED,
+        errorParams: expect.objectContaining({
+          orderNo: existing.orderNo,
+          count: 1,
+        }),
+      });
+      expect(orderModel.findOneAndUpdate).not.toHaveBeenCalled();
+    });
+
+    it('rolls the restore back when a product is archived during the write', async () => {
+      const productId = new Types.ObjectId();
+      const existing = orderWith(OrderStatus.DELIVERED, {
+        isArchived: true,
+        archivedAt: new Date('2026-01-01T00:00:00Z'),
+        items: [{ productId: productId.toString(), productName: 'P', quantity: 1, price: 10 }],
+      });
+      orderModel.findById.mockReturnValue(query(existing));
+      // First (pre-check) read: active; post-write read: archived.
+      productModel.find
+        .mockReturnValueOnce(query([]))
+        .mockReturnValueOnce(query([{ _id: productId }]));
+      orderModel.findOneAndUpdate.mockReturnValue(query({ ...existing, isArchived: false }));
+      orderModel.updateOne.mockReturnValue(query({ modifiedCount: 1 }));
+
+      await expect(service.restore(ORDER_ID.toString(), VENDOR_USER)).rejects.toMatchObject({
+        errorCode: AppErrorCode.ORDER_PRODUCT_ARCHIVED,
+      });
+      const rollback = orderModel.updateOne.mock.calls
+        .map(([filter, update]: any[]) => ({ filter, update }))
+        .find(({ update }) => update?.$set?.isArchived === true);
+      expect(rollback?.filter).toEqual({ _id: ORDER_ID.toString(), isArchived: false });
     });
 
     it('denies archive and restore across stores, but allows an admin', async () => {

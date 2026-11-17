@@ -102,11 +102,14 @@ export class BarcodeService {
   ): Promise<GenerateCodesResult> {
     const product = await this.productModel
       .findById(productId)
-      .select('_id storeId nameEn nameFr nameAr slug')
+      .select('_id storeId nameEn nameFr nameAr slug isArchived')
       .lean()
       .exec();
     if (!product || String((product as any).storeId ?? '') !== String(storeId)) {
       throw new AppException(AppErrorCode.PRODUCT_NOT_IN_STORE, { productId });
+    }
+    if ((product as any).isArchived === true) {
+      throw new AppException(AppErrorCode.PRODUCT_ARCHIVED, { id: productId });
     }
 
     const allVariants = await this.variantModel

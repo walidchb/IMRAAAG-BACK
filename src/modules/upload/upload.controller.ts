@@ -26,7 +26,7 @@ import { IMAGE_CONFIG } from './image.config';
 @ApiTags('Upload')
 @Controller('upload')
 @Roles(Role.VENDOR, Role.ADMIN)
-@Throttle({ default: { limit: 20, ttl: 60000 } })
+@Throttle({ default: { limit: 500, ttl: 60000 } })
 export class UploadController {
   constructor(
     private readonly uploadService: UploadService,
@@ -62,15 +62,13 @@ export class UploadController {
   @RequirePermissions(StorePermission.PRODUCTS_UPDATE)
   @HttpCode(HttpStatus.OK)
   @UseInterceptors(
-    FilesInterceptor('files', 10, { limits: { fileSize: IMAGE_CONFIG.maxFileSize, files: 10 } }),
+    FilesInterceptor('files', 100, { limits: { fileSize: IMAGE_CONFIG.maxFileSize } }),
   )
-  @ApiOperation({ summary: 'Upload multiple product images (max 10)' })
+  @ApiOperation({ summary: 'Upload multiple product images (max 100 per request)' })
   @ApiConsumes('multipart/form-data')
   async uploadProductImages(@UploadedFiles() files: Express.Multer.File[], @Req() req: any) {
     if (!files || files.length === 0)
       throw new AppException(AppErrorCode.UPLOAD_NO_FILE_PROVIDED);
-    if (files.length > 10)
-      throw new AppException(AppErrorCode.UPLOAD_MAX_FILES_EXCEEDED);
     const results = await this.uploadService.uploadProductImages(files, await this.scopeFor(req));
     return { images: results };
   }

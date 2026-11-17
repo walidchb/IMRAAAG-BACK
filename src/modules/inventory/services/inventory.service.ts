@@ -415,11 +415,14 @@ export class InventoryService {
     const productId = new Types.ObjectId(targetProductId);
     const product = await this.productModel
       .findById(productId)
-      .select('storeId')
+      .select('storeId isArchived')
       .lean()
       .exec();
     if (!product || String(product.storeId ?? '') !== String(input.storeId)) {
       throw new AppException(AppErrorCode.PRODUCT_NOT_IN_STORE, { productId: targetProductId });
+    }
+    if (product.isArchived === true) {
+      throw new AppException(AppErrorCode.PRODUCT_ARCHIVED, { id: targetProductId });
     }
 
     await this.productModel
@@ -433,6 +436,26 @@ export class InventoryService {
     storeId: Types.ObjectId,
   ): Promise<void> {
     await this.assertVariantAccess(variantId, storeId);
+
+    // Manual stock/threshold edits are refused while the owning product is archived: the
+    // product is read-only until restored. Order-driven reserve/consume/restock does not land
+    // here (it goes through `ReservationsService`), so returns keep working.
+    const variant = await this.variantModel
+      .findById(variantId)
+      .select('productId')
+      .lean()
+      .exec();
+    if (!variant?.productId) return;
+    const product = await this.productModel
+      .findById(variant.productId)
+      .select('isArchived')
+      .lean()
+      .exec();
+    if (product?.isArchived === true) {
+      throw new AppException(AppErrorCode.PRODUCT_ARCHIVED, {
+        id: String(variant.productId),
+      });
+    }
   }
 
   private toView(

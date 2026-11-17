@@ -12,12 +12,15 @@ export class SavedProductsService {
   ) {}
 
   async findAll(userId: string) {
-    return this.savedProductModel
+    const rows = await this.savedProductModel
       .find({ userId: new Types.ObjectId(userId) })
       .populate('productId')
       .sort({ createdAt: -1 })
       .lean()
       .exec();
+    // An archived product is not browsable (its detail route 404s), so it must not appear
+    // in the customer's saved list until it is restored.
+    return rows.filter((row: any) => row?.productId && row.productId.isArchived !== true);
   }
 
   async toggle(userId: string, productId: string) {

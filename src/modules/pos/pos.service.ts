@@ -9,6 +9,7 @@ import { ProductOption } from '../inventory/schemas/product-option.schema';
 import { ProductOptionValue } from '../inventory/schemas/product-option-value.schema';
 import { VariantOptionValue } from '../inventory/schemas/variant-option-value.schema';
 import { Product } from '../products/schemas/product.schema';
+import { NOT_ARCHIVED_PRODUCT_FILTER } from '../../common/constants/product.const';
 import {
   buildVariantLabel,
   LabelOption,
@@ -220,6 +221,7 @@ export class PosService {
         },
       },
       { $unwind: '$prod' },
+      { $match: { 'prod.isArchived': NOT_ARCHIVED_PRODUCT_FILTER.isArchived } },
     ];
 
     const term = q?.trim();
@@ -255,7 +257,7 @@ export class PosService {
     if (productIds.length === 0) return [];
 
     const products = (await this.productModel
-      .find({ _id: { $in: productIds }, storeId })
+      .find({ _id: { $in: productIds }, storeId, ...NOT_ARCHIVED_PRODUCT_FILTER })
       .lean()
       .exec()) as any[];
     if (products.length === 0) return [];

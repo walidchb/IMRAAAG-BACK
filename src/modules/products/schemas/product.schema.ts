@@ -82,6 +82,17 @@ export class Product {
   @Prop({ default: false })
   published: boolean;
 
+  /** Reversible hide. Archived products are excluded from vendor management and the public catalog. */
+  @Prop({ type: Boolean, default: false })
+  isArchived: boolean;
+
+  @Prop({ type: Date, default: null })
+  archivedAt: Date | null;
+
+  /** Session email label for audit/display. Never public. */
+  @Prop({ type: String, default: null })
+  archivedBy: string | null;
+
   /**
    * The embedded `variants` array that used to live here is gone.
    *
@@ -123,3 +134,8 @@ ProductSchema.index({ published: 1, category: 1, createdAt: -1, _id: -1 });
 ProductSchema.index({ published: 1, vendorEmail: 1, createdAt: -1, _id: -1 });
 ProductSchema.index({ published: 1, storeId: 1, createdAt: -1, _id: -1 });
 ProductSchema.index({ published: 1, price: 1, createdAt: -1, _id: -1 });
+// Archive separation (vendor active list, vendor archived list, legacy fallback, public list)
+ProductSchema.index({ storeId: 1, isArchived: 1, createdAt: -1, _id: -1 });
+ProductSchema.index({ storeId: 1, isArchived: 1, archivedAt: -1, _id: -1 });
+ProductSchema.index({ vendorEmail: 1, isArchived: 1, createdAt: -1, _id: -1 });
+ProductSchema.index({ published: 1, isArchived: 1, createdAt: -1, _id: -1 });

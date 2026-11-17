@@ -272,6 +272,61 @@ describe('VariantsService — ownership, cross-product values, duplicate indexes
     });
   });
 
+  // ------------------------------------------- updateValue: canonical slug follows the label
+  //
+  // A rename used to touch only `valueEn/Fr/Ar`, so the `{optionId, value}` unique index kept
+  // the old slug reserved ("red") and a genuinely new "Red" could never be created. The slug
+  // must follow the English label, while a non-English-only edit must leave it alone.
+
+  it('re-keys the canonical value when the English label is renamed', async () => {
+    valueModel.findOne.mockReturnValue(
+      query(value(VALUE_A, OPTION_A, 'red', { valueEn: 'Red', valueAr: 'Red', valueFr: 'Rouge' })),
+    );
+
+    await service.updateValue(PRODUCT_ID.toString(), STORE_ID, OPTION_A.toString(), VALUE_A.toString(), {
+      valueEn: 'Purple',
+      valueAr: 'Purple',
+      valueFr: 'Violet',
+    });
+
+    expect(valueModel.findOneAndUpdate).toHaveBeenCalledWith(
+      { _id: VALUE_A },
+      { $set: { value: 'purple', valueEn: 'Purple', valueAr: 'Purple', valueFr: 'Violet' } },
+      { new: true },
+    );
+  });
+
+  it('leaves the canonical value alone when only a non-English label changes', async () => {
+    valueModel.findOne.mockReturnValue(
+      query(value(VALUE_A, OPTION_A, 'red', { valueEn: 'Red', valueFr: 'Rouge' })),
+    );
+
+    await service.updateValue(PRODUCT_ID.toString(), STORE_ID, OPTION_A.toString(), VALUE_A.toString(), {
+      valueFr: 'Rouge vif',
+    });
+
+    expect(valueModel.findOneAndUpdate).toHaveBeenCalledWith(
+      { _id: VALUE_A },
+      { $set: { valueFr: 'Rouge vif' } },
+      { new: true },
+    );
+  });
+
+  it('maps a rename onto a sibling value\'s slug to OPTION_VALUE_IN_USE', async () => {
+    valueModel.findOne.mockReturnValue(
+      query(value(VALUE_A, OPTION_A, 'red', { valueEn: 'Red' })),
+    );
+    valueModel.findOneAndUpdate.mockReturnValue({
+      exec: jest.fn().mockRejectedValue(e11000({ optionId: 1, value: 1 })),
+    });
+
+    await expect(
+      service.updateValue(PRODUCT_ID.toString(), STORE_ID, OPTION_A.toString(), VALUE_A.toString(), {
+        valueEn: 'Blue',
+      }),
+    ).rejects.toMatchObject({ errorCode: AppErrorCode.OPTION_VALUE_IN_USE });
+  });
+
   it('rejects malformed ids without touching the database', async () => {
     productModel.findById.mockReturnValue(query(ownedProduct()));
 
@@ -697,5 +752,16 @@ describe('VariantsService — ownership, cross-product values, duplicate indexes
       errorParams: { reason: 'reserved_stock_exists' },
     });
     expect(variantModel.findOneAndUpdate).not.toHaveBeenCalled();
+  });
+
+  it('refuses a structural mutation while the product is archived', async () => {
+    productModel.findById.mockReturnValue(query(ownedProduct({ isArchived: true })));
+
+    await expect(
+      service.createOption(PRODUCT_ID.toString(), STORE_ID, {
+        key: 'size',
+        nameEn: 'Size',
+      } as any),
+    ).rejects.toMatchObject({ errorCode: AppErrorCode.PRODUCT_ARCHIVED });
   });
 });

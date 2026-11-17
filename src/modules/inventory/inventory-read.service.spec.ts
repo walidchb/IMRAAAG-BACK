@@ -60,7 +60,9 @@ describe('InventoryReadService', () => {
 
   const statusMatchIndexes = (): number[] =>
     pipelineOf()
-      .map((s, i) => (s.$match && i > 0 ? i : -1))
+      .map((s, i) =>
+        s.$match && i > 0 && !('prod.isArchived' in s.$match) ? i : -1,
+      )
       .filter((i) => i >= 0);
 
   beforeEach(async () => {
@@ -105,6 +107,14 @@ describe('InventoryReadService', () => {
       expect(firstMatch().productId).toBeInstanceOf(Types.ObjectId);
       expect(String(firstMatch().productId)).toBe(productId);
       expect(firstMatch().storeId).toEqual(STORE_ID);
+    });
+
+    it('excludes variants whose product is archived', async () => {
+      await service.listStoreInventory(STORE_ID, {});
+
+      expect(pipelineOf()).toEqual(
+        expect.arrayContaining([{ $match: { 'prod.isArchived': { $ne: true } } }]),
+      );
     });
   });
 
@@ -318,8 +328,11 @@ describe('InventoryReadService', () => {
       expect(stages.some((s) => s.$skip)).toBe(false);
       expect(stages.some((s) => s.$limit)).toBe(false);
       expect(stages.some((s) => s.$sort)).toBe(false);
-      // No search regex, no status predicate: a single $match and it is the store scope.
-      expect(stages.filter((s) => s.$match)).toHaveLength(1);
+      // No search regex, no status predicate: the only $match besides the archive filter is
+      // the store scope.
+      expect(
+        stages.filter((s) => s.$match && !('prod.isArchived' in s.$match)),
+      ).toHaveLength(1);
       expect(stages.some((s) => s.$group)).toBe(true);
     });
 

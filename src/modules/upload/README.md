@@ -90,7 +90,7 @@ stores/covers/{uuid}-medium.webp → Medium
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/upload/product-image` | POST | Upload single product image |
-| `/upload/product-images` | POST | Upload up to 10 product images |
+| `/upload/product-images` | POST | Upload multiple product images (max 100 per request; no per-product limit) |
 | `/upload/store-logo` | POST | Upload store logo |
 | `/upload/store-cover` | POST | Upload store cover/banner |
 | `/upload` | DELETE | Delete image by key |

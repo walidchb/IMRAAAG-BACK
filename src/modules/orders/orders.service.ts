@@ -580,23 +580,6 @@ export class OrdersService {
       .map(i => i.productId)
       .filter((id): id is string => !!id && /^[a-fA-F0-9]{24}$/.test(id));
 
-    const productMap = new Map<string, { price: number; weight: number; originalPrice: number | null }>();
-
-    if (objectIds.length > 0) {
-      const products = await this.productModel
-        .find({ _id: { $in: objectIds }, published: true })
-        .select('price weight originalPrice')
-        .lean()
-        .exec();
-      for (const p of products) {
-        productMap.set(String(p._id), {
-          price: (p as any).price,
-          weight: (p as any).weight,
-          originalPrice: (p as any).originalPrice ?? null,
-        });
-      }
-    }
-
     // Phase 4 (roadmap 4.6): snapshot the variant each line actually bought, so the order
     // keeps describing it after the seller renames the option or deactivates the variant
     // (spec §7.4). Read once here and matched per line below.
@@ -606,33 +589,50 @@ export class OrdersService {
         .filter((id): id is string => !!id),
     );
 
-    // A storefront line names its variant, not necessarily its product. Price must still come
-    // from that variant's product when the variant has no override of its own, so load the
-    // products reached through the snapshots as well. Only published products are sellable to
-    // the public; a vendor's manual order keeps its historical behaviour (client-editable
-    // price, product required only when the caller named one).
-    if (!user) {
-      const unresolvedProductIds = [
-        ...new Set(
-          [...snapshots.values()]
-            .map((snapshot) => snapshot.productId)
-            .filter((id) => !!id && !productMap.has(id)),
-        ),
-      ];
-      if (unresolvedProductIds.length > 0) {
-        const products = await this.productModel
-          .find({ _id: { $in: unresolvedProductIds }, published: true })
-          .select('price weight originalPrice')
+    // A storefront line names its variant, not necessarily its product. Every product a line
+    // can reach is loaded in one query (directly named, or through the variant snapshot) and
+    // carries both the pricing fallbacks and the archive/publication gates.
+    const productLookupIds = [
+      ...new Set([
+        ...objectIds,
+        ...[...snapshots.values()]
+          .map((snapshot) => snapshot.productId)
+          .filter((id): id is string => !!id && /^[a-fA-F0-9]{24}$/.test(id)),
+      ]),
+    ];
+
+    const products = productLookupIds.length > 0
+      ? await this.productModel
+          .find({ _id: { $in: productLookupIds } })
+          .select('price weight originalPrice published isArchived')
           .lean()
-          .exec();
-        for (const p of products) {
-          productMap.set(String(p._id), {
-            price: (p as any).price,
-            weight: (p as any).weight,
-            originalPrice: (p as any).originalPrice ?? null,
-          });
-        }
-      }
+          .exec()
+      : [];
+
+    // Archived products are never sellable. The public path additionally requires publication;
+    // a vendor's manual order may use an unpublished product.
+    const unavailableProductIds = [
+      ...new Set(
+        products
+          .filter(
+            (p: any) => p.isArchived === true || (!user && p.published !== true),
+          )
+          .map((p: any) => String(p._id)),
+      ),
+    ];
+    if (unavailableProductIds.length > 0) {
+      throw new AppException(AppErrorCode.ORDER_PRODUCT_NOT_AVAILABLE, {
+        productIds: unavailableProductIds,
+      });
+    }
+
+    const productMap = new Map<string, { price: number; weight: number; originalPrice: number | null }>();
+    for (const p of products) {
+      productMap.set(String(p._id), {
+        price: (p as any).price,
+        weight: (p as any).weight,
+        originalPrice: (p as any).originalPrice ?? null,
+      });
     }
 
     // Every line must name a variant. Products own no stock, so a bare-product line could
@@ -1026,7 +1026,7 @@ export class OrdersService {
     const products = productIds.length
       ? await this.productModel
           .find({ _id: { $in: productIds } })
-          .select('nameEn nameAr nameFr slug image images price originalPrice published storeId')
+          .select('nameEn nameAr nameFr slug image images price originalPrice published storeId isArchived')
           .lean()
           .exec()
       : [];
@@ -1070,7 +1070,9 @@ export class OrdersService {
           issues.push('PRODUCT_UNAVAILABLE');
         } else {
           if (product.storeId && String(product.storeId) !== storeKey) issues.push('STORE_MISMATCH');
-          if (product.published !== true) issues.push('PRODUCT_UNAVAILABLE');
+          if (product.published !== true || product.isArchived === true) {
+            issues.push('PRODUCT_UNAVAILABLE');
+          }
         }
       }
 
@@ -1165,7 +1167,7 @@ export class OrdersService {
     const products = productIds.length
       ? await this.productModel
           .find({ _id: { $in: productIds } })
-          .select('price nameEn nameFr nameAr originalPrice')
+          .select('price nameEn nameFr nameAr originalPrice isArchived')
           .lean()
           .exec()
       : [];
@@ -1188,6 +1190,14 @@ export class OrdersService {
       }
 
       const product = productById.get(snapshot.productId);
+      // Archived products are read-only and not sellable at the till, including held sales
+      // completed later. A variant price override does not exempt an archived product.
+      if ((product as any)?.isArchived === true) {
+        throw new AppException(AppErrorCode.ORDER_PRODUCT_NOT_AVAILABLE, {
+          variantId: input.variantId,
+          productId: snapshot.productId,
+        });
+      }
       // A variant always resolves to a product (integrity-checked); a missing one means
       // corrupt data. Refuse rather than ring a line up at 0, which would silently give the
       // goods away. A variant price override is enough on its own, so it is exempt.
@@ -1698,6 +1708,8 @@ export class OrdersService {
   async findAll(query: Record<string, string>, user?: RequestUser): Promise<PaginatedOrdersResult> {
     const filter: Record<string, any> = {};
     const orConditions: Record<string, any>[] = [];
+    /** Variant-only order lines referencing the filtered product (see `productId` below). */
+    let variantProductCondition: Record<string, any> | null = null;
 
     const archivedMode = query.archived === 'true';
     if (archivedMode) {
@@ -1757,7 +1769,30 @@ export class OrdersService {
     if (query.phone) filter['customer.phone'] = { $regex: query.phone.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' };
     if (query.note) filter['customer.note'] = { $regex: query.note.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' };
     if (query.deliveryCompanyId) filter.deliveryCompanyId = query.deliveryCompanyId;
-    if (query.productId) filter['items.productId'] = query.productId;
+    if (query.productId) {
+      filter['items.productId'] = query.productId;
+      // A line is allowed to carry only `variantId`, so filtering by product must also reach
+      // lines that reference one of its variants (store-scoped, tombstones included), or the
+      // vendor would see fewer orders than the product-archive blocker counted.
+      const store = user && user.role === Role.VENDOR
+        ? await this.storesService.findByMemberId(user.id).catch(() => null)
+        : null;
+      if (store?._id) {
+        const variantIds = await this.variantsService.listVariantIdsForProduct(
+          query.productId,
+          store._id as Types.ObjectId,
+        );
+        if (variantIds.length > 0) {
+          delete filter['items.productId'];
+          variantProductCondition = {
+            $or: [
+              { 'items.productId': query.productId },
+              { 'items.variantId': { $in: variantIds } },
+            ],
+          };
+        }
+      }
+    }
     if (query.source) {
       filter.source = query.source;
     }
@@ -1821,6 +1856,7 @@ export class OrdersService {
 
     const andConditions: Record<string, any>[] = [];
     if (ownershipScope && Object.keys(ownershipScope).length > 0) andConditions.push(ownershipScope);
+    if (variantProductCondition) andConditions.push(variantProductCondition);
     if (orConditions.length > 0) andConditions.push({ $or: orConditions });
     if (andConditions.length > 0) filter.$and = andConditions;
 
@@ -3023,6 +3059,40 @@ export class OrdersService {
     }
   }
 
+  /**
+   * Restoring an archived order would put it back beside products that may no longer exist
+   * in the active catalogue. Refuse while any referenced product is archived: the vendor
+   * must restore the product first (or leave the order archived).
+   */
+  private async assertOrderProductsNotArchived(order: any): Promise<void> {
+    const productIds = new Set<string>();
+    const variantIds: string[] = [];
+    for (const item of order?.items ?? []) {
+      if (item.productId && Types.ObjectId.isValid(item.productId)) {
+        productIds.add(String(item.productId));
+      }
+      if (item.variantId) variantIds.push(String(item.variantId));
+    }
+    if (variantIds.length > 0) {
+      for (const snapshot of (await this.variantsService.snapshotsForVariants(variantIds)).values()) {
+        if (snapshot.productId) productIds.add(snapshot.productId);
+      }
+    }
+    if (productIds.size === 0) return;
+
+    const archived = await this.productModel
+      .find({ _id: { $in: [...productIds] }, isArchived: true })
+      .select('nameEn nameFr nameAr')
+      .lean()
+      .exec();
+    if (archived.length > 0) {
+      throw new AppException(AppErrorCode.ORDER_PRODUCT_ARCHIVED, {
+        orderNo: order?.orderNo,
+        count: archived.length,
+      });
+    }
+  }
+
   async archive(
     id: string,
     user?: RequestUser,
@@ -3108,6 +3178,8 @@ export class OrdersService {
       return { id, archived: false };
     }
 
+    await this.assertOrderProductsNotArchived(existing);
+
     const filter: Record<string, any> = { _id: id, isDeleted: { $ne: true }, isArchived: true };
     if (user.role !== Role.ADMIN) {
       const ownership = await this.vendorScopedFilter(user);
@@ -3130,6 +3202,26 @@ export class OrdersService {
       await this.assertOrderOwnership(current, user);
       if (!current.isArchived) return { id, archived: false };
       throw new AppException(AppErrorCode.ORDER_CONFLICT, { id });
+    }
+
+    // The product could have been archived between the pre-check and this write. Roll the
+    // restore back to its previous archive state rather than leave the guard bypassed.
+    try {
+      await this.assertOrderProductsNotArchived(updated);
+    } catch (err) {
+      await this.orderModel
+        .updateOne(
+          { _id: id, isArchived: false },
+          {
+            $set: {
+              isArchived: true,
+              archivedAt: (existing as any).archivedAt ?? new Date(),
+              archivedBy: (existing as any).archivedBy ?? null,
+            },
+          },
+        )
+        .exec();
+      throw err;
     }
 
     await this.auditService.record({

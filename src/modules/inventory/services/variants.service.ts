@@ -268,7 +268,7 @@ export class VariantsService {
   // -------------------------------------------------------------------- option CRUD
 
   async createOption(productId: string, storeId: Types.ObjectId, dto: CreateOptionDto) {
-    await this.assertProductInStore(productId, storeId);
+    await this.assertProductWritable(productId, storeId);
 
     // Defining a real dimension makes the auto-seeded "Default > One Size" placeholder obsolete:
     // it must not sit beside genuinely offered sizes/colours afterwards. Purge happens *before*
@@ -338,7 +338,7 @@ export class VariantsService {
     optionId: string,
     dto: UpdateOptionDto,
   ) {
-    await this.assertProductInStore(productId, storeId);
+    await this.assertProductWritable(productId, storeId);
     const option = await this.requireOption(optionId, productId, storeId);
 
     const update: Record<string, any> = {};
@@ -413,7 +413,7 @@ export class VariantsService {
     storeId: Types.ObjectId,
     dto: SetOptionValueImagesDto,
   ) {
-    const product = await this.assertProductInStore(productId, storeId);
+    const product = await this.assertProductWritable(productId, storeId);
     const gallery = this.gallerySet(product);
     const productObjectId = new Types.ObjectId(productId);
 
@@ -563,7 +563,7 @@ export class VariantsService {
   }
 
   async createValue(productId: string, storeId: Types.ObjectId, optionId: string, dto: CreateOptionValueDto) {
-    await this.assertProductInStore(productId, storeId);
+    await this.assertProductWritable(productId, storeId);
     const option = await this.requireOption(optionId, productId, storeId);
 
     const filled = this.fillValueLanguages(dto.valueEn, dto.valueAr, dto.valueFr);
@@ -606,9 +606,12 @@ export class VariantsService {
   /**
    * Renames a value's **labels** and presentation metadata.
    *
-   * `value` — the canonical machine value — is not editable. It is part of the identity
-   * the seller references elsewhere, and letting it drift from the labels is how a variant
-   * ends up displayed as "Large" under the key "medium".
+   * The canonical machine value follows the English label: when that label changes, `value`
+   * is re-derived from it (same precedence `createValue` uses). Without this a value renamed
+   * "Red" → "Purple" kept the stale identity `red`, so the per-option `{optionId, value}`
+   * unique index kept rejecting a genuinely new "Red". Variant identity is the sorted set of
+   * value **ids** (`combinationKey`), so re-keying this slug never re-keys a variant or its
+   * join rows.
    */
   async updateValue(
     productId: string,
@@ -617,7 +620,7 @@ export class VariantsService {
     valueId: string,
     dto: UpdateOptionValueDto,
   ) {
-    await this.assertProductInStore(productId, storeId);
+    await this.assertProductWritable(productId, storeId);
     const option = await this.requireOption(optionId, productId, storeId);
     const value = await this.requireValue(valueId, option._id, productId, storeId);
 
@@ -642,6 +645,19 @@ export class VariantsService {
       if (dto.valueEn !== undefined) update.valueEn = filled.valueEn;
       if (dto.valueAr !== undefined) update.valueAr = filled.valueAr;
       if (dto.valueFr !== undefined) update.valueFr = filled.valueFr;
+
+      // Re-derive the canonical slug from the *English* label only. That is the label the slug
+      // is derived from on create, and restricting the re-key to it keeps the auto-seeded
+      // "One Size" scaffold on its `default` identity when only FR/AR labels are edited.
+      const previousEn = (value.valueEn ?? '').trim();
+      const nextEn = (filled.valueEn ?? '').trim();
+      if (dto.valueEn !== undefined && nextEn && nextEn !== previousEn) {
+        const machine =
+          this.slug(nextEn) ||
+          (filled.valueFr ? this.slug(filled.valueFr) : '') ||
+          (filled.valueAr ? this.slug(filled.valueAr) : '');
+        if (machine && machine !== value.value) update.value = machine;
+      }
     }
     if (dto.color !== undefined) {
       update.color = option.type === 'color' ? this.normalizeColor(dto.color) : null;
@@ -649,13 +665,24 @@ export class VariantsService {
     if (dto.position !== undefined) update.position = dto.position;
 
     // Preview before writing, so the seller sees which combinations move before the label changes.
-// The canonical `value` is untouched: it is half of the combinationKey, so editing it would
-// silently re-key every variant that uses it.
-const affected = await this.affectedVariants(productId, storeId, value._id);
+    // `combinationKey` is built from value *ids*, never this slug, so the rename touches no variant.
+    const affected = await this.affectedVariants(productId, storeId, value._id);
 
-    const saved = await this.valueModel
-      .findOneAndUpdate({ _id: value._id }, { $set: update }, { new: true })
-      .exec();
+    let saved;
+    try {
+      saved = await this.valueModel
+        .findOneAndUpdate({ _id: value._id }, { $set: update }, { new: true })
+        .exec();
+    } catch (err: any) {
+      // The slug is unique per option: renaming onto a sibling's identity is a conflict, not a 500.
+      if (err?.code === 11000) {
+        throw new AppException(AppErrorCode.OPTION_VALUE_IN_USE, {
+          optionId,
+          value: update.value ?? value.value,
+        });
+      }
+      throw err;
+    }
 
     return { value: saved, affected, previewed: true };
   }
@@ -674,7 +701,7 @@ const affected = await this.affectedVariants(productId, storeId, value._id);
     optionId: string,
     valueId: string,
   ) {
-    await this.assertProductInStore(productId, storeId);
+    await this.assertProductWritable(productId, storeId);
     const option = await this.requireOption(optionId, productId, storeId);
     const value = await this.requireValue(valueId, option._id, productId, storeId);
 
@@ -738,7 +765,7 @@ const affected = await this.affectedVariants(productId, storeId, value._id);
     optionId: string,
     valueId: string,
   ) {
-    await this.assertProductInStore(productId, storeId);
+    await this.assertProductWritable(productId, storeId);
     const option = await this.requireOption(optionId, productId, storeId);
     const value = await this.requireValue(valueId, option._id, productId, storeId);
 
@@ -788,7 +815,7 @@ const affected = await this.affectedVariants(productId, storeId, value._id);
     storeId: Types.ObjectId,
     dto: PreviewCombinationsDto,
   ) {
-    await this.assertProductInStore(productId, storeId);
+    await this.assertProductWritable(productId, storeId);
 
     const options = await this.listOptions(productId, storeId);
 
@@ -903,7 +930,7 @@ const affected = await this.affectedVariants(productId, storeId, value._id);
     // Ownership check: the product must belong to this store. Every product is in variant
     // mode now, so there is no simple-mode guard to pass here — the old "convert first"
     // requirement disappeared with `hasVariants`.
-    const product = await this.assertProductInStore(productId, storeId);
+    const product = await this.assertProductWritable(productId, storeId);
 
     // Same rule as createOption: real combinations must never co-exist with the placeholder
     // default. Defense-in-depth for API clients that seed values and call this directly.
@@ -1083,7 +1110,7 @@ const affected = await this.affectedVariants(productId, storeId, value._id);
     variantId: string,
     dto: UpdateVariantDto,
   ) {
-    const product = await this.assertProductInStore(productId, storeId);
+    const product = await this.assertProductWritable(productId, storeId);
     const variant = await this.requireVariant(variantId, productId, storeId);
 
     const update: Record<string, any> = {};
@@ -1134,7 +1161,7 @@ const affected = await this.affectedVariants(productId, storeId, value._id);
    * with its own stock history, not something an activate click implies.
    */
   async activateVariant(productId: string, storeId: Types.ObjectId, variantId: string) {
-    await this.assertProductInStore(productId, storeId);
+    await this.assertProductWritable(productId, storeId);
     const variant = await this.requireVariant(variantId, productId, storeId);
     if (variant.isDeleted) {
       throw new AppException(AppErrorCode.VARIANT_NOT_FOUND, { variantId, reason: 'deleted' });
@@ -1172,7 +1199,7 @@ const affected = await this.affectedVariants(productId, storeId, value._id);
     dto: DeactivateVariantDto,
     actorUserId?: Types.ObjectId | null,
   ) {
-    await this.assertProductInStore(productId, storeId);
+    await this.assertProductWritable(productId, storeId);
     const variant = await this.requireVariant(variantId, productId, storeId);
 
     const balance = await this.balanceModel.findOne({ variantId: variant._id }).exec();
@@ -2157,12 +2184,13 @@ async getAvailability(productId: string): Promise<{
     originalPrice: number;
     image?: string | null;
     images?: string[];
+    isArchived?: boolean;
   }> {
     const product = (await this.productModel
       .findById(productId)
       // `price`/`originalPrice` are read here, beside ownership, because the variant price
       // invariant (see `assertVariantPriceNotAboveInitial`) needs the product-level fallbacks.
-      .select('_id storeId price originalPrice image images')
+      .select('_id storeId price originalPrice image images isArchived')
       .lean()
       .exec()) as unknown as {
       _id: Types.ObjectId;
@@ -2171,11 +2199,35 @@ async getAvailability(productId: string): Promise<{
       originalPrice: number;
       image?: string | null;
       images?: string[];
+      isArchived?: boolean;
     } | null;
     if (!product || String(product.storeId ?? '') !== String(storeId)) {
       throw new AppException(AppErrorCode.PRODUCT_NOT_IN_STORE, { productId });
     }
     return { ...product };
+  }
+
+  /**
+   * Structural mutations are refused while the product is archived: it is read-only until
+   * restored. Reads (`getMatrix`, `getPublicMatrix`, `getAvailability`) deliberately skip this.
+   */
+  private async assertProductWritable(
+    productId: string,
+    storeId: Types.ObjectId,
+  ): Promise<{
+    _id: Types.ObjectId;
+    storeId: Types.ObjectId;
+    price: number;
+    originalPrice: number;
+    image?: string | null;
+    images?: string[];
+    isArchived?: boolean;
+  }> {
+    const product = await this.assertProductInStore(productId, storeId);
+    if (product.isArchived === true) {
+      throw new AppException(AppErrorCode.PRODUCT_ARCHIVED, { id: productId });
+    }
+    return product;
   }
 
   /** The product's normalised gallery as a set, for validating/linking option-value images. */

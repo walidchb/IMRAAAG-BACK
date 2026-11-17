@@ -91,6 +91,7 @@ describe('ProductsService', () => {
     productModel.findOne = jest.fn();
     productModel.findById = jest.fn();
     productModel.findByIdAndUpdate = jest.fn();
+    productModel.findOneAndUpdate = productModel.findByIdAndUpdate;
     productModel.findOneAndDelete = jest.fn();
     productModel.deleteOne = jest.fn().mockReturnValue(query({ deletedCount: 1 }));
 

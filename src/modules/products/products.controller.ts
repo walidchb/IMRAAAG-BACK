@@ -90,6 +90,7 @@ export class ProductsController {
   @ApiQuery({ name: 'maxPrice', required: false })
   @ApiQuery({ name: 'sortBy', required: false, enum: ['price_asc', 'price_desc', 'newest', 'name'] })
   @ApiQuery({ name: 'published', required: false })
+  @ApiQuery({ name: 'archived', required: false, enum: ['true', 'false'], description: 'List archived products only' })
   @ApiResponse({ status: 200, description: 'Vendor products with offset pagination' })
   async findVendorProducts(@Query() query: VendorProductQueryDto, @Req() req: any) {
     const store = await this.storeEmailFor(req);
@@ -173,5 +174,28 @@ export class ProductsController {
   async duplicate(@Param('id') id: string, @Req() req: any) {
     const store = await this.storeEmailFor(req);
     return this.productsService.duplicate(id, store.email, store.id);
+  }
+
+  @Roles(Role.VENDOR, Role.ADMIN)
+  @RequirePermissions(StorePermission.PRODUCTS_ARCHIVE)
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  @Post(':id/archive')
+  @ApiOperation({ summary: 'Archive a product (reversible; refused while active orders reference it)' })
+  @ApiResponse({ status: 201, description: 'Product archived' })
+  @ApiResponse({ status: 409, description: 'Product has active orders or is already archived' })
+  async archive(@Param('id') id: string, @Req() req: any) {
+    const store = await this.storeEmailFor(req);
+    return this.productsService.archive(id, store.email, store.id);
+  }
+
+  @Roles(Role.VENDOR, Role.ADMIN)
+  @RequirePermissions(StorePermission.PRODUCTS_ARCHIVE)
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  @Post(':id/restore')
+  @ApiOperation({ summary: 'Restore an archived product' })
+  @ApiResponse({ status: 201, description: 'Product restored' })
+  async restore(@Param('id') id: string, @Req() req: any) {
+    const store = await this.storeEmailFor(req);
+    return this.productsService.restore(id, store.email, store.id);
   }
 }
