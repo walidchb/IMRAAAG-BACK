@@ -301,7 +301,7 @@ describe('StoresService', () => {
 
       expect(result.stores[0].totalProducts).toBe(12);
       expect(productModel.aggregate).toHaveBeenCalledWith([
-        { $match: { storeId: { $in: [store._id] }, published: true } },
+        { $match: { storeId: { $in: [store._id] }, published: true, isArchived: { $ne: true } } },
         { $group: { _id: '$storeId', count: { $sum: 1 } } },
       ]);
     });

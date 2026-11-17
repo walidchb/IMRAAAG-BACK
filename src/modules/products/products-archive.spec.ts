@@ -133,16 +133,21 @@ describe('ProductsService — archiving', () => {
     });
 
     it('archives when only archived or soft-deleted orders remain', async () => {
-      const archivedAt = new Date();
       productModel.findById.mockReturnValue(query(productDoc()));
       orderModel.countDocuments.mockReturnValue(query(0));
       productModel.findOneAndUpdate.mockReturnValue(
-        query(productDoc({ isArchived: true, archivedAt, archivedBy: VENDOR_EMAIL })),
+        query(productDoc({ isArchived: true })),
       );
 
       const result = await service.archive(PRODUCT_ID, VENDOR_EMAIL);
 
-      expect(result).toEqual({ id: expect.any(String), archived: true, archivedAt });
+      expect(result).toEqual({ id: expect.any(String), archived: true, archivedAt: expect.any(Date) });
+      // The timestamp returned to the caller is the one written by the claim, not the mocked read.
+      expect(productModel.findOneAndUpdate).toHaveBeenCalledWith(
+        expect.anything(),
+        { $set: expect.objectContaining({ isArchived: true, archivedAt: result.archivedAt }) },
+        expect.anything(),
+      );
       expect(auditService.record).toHaveBeenCalledWith(
         expect.objectContaining({ details: expect.objectContaining({ operation: 'archive' }) }),
       );
