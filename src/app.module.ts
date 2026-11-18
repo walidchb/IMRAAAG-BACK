@@ -11,6 +11,7 @@ import configuration from './config/configuration';
 import { UsersModule } from './modules/users/users.module';
 import { StoresModule } from './modules/stores/stores.module';
 import { ProductsModule } from './modules/products/products.module';
+import { BoxesModule } from './modules/boxes/boxes.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -53,6 +54,7 @@ import { TeamModule } from './modules/team/team.module';
     UsersModule,
     StoresModule,
     ProductsModule,
+    BoxesModule,
     OrdersModule,
     AuditModule,
     CategoriesModule,

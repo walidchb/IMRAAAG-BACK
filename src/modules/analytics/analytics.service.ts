@@ -49,6 +49,17 @@ export interface AnalyticsProjectedLine {
    * recorded no discount. Presence is what marks a line as *covered* for gross/discount.
    */
   originalPrice?: number | null;
+  /** Present when the physical line is a component of a Box (its charge is the Box line). */
+  bundleGroupId?: string | null;
+}
+
+/** The commercial Box line (one per `Order.bundles[]` entry). */
+export interface AnalyticsProjectedBundle {
+  bundleGroupId?: string | null;
+  price: number;
+  quantity: number;
+  referenceTotal: number;
+  lineTotal: number;
 }
 
 export interface AnalyticsProjectedOrder {
@@ -57,9 +68,13 @@ export interface AnalyticsProjectedOrder {
   statusSlug: string;
   itemsTotal: number;
   itemQty: number;
+  /** Sale-level POS custom-price reduction (`subtotal - customFinalPrice`); 0 when none. */
+  pricingAdjustment: number;
   source: string | null;
   /** Line snapshot for the Phase 2 sales breakdown; absent rows fail closed (unavailable). */
   items?: AnalyticsProjectedLine[];
+  /** Box snapshots; a Box's charge is `lineTotal`, never the component reference prices. */
+  bundles?: AnalyticsProjectedBundle[];
 }
 
 export interface SummaryMetrics {
@@ -142,7 +157,21 @@ export function salesBreakdown(rows: AnalyticsProjectedOrder[]): SalesBreakdown 
       // A sales-eligible order whose line list was never projected cannot prove coverage.
       return { grossSales: null, discount: null, available: false };
     }
+
+    const bundles = Array.isArray(row.bundles) ? row.bundles : [];
+    const bundleGroupIds = new Set(
+      bundles.map((bundle) => String(bundle.bundleGroupId ?? '')),
+    );
+
     for (const it of row.items) {
+      if (it.bundleGroupId) {
+        // A component line is billed through its Box snapshot; the snapshot must exist, or
+        // the row is inconsistent and the exact figure is unknowable (fail closed).
+        if (!bundleGroupIds.has(String(it.bundleGroupId))) {
+          return { grossSales: null, discount: null, available: false };
+        }
+        continue;
+      }
       anyLines = true;
       const qty = Number(it.quantity) || 0;
       const price = Number(it.price) || 0;
@@ -153,6 +182,20 @@ export function salesBreakdown(rows: AnalyticsProjectedOrder[]): SalesBreakdown 
         allCovered = false;
       }
     }
+
+    for (const bundle of bundles) {
+      anyLines = true;
+      const lineTotal = Number(bundle.lineTotal) || 0;
+      const referenceTotal = Number(bundle.referenceTotal) || 0;
+      net += lineTotal;
+      // Never negative: a Box priced above its contents records no discount.
+      gross += Math.max(referenceTotal, lineTotal);
+    }
+
+    // A POS sale-level custom price is a discount with no per-line snapshot: subtract it from
+    // net only, so `discount = gross - net` includes the adjustment while `gross` stays the
+    // pre-adjustment value.
+    net -= row.pricingAdjustment ?? 0;
   }
   if (!anyLines || !allCovered) {
     return { grossSales: null, discount: null, available: false };
@@ -166,11 +209,12 @@ export function summarize(rows: AnalyticsProjectedOrder[]): SummaryMetrics {
   for (const row of rows) {
     metrics.grossVolume += row.itemsTotal;
     if (!isSalesEligible({ status: row.statusSlug })) continue;
-    metrics.netSales += row.itemsTotal;
+    const net = row.itemsTotal - (row.pricingAdjustment ?? 0);
+    metrics.netSales += net;
     metrics.orderCount += 1;
     metrics.units += row.itemQty;
-    if (isSettled({ status: row.statusSlug })) metrics.settled += row.itemsTotal;
-    if (isReturned({ status: row.statusSlug })) metrics.returned += row.itemsTotal;
+    if (isSettled({ status: row.statusSlug })) metrics.settled += net;
+    if (isReturned({ status: row.statusSlug })) metrics.returned += net;
   }
   metrics.aov = metrics.orderCount > 0 ? metrics.netSales / metrics.orderCount : null;
   const breakdown = salesBreakdown(rows);
@@ -198,7 +242,8 @@ export function summarizeChannels(rows: AnalyticsProjectedOrder[]): ChannelMetri
     if (channel === 'unknown') continue;
     by[channel].orders += 1;
     by[channel].units += row.itemQty;
-    if (isSalesEligible({ status: row.statusSlug })) by[channel].netSales += row.itemsTotal;
+    if (isSalesEligible({ status: row.statusSlug }))
+      by[channel].netSales += row.itemsTotal - (row.pricingAdjustment ?? 0);
   }
   return [by.online, by['in-store'], by.manual];
 }
@@ -243,11 +288,11 @@ export function trendSeries(
       point = emptyTrendPoint(key);
       byKey.set(key, point);
     }
-    point.netSales += row.itemsTotal;
+    point.netSales += row.itemsTotal - (row.pricingAdjustment ?? 0);
     point.orderCount += 1;
     point.units += row.itemQty;
-    if (isSettled({ status: row.statusSlug })) point.settled += row.itemsTotal;
-    if (isReturned({ status: row.statusSlug })) point.returned += row.itemsTotal;
+    if (isSettled({ status: row.statusSlug })) point.settled += row.itemsTotal - (row.pricingAdjustment ?? 0);
+    if (isReturned({ status: row.statusSlug })) point.returned += row.itemsTotal - (row.pricingAdjustment ?? 0);
     if (includeDiscount && Array.isArray(row.items)) {
       // Gross is accumulated per line so the net figure (itemsTotal) stays the source of truth.
       for (const it of row.items) {
@@ -413,13 +458,33 @@ export class AnalyticsService {
             // A status can be an embedded status document or, for legacy rows, a bare slug.
             statusSlug: { $ifNull: ['$status.slug', '$status'] },
             itemsTotal: {
-              $sum: {
-                $map: {
-                  input: { $ifNull: ['$items', []] },
-                  as: 'it',
-                  in: { $multiply: ['$$it.price', { $ifNull: ['$$it.quantity', 0] }] },
+              $add: [
+                {
+                  $sum: {
+                    $map: {
+                      input: { $ifNull: ['$items', []] },
+                      as: 'it',
+                      in: {
+                        // Component lines carry no commercial charge; the Box line does.
+                        $cond: [
+                          { $ifNull: ['$$it.bundleGroupId', false] },
+                          0,
+                          { $multiply: ['$$it.price', { $ifNull: ['$$it.quantity', 0] }] },
+                        ],
+                      },
+                    },
+                  },
                 },
-              },
+                {
+                  $sum: {
+                    $map: {
+                      input: { $ifNull: ['$bundles', []] },
+                      as: 'b',
+                      in: { $multiply: ['$$b.price', { $ifNull: ['$$b.quantity', 0] }] },
+                    },
+                  },
+                },
+              ],
             },
             itemQty: {
               $sum: {
@@ -430,6 +495,9 @@ export class AnalyticsService {
                 },
               },
             },
+            // A POS sale-level custom price reduces the collected amount without changing any
+            // line snapshot, so net metrics must subtract it explicitly.
+            pricingAdjustment: { $ifNull: ['$pricing.priceAdjustment', 0] },
           },
         },
         {
@@ -439,6 +507,7 @@ export class AnalyticsService {
             statusSlug: 1,
             itemsTotal: 1,
             itemQty: 1,
+            pricingAdjustment: 1,
             source: 1,
             // Phase 2: only the fields the gross/discount split needs per line.
             items: {
@@ -446,6 +515,14 @@ export class AnalyticsService {
               price: 1,
               quantity: 1,
               originalPrice: 1,
+              bundleGroupId: 1,
+            },
+            bundles: {
+              bundleGroupId: 1,
+              price: 1,
+              quantity: 1,
+              referenceTotal: 1,
+              lineTotal: 1,
             },
           },
         },
@@ -458,6 +535,7 @@ export class AnalyticsService {
       statusSlug: r.statusSlug ? String(r.statusSlug) : '',
       itemsTotal: Number(r.itemsTotal) || 0,
       itemQty: Number(r.itemQty) || 0,
+      pricingAdjustment: Number(r.pricingAdjustment) || 0,
       source: r.source ? String(r.source) : null,
       items: Array.isArray(r.items)
         ? r.items.map((it: any) => ({
@@ -466,6 +544,16 @@ export class AnalyticsService {
             // Only emitted when present so an absent field [legacy] vs `null` [recorded
             // zero discount] remain distinguishable — the coverage signal (D12).
             ...('originalPrice' in it ? { originalPrice: it.originalPrice == null ? null : Number(it.originalPrice) || 0 } : {}),
+            ...(it.bundleGroupId ? { bundleGroupId: String(it.bundleGroupId) } : {}),
+          }))
+        : undefined,
+      bundles: Array.isArray(r.bundles)
+        ? r.bundles.map((bundle: any) => ({
+            bundleGroupId: bundle.bundleGroupId ? String(bundle.bundleGroupId) : null,
+            price: Number(bundle.price) || 0,
+            quantity: Number(bundle.quantity) || 0,
+            referenceTotal: Number(bundle.referenceTotal) || 0,
+            lineTotal: Number(bundle.lineTotal) || 0,
           }))
         : undefined,
     }));

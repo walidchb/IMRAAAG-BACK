@@ -93,6 +93,10 @@ export class Order {
       lineId: { type: String },
       variantId: { type: String },
       sku: { type: String },
+      /** Present on a physical line that belongs to a Box; links it to `bundles[].contents[].lineId`. */
+      bundleGroupId: { type: String },
+      /** Reference unit price at purchase — kept only as history; the charge is the Box price. */
+      bundleReferencePrice: { type: Number },
       variantSnapshot: {
         type: {
           options: {
@@ -125,6 +129,8 @@ export class Order {
     lineId?: string;
     variantId?: string;
     sku?: string;
+    bundleGroupId?: string;
+    bundleReferencePrice?: number;
     /** Structured replacement for matching on the `variantDetails` label. */
     variantSnapshot?: {
       options: Array<{
@@ -136,6 +142,71 @@ export class Order {
       label: string;
     };
     image?: string;
+  }>;
+
+  /**
+   * Immutable Box snapshots — the commercial line the customer bought.
+   *
+   * `items[]` stays flat (one variant per entry, tagged with `bundleGroupId`) so the
+   * reservation unique key, returns and ledger addressing are untouched (D1/C1/C2).
+   * Later Box/product/variant edits, archives or deletes cannot change these snapshots.
+   */
+  @Prop([
+    {
+      bundleId: { type: String, required: true },
+      bundleGroupId: { type: String, required: true },
+      slug: { type: String },
+      nameEn: { type: String, required: true },
+      nameAr: { type: String, required: true },
+      nameFr: { type: String, required: true },
+      image: { type: String },
+      price: { type: Number, required: true },
+      requiredQuantity: { type: Number, required: true },
+      quantity: { type: Number, required: true },
+      lineTotal: { type: Number, required: true },
+      referenceTotal: { type: Number, required: true },
+      savings: { type: Number, required: true },
+      contents: [
+        {
+          _id: false,
+          lineId: { type: String, required: true },
+          productId: { type: String },
+          variantId: { type: String },
+          productName: { type: String, required: true },
+          variantLabel: { type: String },
+          sku: { type: String },
+          image: { type: String },
+          quantityPerBox: { type: Number, required: true },
+          referenceUnitPrice: { type: Number, required: true },
+        },
+      ],
+    },
+  ])
+  bundles?: Array<{
+    bundleId: string;
+    bundleGroupId: string;
+    slug?: string;
+    nameEn: string;
+    nameAr: string;
+    nameFr: string;
+    image?: string;
+    price: number;
+    requiredQuantity: number;
+    quantity: number;
+    lineTotal: number;
+    referenceTotal: number;
+    savings: number;
+    contents: Array<{
+      lineId: string;
+      productId?: string;
+      variantId?: string;
+      productName: string;
+      variantLabel?: string;
+      sku?: string;
+      image?: string;
+      quantityPerBox: number;
+      referenceUnitPrice: number;
+    }>;
   }>;
 
   /**
@@ -167,6 +238,24 @@ export class Order {
 
   @Prop({ required: true })
   total: number;
+
+  /**
+   * POS sale-level pricing snapshot. Present only when the seller explicitly entered a
+   * custom final price; absent on every other order and on all historical documents.
+   *
+   * `total` above is the amount actually charged (`= customFinalPrice` when this is present).
+   * The difference is server-computed so it can never be supplied by a client.
+   */
+  @Prop({
+    type: {
+      subtotal: { type: Number, required: true },
+      customFinalPrice: { type: Number, required: true },
+      priceAdjustment: { type: Number, required: true },
+    },
+    _id: false,
+    default: undefined,
+  })
+  pricing?: { subtotal: number; customFinalPrice: number; priceAdjustment: number } | null;
 
   @Prop({ type: Object, required: true })
   status: StatusConfig;
@@ -338,6 +427,8 @@ OrderSchema.index({ 'status.slug': 1 });
 OrderSchema.index({ createdAt: -1 });
 OrderSchema.index({ isDeleted: 1 });
 OrderSchema.index({ 'customer.phone': 1 });
+// Box delete guard: "does any active order reference this Box?" and order-detail lookups.
+OrderSchema.index({ 'bundles.bundleId': 1 });
 // Vendor order-list hot read: session storeId + soft-delete flag, ordered newest first
 // (the `find()` default sort, `orders.service.ts`). One compound instead of three separate
 // single-field indexes means the scan never falls back to fetching the whole store's orders

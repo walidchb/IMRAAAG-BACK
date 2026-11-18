@@ -82,6 +82,19 @@ export const ERROR_HTTP_STATUS: Record<string, number> = {
   [AppErrorCode.PRODUCT_ARCHIVED]: HttpStatus.CONFLICT,
   [AppErrorCode.PRODUCT_CONFLICT]: HttpStatus.CONFLICT,
 
+  // --- Boxes ---
+  [AppErrorCode.BOX_NOT_FOUND]: HttpStatus.NOT_FOUND,
+  [AppErrorCode.BOX_NOT_ACTIVE]: HttpStatus.CONFLICT,
+  [AppErrorCode.BOX_ARCHIVED]: HttpStatus.CONFLICT,
+  [AppErrorCode.BOX_SELECTION_INVALID]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.BOX_SELECTION_UNAVAILABLE]: HttpStatus.CONFLICT,
+  [AppErrorCode.BOX_ELIGIBLE_EMPTY]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.BOX_ELIGIBLE_PRODUCT_INVALID]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.BOX_ELIGIBLE_VARIANT_INVALID]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.BOX_REQUIRED_QUANTITY_UNREACHABLE]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.BOX_CANNOT_DELETE_HAS_ORDERS]: HttpStatus.CONFLICT,
+  [AppErrorCode.BOX_CONFLICT]: HttpStatus.CONFLICT,
+
   // ─── Category ───
   [AppErrorCode.CATEGORY_NOT_FOUND]: HttpStatus.NOT_FOUND,
   [AppErrorCode.CATEGORY_HAS_PRODUCTS]: HttpStatus.CONFLICT,
@@ -260,6 +273,8 @@ export const ERROR_HTTP_STATUS: Record<string, number> = {
   [AppErrorCode.POS_ITEM_OUT_OF_STOCK]: HttpStatus.CONFLICT,
   [AppErrorCode.POS_EMPTY_CART]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.POS_HOLD_NOT_FOUND]: HttpStatus.NOT_FOUND,
+  [AppErrorCode.POS_CUSTOM_PRICE_INVALID]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.POS_CUSTOM_PRICE_EXCEEDS_SUBTOTAL]: HttpStatus.BAD_REQUEST,
 
   // Cart checkout
   [AppErrorCode.CART_EMPTY]: HttpStatus.BAD_REQUEST,

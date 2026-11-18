@@ -32,6 +32,11 @@ export const StorePermission = {
   PRODUCTS_VARIANTS_MANAGE: 'products.variants.manage',
   PRODUCTS_BARCODES_GENERATE: 'products.barcodes.generate',
 
+  /** Boxes: seller-defined promotional bundles (create/edit/publish/lifecycle). */
+  BOXES_VIEW: 'boxes.view',
+  BOXES_MANAGE: 'boxes.manage',
+  BOXES_DELETE: 'boxes.delete',
+
   ORDERS_VIEW: 'orders.view',
   ORDERS_CREATE: 'orders.create',
   ORDERS_UPDATE: 'orders.update',
@@ -138,6 +143,9 @@ export const STORE_ROLE_PERMISSIONS: Record<Exclude<StoreRole, StoreRole.OWNER>,
     StorePermission.PRODUCTS_CATEGORIES_MANAGE,
     StorePermission.PRODUCTS_VARIANTS_MANAGE,
     StorePermission.PRODUCTS_BARCODES_GENERATE,
+    // Boxes: inventory staff may create/manage/publish, but not hard-delete.
+    StorePermission.BOXES_VIEW,
+    StorePermission.BOXES_MANAGE,
     // `orders.view` only, so the return-receipt screen can open an order; no order mutation.
     StorePermission.ORDERS_VIEW,
     StorePermission.ORDERS_RETURNS_RECEIVE,

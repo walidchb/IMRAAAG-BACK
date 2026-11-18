@@ -29,6 +29,7 @@ const row = (
   statusSlug: 'delivered',
   itemsTotal: 0,
   itemQty: 0,
+  pricingAdjustment: 0,
   source: 'ONLINE',
   ...over,
 });
@@ -345,6 +346,41 @@ describe('AnalyticsService', () => {
       expect(res.summary.grossVolume).toBe(3600); // incl. cancelled c2
     });
 
+    it('nets a POS sale-level custom-price adjustment without changing gross volume', async () => {
+      const custom = () => [
+        row({
+          _id: 'pos-1',
+          createdAt: new Date('2026-10-02T10:00:00Z'),
+          statusSlug: 'delivered',
+          itemsTotal: 6000,
+          itemQty: 2,
+          pricingAdjustment: 920,
+          source: 'POS',
+          items: [{ price: 3000, quantity: 2, originalPrice: 3000 }],
+        }),
+      ];
+      orderModel.aggregate.mockImplementation(() => agg(custom()));
+
+      const summary = await service.summary(SCOPE, { preset: '30d' });
+      expect(summary.summary).toMatchObject({
+        netSales: 5080,
+        settled: 5080,
+        returned: 0,
+        // grossVolume stays the pre-adjustment line total (documented).
+        grossVolume: 6000,
+        grossSales: 6000,
+        discount: 920,
+        aov: 5080,
+      });
+
+      const channels = await service.channels(SCOPE, { preset: '30d' });
+      expect(channels.channels.find((c) => c.channel === 'in-store')?.netSales).toBe(5080);
+
+      const trend = await service.trend(SCOPE, { preset: '30d' });
+      const soldPoint = trend.points.find((p) => p.orderCount > 0);
+      expect(soldPoint).toMatchObject({ netSales: 5080, settled: 5080, returned: 0 });
+    });
+
     it('marks a window unavailable when any eligible line is legacy (missing originalPrice)', async () => {
       const legacy = covered().concat([
         row({
@@ -420,6 +456,88 @@ describe('AnalyticsService', () => {
         isDeleted: { $ne: true },
         'items.originalPrice': { $exists: true },
       });
+    });
+
+    it('counts a Box at its charged price while gross uses the reference total', async () => {
+      orderModel.aggregate.mockImplementationOnce(() =>
+        agg([
+          row({
+            _id: 'box-1',
+            createdAt: new Date('2026-09-25T10:00:00Z'),
+            statusSlug: 'delivered',
+            itemsTotal: 3500,
+            itemQty: 2,
+            items: [
+              { price: 2000, quantity: 2, originalPrice: 2000, bundleGroupId: 'g1' },
+            ],
+            bundles: [
+              {
+                bundleGroupId: 'g1',
+                price: 3500,
+                quantity: 1,
+                referenceTotal: 4000,
+                lineTotal: 3500,
+              },
+            ],
+          }),
+        ]),
+      );
+      const res = await service.summary(SCOPE, { preset: '30d' });
+
+      expect(res.summary).toMatchObject({
+        netSales: 3500,
+        grossSales: 4000,
+        discount: 500,
+        units: 2, // physical component units
+      });
+    });
+
+    it('never reports a negative Box discount when the Box costs more than its contents', async () => {
+      orderModel.aggregate.mockImplementationOnce(() =>
+        agg([
+          row({
+            _id: 'box-2',
+            createdAt: new Date('2026-09-25T10:00:00Z'),
+            statusSlug: 'delivered',
+            itemsTotal: 1500,
+            itemQty: 1,
+            items: [{ price: 1000, quantity: 1, originalPrice: 1000, bundleGroupId: 'g2' }],
+            bundles: [
+              {
+                bundleGroupId: 'g2',
+                price: 1500,
+                quantity: 1,
+                referenceTotal: 1000,
+                lineTotal: 1500,
+              },
+            ],
+          }),
+        ]),
+      );
+      const res = await service.summary(SCOPE, { preset: '30d' });
+
+      expect(res.summary.netSales).toBe(1500);
+      expect(res.summary.grossSales).toBe(1500);
+      expect(res.summary.discount).toBe(0);
+    });
+
+    it('fails closed when a component line has no Box snapshot', async () => {
+      orderModel.aggregate.mockImplementationOnce(() =>
+        agg([
+          row({
+            _id: 'box-3',
+            createdAt: new Date('2026-09-25T10:00:00Z'),
+            statusSlug: 'delivered',
+            itemsTotal: 1000,
+            itemQty: 1,
+            items: [{ price: 1000, quantity: 1, originalPrice: 1000, bundleGroupId: 'missing' }],
+          }),
+        ]),
+      );
+      const res = await service.summary(SCOPE, { preset: '30d' });
+
+      expect(res.summary.grossSales).toBeNull();
+      expect(res.summary.discount).toBeNull();
     });
 
     it('discountSince is null for a store with no snapshot-bearing orders yet', async () => {

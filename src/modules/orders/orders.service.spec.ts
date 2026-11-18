@@ -14,6 +14,7 @@ import { StoresService } from '../stores/stores.service';
 import { StoreAccessService } from '../team/store-access.service';
 import { ReservationsService } from '../inventory/services/reservations.service';
 import { VariantsService } from '../inventory/services/variants.service';
+import { BoxesService } from '../boxes/boxes.service';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
 import { AppException } from '../../common/errors/app-exception';
 import { UpdateOrderDto } from './dto/update-order.dto';
@@ -125,6 +126,7 @@ describe('OrdersService', () => {
   let storesService: any;
   let reservationsService: any;
   let variantsService: any;
+  let boxesService: any;
   let sessions: any[];
 
   beforeEach(async () => {
@@ -229,11 +231,13 @@ describe('OrdersService', () => {
         },
         { provide: ReservationsService, useValue: reservationsService },
         { provide: VariantsService, useValue: variantsService },
+        { provide: BoxesService, useValue: { resolveForCart: jest.fn().mockResolvedValue({ bundleLines: [], componentLines: [], bundleSnapshots: [], bundlesTotal: 0 }) } },
         { provide: AuditService, useValue: { record: jest.fn().mockResolvedValue(undefined) } },
       ],
     }).compile();
 
     service = module.get<OrdersService>(OrdersService);
+    boxesService = module.get(BoxesService);
   });
 
   describe('update() — D-1 atomic status claim', () => {
@@ -262,6 +266,46 @@ describe('OrdersService', () => {
       // …while a legitimate editable field still does.
       expect(write.customer).toEqual({ name: 'Real Customer' });
       expect(write.updatedAt).toBeInstanceOf(Date);
+    });
+
+    it('refuses item edits on a Box order (bundle_items_locked)', async () => {
+      const existing = makeOrder({
+        bundles: [{ bundleId: 'box-1', bundleGroupId: 'g-1', price: 3500, quantity: 1 }],
+        total: 3900,
+      });
+      orderModel.findById.mockReturnValue(query(existing));
+
+      await expect(
+        service.update(ORDER_ID.toString(), {
+          items: [{ productId: 'p-1', productName: 'X', quantity: 1, price: 10 }],
+        } as any),
+      ).rejects.toMatchObject({
+        errorCode: AppErrorCode.INVALID_ORDER_TRANSITION,
+        errorParams: { reason: 'bundle_items_locked' },
+      });
+
+      expect(orderModel.findOneAndUpdate).not.toHaveBeenCalled();
+      expect(orderModel.findByIdAndUpdate).not.toHaveBeenCalled();
+    });
+
+    it('still allows a status-only change on a Box order', async () => {
+      const existing = makeOrder({
+        bundles: [{ bundleId: 'box-1', bundleGroupId: 'g-1', price: 3500, quantity: 1 }],
+        total: 3900,
+      });
+      const claimed = makeOrder({
+        status: statusConfig(OrderStatus.CONFIRMED),
+        bundles: (existing as any).bundles,
+        total: 3900,
+      });
+      orderModel.findById.mockReturnValue(query(existing));
+      orderModel.findOneAndUpdate.mockReturnValue(query(claimed));
+
+      await service.update(ORDER_ID.toString(), {
+        status: OrderStatus.CONFIRMED,
+      } as UpdateOrderDto);
+
+      expect(orderModel.findOneAndUpdate).toHaveBeenCalled();
     });
 
     it('claims a transition with a predicate on the status it moves from', async () => {
@@ -630,6 +674,29 @@ describe('OrdersService', () => {
       await expect(service.update(ORDER_ID.toString(), {} as UpdateOrderDto)).rejects.toMatchObject({
         errorCode: AppErrorCode.ORDER_NOT_FOUND,
       });
+    });
+
+    it('keeps the charged amount of a custom-priced POS sale immutably', async () => {
+      const existing = makeOrder({
+        source: 'POS',
+        status: statusConfig(OrderStatus.DELIVERED),
+        total: 400,
+        pricing: { subtotal: 500, customFinalPrice: 400, priceAdjustment: 100 },
+      });
+      orderModel.findById.mockReturnValue(query(existing));
+      orderModel.findByIdAndUpdate.mockReturnValue(query(existing));
+
+      // A client-supplied `total` that would fail the mismatch guard must be ignored, not
+      // rejected, and the note edit must still go through.
+      await service.update(ORDER_ID.toString(), {
+        total: 1,
+        customer: { ...existing.customer, note: 'Called the buyer' },
+      } as UpdateOrderDto);
+
+      const written = orderModel.findByIdAndUpdate.mock.calls[0][1];
+      expect(written).not.toHaveProperty('total');
+      expect(written.customer).toMatchObject({ note: 'Called the buyer' });
+      expect(orderModel.startSession).not.toHaveBeenCalled();
     });
   });
 
@@ -1517,6 +1584,7 @@ describe('OrdersService', () => {
           },
           { provide: ReservationsService, useValue: reservations },
           { provide: VariantsService, useValue: variantsService },
+        { provide: BoxesService, useValue: { resolveForCart: jest.fn().mockResolvedValue({ bundleLines: [], componentLines: [], bundleSnapshots: [], bundlesTotal: 0 }) } },
           { provide: AuditService, useValue: { record: jest.fn().mockResolvedValue(undefined) } },
         ],
       }).compile();
@@ -2031,6 +2099,7 @@ describe('OrdersService', () => {
           },
           { provide: ReservationsService, useValue: reservations },
           { provide: VariantsService, useValue: variantsService },
+        { provide: BoxesService, useValue: { resolveForCart: jest.fn().mockResolvedValue({ bundleLines: [], componentLines: [], bundleSnapshots: [], bundlesTotal: 0 }) } },
           { provide: AuditService, useValue: { record: jest.fn().mockResolvedValue(undefined) } },
         ],
       }).compile();
@@ -2096,6 +2165,50 @@ describe('OrdersService', () => {
       const doc = orderModel.mock.calls[0][0];
       expect(doc.items[0].price).toBe(250);
       expect(doc.total).toBe(750);
+    });
+
+    it('persists a custom final price as the charged total with the server-computed difference', async () => {
+      const result: any = await service.createImmediateSale(
+        posDto({ customFinalPrice: 400 }),
+        VENDOR_USER,
+      );
+
+      const doc = orderModel.mock.calls[0][0];
+      expect(doc.total).toBe(400);
+      expect(doc.pricing).toEqual({ subtotal: 500, customFinalPrice: 400, priceAdjustment: 100 });
+      expect(result.toObject().pricing).toEqual({
+        subtotal: 500,
+        customFinalPrice: 400,
+        priceAdjustment: 100,
+      });
+
+      // Payment and inventory still move together in the same transaction.
+      const session = sessions[1];
+      expect(session.withTransaction).toHaveBeenCalledTimes(1);
+      expect(reservations.reserve).toHaveBeenCalledWith(expect.anything(), expect.anything(), session);
+      expect(reservations.consume).toHaveBeenCalledWith(expect.anything(), expect.anything(), session);
+    });
+
+    it('leaves the no-custom sale unchanged: total is the line sum and pricing is absent', async () => {
+      await service.createImmediateSale(posDto(), VENDOR_USER);
+
+      const doc = orderModel.mock.calls[0][0];
+      expect(doc.total).toBe(500);
+      expect(doc).not.toHaveProperty('pricing');
+
+      const session = sessions[1];
+      expect(reservations.reserve).toHaveBeenCalledWith(expect.anything(), expect.anything(), session);
+      expect(reservations.consume).toHaveBeenCalledWith(expect.anything(), expect.anything(), session);
+    });
+
+    it('rejects a custom price above the server subtotal before opening a transaction', async () => {
+      await expect(
+        service.createImmediateSale(posDto({ customFinalPrice: 501 }), VENDOR_USER),
+      ).rejects.toMatchObject({ errorCode: AppErrorCode.POS_CUSTOM_PRICE_EXCEEDS_SUBTOTAL });
+
+      expect(orderModel.startSession).not.toHaveBeenCalled();
+      expect(reservations.reserve).not.toHaveBeenCalled();
+      expect(reservations.consume).not.toHaveBeenCalled();
     });
 
     it('prefers the variant price override over the product price', async () => {
@@ -2279,6 +2392,8 @@ describe('OrdersService', () => {
       total: 500,
       customer: { name: 'Ali' },
       note: '',
+      noteTitle: '',
+      noteType: 'general',
       createdAt: new Date('2026-01-01T10:00:00.000Z'),
       updatedAt: new Date('2026-01-01T10:00:00.000Z'),
       ...over,
@@ -2376,6 +2491,17 @@ describe('OrdersService', () => {
                 .mockResolvedValue(new Map([[VARIANT.toString(), snapshot()]])),
             },
           },
+          {
+            provide: BoxesService,
+            useValue: {
+              resolveForCart: jest.fn().mockResolvedValue({
+                bundleLines: [],
+                componentLines: [],
+                bundleSnapshots: [],
+                bundlesTotal: 0,
+              }),
+            },
+          },
           { provide: AuditService, useValue: { record: jest.fn().mockResolvedValue(undefined) } },
         ],
       }).compile();
@@ -2414,6 +2540,31 @@ describe('OrdersService', () => {
       // Probe session is discarded; the real one drives the hold write and its reservation.
       expect(sessions[0].withTransaction).not.toHaveBeenCalled();
       expect(reservations.reserve.mock.calls[0][2]).toBe(sessions[1]);
+    });
+
+    it('persists and serializes the hold note title and type', async () => {
+      const view = await service.createPosHold(
+        holdDto({ note: 'Client a versé 500 DZD', noteTitle: ' Versement ', noteType: 'payment' }),
+        VENDOR_USER,
+      );
+
+      expect(posHoldModel.mock.calls[0][0]).toMatchObject({
+        note: 'Client a versé 500 DZD',
+        noteTitle: 'Versement',
+        noteType: 'payment',
+      });
+      expect(view).toMatchObject({
+        note: 'Client a versé 500 DZD',
+        noteTitle: 'Versement',
+        noteType: 'payment',
+      });
+    });
+
+    it('defaults the hold note to a general note', async () => {
+      const view = await service.createPosHold(holdDto(), VENDOR_USER);
+
+      expect(posHoldModel.mock.calls[0][0]).toMatchObject({ noteTitle: '', noteType: 'general' });
+      expect(view).toMatchObject({ noteTitle: '', noteType: 'general' });
     });
 
     it('aborts the hold write when the stock cannot be reserved', async () => {
@@ -2502,6 +2653,18 @@ describe('OrdersService', () => {
         orderSession,
       );
       expect(storesService.incrementOrderCount).toHaveBeenCalledWith(HOLD_STORE.vendorEmail, 1);
+    });
+
+    it('carries the hold note title onto the delivered order', async () => {
+      const held = holdDoc({ noteTitle: 'Versement', note: 'Client a versé 500 DZD' });
+      posHoldModel.findOne.mockReturnValue(query(held));
+      posHoldModel.findOneAndDelete.mockResolvedValue(held);
+
+      await service.completePosHold(HOLD_ID.toString(), holdDto(), VENDOR_USER);
+
+      expect(orderModel.mock.calls[0][0].customer).toMatchObject({
+        note: 'Versement: Client a versé 500 DZD',
+      });
     });
 
     it('lists only the session store’s holds, newest first', async () => {

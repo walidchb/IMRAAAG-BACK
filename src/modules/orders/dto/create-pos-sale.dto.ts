@@ -91,7 +91,12 @@ export class PosSaleCustomerDto {
   note?: string;
 }
 
-export class CreatePosSaleDto {
+/**
+ * The shared cart body of any POS sale-shaped request (an immediate sale, a hold create, a
+ * hold update, or a hold completion). Holds deliberately do **not** accept a custom final
+ * price, so that field lives on `CreatePosSaleDto` only.
+ */
+export class PosCartDto {
   @ApiProperty({ description: 'Sale items', type: [PosSaleItemDto] })
   @IsArray()
   @ArrayMinSize(1)
@@ -110,4 +115,18 @@ export class CreatePosSaleDto {
   @IsString()
   @MaxLength(300)
   note?: string;
+}
+
+export class CreatePosSaleDto extends PosCartDto {
+  /**
+   * Amount the customer will actually pay. Omitted/null = no customization.
+   * Integer DZD; 0 is valid; must not exceed the server-computed subtotal.
+   * `subtotal` / `priceAdjustment` / `finalTotal` / `total` are NOT accepted fields — the
+   * server derives them and the whitelist pipe rejects any attempt to supply them.
+   */
+  @ApiPropertyOptional({ description: 'Seller-entered final amount (integer DZD)' })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  customFinalPrice?: number;
 }

@@ -14,6 +14,7 @@ import { DeliveryFeesModule } from '../delivery-fees/delivery-fees.module';
 import { AuditModule } from '../audit/audit.module';
 import { StoresModule } from '../stores/stores.module';
 import { InventoryModule } from '../inventory/inventory.module';
+import { BoxesModule } from '../boxes/boxes.module';
 import { TeamModule } from '../team/team.module';
 
 @Module({
@@ -36,6 +37,8 @@ import { TeamModule } from '../team/team.module';
     // confirm/dispatch has to reserve or deduct inside the same transaction as the status
     // claim. `InventoryModule` does not import this one back, so no `forwardRef` is needed.
     InventoryModule,
+    // Box cart resolution: `OrdersModule → BoxesModule → InventoryModule` (acyclic).
+    BoxesModule,
   ],
   controllers: [OrdersController, OrderStatusesController],
   providers: [OrdersService, OrderStatusesService],

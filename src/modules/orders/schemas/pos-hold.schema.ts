@@ -39,6 +39,13 @@ export interface PosHoldCustomer {
 }
 
 /**
+ * Why the cart was parked. `payment` is the "versement" case (the customer left a deposit or
+ * paid part of the amount); `general` is any other note. The register shows this beside the
+ * note title so the next cashier knows what the money is for.
+ */
+export type PosHoldNoteType = 'general' | 'payment';
+
+/**
  * A parked (held) POS sale that already holds its stock.
  *
  * The document's `_id` is deliberately reused as the `Order._id` when the sale is completed,
@@ -65,6 +72,14 @@ export class PosHold {
 
   @Prop({ type: String, default: '' })
   note: string;
+
+  /** Short heading the cashier typed, e.g. "Versement 5000" (shown as `title (type)`). */
+  @Prop({ type: String, default: '' })
+  noteTitle: string;
+
+  /** `general` or `payment` (a deposit/"versement"); `general` is the default. */
+  @Prop({ type: String, default: 'general' })
+  noteType: PosHoldNoteType;
 
   @Prop({ type: [Object], default: [] })
   items: PosHoldItem[];

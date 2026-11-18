@@ -14,9 +14,13 @@ import { StoresService } from '../stores/stores.service';
 import { StoreAccessService } from '../team/store-access.service';
 import { ReservationsService } from '../inventory/services/reservations.service';
 import { VariantsService } from '../inventory/services/variants.service';
+import { BoxesService } from '../boxes/boxes.service';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
 import { AppException } from '../../common/errors/app-exception';
 import { StatusConfig } from '../../common/constants/order-statuses.const';
+import { plainToInstance } from 'class-transformer';
+import { validate } from 'class-validator';
+import { CreateCartOrderDto } from './dto/create-cart-order.dto';
 
 const STORE_ID = new Types.ObjectId();
 const PRODUCT_ID = new Types.ObjectId();
@@ -53,6 +57,7 @@ describe('OrdersService — cart checkout', () => {
   let productModel: any;
   let variantsService: any;
   let reservations: any;
+  let boxesService: any;
 
   const snapshot = (over: Record<string, any> = {}) => ({
     variantId: VARIANT_ID.toString(),
@@ -115,6 +120,14 @@ describe('OrdersService — cart checkout', () => {
       checkAdvisoryAvailability: jest.fn().mockResolvedValue([]),
       assertLinesInStock: jest.fn().mockResolvedValue(undefined),
     };
+    boxesService = {
+      resolveForCart: jest.fn().mockResolvedValue({
+        bundleLines: [],
+        componentLines: [],
+        bundleSnapshots: [],
+        bundlesTotal: 0,
+      }),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -155,6 +168,7 @@ describe('OrdersService — cart checkout', () => {
         },
         { provide: ReservationsService, useValue: reservations },
         { provide: VariantsService, useValue: variantsService },
+        { provide: BoxesService, useValue: boxesService },
         { provide: AuditService, useValue: { record: jest.fn().mockResolvedValue(undefined) } },
       ],
     }).compile();
@@ -285,5 +299,231 @@ describe('OrdersService — cart checkout', () => {
       service.createCartOrder(buildDto({ customer: { ...customer, address: '' } })),
     ).rejects.toMatchObject({ errorCode: AppErrorCode.VALIDATION_REQUIRED });
     expect(orderModel).not.toHaveBeenCalled();
+  });
+
+  describe('Box lines', () => {
+    const bundleLine = (over: Record<string, any> = {}) => ({
+      lineKey: 'bundle:box-1:key',
+      bundleId: 'box-1',
+      bundleSlug: 'box-of-2',
+      bundleName: 'Box of 2',
+      image: 'box.jpg',
+      price: 3500,
+      requiredQuantity: 2,
+      quantity: 1,
+      lineTotal: 3500,
+      availableBoxes: 2,
+      isAvailable: true,
+      issues: [],
+      selections: [
+        {
+          productId: PRODUCT_ID.toString(),
+          variantId: VARIANT_ID.toString(),
+          productName: 'Kaftan Nour',
+          variantLabel: 'M / Terracotta',
+          image: 'product.jpg',
+          quantity: 2,
+          referenceUnitPrice: 900,
+          available: 5,
+        },
+      ],
+      referenceTotal: 1800,
+      savings: 0,
+      ...over,
+    });
+
+    const componentLine = () => ({
+      lineId: 'line-abc',
+      productId: PRODUCT_ID.toString(),
+      productName: 'Kaftan Nour',
+      price: 900,
+      originalPrice: 150,
+      quantity: 2,
+      variantId: VARIANT_ID.toString(),
+      variantDetails: 'M / Terracotta',
+      image: 'product.jpg',
+      bundleGroupId: 'group-1',
+      bundleReferencePrice: 900,
+    });
+
+    const bundleSnapshot = () => ({
+      bundleId: 'box-1',
+      bundleGroupId: 'group-1',
+      slug: 'box-of-2',
+      nameEn: 'Box of 2',
+      nameAr: 'صندوق',
+      nameFr: 'Boîte de 2',
+      image: 'box.jpg',
+      price: 3500,
+      requiredQuantity: 2,
+      quantity: 1,
+      lineTotal: 3500,
+      referenceTotal: 1800,
+      savings: 0,
+      contents: [
+        {
+          lineId: 'line-abc',
+          productId: PRODUCT_ID.toString(),
+          variantId: VARIANT_ID.toString(),
+          productName: 'Kaftan Nour',
+          variantLabel: 'M / Terracotta',
+          sku: 'KAF-M-RED',
+          image: 'product.jpg',
+          quantityPerBox: 2,
+          referenceUnitPrice: 900,
+        },
+      ],
+    });
+
+    const bundleBody = {
+      bundles: [
+        {
+          bundleId: 'box-1',
+          quantity: 1,
+          selections: [{ variantId: VARIANT_ID.toString(), quantity: 2 }],
+        },
+      ],
+    };
+
+    const primeBundleResolution = () => {
+      boxesService.resolveForCart.mockResolvedValue({
+        bundleLines: [bundleLine()],
+        componentLines: [componentLine()],
+        bundleSnapshots: [bundleSnapshot()],
+        bundlesTotal: 3500,
+      });
+    };
+
+    it('charges the fixed Box price, keeps reference prices on flat component lines', async () => {
+      primeBundleResolution();
+
+      await service.createCartOrder(
+        buildDto({ items: [], ...bundleBody }),
+      );
+
+      const payload = orderModel.mock.calls[0][0];
+      expect(payload.total).toBe(4100); // 3500 Box + 600 shipping, not 1800 of components
+      expect(payload.bundles).toHaveLength(1);
+      expect(payload.bundles[0].bundleId).toBe('box-1');
+      expect(payload.items).toHaveLength(1);
+      expect(payload.items[0]).toMatchObject({
+        bundleGroupId: 'group-1',
+        lineId: 'line-abc',
+        price: 900,
+        quantity: 2,
+      });
+      // The flattened stock demand includes the Box component quantity.
+      expect(reservations.assertCartAvailability).toHaveBeenCalledWith([
+        { variantId: VARIANT_ID.toString(), quantity: 2 },
+      ]);
+    });
+
+    it('refuses an invalid Box selection with CART_ITEMS_INVALID and writes nothing', async () => {
+      boxesService.resolveForCart.mockResolvedValue({
+        bundleLines: [bundleLine({ isAvailable: false, issues: ['BOX_SELECTION_INVALID'] })],
+        componentLines: [],
+        bundleSnapshots: [],
+        bundlesTotal: 0,
+      });
+
+      await expect(
+        service.createCartOrder(buildDto({ items: [], ...bundleBody })),
+      ).rejects.toMatchObject({
+        errorCode: AppErrorCode.CART_ITEMS_INVALID,
+      });
+      expect(orderModel).not.toHaveBeenCalled();
+      expect(reservations.assertCartAvailability).not.toHaveBeenCalled();
+    });
+
+    it('lets the flattened stock gate refuse a short Box with INSUFFICIENT_STOCK', async () => {
+      boxesService.resolveForCart.mockResolvedValue({
+        bundleLines: [bundleLine({ isAvailable: false, issues: ['BOX_SELECTION_UNAVAILABLE'] })],
+        componentLines: [componentLine()],
+        bundleSnapshots: [bundleSnapshot()],
+        bundlesTotal: 3500,
+      });
+      reservations.assertCartAvailability.mockRejectedValue(
+        new AppException(AppErrorCode.INSUFFICIENT_STOCK, {
+          items: [{ variantId: VARIANT_ID.toString(), requested: 2, available: 1 }],
+        }),
+      );
+
+      await expect(
+        service.createCartOrder(buildDto({ items: [], ...bundleBody })),
+      ).rejects.toMatchObject({ errorCode: AppErrorCode.INSUFFICIENT_STOCK });
+      expect(orderModel).not.toHaveBeenCalled();
+    });
+
+    it('adds bundle lines and their totals to the read-only quote', async () => {
+      primeBundleResolution();
+
+      const quote = await service.validateCart(
+        buildDto({ items: [], ...bundleBody }),
+      );
+
+      expect(quote.bundleLines).toHaveLength(1);
+      expect(quote.bundleLines![0].lineTotal).toBe(3500);
+      expect(quote.subtotal).toBe(3500);
+      expect(quote.hasBlockingIssues).toBe(false);
+    });
+  });
+
+  describe('cart DTO contract', () => {
+    const validateDto = async (body: Record<string, any>) => {
+      const dto = plainToInstance(CreateCartOrderDto, body);
+      return validate(dto, { whitelist: true, forbidNonWhitelisted: true });
+    };
+    const validCustomer = {
+      name: 'Yasmine',
+      phone: '0555123456',
+      wilaya: '16',
+      commune: '163',
+      address: '12 Rue des Oliviers',
+    };
+    const base = {
+      storeId: STORE_ID.toString(),
+      idempotencyKey: 'key_12345',
+      customer: validCustomer,
+      shippingMethod: 'home',
+    };
+
+    it('accepts a bundle-only cart', async () => {
+      const errors = await validateDto({
+        ...base,
+        items: [],
+        bundles: [
+          {
+            bundleId: new Types.ObjectId().toString(),
+            quantity: 1,
+            selections: [{ variantId: VARIANT_ID.toString(), quantity: 2 }],
+          },
+        ],
+      });
+      expect(errors).toHaveLength(0);
+    });
+
+    it('rejects a client-supplied price inside a bundle item', async () => {
+      const errors = await validateDto({
+        ...base,
+        items: [],
+        bundles: [
+          {
+            bundleId: new Types.ObjectId().toString(),
+            quantity: 1,
+            price: 10,
+            selections: [{ variantId: VARIANT_ID.toString(), quantity: 2 }],
+          },
+        ],
+      });
+      expect(errors.length).toBeGreaterThan(0);
+    });
+
+    it('still accepts an items-only cart', async () => {
+      const errors = await validateDto({
+        ...base,
+        items: [{ variantId: VARIANT_ID.toString(), quantity: 2 }],
+      });
+      expect(errors).toHaveLength(0);
+    });
   });
 });

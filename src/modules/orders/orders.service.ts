@@ -5,12 +5,13 @@ import { InjectModel } from '@nestjs/mongoose';
 import { ClientSession, Model, Types } from 'mongoose';
 import { Order, OrderDocument } from './schemas/order.schema';
 import { Counter, CounterDocument } from './schemas/counter.schema';
-import { PosHold, PosHoldDocument, PosHoldItem } from './schemas/pos-hold.schema';
+import { PosHold, PosHoldDocument, PosHoldItem, PosHoldNoteType } from './schemas/pos-hold.schema';
 import { Product, ProductDocument } from '../products/schemas/product.schema';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { CartItemDto, CartValidationDto, CreateCartOrderDto } from './dto/create-cart-order.dto';
 import { CreatePosSaleDto } from './dto/create-pos-sale.dto';
 import { CreatePosHoldDto } from './dto/pos-hold.dto';
+import { resolvePosPricing } from './pos-pricing';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { BulkActionDto } from './dto/bulk-action.dto';
 import { BulkShipDto } from './dto/bulk-ship.dto';
@@ -40,6 +41,8 @@ import {
 import { VariantsService } from '../inventory/services/variants.service';
 import { openTransactionSession, withOptionalSession } from '../inventory/services/session.util';
 import { ReceiveReturnDto } from '../inventory/dto/reservations.dto';
+import { BoxesService } from '../boxes/boxes.service';
+import { BoxCartLineQuote } from '../boxes/box.types';
 
 export interface RequestUser {
   id: string;
@@ -65,7 +68,15 @@ export type CartLineIssueCode =
   | 'VARIANT_INACTIVE'
   | 'STORE_MISMATCH'
   | 'OUT_OF_STOCK'
-  | 'INSUFFICIENT_STOCK';
+  | 'INSUFFICIENT_STOCK'
+  | 'BOX_UNAVAILABLE'
+  | 'BOX_INACTIVE'
+  | 'BOX_ARCHIVED'
+  | 'BOX_NOT_FOUND'
+  | 'BOX_STORE_MISMATCH'
+  | 'BOX_SELECTION_INVALID'
+  | 'BOX_SELECTION_UNAVAILABLE'
+  | 'BOX_PRICE_CHANGED';
 
 export interface CartQuoteLine {
   lineKey: string;
@@ -91,6 +102,8 @@ export interface CartQuote {
   storeSlug: string;
   currency: string;
   lines: CartQuoteLine[];
+  /** Box lines; additive, so product-only quotes keep their exact old shape. */
+  bundleLines?: BoxCartLineQuote[];
   subtotal: number;
   hasBlockingIssues: boolean;
 }
@@ -109,6 +122,10 @@ interface ResolvedCartResult {
     unitPrice: number;
     compareAtPrice: number | null;
   }>;
+  bundleLines: BoxCartLineQuote[];
+  componentLines: Array<Record<string, any>>;
+  bundleSnapshots: Array<Record<string, any>>;
+  bundlesTotal: number;
 }
 
 type OrderCreationMode = 'legacy' | 'cart';
@@ -119,6 +136,8 @@ interface CreateOrderOptions {
   store?: { _id?: any; vendorEmail: string };
   locale?: 'en' | 'ar' | 'fr';
   idempotencyKey?: string;
+  /** Fixed-price Box commercial total (already `Σ bundle.price × quantity`). */
+  bundlesTotal?: number;
 }
 
 /** The register-facing shape of a parked sale (matches the frontend's `PosHeldCart`). */
@@ -143,6 +162,9 @@ export interface PosHoldView {
   updatedAt: string;
   customer: { name?: string; phone?: string; email?: string; note?: string };
   note: string;
+  /** Short heading and kind of the note, so the register can render `title (type)`. */
+  noteTitle: string;
+  noteType: PosHoldNoteType;
   lines: PosHoldViewLine[];
   total: number;
 }
@@ -325,6 +347,7 @@ export class OrdersService {
     private readonly reservationsService: ReservationsService,
     private readonly variantsService: VariantsService,
     private readonly auditService: AuditService,
+    private readonly boxesService: BoxesService,
   ) {}
 
   private assertVendorOrAdmin(user: RequestUser): void {
@@ -654,12 +677,13 @@ export class OrdersService {
     // touching currency conversions. Written even when there is none (`null` = no discount
     // recorded); never backfilled into legacy orders.
     const items = (createOrderDto.items || []).map(item => {
+      const isBundleComponent = !!(item as any).bundleGroupId;
       let price = item.price;
       let weight = item.weight;
       let originalPrice: number | null = null;
       let product: { price: number; weight: number; originalPrice: number | null } | undefined;
 
-      if (item.productId) {
+      if (!isBundleComponent && item.productId) {
         product = productMap.get(item.productId);
         if (!product) {
           throw new AppException(AppErrorCode.ORDER_PRODUCT_NOT_AVAILABLE, { name: item.productName });
@@ -713,7 +737,15 @@ export class OrdersService {
         // server-side data; the client-sent price must never win (spec §7.2 rule 7, "do not
         // trust stock/price values sent by the client"). A vendor's manual order keeps its
         // editable line price: the seller may be recording a negotiated/adjusted sale.
-        if (user) {
+        if (isBundleComponent) {
+          // The Box resolver already priced this line from server-side data. Keep that
+          // reference price and never re-price it (the charge is the bundle price).
+          price = (item as any).bundleReferencePrice ?? item.price;
+          originalPrice = (item as any).originalPrice ?? null;
+          if (!weight || weight <= 0) {
+            weight = productMap.get(snapshot.productId)?.weight ?? weight;
+          }
+        } else if (user) {
           price = snapshot.priceOverride ?? price;
           originalPrice = snapshot.compareAtPrice ?? product?.originalPrice ?? null;
         } else {
@@ -735,16 +767,25 @@ export class OrdersService {
         }
       }
 
-      itemsTotal += price * item.quantity;
+      // Box component lines are physical fulfillment lines; their reference prices must not
+      // be counted again in the commercial total (BR9 / D2).
+      if (!isBundleComponent) {
+        itemsTotal += price * item.quantity;
+      }
       // Every line gets a stable identifier at creation time so inventory
       // reservations can address a single line. `(orderId, variantId)` alone is
-      // ambiguous when the same variant is ordered twice on one order.
+      // ambiguous when the same variant is ordered twice on one order. A Box component's
+      // id is generated by the resolver so `bundles[].contents[].lineId` links stably.
+      const lineId =
+        isBundleComponent && (item as any).lineId
+          ? String((item as any).lineId)
+          : new Types.ObjectId().toHexString();
       return {
         ...item,
         price,
         originalPrice,
         weight: weight || item.weight,
-        lineId: new Types.ObjectId().toHexString(),
+        lineId,
         ...(variantId ? { variantId } : {}),
         ...(sku ? { sku } : {}),
         ...(variantSnapshot ? { variantSnapshot } : {}),
@@ -773,7 +814,9 @@ export class OrdersService {
           createOrderDto.customer?.wilaya,
           createOrderDto.shippingMethod,
         );
-    const total = itemsTotal + shippingFee;
+    // Boxes are charged at their fixed price, never at the sum of component reference prices
+    // (BR9). `bundlesTotal` is resolved by `BoxesService` from stored Box prices.
+    const total = itemsTotal + (options.bundlesTotal ?? 0) + shippingFee;
 
     // A public checkout may not pin the carrier: the store's wilaya attribution (or its enabled
     // default) decides. A vendor entering an order by hand may still choose.
@@ -900,15 +943,38 @@ export class OrdersService {
    * non-throwing per-line issues. It writes nothing.
    */
   async validateCart(dto: CartValidationDto): Promise<CartQuote & { validatedAt: string }> {
-    if (!dto.items?.length) throw new AppException(AppErrorCode.CART_EMPTY);
+    if ((dto.items?.length ?? 0) + (dto.bundles?.length ?? 0) < 1) {
+      throw new AppException(AppErrorCode.CART_EMPTY);
+    }
     const store = await this.resolveActiveStore(dto.storeId);
-    const { quote } = await this.resolveCartLines(
+    const locale = dto.locale ?? 'en';
+    const resolved = await this.resolveCartLines(
       new Types.ObjectId(dto.storeId),
       store,
-      dto.items,
-      dto.locale ?? 'en',
+      dto.items ?? [],
+      locale,
     );
-    return { ...quote, validatedAt: new Date().toISOString() };
+    const bundles = await this.boxesService.resolveForCart(
+      new Types.ObjectId(dto.storeId),
+      dto.bundles ?? [],
+      locale,
+    );
+
+    const bundleSubtotal = bundles.bundleLines.reduce(
+      (sum, line) => sum + line.lineTotal,
+      0,
+    );
+    const subtotal = resolved.quote.subtotal + bundleSubtotal;
+
+    return {
+      ...resolved.quote,
+      bundleLines: bundles.bundleLines,
+      subtotal,
+      hasBlockingIssues:
+        resolved.quote.hasBlockingIssues ||
+        bundles.bundleLines.some((line) => !line.isAvailable),
+      validatedAt: new Date().toISOString(),
+    };
   }
 
   /**
@@ -920,7 +986,9 @@ export class OrdersService {
    * happens atomically at vendor confirmation.
    */
   async createCartOrder(dto: CreateCartOrderDto): Promise<Order> {
-    if (!dto.items?.length) throw new AppException(AppErrorCode.CART_EMPTY);
+    if ((dto.items?.length ?? 0) + (dto.bundles?.length ?? 0) < 1) {
+      throw new AppException(AppErrorCode.CART_EMPTY);
+    }
 
     // Replay first: a retried request must return the order it already created, even if stock
     // has moved since. The core repeats this lookup to close the insert race.
@@ -941,21 +1009,47 @@ export class OrdersService {
     const resolved = await this.resolveCartLines(
       new Types.ObjectId(dto.storeId),
       store,
-      dto.items,
+      dto.items ?? [],
+      locale,
+    );
+    const bundles = await this.boxesService.resolveForCart(
+      new Types.ObjectId(dto.storeId),
+      dto.bundles ?? [],
       locale,
     );
 
-    const invalid = resolved.quote.lines.flatMap((line) =>
-      line.issues
-        .filter((code) => code !== 'INSUFFICIENT_STOCK' && code !== 'OUT_OF_STOCK')
-        .map((code) => ({ lineKey: line.lineKey, variantId: line.variantId, code })),
-    );
+    const invalid = [
+      ...resolved.quote.lines.flatMap((line) =>
+        line.issues
+          .filter((code) => code !== 'INSUFFICIENT_STOCK' && code !== 'OUT_OF_STOCK')
+          .map((code) => ({ lineKey: line.lineKey, variantId: line.variantId, code })),
+      ),
+      ...bundles.bundleLines.flatMap((line) =>
+        line.issues
+          // A short Box is handled by the flattened stock gate below, so it must not be
+          // reported as a structural cart error (the customer just needs fewer boxes).
+          .filter((code) => code !== 'BOX_SELECTION_UNAVAILABLE')
+          .map((code) => ({ lineKey: line.lineKey, bundleId: line.bundleId, code })),
+      ),
+    ];
     if (invalid.length > 0) {
       throw new AppException(AppErrorCode.CART_ITEMS_INVALID, { issues: invalid });
     }
 
-    // Strict, all-or-none stock gate. A short line means no order and no stock movement.
-    await this.reservationsService.assertCartAvailability(dto.items);
+    // Strict, all-or-none stock gate on the *flattened* physical demand: normal lines plus
+    // every Box component (`selection.quantity × bundle.quantity`). Aggregation is per
+    // variant, so two Boxes sharing a variant cannot each pass on their own.
+    const stockDemand = [
+      ...(dto.items ?? []).map((item) => ({
+        variantId: item.variantId,
+        quantity: item.quantity,
+      })),
+      ...bundles.componentLines.map((line) => ({
+        variantId: String(line.variantId),
+        quantity: Number(line.quantity),
+      })),
+    ];
+    await this.reservationsService.assertCartAvailability(stockDemand);
 
     const internalDto = {
       storeId: dto.storeId,
@@ -971,17 +1065,21 @@ export class OrdersService {
         address: dto.shippingMethod === 'home' ? dto.customer.address?.trim() : '',
         note: dto.customer.note,
       },
-      items: resolved.orderable.map((line) => ({
-        productId: line.productId,
-        productName: line.productName,
-        price: line.unitPrice,
-        quantity: line.quantity,
-        variantId: line.variantId,
-        variantDetails: line.variantLabel,
-        // Pre-resolved fallback (variant image ?? product image); the core preserves it for carts.
-        image: line.image ?? undefined,
-      })),
-      total: resolved.quote.subtotal,
+      items: [
+        ...resolved.orderable.map((line) => ({
+          productId: line.productId,
+          productName: line.productName,
+          price: line.unitPrice,
+          quantity: line.quantity,
+          variantId: line.variantId,
+          variantDetails: line.variantLabel,
+          // Pre-resolved fallback (variant image ?? product image); the core preserves it for carts.
+          image: line.image ?? undefined,
+        })),
+        ...bundles.componentLines,
+      ],
+      bundles: bundles.bundleSnapshots,
+      total: resolved.quote.subtotal + bundles.bundlesTotal,
       stopDeskCode: dto.stopDeskCode,
     } as unknown as CreateOrderDto;
 
@@ -990,6 +1088,7 @@ export class OrdersService {
       store,
       locale,
       idempotencyKey: dto.idempotencyKey,
+      bundlesTotal: bundles.bundlesTotal,
     });
   }
 
@@ -1139,6 +1238,10 @@ export class OrdersService {
         hasBlockingIssues: quoteLines.some((line) => !line.isAvailable),
       },
       orderable,
+      bundleLines: [],
+      componentLines: [],
+      bundleSnapshots: [],
+      bundlesTotal: 0,
     };
   }
 
@@ -1267,6 +1370,7 @@ export class OrdersService {
     const now = new Date();
 
     const { items, itemsTotal } = await this.buildPosItems(storeId, dto.items);
+    const pricing = resolvePosPricing(itemsTotal, dto.customFinalPrice);
 
     const [placedStatus, confirmedStatus, dispatchedStatus, deliveredStatus] = await Promise.all([
       this.statusesService.getBySlug(OrderStatus.PLACED),
@@ -1316,7 +1420,16 @@ export class OrdersService {
           paymentMethod: 'CASH',
           customer,
           items,
-          total: itemsTotal,
+          total: pricing.total,
+          ...(pricing.customFinalPrice !== null
+            ? {
+                pricing: {
+                  subtotal: pricing.subtotal,
+                  customFinalPrice: pricing.customFinalPrice,
+                  priceAdjustment: pricing.priceAdjustment,
+                },
+              }
+            : {}),
           status: deliveredStatus,
           history,
           date: now,
@@ -1413,6 +1526,8 @@ export class OrdersService {
         hold.updatedAt instanceof Date ? hold.updatedAt.toISOString() : String(hold.updatedAt ?? ''),
       customer: hold.customer ?? {},
       note: hold.note ?? '',
+      noteTitle: hold.noteTitle ?? '',
+      noteType: (hold.noteType as PosHoldNoteType) ?? 'general',
       total: hold.total ?? 0,
       lines: items.map((item) => ({
         variantId: item.variantId,
@@ -1451,6 +1566,8 @@ export class OrdersService {
     const { items, itemsTotal } = await this.buildPosItems(storeId, dto.items);
     const orderNo = await this.generateOrderNo();
     const note = dto.customer?.note || dto.note || '';
+    const noteTitle = dto.noteTitle?.trim() ?? '';
+    const noteType: PosHoldNoteType = dto.noteType ?? 'general';
     const customer = this.normalizePosCustomer(dto.customer, note);
 
     const session = await openTransactionSession(this.posHoldModel, this.logger);
@@ -1462,6 +1579,8 @@ export class OrdersService {
           orderNo,
           customer,
           note,
+          noteTitle,
+          noteType,
           items,
           total: itemsTotal,
           createdBy: user.id,
@@ -1496,6 +1615,8 @@ export class OrdersService {
     const existing = await this.findPosHoldOrThrow(id, storeId);
     const { items, itemsTotal } = await this.buildPosItems(storeId, dto.items);
     const note = dto.customer?.note || dto.note || '';
+    const noteTitle = dto.noteTitle?.trim() ?? '';
+    const noteType: PosHoldNoteType = dto.noteType ?? 'general';
     const customer = this.normalizePosCustomer(dto.customer, note);
 
     const session = await openTransactionSession(this.posHoldModel, this.logger);
@@ -1504,7 +1625,7 @@ export class OrdersService {
       await session.withTransaction(async () => {
         saved = await this.posHoldModel.findOneAndUpdate(
           { _id: existing._id, storeId },
-          { $set: { customer, note, items, total: itemsTotal } },
+          { $set: { customer, note, noteTitle, noteType, items, total: itemsTotal } },
           { new: true, session },
         );
         if (!saved) {
@@ -1575,6 +1696,7 @@ export class OrdersService {
 
     const now = new Date();
     const { items, itemsTotal } = await this.buildPosItems(storeId, dto.items);
+    const pricing = resolvePosPricing(itemsTotal, dto.customFinalPrice);
 
     const [placedStatus, confirmedStatus, dispatchedStatus, deliveredStatus] = await Promise.all([
       this.statusesService.getBySlug(OrderStatus.PLACED),
@@ -1589,7 +1711,14 @@ export class OrdersService {
     const actor = this.actorLabel(user);
     const holdCustomer = (hold.customer ?? {}) as Record<string, any>;
     const merged = { ...holdCustomer, ...(dto.customer ?? {}) };
-    const note = merged.note || dto.note || hold.note || '';
+    const baseNote = merged.note || dto.note || hold.note || '';
+    // The hold note title ("Versement", …) is part of the note the cashier meant to keep, so
+    // carry it onto the delivered order unless the caller already included it.
+    const holdNoteTitle = (hold.noteTitle ?? '').trim();
+    const note =
+      holdNoteTitle && !baseNote.startsWith(holdNoteTitle)
+        ? [holdNoteTitle, baseNote].filter(Boolean).join(': ')
+        : baseNote;
     // Anonymous walk-in placeholder, exactly like an immediate sale (the vendor UI reads
     // `customer.name` unguarded). `wilaya`/`commune` stay empty because the order is `pickup`.
     const customer = {
@@ -1634,7 +1763,16 @@ export class OrdersService {
           paymentMethod: 'CASH',
           customer,
           items,
-          total: itemsTotal,
+          total: pricing.total,
+          ...(pricing.customFinalPrice !== null
+            ? {
+                pricing: {
+                  subtotal: pricing.subtotal,
+                  customFinalPrice: pricing.customFinalPrice,
+                  priceAdjustment: pricing.priceAdjustment,
+                },
+              }
+            : {}),
           status: deliveredStatus,
           history,
           date: now,
@@ -2590,6 +2728,9 @@ export class OrdersService {
     this.assertNotArchived(existing);
 
     const existingSlug = this.getStatusSlug(existing.status);
+    // A custom-priced POS sale's `total` is the amount actually collected — a historical fact.
+    // Later edits may change customer/note only; the money is immutable.
+    const hasPosPricing = existing.source === OrderSource.POS && existing.pricing != null;
 
     if (user && updateOrderDto.status && updateOrderDto.status !== existingSlug) {
       await this.assertStatusTargetPermission(user, updateOrderDto.status);
@@ -2612,6 +2753,11 @@ export class OrdersService {
     for (const field of ORDERS_UPDATEABLE_FIELDS) {
       const value = (updateOrderDto as Record<string, unknown>)[field];
       if (value !== undefined) updateData[field] = value;
+    }
+
+    if (hasPosPricing) {
+      // The charged amount is a historical fact; later edits may change customer/note only.
+      delete updateData.total;
     }
 
     // DHD commune mapping (DHD-COMMUNE-MAPPING-IMPLEMENTATION-PLAN.md §2.4): the selection is an
@@ -2689,6 +2835,31 @@ export class OrdersService {
           actualUpdatedAt: existing.updatedAt,
         });
       }
+    }
+
+    // Box orders are priced by their immutable `bundles[]` snapshots and their component lines
+    // are generated fulfillment lines. Rewriting them by hand would desynchronise the physical
+    // reservation from the commercial line, so item/total edits are refused (C9 / plan §5.9).
+    const hasBundles =
+      Array.isArray((existing as any).bundles) &&
+      (existing as any).bundles.length > 0;
+    if (hasBundles && updateOrderDto.items !== undefined) {
+      throw new AppException(AppErrorCode.INVALID_ORDER_TRANSITION, {
+        orderNo: existing.orderNo,
+        from: existingSlug,
+        reason: 'bundle_items_locked',
+      });
+    }
+    if (
+      hasBundles &&
+      updateOrderDto.total !== undefined &&
+      Math.abs(updateOrderDto.total - existing.total) > 0.01
+    ) {
+      throw new AppException(AppErrorCode.INVALID_ORDER_TRANSITION, {
+        orderNo: existing.orderNo,
+        from: existingSlug,
+        reason: 'bundle_items_locked',
+      });
     }
 
     // D-5 (revised): the editable window is `placed` (nothing reserved yet) and `confirmed`
@@ -2784,7 +2955,7 @@ export class OrdersService {
       if (!wilaya || !commune) throw new AppException(AppErrorCode.ORDER_WILAYA_COMMUNE_REQUIRED);
     }
 
-    if (updateOrderDto.total !== undefined || updateOrderDto.items) {
+    if (!hasBundles && !hasPosPricing && (updateOrderDto.total !== undefined || updateOrderDto.items)) {
       const items = updateOrderDto.items || (existing.items as any[]);
       const shippingFee = updateOrderDto.shippingFee ?? existing.shippingFee ?? 0;
       const itemsTotal = items.reduce((sum: number, item: any) => sum + (item.price || 0) * (item.quantity || 0), 0);

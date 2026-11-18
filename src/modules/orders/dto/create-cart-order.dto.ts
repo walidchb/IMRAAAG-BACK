@@ -38,6 +38,48 @@ export class CartItemDto {
   quantity: number;
 }
 
+/** One physical unit inside a Box (one variant). Only ids/quantities are accepted. */
+export class CartBundleSelectionDto {
+  @ApiProperty({ description: 'Eligible variant id' })
+  @IsString()
+  @IsNotEmpty()
+  @IsMongoId()
+  variantId: string;
+
+  @ApiProperty({ description: 'Units of this variant inside one Box' })
+  @IsInt()
+  @Min(1)
+  @Max(50)
+  quantity: number;
+}
+
+/**
+ * One Box line in the cart. A separate `bundles` array (not a polymorphic `items`) keeps the
+ * product contract byte-compatible and avoids class-transformer discriminators. Price, name,
+ * requiredQuantity and storeId are deliberately absent: `forbidNonWhitelisted` 400s them.
+ */
+export class CartBundleItemDto {
+  @ApiProperty({ description: 'Box id' })
+  @IsString()
+  @IsNotEmpty()
+  @IsMongoId()
+  bundleId: string;
+
+  @ApiProperty({ description: 'Number of complete Boxes (1–10)' })
+  @IsInt()
+  @Min(1)
+  @Max(10)
+  quantity: number;
+
+  @ApiProperty({ description: 'Contents of one Box', type: [CartBundleSelectionDto] })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(50)
+  @ValidateNested({ each: true })
+  @Type(() => CartBundleSelectionDto)
+  selections: CartBundleSelectionDto[];
+}
+
 /** Ground truth for a cart: one store, many variant lines. */
 export class CartValidationDto {
   @ApiProperty({ description: 'Store id' })
@@ -53,11 +95,18 @@ export class CartValidationDto {
 
   @ApiProperty({ description: 'Cart lines', type: [CartItemDto] })
   @IsArray()
-  @ArrayMinSize(1)
   @ArrayMaxSize(50)
   @ValidateNested({ each: true })
   @Type(() => CartItemDto)
   items: CartItemDto[];
+
+  @ApiPropertyOptional({ description: 'Box lines', type: [CartBundleItemDto] })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(20)
+  @ValidateNested({ each: true })
+  @Type(() => CartBundleItemDto)
+  bundles?: CartBundleItemDto[];
 }
 
 export class CartCustomerDto {
@@ -125,11 +174,18 @@ export class CreateCartOrderDto {
 
   @ApiProperty({ description: 'Cart lines', type: [CartItemDto] })
   @IsArray()
-  @ArrayMinSize(1)
   @ArrayMaxSize(50)
   @ValidateNested({ each: true })
   @Type(() => CartItemDto)
   items: CartItemDto[];
+
+  @ApiPropertyOptional({ description: 'Box lines', type: [CartBundleItemDto] })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(20)
+  @ValidateNested({ each: true })
+  @Type(() => CartBundleItemDto)
+  bundles?: CartBundleItemDto[];
 
   @ApiProperty({ description: 'Customer details', type: CartCustomerDto })
   @ValidateNested()
