@@ -186,6 +186,17 @@
     puppeteerExecutablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
   },
 
+  /**
+   * Product & Box view analytics. Off by default: the public beacon is a no-op and the vendor
+   * reads return zeros with `enabled:false`, so the feature ships dark. Disabling never deletes
+   * stored rows. `hashSalt` falls back to `JWT_SECRET` (with a one-time warning) when empty.
+   */
+  itemViews: {
+    enabled: process.env.ITEM_VIEW_ANALYTICS_ENABLED === 'true',
+    hashSalt: process.env.ITEM_VIEW_HASH_SALT || '',
+    retentionDays: parseInt(process.env.ITEM_VIEW_RETENTION_DAYS || '0', 10),
+  },
+
   zrStatusSync: {
     enabled: process.env.ZR_STATUS_SYNC_ENABLED === 'true',
     intervalMinutes: parseInt(process.env.ZR_STATUS_SYNC_INTERVAL_MINUTES || '15', 10),

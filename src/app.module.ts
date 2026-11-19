@@ -28,6 +28,7 @@ import { SearchModule } from './modules/search/search.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
 import { PosModule } from './modules/pos/pos.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { ItemViewsModule } from './modules/item-views/item-views.module';
 import { OrderLabelsModule } from './modules/order-labels/order-labels.module';
 import { TeamModule } from './modules/team/team.module';
 
@@ -70,6 +71,7 @@ import { TeamModule } from './modules/team/team.module';
     InventoryModule,
     PosModule,
     AnalyticsModule,
+    ItemViewsModule,
     OrderLabelsModule,
     TeamModule,
   ],

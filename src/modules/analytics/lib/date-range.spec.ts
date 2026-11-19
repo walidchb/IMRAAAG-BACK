@@ -6,6 +6,7 @@ import {
   startOfNextMonthInTz,
   previousPeriod,
   resolveAnalyticsRange,
+  resolveViewRange,
 } from './date-range';
 
 /**
@@ -141,5 +142,34 @@ describe('previousPeriod', () => {
     const span = range.to.getTime() - range.from.getTime();
     expect(prev.to.getTime() - prev.from.getTime()).toBe(span);
     expect(prev.to.getTime()).toBe(range.from.getTime());
+  });
+});
+
+describe('resolveViewRange', () => {
+  const resolveView = (input: Parameters<typeof resolveAnalyticsRange>[0]) =>
+    resolveViewRange({ ...input, now: NOW });
+
+  it('defaults to the 7-day preset', () => {
+    const range = resolveView({});
+    expect(range.preset).toBe('7d');
+    expect(iso(range.from)).toBe('2026-06-08T23:00:00.000Z');
+    expect(iso(range.to)).toBe('2026-06-15T23:00:00.000Z');
+  });
+
+  it('keeps an explicit preset intact', () => {
+    const range = resolveView({ preset: '30d' });
+    expect(range.preset).toBe('30d');
+    expect(iso(range.from)).toBe('2026-05-16T23:00:00.000Z');
+  });
+
+  it('snaps timestamp custom bounds to whole Algiers days', () => {
+    const range = resolveView({
+      preset: 'custom',
+      from: '2026-01-02T10:30:00.000Z',
+      to: '2026-01-04T09:00:00.000Z',
+    });
+    expect(range.preset).toBe('custom');
+    expect(iso(range.from)).toBe('2026-01-01T23:00:00.000Z');
+    expect(iso(range.to)).toBe('2026-01-04T23:00:00.000Z');
   });
 });

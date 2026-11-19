@@ -44,6 +44,11 @@ export interface ResolveRangeInput {
   /** ISO 8601 string, exclusive end. Date-only is read as the end of that Algiers day. */
   to?: string | null;
   bucket?: string | null;
+  /**
+   * Preset used when the query omits one (or sends an unusable `custom`). Defaults to the
+   * Sales default (30d); the views surface passes `7d` through `resolveViewRange`.
+   */
+  defaultPreset?: Exclude<AnalyticsRangePreset, 'custom'>;
   /** Injectable clock for deterministic tests. */
   now?: Date;
 }
@@ -174,7 +179,8 @@ function pickBucket(
  */
 export function resolveAnalyticsRange(input: ResolveRangeInput = {}): ResolvedAnalyticsRange {
   const now = input.now ?? new Date();
-  const requested = isPreset(input.preset) ? input.preset : ANALYTICS_DEFAULT_PRESET;
+  const fallbackPreset = input.defaultPreset ?? ANALYTICS_DEFAULT_PRESET;
+  const requested = isPreset(input.preset) ? input.preset : fallbackPreset;
 
   let preset: AnalyticsRangePreset;
   let window: DateWindow;
@@ -186,8 +192,8 @@ export function resolveAnalyticsRange(input: ResolveRangeInput = {}): ResolvedAn
       preset = 'custom';
       window = { from, to };
     } else {
-      preset = ANALYTICS_DEFAULT_PRESET;
-      window = presetWindow(ANALYTICS_DEFAULT_PRESET, now);
+      preset = fallbackPreset;
+      window = presetWindow(fallbackPreset, now);
     }
   } else {
     preset = requested;
@@ -200,6 +206,20 @@ export function resolveAnalyticsRange(input: ResolveRangeInput = {}): ResolvedAn
     to: window.to,
     bucket: pickBucket(input.bucket, preset),
     timezone: ANALYTICS_TIMEZONE,
+  };
+}
+
+/**
+ * Range resolver for the Product & Box views surface: same vocabulary, a 7-day default, and
+ * every bound snapped to whole Algiers calendar days so a timestamp `custom` bound cannot
+ * produce a partial day (the UI sends `YYYY-MM-DD`, but the contract does not rely on it).
+ */
+export function resolveViewRange(input: ResolveRangeInput = {}): ResolvedAnalyticsRange {
+  const resolved = resolveAnalyticsRange({ ...input, defaultPreset: '7d' });
+  return {
+    ...resolved,
+    from: startOfDayInTz(resolved.from),
+    to: startOfNextDayInTz(new Date(resolved.to.getTime() - 1)),
   };
 }
 
