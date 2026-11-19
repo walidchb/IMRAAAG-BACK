@@ -70,10 +70,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
       error = 'Upload Error';
       switch (exception.code) {
         case 'LIMIT_FILE_SIZE':
-          message = 'File too large. Maximum size is 10MB.';
+          message = 'The uploaded file exceeds the maximum allowed size.';
           break;
         case 'LIMIT_FILE_COUNT':
-          message = 'Too many files. Maximum 10 files allowed.';
+          message = 'Too many files in one request.';
           break;
         case 'LIMIT_UNEXPECTED_FILE':
           message = 'Unexpected file field.';

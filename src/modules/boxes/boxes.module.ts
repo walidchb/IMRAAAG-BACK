@@ -7,6 +7,7 @@ import { BoxesController } from './boxes.controller';
 import { BoxesService } from './boxes.service';
 import { StoresModule } from '../stores/stores.module';
 import { InventoryModule } from '../inventory/inventory.module';
+import { UploadModule } from '../upload/upload.module';
 
 /**
  * Dependency direction: `OrdersModule → BoxesModule → InventoryModule`.
@@ -25,6 +26,7 @@ import { InventoryModule } from '../inventory/inventory.module';
     ]),
     StoresModule,
     InventoryModule,
+    UploadModule,
   ],
   controllers: [BoxesController],
   providers: [BoxesService],

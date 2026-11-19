@@ -10,7 +10,7 @@ import {
 } from '@aws-sdk/client-s3';
 import { randomUUID } from 'crypto';
 import { Readable } from 'node:stream';
-import sharp from 'sharp';
+import sharp, { Metadata, Sharp } from 'sharp';
 import { IMAGE_CONFIG } from './image.config';
 
 type VariantDef = {
@@ -56,6 +56,12 @@ export class UploadService {
       credentials: { accessKeyId, secretAccessKey },
       forcePathStyle: true,
     });
+
+    if (!this.publicUrl) {
+      this.logger.warn(
+        'R2_PUBLIC_URL is not set; upload URLs will be relative. Set it (absolute https://) in every deployed environment.',
+      );
+    }
   }
 
   /**
@@ -93,7 +99,11 @@ export class UploadService {
   }
 
   async uploadProductImages(files: Express.Multer.File[], scope: string): Promise<MultiUploadResult> {
-    return Promise.all(files.map((f) => this.uploadProductImage(f, scope)));
+    // Bounded concurrency: sharp is CPU/memory heavy and Vercel Functions are small. Never
+    // start one full pipeline set per uploaded file at once.
+    return this.mapWithConcurrency(files, IMAGE_CONFIG.processingConcurrency, (file) =>
+      this.uploadProductImage(file, scope),
+    );
   }
 
   async uploadStoreLogo(file: Express.Multer.File, scope: string): Promise<UploadResult> {
@@ -124,6 +134,18 @@ export class UploadService {
     return this.processUpload(file, folder, [], maxWidth, scope);
   }
 
+  /**
+   * A single optimized WebP for a Box's primary or gallery image. Boxes never render the
+   * product thumbnail/medium/large derivatives, so none are generated — only the resized
+   * main image is written, under the store's own `boxes/` namespace.
+   */
+  async uploadBoxImage(file: Express.Multer.File, scope: string): Promise<UploadResult> {
+    this.validateFile(file);
+    const folder = IMAGE_CONFIG.folders.box;
+    const maxWidth = IMAGE_CONFIG.maxWidths.box;
+    return this.processUpload(file, folder, [], maxWidth, scope);
+  }
+
   private async processUpload(
     file: Express.Multer.File,
     folder: string,
@@ -139,25 +161,25 @@ export class UploadService {
     const baseKey = `store/${scope}/${folder}/${id}`;
     const baseUrl = this.publicUrl.replace(/\/+$/, '');
 
-    let pipeline = sharp(file.buffer).rotate();
+    const metadata = await this.readMetadata(file);
 
-    const metadata = await sharp(file.buffer).metadata();
+    let pipeline = this.sharpInput(file).rotate();
     if (metadata.width && metadata.width > maxWidth) {
       pipeline = pipeline.resize({ width: maxWidth, withoutEnlargement: true });
     }
 
-    const mainBuffer = await pipeline.webp({ quality: IMAGE_CONFIG.quality }).toBuffer();
+    const mainBuffer = await this.encodeWebp(pipeline);
     const mainKey = `${baseKey}.webp`;
     const mainUrl = baseUrl ? `${baseUrl}/${mainKey}` : mainKey;
 
     const results: Record<string, { url: string; key: string }> = {};
 
     const uploadPromises = variants.map(async (v) => {
-      const buf = await sharp(file.buffer)
-        .rotate()
-        .resize(v.width, v.height, { fit: v.fit, withoutEnlargement: true })
-        .webp({ quality: IMAGE_CONFIG.quality })
-        .toBuffer();
+      const buf = await this.encodeWebp(
+        this.sharpInput(file)
+          .rotate()
+          .resize(v.width, v.height, { fit: v.fit, withoutEnlargement: true }),
+      );
 
       const key = `${baseKey}-${v.suffix}.webp`;
       const url = baseUrl ? `${baseUrl}/${key}` : key;
@@ -179,6 +201,69 @@ export class UploadService {
       large: results['large']?.url || mainUrl,
       largeKey: results['large']?.key || mainKey,
     };
+  }
+
+  /**
+   * Every sharp instance is created with the same safety policy: reject truncated/invalid
+   * input and refuse decompression bombs above the configured pixel budget. A failure is
+   * translated into a clean 400 (`UPLOAD_INVALID_FILE_TYPE`) instead of a generic 500.
+   */
+  private sharpInput(file: Express.Multer.File): Sharp {
+    return sharp(file.buffer, {
+      failOn: 'error',
+      limitInputPixels: IMAGE_CONFIG.maxInputPixels,
+    });
+  }
+
+  private async readMetadata(file: Express.Multer.File): Promise<Metadata> {
+    try {
+      const metadata = await this.sharpInput(file).metadata();
+      if (!metadata.width || !metadata.height) {
+        throw new Error('Image has no readable dimensions');
+      }
+      return metadata;
+    } catch (error) {
+      this.logger.warn(
+        `Rejected an invalid image upload (${file.mimetype}): ${error instanceof Error ? error.message : String(error)}`,
+      );
+      throw new AppException(AppErrorCode.UPLOAD_INVALID_FILE_TYPE, {
+        mime: file.mimetype,
+        reason: 'invalid_or_unsupported_image',
+      });
+    }
+  }
+
+  private async encodeWebp(pipeline: Sharp): Promise<Buffer> {
+    try {
+      return await pipeline.webp({ quality: IMAGE_CONFIG.quality }).toBuffer();
+    } catch (error) {
+      this.logger.warn(
+        `Image conversion failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      throw new AppException(AppErrorCode.UPLOAD_INVALID_FILE_TYPE, {
+        reason: 'invalid_or_unsupported_image',
+      });
+    }
+  }
+
+  private async mapWithConcurrency<T, R>(
+    items: readonly T[],
+    limit: number,
+    fn: (item: T) => Promise<R>,
+  ): Promise<R[]> {
+    const results = new Array<R>(items.length);
+    let next = 0;
+    const workerCount = Math.max(1, Math.min(limit, items.length));
+    await Promise.all(
+      Array.from({ length: workerCount }, async () => {
+        while (true) {
+          const index = next++;
+          if (index >= items.length) return;
+          results[index] = await fn(items[index]);
+        }
+      }),
+    );
+    return results;
   }
 
   private async uploadToR2(key: string, body: Buffer, contentType: string): Promise<void> {

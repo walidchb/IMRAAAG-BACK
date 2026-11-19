@@ -9,6 +9,7 @@ import { Order, OrderDocument } from '../orders/schemas/order.schema';
 import { StoresService } from '../stores/stores.service';
 import { VariantsService } from '../inventory/services/variants.service';
 import { ReservationsService } from '../inventory/services/reservations.service';
+import { UploadService } from '../upload/upload.service';
 import { CreateBoxDto } from './dto/create-box.dto';
 import { UpdateBoxDto } from './dto/update-box.dto';
 import { BoxQueryDto, VendorBoxQueryDto } from './dto/box-query.dto';
@@ -112,6 +113,7 @@ export class BoxesService {
     private readonly storesService: StoresService,
     private readonly variantsService: VariantsService,
     private readonly reservationsService: ReservationsService,
+    private readonly uploadService: UploadService,
   ) {}
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -321,6 +323,11 @@ export class BoxesService {
     if (!updated) {
       throw new AppException(AppErrorCode.BOX_CONFLICT, { id });
     }
+
+    // Delete replaced/removed uploads only after the database write has committed. The
+    // helper checks every remaining Box and Product reference first, so a duplicated Box
+    // that still points at the same URL keeps its image.
+    await this.releaseRemovedImages(storeId, existing!, updated, id);
     return updated;
   }
 
@@ -612,8 +619,80 @@ export class BoxesService {
     if (!deleted) {
       throw new AppException(AppErrorCode.BOX_NOT_FOUND, { id });
     }
-    // R2 assets are deliberately never deleted here (plan §1.4).
+
+    // The Box row is gone; remove its uploads only after the delete succeeded, and only when
+    // no other Box/Product still references them.
+    await this.releaseImages(
+      storeId,
+      [existing?.image, ...(existing?.images ?? [])].filter(Boolean) as string[],
+    );
     return { id: String((deleted as any)._id), deleted: true };
+  }
+
+  /**
+   * Best-effort R2 cleanup after a successful update. Only URLs that disappeared from the
+   * Box are considered. Deletes happen after the database write so a failed save can never
+   * leave the Box pointing at a deleted object.
+   */
+  private async releaseRemovedImages(
+    storeId: string,
+    before: { image?: string | null; images?: string[] | null },
+    after: { image?: string | null; images?: string[] | null },
+    boxId: string,
+  ): Promise<void> {
+    const oldUrls = new Set(
+      [before.image, ...(before.images ?? [])].filter(Boolean) as string[],
+    );
+    const newUrls = new Set(
+      [after.image, ...(after.images ?? [])].filter(Boolean) as string[],
+    );
+    const removed = [...oldUrls].filter((url) => !newUrls.has(url));
+    if (removed.length === 0) return;
+
+    await this.releaseImages(storeId, removed, boxId);
+  }
+
+  /**
+   * Delete upload keys only when no Box or Product still references the URL. `extractKeyFromUrl`
+   * ignores external URLs (e.g. a pasted CDN link), so only objects in this R2 namespace are
+   * ever touched. Every failure is logged and swallowed: cleanup must not fail the write.
+   */
+  private async releaseImages(
+    storeId: string,
+    urls: string[],
+    excludeBoxId?: string,
+  ): Promise<void> {
+    if (!Types.ObjectId.isValid(storeId)) {
+      this.logger.warn(`Skipping Box image cleanup: invalid store id ${storeId}`);
+      return;
+    }
+    const storeKey = new Types.ObjectId(storeId);
+    for (const url of urls) {
+      try {
+        const [boxReference, productReference] = await Promise.all([
+          this.boxModel.exists({
+            storeId: storeKey,
+            ...(excludeBoxId ? { _id: { $ne: excludeBoxId } } : {}),
+            $or: [{ image: url }, { images: url }],
+          }),
+          // Product.storeId is a Mixed path in this Mongoose build, so query with the
+          // ObjectId shape the dual-write stores (a raw string would not match).
+          this.productModel.exists({
+            storeId: storeKey,
+            $or: [{ image: url }, { images: url }],
+          }),
+        ]);
+        if (boxReference || productReference) continue;
+
+        const key = this.uploadService.extractKeyFromUrl(url);
+        if (!key) continue;
+        await this.uploadService.deleteFiles([key]);
+      } catch (error) {
+        this.logger.warn(
+          `Failed to clean up Box image ${url}: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    }
   }
 
   // ─────────────────────────────────────────────────────────────────────────────

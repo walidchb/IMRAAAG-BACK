@@ -66,8 +66,9 @@ describe('Boxes tenancy', () => {
   let productModel: any;
   let orderModel: any;
   let storesService: any;
-  let variantsService: any;
-  let reservationsService: any;
+let variantsService: any;
+let reservationsService: any;
+let uploadService: any;
 
   beforeEach(() => {
     boxModel = jest.fn().mockImplementation((data: any) => ({
@@ -81,7 +82,11 @@ describe('Boxes tenancy', () => {
     boxModel.findOneAndDelete = jest.fn().mockReturnValue(query(null));
     boxModel.countDocuments = jest.fn().mockReturnValue(query(0));
 
-    productModel = { find: jest.fn().mockReturnValue(query([])) };
+    boxModel.exists = jest.fn().mockResolvedValue(null);
+    productModel = {
+      find: jest.fn().mockReturnValue(query([])),
+      exists: jest.fn().mockResolvedValue(null),
+    };
     orderModel = { countDocuments: jest.fn().mockReturnValue(query(0)) };
     storesService = { findByMemberIdOrThrow: jest.fn() };
     variantsService = {
@@ -89,6 +94,10 @@ describe('Boxes tenancy', () => {
     };
     reservationsService = {
       getAvailabilityForVariants: jest.fn().mockResolvedValue(new Map()),
+    };
+    uploadService = {
+      extractKeyFromUrl: jest.fn().mockReturnValue(null),
+      deleteFiles: jest.fn().mockResolvedValue(undefined),
     };
 
     service = new BoxesService(
@@ -98,6 +107,7 @@ describe('Boxes tenancy', () => {
       storesService,
       variantsService,
       reservationsService,
+      uploadService,
     );
   });
 

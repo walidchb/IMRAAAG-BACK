@@ -20,6 +20,7 @@ import { AuditService } from '../audit/audit.service';
 import { OrderStatusesService } from '../orders/order-statuses.service';
 import { ReservationsService } from '../inventory/services/reservations.service';
 import { VariantsService } from '../inventory/services/variants.service';
+import { BoxesService } from '../boxes/boxes.service';
 import { AppException } from '../../common/errors/app-exception';
 import { StoreAccessService } from '../team/store-access.service';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
@@ -324,6 +325,10 @@ describe('POS tenancy isolation', () => {
             },
           },
           { provide: AuditService, useValue: { record: jest.fn().mockResolvedValue(undefined) } },
+          {
+            provide: BoxesService,
+            useValue: { resolveForCart: jest.fn().mockResolvedValue([]) },
+          },
           {
             provide: StoreAccessService,
             useValue: {

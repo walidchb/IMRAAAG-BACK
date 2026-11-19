@@ -9,6 +9,7 @@ import {
   HttpCode,
   HttpStatus,
   Req,
+  UseGuards,
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiConsumes, ApiBody } from '@nestjs/swagger';
@@ -22,10 +23,12 @@ import { StoresService } from '../stores/stores.service';
 import { StorePermission, hasStorePermission } from '../../common/constants/store-permissions.const';
 import { RequirePermissions } from '../team/decorators/require-permissions.decorator';
 import { IMAGE_CONFIG } from './image.config';
+import { UploadSizeGuard } from './upload-size.guard';
 
 @ApiTags('Upload')
 @Controller('upload')
 @Roles(Role.VENDOR, Role.ADMIN)
+@UseGuards(UploadSizeGuard)
 @Throttle({ default: { limit: 500, ttl: 60000 } })
 export class UploadController {
   constructor(
@@ -62,15 +65,34 @@ export class UploadController {
   @RequirePermissions(StorePermission.PRODUCTS_UPDATE)
   @HttpCode(HttpStatus.OK)
   @UseInterceptors(
-    FilesInterceptor('files', 100, { limits: { fileSize: IMAGE_CONFIG.maxFileSize } }),
+    FilesInterceptor('files', IMAGE_CONFIG.maxFilesPerRequest, {
+      limits: { fileSize: IMAGE_CONFIG.maxFileSize },
+    }),
   )
-  @ApiOperation({ summary: 'Upload multiple product images (max 100 per request)' })
+  @ApiOperation({
+    summary: `Upload multiple product images (max ${IMAGE_CONFIG.maxFilesPerRequest} per request)`,
+  })
   @ApiConsumes('multipart/form-data')
   async uploadProductImages(@UploadedFiles() files: Express.Multer.File[], @Req() req: any) {
     if (!files || files.length === 0)
       throw new AppException(AppErrorCode.UPLOAD_NO_FILE_PROVIDED);
+    this.assertAggregateSize(files);
     const results = await this.uploadService.uploadProductImages(files, await this.scopeFor(req));
     return { images: results };
+  }
+
+  /**
+   * `Content-Length` may be absent on a chunked request, so the guard cannot catch every
+   * oversized batch. Re-check the actual buffers before sharp starts. Vercel itself rejects
+   * bodies above 4.5 MB; this keeps the app's own aggregate budget explicit and testable.
+   */
+  private assertAggregateSize(files: Express.Multer.File[]): void {
+    const total = files.reduce((sum, file) => sum + (file.size || 0), 0);
+    if (total > IMAGE_CONFIG.maxTotalUploadBytes) {
+      throw new AppException(AppErrorCode.UPLOAD_REQUEST_TOO_LARGE, {
+        limitMb: (IMAGE_CONFIG.maxTotalUploadBytes / (1024 * 1024)).toFixed(1),
+      });
+    }
   }
 
   @Post('store-logo')
@@ -106,6 +128,17 @@ export class UploadController {
     return this.uploadService.uploadCategoryImage(file, await this.scopeFor(req));
   }
 
+  @Post('box-image')
+  @RequirePermissions(StorePermission.BOXES_MANAGE)
+  @HttpCode(HttpStatus.OK)
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: IMAGE_CONFIG.maxFileSize } }))
+  @ApiOperation({ summary: 'Upload an optimized Box image (primary or gallery)' })
+  @ApiConsumes('multipart/form-data')
+  async uploadBoxImage(@UploadedFile() file: Express.Multer.File, @Req() req: any) {
+    if (!file) throw new AppException(AppErrorCode.UPLOAD_NO_FILE_PROVIDED);
+    return this.uploadService.uploadBoxImage(file, await this.scopeFor(req));
+  }
+
   @Delete()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Delete an uploaded image by key' })
@@ -129,6 +162,7 @@ export class UploadController {
     let permission: string | null = null;
     if (key.includes('/products/')) permission = StorePermission.PRODUCTS_UPDATE;
     else if (key.includes('/categories/')) permission = StorePermission.PRODUCTS_CATEGORIES_MANAGE;
+    else if (key.includes('/boxes/')) permission = StorePermission.BOXES_MANAGE;
     else if (key.includes('/stores/')) permission = StorePermission.STORE_UPDATE;
     if (!permission) return;
 

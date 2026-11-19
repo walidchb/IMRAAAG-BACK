@@ -1,12 +1,51 @@
+const MB = 1024 * 1024;
+
+function intFromEnv(name: string, fallback: number): number {
+  const raw = process.env[name];
+  if (!raw) return fallback;
+  const value = Number.parseInt(raw, 10);
+  return Number.isFinite(value) && value > 0 ? value : fallback;
+}
+
+/**
+ * Vercel Functions reject a total request body above 4.5 MB before the function runs. Keep
+ * every limit below that ceiling with headroom for multipart boundaries and headers. The
+ * browser compresses to ~700 KB per image, so these are safety ceilings, not targets. A
+ * larger upload would need a direct-to-R2 flow.
+ */
+const VERCEL_SAFE_REQUEST_BYTES = 4 * MB;
+
+const maxTotalUploadBytes = Math.min(
+  intFromEnv('UPLOAD_MAX_TOTAL_BYTES', VERCEL_SAFE_REQUEST_BYTES),
+  VERCEL_SAFE_REQUEST_BYTES,
+);
+const maxFileSize = Math.min(
+  intFromEnv('UPLOAD_MAX_FILE_BYTES', maxTotalUploadBytes),
+  maxTotalUploadBytes,
+);
+
 export const IMAGE_CONFIG = {
   quality: 80,
-  maxFileSize: 10 * 1024 * 1024,
+  /** Per-file ceiling. Clamped to the aggregate request budget above. */
+  maxFileSize,
+  /** Aggregate multipart budget for one request (all files + boundaries). */
+  maxTotalUploadBytes,
+  /** Maximum files in one multipart request. */
+  maxFilesPerRequest: intFromEnv('UPLOAD_MAX_FILES', 10),
+  /** Files processed at once. Bounds sharp CPU/memory on Vercel Functions. */
+  processingConcurrency: Math.min(
+    Math.max(intFromEnv('UPLOAD_CONCURRENCY', 2), 1),
+    4,
+  ),
+  /** Decompression-bomb guard passed to every sharp instance. */
+  maxInputPixels: intFromEnv('UPLOAD_MAX_INPUT_PIXELS', 40_000_000),
   /** Per-store uploads allowed in a rolling day (H7). Bounds storage abuse by one tenant. */
   dailyUploadLimitPerStore: 500,
   allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/avif'] as const,
 
   maxWidths: {
     product: 1600,
+    box: 1600,
     storeLogo: 512,
     storeCover: 1920,
     profileAvatar: 256,
@@ -35,6 +74,7 @@ export const IMAGE_CONFIG = {
 
   folders: {
     product: 'products',
+    box: 'boxes',
     storeLogo: 'stores/logos',
     storeCover: 'stores/covers',
     profileAvatar: 'profiles',

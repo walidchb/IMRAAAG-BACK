@@ -106,6 +106,7 @@ describe('BoxesService', () => {
   let storesService: any;
   let variantsService: any;
   let reservationsService: any;
+  let uploadService: any;
 
   beforeEach(() => {
     boxModel = jest.fn().mockImplementation((data: any) => ({
@@ -118,9 +119,11 @@ describe('BoxesService', () => {
     boxModel.findOneAndUpdate = jest.fn().mockReturnValue(query(null));
     boxModel.findOneAndDelete = jest.fn().mockReturnValue(query(null));
     boxModel.countDocuments = jest.fn().mockReturnValue(query(0));
+    boxModel.exists = jest.fn().mockResolvedValue(null);
 
     productModel = {
       find: jest.fn().mockReturnValue(query([product()])),
+      exists: jest.fn().mockResolvedValue(null),
     };
     orderModel = {
       countDocuments: jest.fn().mockReturnValue(query(0)),
@@ -145,6 +148,12 @@ describe('BoxesService', () => {
         ]),
       ),
     };
+    uploadService = {
+      extractKeyFromUrl: jest.fn((url: string) =>
+        url.startsWith('https://cdn.test/') ? url.slice('https://cdn.test/'.length) : null,
+      ),
+      deleteFiles: jest.fn().mockResolvedValue(undefined),
+    };
 
     service = new BoxesService(
       boxModel,
@@ -153,6 +162,7 @@ describe('BoxesService', () => {
       storesService,
       variantsService,
       reservationsService,
+      uploadService,
     );
   });
 
@@ -442,6 +452,72 @@ describe('BoxesService', () => {
       expect(boxModel.findOneAndUpdate).not.toHaveBeenCalled();
       expect(boxModel.findOneAndDelete).not.toHaveBeenCalled();
       expect(boxModel).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('image cleanup', () => {
+    it('deletes the replaced primary image only after a successful update', async () => {
+      const oldUrl = 'https://cdn.test/old.webp';
+      const newUrl = 'https://cdn.test/new.webp';
+      boxModel.findById.mockReturnValue(query(boxDoc({ image: oldUrl, images: [] })));
+      boxModel.findOneAndUpdate.mockReturnValue(query(boxDoc({ image: newUrl, images: [] })));
+
+      await service.update('box-id', { image: newUrl } as any, store);
+
+      expect(uploadService.deleteFiles).toHaveBeenCalledWith(['old.webp']);
+    });
+
+    it('does not delete when the update fails', async () => {
+      boxModel.findById.mockReturnValue(query(boxDoc()));
+      boxModel.findOneAndUpdate.mockReturnValue(query(null));
+
+      await expect(
+        service.update('box-id', { image: 'https://cdn.test/new.webp' } as any, store),
+      ).rejects.toMatchObject({ errorCode: AppErrorCode.BOX_CONFLICT });
+
+      expect(uploadService.deleteFiles).not.toHaveBeenCalled();
+    });
+
+    it('keeps an image still referenced by another Box', async () => {
+      const shared = 'https://cdn.test/shared.webp';
+      boxModel.findById.mockReturnValue(query(boxDoc({ image: shared, images: [] })));
+      boxModel.findOneAndUpdate.mockReturnValue(
+        query(boxDoc({ image: 'https://cdn.test/new.webp', images: [] })),
+      );
+      boxModel.exists.mockResolvedValue({ _id: new Types.ObjectId() });
+
+      await service.update(
+        'box-id',
+        { image: 'https://cdn.test/new.webp' } as any,
+        store,
+      );
+
+      expect(uploadService.deleteFiles).not.toHaveBeenCalled();
+    });
+
+    it('deletes every Box image after a successful delete', async () => {
+      const img1 = 'https://cdn.test/one.webp';
+      const img2 = 'https://cdn.test/two.webp';
+      boxModel.findById.mockReturnValue(query(boxDoc({ image: img1, images: [img2] })));
+      boxModel.findOneAndDelete.mockReturnValue(
+        query(boxDoc({ image: img1, images: [img2] })),
+      );
+
+      await service.remove('box-id', store);
+
+      expect(uploadService.deleteFiles).toHaveBeenCalledWith(['one.webp']);
+      expect(uploadService.deleteFiles).toHaveBeenCalledWith(['two.webp']);
+    });
+
+    it('keeps shared images when another Box still references them', async () => {
+      const shared = 'https://cdn.test/shared.webp';
+      boxModel.findById.mockReturnValue(query(boxDoc({ image: shared, images: [] })));
+      boxModel.findOneAndDelete.mockReturnValue(query(boxDoc({ image: shared, images: [] })));
+      boxModel.exists.mockResolvedValue({ _id: new Types.ObjectId() });
+
+      await service.remove('box-id', store);
+
+      expect(uploadService.deleteFiles).not.toHaveBeenCalled();
     });
   });
 });

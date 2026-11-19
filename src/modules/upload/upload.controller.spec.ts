@@ -2,6 +2,7 @@ import { UploadController } from './upload.controller';
 import { AppException } from '../../common/errors/app-exception';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
 import { Role } from '../../common/constants/roles.enum';
+import { IMAGE_CONFIG } from './image.config';
 
 /**
  * H7 — uploads are tenant-scoped.
@@ -19,6 +20,8 @@ describe('UploadController tenancy', () => {
     const uploadService = {
       deleteFile: jest.fn().mockResolvedValue(undefined),
       uploadProductImage: jest.fn().mockResolvedValue({ key: `store/${storeId}/products/${FILE_ID}.webp` }),
+      uploadProductImages: jest.fn().mockResolvedValue([]),
+      uploadBoxImage: jest.fn().mockResolvedValue({ key: `store/${storeId}/boxes/${FILE_ID}.webp` }),
     };
     const storesService = {
       findByMemberIdOrThrow: jest.fn().mockResolvedValue({ _id: storeId }),
@@ -70,5 +73,39 @@ describe('UploadController tenancy', () => {
     await controller.uploadProductImage({} as any, vendorReq);
 
     expect(uploadService.uploadProductImage).toHaveBeenCalledWith({}, STORE_A);
+  });
+
+  it('namespaces Box uploads under the session store', async () => {
+    const { controller, uploadService } = makeController();
+
+    await controller.uploadBoxImage({} as any, vendorReq);
+
+    expect(uploadService.uploadBoxImage).toHaveBeenCalledWith({}, STORE_A);
+  });
+
+  it('deletes a Box image inside the caller’s own store namespace', async () => {
+    const { controller, uploadService } = makeController();
+
+    await expect(
+      controller.deleteFile(vendorReq, `store/${STORE_A}/boxes/${FILE_ID}.webp`),
+    ).resolves.toEqual({ message: 'File deleted' });
+
+    expect(uploadService.deleteFile).toHaveBeenCalledWith(
+      `store/${STORE_A}/boxes/${FILE_ID}.webp`,
+    );
+  });
+
+  it('rejects a batch whose summed file sizes exceed the aggregate Vercel-safe budget', async () => {
+    const { controller, uploadService } = makeController();
+    const files = [
+      { size: IMAGE_CONFIG.maxTotalUploadBytes, buffer: Buffer.alloc(1), mimetype: 'image/jpeg' },
+      { size: 1, buffer: Buffer.alloc(1), mimetype: 'image/jpeg' },
+    ] as any;
+
+    await expect(controller.uploadProductImages(files, vendorReq)).rejects.toMatchObject({
+      errorCode: AppErrorCode.UPLOAD_REQUEST_TOO_LARGE,
+    });
+
+    expect(uploadService.uploadProductImages).not.toHaveBeenCalled();
   });
 });
