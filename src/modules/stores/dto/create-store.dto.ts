@@ -9,6 +9,7 @@ import {
   ValidateNested,
   IsIn,
   MaxLength,
+  MinLength,
   IsMongoId,
   IsUrl,
 } from 'class-validator';
@@ -101,6 +102,15 @@ export class CreateStoreDto {
   @IsOptional()
   @IsString()
   storeSlug?: string;
+
+  // Optional. Omitted by existing clients, in which case the backend derives one from the
+  // store slug. Kept out of `UpdateStoreDto` on purpose: the storefront address is stable.
+  @ApiPropertyOptional({ description: 'Public subdomain label (auto-assigned if omitted)' })
+  @IsOptional()
+  @IsString()
+  @MinLength(3)
+  @MaxLength(30)
+  subdomain?: string;
 
   @ApiPropertyOptional({ description: 'Store description' })
   @IsOptional()

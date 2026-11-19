@@ -72,6 +72,9 @@ export const ERROR_HTTP_STATUS: Record<string, number> = {
   [AppErrorCode.STORE_CATEGORY_LIMIT_EXCEEDED]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.STORE_HAS_PRODUCTS]: HttpStatus.CONFLICT,
   [AppErrorCode.STORE_CANNOT_PUBLISH_EMPTY]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.STORE_SUBDOMAIN_INVALID]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.STORE_SUBDOMAIN_RESERVED]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.STORE_SUBDOMAIN_TAKEN]: HttpStatus.CONFLICT,
 
   // ─── Product ───
   [AppErrorCode.PRODUCT_NOT_FOUND]: HttpStatus.NOT_FOUND,
@@ -189,6 +192,7 @@ export const ERROR_HTTP_STATUS: Record<string, number> = {
   [AppErrorCode.UPLOAD_KEY_FORBIDDEN]: HttpStatus.FORBIDDEN,
   [AppErrorCode.UPLOAD_INVALID_FILE_TYPE]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.UPLOAD_FILE_TOO_LARGE]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.UPLOAD_REQUEST_TOO_LARGE]: HttpStatus.PAYLOAD_TOO_LARGE,
   [AppErrorCode.UPLOAD_R2_ACCESS_DENIED]: HttpStatus.INTERNAL_SERVER_ERROR,
   [AppErrorCode.UPLOAD_FAILED]: HttpStatus.INTERNAL_SERVER_ERROR,
   [AppErrorCode.UPLOAD_DELETE_FAILED]: HttpStatus.INTERNAL_SERVER_ERROR,

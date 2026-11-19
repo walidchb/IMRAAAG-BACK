@@ -22,6 +22,15 @@ export class Store {
   @Prop({ required: true, unique: true, lowercase: true, trim: true })
   storeSlug: string;
 
+  /**
+   * Stable, host-safe public subdomain under the platform root (e.g. "zainab").
+   * Deliberately separate from `storeSlug`: storeSlug is regenerated when the
+   * store name changes, while the public storefront address must remain stable.
+   * Nullable for legacy documents and stores that have not completed migration.
+   */
+  @Prop({ lowercase: true, trim: true, maxlength: 30 })
+  subdomain?: string;
+
   // Optional: only `storeName`, `storeSlug` (derived from the name) and the contact
   // identity (`vendorEmail`) are mandatory. Every other attribute - description, logo,
   // cover, location, socials - is optional.
@@ -118,3 +127,14 @@ StoreSchema.index({ storeSlug: 1 });
 StoreSchema.index({ vendorEmail: 1 });
 StoreSchema.index({ vendorId: 1 });
 StoreSchema.index({ status: 1 });
+
+// A partial unique index (not `unique: true` on the @Prop) so the many legacy documents
+// without a subdomain remain valid while actual strings stay unique platform-wide.
+StoreSchema.index(
+  { subdomain: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { subdomain: { $type: 'string' } },
+    name: 'store_subdomain_unique',
+  },
+);

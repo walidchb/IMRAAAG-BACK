@@ -19,6 +19,17 @@ import { UploadService } from '../upload/upload.service';
 import { StoreMember, StoreMemberDocument } from '../team/schemas/store-member.schema';
 import { StoreMemberStatus, StoreRole } from '../../common/constants/store-roles.enum';
 import { permissionsForRole } from '../../common/constants/store-permissions.const';
+import { isReservedStoreSubdomain } from '../../common/constants/store-subdomain.const';
+import {
+  normalizeSubdomain,
+  STORE_SUBDOMAIN_MAX_LENGTH,
+} from './store-subdomain.util';
+
+export interface SubdomainAvailability {
+  value: string;
+  available: boolean;
+  reason?: 'invalid' | 'reserved' | 'taken';
+}
 
 export interface CursorDto {
   createdAt: string;
@@ -95,16 +106,51 @@ export class StoresService {
     if (existingSlug) {
       storeSlug = `${storeSlug}-${Date.now()}`;
     }
+
+    // An explicit subdomain (dashboard/admin create form) is validated and pre-checked so a
+    // conflict is a real error; otherwise one is derived deterministically from the slug.
+    // The DTO field is never copied through unvalidated - `subdomain` below always wins.
+    const rawSubdomain =
+      typeof createStoreDto.subdomain === 'string' ? createStoreDto.subdomain.trim() : '';
+    const explicitSubdomain = rawSubdomain ? this.assertSubdomainAllowed(rawSubdomain) : null;
+    if (explicitSubdomain) {
+      const taken = await this.storeModel.exists({ subdomain: explicitSubdomain }).exec();
+      if (taken) {
+        throw new AppException(AppErrorCode.STORE_SUBDOMAIN_TAKEN, {
+          subdomain: explicitSubdomain,
+        });
+      }
+    }
+    const assignedSubdomain = explicitSubdomain ?? (await this.suggestSubdomain(storeSlug));
+
     const created = new this.storeModel({
       ...createStoreDto,
       vendorEmail,
       storeSlug,
+      subdomain: assignedSubdomain,
       // Cast explicitly rather than relying on Mongoose: a string here is exactly the
       // defect `vendorIdFilter()` has to tolerate, so do not create new instances of it.
       ...(vendorId ? { vendorId: new Types.ObjectId(vendorId) } : {}),
     });
 
-    const saved = await created.save();
+    let saved: StoreDocument;
+    try {
+      saved = await created.save();
+    } catch (err) {
+      // A concurrent create can win the index race. On the auto path retry once with a fresh
+      // suggestion; on an explicit request tell the caller the value is taken.
+      if (this.isDuplicateSubdomainKey(err)) {
+        if (explicitSubdomain) {
+          throw new AppException(AppErrorCode.STORE_SUBDOMAIN_TAKEN, {
+            subdomain: explicitSubdomain,
+          });
+        }
+        created.set('subdomain', await this.suggestSubdomain(storeSlug));
+        saved = await created.save();
+      } else {
+        throw err;
+      }
+    }
     this.storeIdByEmailCache.set(vendorEmail, { id: saved._id, at: Date.now() });
 
     // Every store owns a General/General category tree from the moment it exists. A failure
@@ -279,6 +325,136 @@ export class StoresService {
     }
     if (opts?.includePublishedCount) await this.attachPublishedProductCounts([store]);
     return store;
+  }
+
+  /** Normalize a candidate label, or `null` when it is not a valid store subdomain. */
+  normalizeSubdomain(raw: string): string | null {
+    return normalizeSubdomain(raw);
+  }
+
+  /**
+   * Normalize + reject invalid/reserved labels. Used on every write path so a bad value can
+   * never reach the database even if a caller bypasses the DTO.
+   */
+  assertSubdomainAllowed(raw: string): string {
+    const value = normalizeSubdomain(raw);
+    if (!value) {
+      // Never echo the raw value back: it may contain arbitrary input.
+      throw new AppException(AppErrorCode.STORE_SUBDOMAIN_INVALID);
+    }
+    if (isReservedStoreSubdomain(value)) {
+      throw new AppException(AppErrorCode.STORE_SUBDOMAIN_RESERVED, { subdomain: value });
+    }
+    return value;
+  }
+
+  /**
+   * Public availability check. Never reveals which (if any) store owns a taken value, and
+   * answers `available: false` plus a reason rather than a 4xx so the UI can render every
+   * state without treating it as a request failure.
+   */
+  async isSubdomainAvailable(raw: string): Promise<SubdomainAvailability> {
+    const value = normalizeSubdomain(raw);
+    if (!value) {
+      return { value: typeof raw === 'string' ? raw.trim().toLowerCase() : '', available: false, reason: 'invalid' };
+    }
+    if (isReservedStoreSubdomain(value)) {
+      return { value, available: false, reason: 'reserved' };
+    }
+    const taken = await this.storeModel.exists({ subdomain: value }).exec();
+    return taken ? { value, available: false, reason: 'taken' } : { value, available: true };
+  }
+
+  /**
+   * Deterministic suggestion derived from a seed (normally the store slug). Reserved or
+   * invalid seeds fall back to `store`, and a taken value gets a `-2`, `-3`, ... suffix.
+   * Bounded at 50 attempts; the final fallback is a timestamp-suffixed label so creation can
+   * never dead-end.
+   */
+  async suggestSubdomain(seed: string): Promise<string> {
+    let base = normalizeSubdomain(
+      String(seed ?? '')
+        .slice(0, STORE_SUBDOMAIN_MAX_LENGTH)
+        .replace(/-+$/, ''),
+    );
+    if (!base || isReservedStoreSubdomain(base)) base = 'store';
+
+    if (!(await this.storeModel.exists({ subdomain: base }).exec())) return base;
+
+    for (let n = 2; n <= 50; n += 1) {
+      const suffix = `-${n}`;
+      const head = base.slice(0, STORE_SUBDOMAIN_MAX_LENGTH - suffix.length).replace(/-+$/, '');
+      const candidate = normalizeSubdomain(`${head}${suffix}`);
+      if (candidate && !(await this.storeModel.exists({ subdomain: candidate }).exec())) {
+        return candidate;
+      }
+    }
+
+    const stamp = (Date.now() % 1_000_000).toString(36);
+    return `store-${stamp}`;
+  }
+
+  /**
+   * Host-based public lookup. Invalid input, an unknown label and a store without a
+   * subdomain are all `STORE_NOT_FOUND` (never a format hint); a non-active store mirrors
+   * `findBySlug` with `STORE_NOT_ACTIVE`.
+   */
+  async findBySubdomain(
+    rawSubdomain: string,
+    opts?: { skipStatusCheck?: boolean; includePublishedCount?: boolean },
+  ): Promise<Store> {
+    const value = normalizeSubdomain(rawSubdomain);
+    if (!value) throw new AppException(AppErrorCode.STORE_NOT_FOUND, { field: 'subdomain' });
+    const store = await this.storeModel.findOne({ subdomain: value }).exec();
+    if (!store) throw new AppException(AppErrorCode.STORE_NOT_FOUND, { field: 'subdomain' });
+    if (!opts?.skipStatusCheck && store.status !== StoreStatus.ACTIVE) {
+      throw new AppException(AppErrorCode.STORE_NOT_ACTIVE, { subdomain: value });
+    }
+    if (opts?.includePublishedCount) await this.attachPublishedProductCounts([store]);
+    return store;
+  }
+
+  /**
+   * Dedicated update path for the storefront address. Deliberately not folded into
+   * `update()`: a store rename must never move the public URL, and this path must not
+   * recompute the slug or touch images/products.
+   */
+  async updateSubdomain(storeId: string, rawSubdomain: string): Promise<Store> {
+    const existing = await this.storeModel.findById(storeId).exec();
+    if (!existing) throw new AppException(AppErrorCode.STORE_NOT_FOUND, { id: storeId });
+
+    const value = this.assertSubdomainAllowed(rawSubdomain);
+    if (existing.subdomain === value) return existing;
+
+    const taken = await this.storeModel
+      .exists({ subdomain: value, _id: { $ne: storeId } })
+      .exec();
+    if (taken) throw new AppException(AppErrorCode.STORE_SUBDOMAIN_TAKEN, { subdomain: value });
+
+    let updated: Store | null;
+    try {
+      updated = await this.storeModel
+        .findByIdAndUpdate(storeId, { $set: { subdomain: value } }, { returnDocument: 'after' })
+        .exec();
+    } catch (err) {
+      // The pre-check loses to a concurrent write only here; surface the same 409.
+      if (this.isDuplicateSubdomainKey(err)) {
+        throw new AppException(AppErrorCode.STORE_SUBDOMAIN_TAKEN, { subdomain: value });
+      }
+      throw err;
+    }
+
+    if (!updated) throw new AppException(AppErrorCode.STORE_NOT_FOUND, { id: storeId });
+    return updated;
+  }
+
+  /** True when a Mongo duplicate-key error is on the `subdomain` index. */
+  private isDuplicateSubdomainKey(err: unknown): boolean {
+    const e = err as { code?: number; keyPattern?: Record<string, unknown>; keyValue?: Record<string, unknown> };
+    return (
+      e?.code === 11000 &&
+      (!!e?.keyPattern?.subdomain || !!e?.keyValue?.subdomain)
+    );
   }
 
   /**
@@ -557,7 +733,7 @@ export class StoresService {
     return this.storeModel
       .find(filter)
       .select(
-        '_id storeName storeSlug description storeLogo coverImage tagline wilaya commune categories socialMedia status totalProducts totalOrders createdAt',
+        '_id storeName storeSlug subdomain description storeLogo coverImage tagline wilaya commune categories socialMedia status totalProducts totalOrders createdAt',
       )
       .sort({ createdAt: -1 })
       .limit(50)

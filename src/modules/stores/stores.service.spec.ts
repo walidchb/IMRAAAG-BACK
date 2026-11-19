@@ -59,6 +59,8 @@ describe('StoresService', () => {
     model.findOne = jest.fn().mockReturnValue(query(null));
     model.findById = jest.fn().mockReturnValue(query(null));
     model.find = jest.fn().mockReturnValue(query([]));
+    // `create()` derives a public subdomain; a free label keeps the existing assertions.
+    model.exists = jest.fn().mockReturnValue(query(null));
     model.prototype.save = jest.fn().mockImplementation(function (this: any) {
       this._id = this._id ?? new Types.ObjectId();
       return Promise.resolve(this);
@@ -286,6 +288,23 @@ describe('StoresService', () => {
       await expect(service.create({ ...dto(), vendorEmail: '' })).rejects.toMatchObject({
         errorCode: AppErrorCode.STORE_VENDOR_EMAIL_REQUIRED,
       });
+    });
+  });
+
+  describe('update - a store rename leaves the public subdomain untouched', () => {
+    it('changes storeSlug but never carries subdomain in the update payload', async () => {
+      const store = activeStore({ storeSlug: 'old-name', subdomain: 'stable-address' });
+      storeModel.findById = jest.fn().mockReturnValue(query(store));
+      storeModel.findOne = jest.fn().mockReturnValue(query(null));
+      storeModel.findByIdAndUpdate = jest
+        .fn()
+        .mockReturnValue(query({ ...store, storeName: 'New Name' }));
+
+      await service.update(String(store._id), { storeName: 'New Name' } as any);
+
+      const update = storeModel.findByIdAndUpdate.mock.calls[0][1];
+      expect(update).not.toHaveProperty('subdomain');
+      expect(update.storeSlug).toBe('new-name');
     });
   });
 

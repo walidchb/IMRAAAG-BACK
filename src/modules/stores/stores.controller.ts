@@ -14,6 +14,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiBearerAuth } from '@ne
 import { StoresService } from './stores.service';
 import { CreateStoreDto } from './dto/create-store.dto';
 import { UpdateStoreDto } from './dto/update-store.dto';
+import { UpdateStoreSubdomainDto } from './dto/update-store-subdomain.dto';
 import { Store } from './schemas/store.schema';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Public } from '../auth/decorators/public.decorator';
@@ -92,6 +93,27 @@ export class StoresController {
     return this.storesService.update(store._id.toString(), updateStoreDto);
   }
 
+  /**
+   * Dedicated subdomain update. Ownership is session-derived (`findByMemberIdOrThrow`); a
+   * `storeId`/email smuggled into the body is ignored because the DTO has no such field and
+   * the strict validation pipe rejects unknown properties.
+   */
+  @Roles(Role.VENDOR)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Patch('mine/subdomain')
+  @RequirePermissions(StorePermission.STORE_UPDATE)
+  @ApiOperation({ summary: 'Update own store public subdomain' })
+  @ApiResponse({ status: 200, description: 'Subdomain updated', type: Store })
+  @ApiResponse({ status: 400, description: 'Invalid or reserved subdomain' })
+  @ApiResponse({ status: 409, description: 'Subdomain already taken' })
+  async updateMineSubdomain(@Body() dto: UpdateStoreSubdomainDto, @Req() req: any) {
+    const user = req.user as { id: string };
+    const store = await this.storesService.findByMemberIdOrThrow(user.id, {
+      skipStatusCheck: true,
+    });
+    return this.storesService.updateSubdomain(store._id.toString(), dto.subdomain);
+  }
+
   @Roles(Role.VENDOR)
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Patch('mine/toggle-status')
@@ -143,6 +165,45 @@ export class StoresController {
       limit: limit ? Number(limit) : undefined,
       cursor,
     });
+  }
+
+  /**
+   * Public host-based resolution. Static path, declared before `GET /stores/:id` so Express
+   * never treats `by-subdomain` as an id. Read-only, active-only, and never trusts a Host
+   * header - the caller names the label explicitly.
+   */
+  // The storefront resolves a store host from server-side code, so every store-root document
+  // can make one or two requests from the same egress address. The read is a cheap indexed,
+  // active-only lookup; a higher limit avoids turning a campaign burst into 429s while the
+  // storefront retries and caches. Keep this in-memory throttle as best-effort abuse
+  // protection only: on Vercel each function instance has its own counter.
+  @Public()
+  @Throttle({ default: { limit: 600, ttl: 60000 } })
+  @Get('by-subdomain/:subdomain')
+  @ApiOperation({ summary: 'Get an active store by its public subdomain (public)' })
+  @ApiResponse({ status: 200, description: 'Store found', type: Store })
+  @ApiResponse({ status: 404, description: 'Store not found' })
+  @ApiResponse({ status: 403, description: 'Store is not active' })
+  findBySubdomain(@Param('subdomain') subdomain: string) {
+    return this.storesService.findBySubdomain(subdomain, { includePublishedCount: true });
+  }
+
+  /**
+   * Availability check for the vendor's own picker. Requires an authenticated vendor (so the
+   * endpoint cannot be used for anonymous bulk enumeration) but reveals nothing about the
+   * owner of a taken label. Always 200 with `{ value, available, reason? }`.
+   */
+  @Roles(Role.VENDOR)
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
+  @Get('subdomain-availability')
+  @ApiOperation({ summary: 'Check whether a store subdomain is available' })
+  @ApiResponse({ status: 200, description: 'Availability result' })
+  async checkSubdomainAvailability(@Query('value') value: string, @Req() req: any) {
+    const user = req.user as { id: string };
+    // Resolve the caller's store so only vendors (not any token holder) can probe, without
+    // restricting the check to an active store (a paused vendor can still choose a name).
+    await this.storesService.findByMemberIdOrThrow(user.id, { skipStatusCheck: true });
+    return this.storesService.isSubdomainAvailable(value ?? '');
   }
 
   @Public()
