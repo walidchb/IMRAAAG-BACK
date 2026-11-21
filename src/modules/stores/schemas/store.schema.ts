@@ -58,6 +58,14 @@ export class Store {
   @Prop()
   commune: string;
 
+  /** Full physical street address, as entered by the vendor in a single free-text line. */
+  @Prop()
+  streetAddress?: string;
+
+  /** Optional Google Maps link to the physical store location. Never generated server-side. */
+  @Prop()
+  googleMapsUrl?: string;
+
   @Prop({ type: [String], default: [] })
   categories: string[];
 

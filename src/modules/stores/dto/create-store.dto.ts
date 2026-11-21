@@ -141,6 +141,19 @@ export class CreateStoreDto {
   @MaxLength(60)
   commune?: string;
 
+  @ApiPropertyOptional({ description: 'Full physical street address (single free-text line)' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  streetAddress?: string;
+
+  @ApiPropertyOptional({ description: 'Optional Google Maps link to the physical store location' })
+  @EmptyToUndefined()
+  @IsOptional()
+  @IsUrl({ protocols: ['http', 'https'], require_protocol: true })
+  @MaxLength(2048)
+  googleMapsUrl?: string;
+
   @ApiPropertyOptional({ description: 'Social media links' })
   @IsOptional()
   @ValidateNested()

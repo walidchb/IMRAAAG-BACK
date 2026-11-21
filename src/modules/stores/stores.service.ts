@@ -653,6 +653,8 @@ export class StoresService {
     if (updateStoreDto.contactPhone !== undefined) updateData.contactPhone = updateStoreDto.contactPhone;
     if (updateStoreDto.contactPhones !== undefined) updateData.contactPhones = updateStoreDto.contactPhones;
     if (updateStoreDto.commune !== undefined) updateData.commune = updateStoreDto.commune;
+    if (updateStoreDto.streetAddress !== undefined) updateData.streetAddress = updateStoreDto.streetAddress;
+    if (updateStoreDto.googleMapsUrl !== undefined) updateData.googleMapsUrl = updateStoreDto.googleMapsUrl;
     if (updateStoreDto.socialMedia !== undefined) updateData.socialMedia = updateStoreDto.socialMedia;
     if (updateStoreDto.status !== undefined) updateData.status = updateStoreDto.status;
     if (updateStoreDto.storeLogo !== undefined) updateData.storeLogo = updateStoreDto.storeLogo;
@@ -733,7 +735,7 @@ export class StoresService {
     return this.storeModel
       .find(filter)
       .select(
-        '_id storeName storeSlug subdomain description storeLogo coverImage tagline wilaya commune categories socialMedia status totalProducts totalOrders createdAt',
+        '_id storeName storeSlug subdomain description storeLogo coverImage tagline wilaya commune streetAddress googleMapsUrl address contactEmail contactPhone contactPhones categories socialMedia status totalProducts totalOrders createdAt',
       )
       .sort({ createdAt: -1 })
       .limit(50)

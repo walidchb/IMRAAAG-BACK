@@ -25,6 +25,13 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 const EmptyToUndefined = () =>
   Transform(({ value }) => (typeof value === 'string' && value.trim() === '' ? undefined : value));
 
+/**
+ * Optional URL fields the vendor must be able to **clear**. `EmptyToUndefined` would turn the
+ * field into "not provided", leaving the old link in place forever; `null` explicitly clears it.
+ */
+const EmptyToNull = () =>
+  Transform(({ value }) => (typeof value === 'string' && value.trim() === '' ? null : value));
+
 export class SocialMediaDto {
   @ApiPropertyOptional()
   @EmptyToUndefined()
@@ -111,6 +118,19 @@ export class UpdateStoreDto {
   @IsString()
   @MaxLength(60)
   commune?: string;
+
+  @ApiPropertyOptional({ description: 'Full physical street address (single free-text line)' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  streetAddress?: string;
+
+  @ApiPropertyOptional({ description: 'Optional Google Maps link to the physical store location' })
+  @EmptyToNull()
+  @IsOptional()
+  @IsUrl({ protocols: ['http', 'https'], require_protocol: true })
+  @MaxLength(2048)
+  googleMapsUrl?: string | null;
 
   @ApiPropertyOptional()
   @IsOptional()

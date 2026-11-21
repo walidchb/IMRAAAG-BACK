@@ -62,6 +62,40 @@ describe('UpdateStoreDto - optional attributes tolerate empty strings', () => {
     expect(dto.socialMedia?.facebook).toBe('https://facebook.com/shop');
     await expect(validate(dto)).resolves.toHaveLength(0);
   });
+
+  it('accepts a street address without a Google Maps link', async () => {
+    const dto = plainToInstance(UpdateStoreDto, {
+      ...validVendorEdit,
+      streetAddress: '12 Rue Didouche Mourad, Alger Centre',
+      googleMapsUrl: '',
+    });
+    expect(dto.streetAddress).toBe('12 Rue Didouche Mourad, Alger Centre');
+    expect(dto.googleMapsUrl).toBeNull();
+    await expect(validate(dto)).resolves.toHaveLength(0);
+  });
+
+  it('validates a Google Maps link', async () => {
+    const dto = plainToInstance(UpdateStoreDto, {
+      ...validVendorEdit,
+      googleMapsUrl: 'https://maps.app.goo.gl/abc123',
+    });
+    expect(dto.googleMapsUrl).toBe('https://maps.app.goo.gl/abc123');
+    await expect(validate(dto)).resolves.toHaveLength(0);
+  });
+
+  it('rejects a malformed or non-http Google Maps link', async () => {
+    for (const googleMapsUrl of ['not-a-url', 'javascript:alert(1)', 'ftp://maps.example.com']) {
+      const dto = plainToInstance(UpdateStoreDto, { ...validVendorEdit, googleMapsUrl });
+      const errors = await validate(dto);
+      expect(errors.some((e) => e.property === 'googleMapsUrl')).toBe(true);
+    }
+  });
+
+  it('clears a Google Maps link with an empty string', async () => {
+    const dto = plainToInstance(UpdateStoreDto, { ...validVendorEdit, googleMapsUrl: '   ' });
+    expect(dto.googleMapsUrl).toBeNull();
+    await expect(validate(dto)).resolves.toHaveLength(0);
+  });
 });
 
 describe('CreateStoreDto - mandatory contact identity', () => {

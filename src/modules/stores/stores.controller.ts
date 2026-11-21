@@ -24,6 +24,49 @@ import { RequirePermissions } from '../team/decorators/require-permissions.decor
 import { AppException } from '../../common/errors/app-exception';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
 
+/**
+ * Fields a public storefront read may expose. `vendorId`, `vendorEmail`, the legacy
+ * `storeId`, `inventoryEnabled` and `barcodeSeq` are internal/account data and must never
+ * reach an unauthenticated caller. Keep this list in sync with `Store` in the storefront's
+ * `types.ts`; the vendor's own `GET /stores/mine` deliberately bypasses this projection.
+ */
+const PUBLIC_STORE_FIELDS = [
+  '_id',
+  'storeName',
+  'storeSlug',
+  'subdomain',
+  'description',
+  'storeLogo',
+  'coverImage',
+  'contactEmail',
+  'contactPhone',
+  'contactPhones',
+  'wilaya',
+  'commune',
+  'streetAddress',
+  'googleMapsUrl',
+  // Legacy address object: kept only so pre-migration stores that never set
+  // `wilaya`/`commune` still render their location. New writes use the root fields.
+  'address',
+  'categories',
+  'tagline',
+  'socialMedia',
+  'status',
+  'totalProducts',
+  'totalOrders',
+  'createdAt',
+] as const;
+
+function toPublicStore(store: any): Record<string, unknown> | null {
+  if (!store) return null;
+  const plain = typeof store.toObject === 'function' ? store.toObject() : store;
+  const result: Record<string, unknown> = {};
+  for (const field of PUBLIC_STORE_FIELDS) {
+    if (plain[field] !== undefined) result[field] = plain[field];
+  }
+  return result;
+}
+
 @ApiTags('Stores')
 @ApiBearerAuth()
 @Controller('stores')
@@ -155,16 +198,17 @@ export class StoresController {
   @ApiQuery({ name: 'limit', required: false, description: 'Items per page (default 10, max 100)' })
   @ApiQuery({ name: 'cursor', required: false, description: 'JSON stringified cursor {createdAt, _id} from previous response' })
   @ApiResponse({ status: 200, description: 'Stores with cursor pagination' })
-  findAll(
+  async findAll(
     @Query('search') search?: string,
     @Query('limit') limit?: string,
     @Query('cursor') cursor?: string,
   ) {
-    return this.storesService.findAll({
+    const result = await this.storesService.findAll({
       search,
       limit: limit ? Number(limit) : undefined,
       cursor,
     });
+    return { ...result, stores: result.stores.map((store) => toPublicStore(store)) };
   }
 
   /**
@@ -184,8 +228,9 @@ export class StoresController {
   @ApiResponse({ status: 200, description: 'Store found', type: Store })
   @ApiResponse({ status: 404, description: 'Store not found' })
   @ApiResponse({ status: 403, description: 'Store is not active' })
-  findBySubdomain(@Param('subdomain') subdomain: string) {
-    return this.storesService.findBySubdomain(subdomain, { includePublishedCount: true });
+  async findBySubdomain(@Param('subdomain') subdomain: string) {
+    const store = await this.storesService.findBySubdomain(subdomain, { includePublishedCount: true });
+    return toPublicStore(store);
   }
 
   /**
@@ -211,8 +256,9 @@ export class StoresController {
   @ApiOperation({ summary: 'Get store by vendor email (public)' })
   @ApiResponse({ status: 200, description: 'Store found', type: Store })
   @ApiResponse({ status: 404, description: 'Store not found' })
-  findByEmail(@Param('email') email: string) {
-    return this.storesService.findByEmail(email, { includePublishedCount: true });
+  async findByEmail(@Param('email') email: string) {
+    const store = await this.storesService.findByEmail(email, { includePublishedCount: true });
+    return toPublicStore(store);
   }
 
   @Public()
@@ -230,13 +276,19 @@ export class StoresController {
     @Param('id') id: string,
     @Query('by') by?: string,
   ) {
-    if (by === 'slug') return this.storesService.findBySlug(id, { includePublishedCount: true });
-    if (by === 'vendor') return this.storesService.findByVendor(id, { includePublishedCount: true });
+    if (by === 'slug') {
+      return toPublicStore(await this.storesService.findBySlug(id, { includePublishedCount: true }));
+    }
+    if (by === 'vendor') {
+      return toPublicStore(await this.storesService.findByVendor(id, { includePublishedCount: true }));
+    }
 
     const isMongoId = /^[0-9a-fA-F]{24}$/.test(id);
-    if (isMongoId) return this.storesService.findOne(id, { includePublishedCount: true });
+    if (isMongoId) {
+      return toPublicStore(await this.storesService.findOne(id, { includePublishedCount: true }));
+    }
 
-    return this.storesService.findBySlug(id, { includePublishedCount: true });
+    return toPublicStore(await this.storesService.findBySlug(id, { includePublishedCount: true }));
   }
 
   @Roles(Role.ADMIN)

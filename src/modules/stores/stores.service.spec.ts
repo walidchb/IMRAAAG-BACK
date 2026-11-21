@@ -308,6 +308,48 @@ describe('StoresService', () => {
     });
   });
 
+  describe('update - storefront location fields', () => {
+    it('writes a street address and Google Maps link', async () => {
+      const store = activeStore();
+      storeModel.findById = jest.fn().mockReturnValue(query(store));
+      storeModel.findByIdAndUpdate = jest
+        .fn()
+        .mockReturnValue(query({ ...store, streetAddress: '12 Rue Didouche Mourad', googleMapsUrl: 'https://maps.app.goo.gl/x' }));
+
+      await service.update(String(store._id), {
+        streetAddress: '12 Rue Didouche Mourad',
+        googleMapsUrl: 'https://maps.app.goo.gl/x',
+      } as any);
+
+      expect(storeModel.findByIdAndUpdate.mock.calls[0][1]).toMatchObject({
+        streetAddress: '12 Rue Didouche Mourad',
+        googleMapsUrl: 'https://maps.app.goo.gl/x',
+      });
+    });
+
+    it('clears the Google Maps link when the value is null', async () => {
+      const store = activeStore({ googleMapsUrl: 'https://maps.app.goo.gl/x' });
+      storeModel.findById = jest.fn().mockReturnValue(query(store));
+      storeModel.findByIdAndUpdate = jest.fn().mockReturnValue(query(store));
+
+      await service.update(String(store._id), { googleMapsUrl: null } as any);
+
+      expect(storeModel.findByIdAndUpdate.mock.calls[0][1]).toMatchObject({ googleMapsUrl: null });
+    });
+
+    it('leaves the fields untouched when they are absent from the patch', async () => {
+      const store = activeStore({ streetAddress: 'Old address', googleMapsUrl: 'https://maps.app.goo.gl/x' });
+      storeModel.findById = jest.fn().mockReturnValue(query(store));
+      storeModel.findByIdAndUpdate = jest.fn().mockReturnValue(query(store));
+
+      await service.update(String(store._id), { tagline: 'New tagline' } as any);
+
+      const update = storeModel.findByIdAndUpdate.mock.calls[0][1];
+      expect(update).not.toHaveProperty('streetAddress');
+      expect(update).not.toHaveProperty('googleMapsUrl');
+    });
+  });
+
   describe('findAll - public product counts', () => {
     it('replaces the stale totalProducts counter with a live published count', async () => {
       const store = activeStore({ totalProducts: 5 });
