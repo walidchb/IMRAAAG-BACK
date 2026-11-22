@@ -438,6 +438,8 @@ OrderSchema.index({ storeId: 1, isDeleted: 1, createdAt: -1, _id: -1 });
 // lists only archived rows ordered by their archive date.
 OrderSchema.index({ storeId: 1, isDeleted: 1, isArchived: 1, createdAt: -1, _id: -1 });
 OrderSchema.index({ storeId: 1, isDeleted: 1, isArchived: 1, archivedAt: -1, _id: -1 });
+// Team analytics cohort: a store's orders scanned by confirmation date.
+OrderSchema.index({ storeId: 1, confirmedAt: -1 });
 // Cart idempotency: one order per (store, client key). Partial so the many legacy/direct/POS
 // documents without a key never collide on the missing field. `storeId` is a Mixed path under
 // this build, so the service queries it with an explicit `Types.ObjectId`.

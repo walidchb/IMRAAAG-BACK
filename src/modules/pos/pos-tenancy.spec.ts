@@ -103,6 +103,7 @@ describe('POS tenancy isolation', () => {
     let posService: any;
     let storesService: any;
     let ordersService: any;
+    let boxesService: any;
 
     const req = { user: VENDOR_A };
 
@@ -114,6 +115,7 @@ describe('POS tenancy isolation', () => {
       };
       storesService = { findByMemberIdOrThrow: jest.fn().mockResolvedValue({ _id: STORE_A }) };
       ordersService = { createImmediateSale: jest.fn() };
+      boxesService = { findVendorPage: jest.fn(), publicDetail: jest.fn(), validateSelection: jest.fn() };
 
       const module: TestingModule = await Test.createTestingModule({
         controllers: [PosController],
@@ -121,6 +123,7 @@ describe('POS tenancy isolation', () => {
           { provide: PosService, useValue: posService },
           { provide: StoresService, useValue: storesService },
           { provide: OrdersService, useValue: ordersService },
+          { provide: BoxesService, useValue: boxesService },
         ],
       }).compile();
 
@@ -141,6 +144,50 @@ describe('POS tenancy isolation', () => {
 
       expect(storesService.findByMemberIdOrThrow).toHaveBeenCalledWith(VENDOR_A.id);
       expect(posService.findByBarcode).toHaveBeenCalledWith(STORE_A, 'B-ONLY-CODE');
+    });
+
+    it('lists only the session store’s published Boxes, ignoring a smuggled storeId', async () => {
+      boxesService.findVendorPage.mockResolvedValue({
+        boxes: [],
+        total: 0,
+        page: 1,
+        limit: 20,
+        totalPages: 0,
+      });
+
+      await controller.listBoxes(
+        { search: 'gift', page: 1, limit: 20, storeId: String(STORE_B) } as any,
+        req,
+      );
+
+      expect(boxesService.findVendorPage).toHaveBeenCalledWith(
+        STORE_A.toString(),
+        expect.objectContaining({ status: 'active', search: 'gift' }),
+      );
+    });
+
+    it('refuses a Box that belongs to another store', async () => {
+      boxesService.publicDetail.mockResolvedValue({ _id: 'box-1', storeId: STORE_B.toString() });
+
+      await expect(controller.getBox('box-1', req)).rejects.toMatchObject({
+        errorCode: AppErrorCode.BOX_NOT_FOUND,
+      });
+      expect(boxesService.validateSelection).not.toHaveBeenCalled();
+    });
+
+    it('validates a Box only after checking it belongs to the session store', async () => {
+      boxesService.publicDetail.mockResolvedValue({ _id: 'box-1', storeId: STORE_A.toString() });
+      boxesService.validateSelection.mockResolvedValue({ valid: true, issues: [] });
+
+      await controller.validateBox(
+        'box-1',
+        { selections: [{ variantId: 'v-1', quantity: 1 }] } as any,
+        req,
+      );
+
+      expect(boxesService.validateSelection).toHaveBeenCalledWith('box-1', [
+        { variantId: 'v-1', quantity: 1 },
+      ]);
     });
 
     it('scopes the customer autofill to the session store', async () => {

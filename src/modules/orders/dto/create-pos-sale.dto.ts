@@ -8,12 +8,13 @@ import {
   IsArray,
   Min,
   Max,
-  ArrayMinSize,
+  ArrayMaxSize,
   MaxLength,
   IsMongoId,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { CartBundleItemDto } from './create-cart-order.dto';
 
 /**
  * One line of an in-store sale. Only `variantId` and `quantity` are trusted: the variant
@@ -99,10 +100,23 @@ export class PosSaleCustomerDto {
 export class PosCartDto {
   @ApiProperty({ description: 'Sale items', type: [PosSaleItemDto] })
   @IsArray()
-  @ArrayMinSize(1)
+  @ArrayMaxSize(50)
   @ValidateNested({ each: true })
   @Type(() => PosSaleItemDto)
   items: PosSaleItemDto[];
+
+  /**
+   * Box lines: a Box is a fixed-price bundle, so the client only names the Box, its quantity and
+   * one selection per physical unit. Price/name/total/storeId are deliberately absent and are
+   * rejected by the whitelist pipe; `BoxesService.resolveForCart` is the sole authority.
+   */
+  @ApiPropertyOptional({ description: 'Box lines', type: [CartBundleItemDto] })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(20)
+  @ValidateNested({ each: true })
+  @Type(() => CartBundleItemDto)
+  bundles?: CartBundleItemDto[];
 
   @ApiPropertyOptional({ description: 'Optional buyer details', type: PosSaleCustomerDto })
   @IsOptional()

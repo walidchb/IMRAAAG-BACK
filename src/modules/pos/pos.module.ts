@@ -24,6 +24,7 @@ import { Product, ProductSchema } from '../products/schemas/product.schema';
 import { Order, OrderSchema } from '../orders/schemas/order.schema';
 import { StoresModule } from '../stores/stores.module';
 import { OrdersModule } from '../orders/orders.module';
+import { BoxesModule } from '../boxes/boxes.module';
 import { PosController } from './pos.controller';
 import { PosService } from './pos.service';
 
@@ -51,6 +52,9 @@ import { PosService } from './pos.service';
     // the reservation wiring), so the POS controller delegates to it rather than duplicating
     // that logic. `OrdersModule` does not import `PosModule`, so there is no cycle.
     OrdersModule,
+    // POS-scoped Box reads (list/detail/validate). The Box service is the same resolver the
+    // storefront and cart checkout use, so register pricing/eligibility cannot drift.
+    BoxesModule,
   ],
   controllers: [PosController],
   providers: [PosService],

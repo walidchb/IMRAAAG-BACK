@@ -22,8 +22,12 @@ import { StoresService } from '../stores/stores.service';
 import { OrdersService } from '../orders/orders.service';
 import { CreatePosSaleDto } from '../orders/dto/create-pos-sale.dto';
 import { CreatePosHoldDto } from '../orders/dto/pos-hold.dto';
+import { BoxesService } from '../boxes/boxes.service';
+import { ValidateBoxSelectionDto } from '../boxes/dto/box-selection.dto';
+import { AppException } from '../../common/errors/app-exception';
+import { AppErrorCode } from '../../common/errors/error-codes.enum';
 import { PosService } from './pos.service';
-import { PosProductQueryDto } from './dto/pos.dto';
+import { PosBoxQueryDto, PosProductQueryDto } from './dto/pos.dto';
 
 /**
  * Vendor-scoped POS catalog endpoints.
@@ -43,6 +47,7 @@ export class PosController {
     private readonly posService: PosService,
     private readonly storesService: StoresService,
     private readonly ordersService: OrdersService,
+    private readonly boxesService: BoxesService,
   ) {}
 
   /** Product-grouped catalog search. `q` matches name (any language), SKU or barcode. */
@@ -55,6 +60,39 @@ export class PosController {
   @Get('products/by-barcode/:barcode')
   async byBarcode(@Param('barcode') barcode: string, @Req() req: any) {
     return this.posService.findByBarcode(await this.storeIdFor(req), barcode);
+  }
+
+  /**
+   * Published Boxes of the session store. This stays on the POS permission (`pos.access`)
+   * rather than `boxes.view`, so a cashier can sell Boxes without the Boxes manager.
+   */
+  @Get('boxes')
+  async listBoxes(@Query() query: PosBoxQueryDto, @Req() req: any) {
+    const storeId = await this.storeIdFor(req);
+    return this.boxesService.findVendorPage(String(storeId), {
+      status: 'active',
+      search: query.search,
+      page: query.page,
+      limit: query.limit,
+    });
+  }
+
+  /** Box detail for the register builder; a Box from another store is invisible. */
+  @Get('boxes/:id')
+  async getBox(@Param('id') id: string, @Req() req: any) {
+    return this.posBoxOrThrow(id, await this.storeIdFor(req));
+  }
+
+  /** Read-only selection validation. Mirrors the storefront endpoint under the POS session. */
+  @Post('boxes/:id/validate')
+  @Throttle({ default: { limit: 120, ttl: 60000 } })
+  async validateBox(
+    @Param('id') id: string,
+    @Body() dto: ValidateBoxSelectionDto,
+    @Req() req: any,
+  ) {
+    await this.posBoxOrThrow(id, await this.storeIdFor(req));
+    return this.boxesService.validateSelection(id, dto.selections);
   }
 
   /**
@@ -129,5 +167,14 @@ export class PosController {
   private async storeIdFor(req: any): Promise<Types.ObjectId> {
     const store = await this.storesService.findByMemberIdOrThrow(req.user?.id);
     return store._id as Types.ObjectId;
+  }
+
+  /** Loads a published Box and refuses one that belongs to another store. */
+  private async posBoxOrThrow(id: string, storeId: Types.ObjectId) {
+    const box = await this.boxesService.publicDetail(id);
+    if (String(box.storeId) !== String(storeId)) {
+      throw new AppException(AppErrorCode.BOX_NOT_FOUND, { id });
+    }
+    return box;
   }
 }

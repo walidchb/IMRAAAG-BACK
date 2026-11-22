@@ -7,6 +7,7 @@ import {
   IsIn,
   Min,
   ValidateNested,
+  ValidateIf,
   IsArray,
   IsNotEmpty,
   ArrayMinSize,
@@ -166,7 +167,9 @@ export class UpdateOrderDto {
   @ApiPropertyOptional() @IsOptional() @IsString()
   statusConfirmation?: string;
 
-  @ApiPropertyOptional({ enum: ['stopdesk', 'home'] }) @IsOptional() @IsString() @IsIn(['stopdesk', 'home'])
+  // `pickup` is the in-store/POS channel. Without it, editing (or returning) a POS order
+  // fails validation on the channel it was created with.
+  @ApiPropertyOptional({ enum: ['stopdesk', 'home', 'pickup'] }) @IsOptional() @IsString() @IsIn(['stopdesk', 'home', 'pickup'])
   shippingMethod?: string;
 
   @ApiPropertyOptional() @IsOptional() @IsString()
@@ -175,7 +178,15 @@ export class UpdateOrderDto {
   @ApiPropertyOptional() @IsOptional() @IsNumber()
   shippingFee?: number;
 
-  @ApiPropertyOptional() @IsOptional() @ValidateNested() @Type(() => UpdateCustomerDto)
+  // A `pickup` (in-store/POS) sale may be anonymous, so its customer contact fields are
+  // intentionally empty. Mirror the order schema's pickup exemption here: the nested
+  // `UpdateCustomerDto` requires name/phone/wilaya/commune whenever it validates, and a POS
+  // edit sends all four (empty ones included), which would otherwise 400.
+  @ApiPropertyOptional()
+  @IsOptional()
+  @ValidateIf((o: UpdateOrderDto) => o.shippingMethod !== 'pickup')
+  @ValidateNested()
+  @Type(() => UpdateCustomerDto)
   customer?: UpdateCustomerDto;
 
   @ApiPropertyOptional() @IsOptional() @IsArray() @ArrayMinSize(1) @ValidateNested({ each: true }) @Type(() => UpdateOrderItemDto)

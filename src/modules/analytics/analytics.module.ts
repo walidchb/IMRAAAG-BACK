@@ -3,6 +3,8 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Order, OrderSchema } from '../orders/schemas/order.schema';
 import { Product, ProductSchema } from '../products/schemas/product.schema';
 import { ProductVariant, ProductVariantSchema } from '../inventory/schemas/product-variant.schema';
+import { StoreMember, StoreMemberSchema } from '../team/schemas/store-member.schema';
+import { User, UserSchema } from '../users/schemas/user.schema';
 import { StoresModule } from '../stores/stores.module';
 import { AnalyticsController } from './analytics.controller';
 import { AnalyticsService } from './analytics.service';
@@ -21,6 +23,8 @@ import { AnalyticsService } from './analytics.service';
       { name: Order.name, schema: OrderSchema },
       { name: Product.name, schema: ProductSchema },
       { name: ProductVariant.name, schema: ProductVariantSchema },
+      { name: StoreMember.name, schema: StoreMemberSchema },
+      { name: User.name, schema: UserSchema },
     ]),
     StoresModule,
   ],

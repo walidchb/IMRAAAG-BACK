@@ -94,3 +94,17 @@ export const ACTIONABLE_STATUSES: string[] = [
 
 /** Sources excluded from processing-time metrics (D8) — POS is instantaneous. */
 export const PROCESSING_EXCLUDED_SOURCES: string[] = [OrderSource.POS];
+
+/**
+ * Top-products ranking vocabulary. `orders` is accepted by the API for completeness, while the
+ * dashboard UI only exposes `units` and `sales`.
+ */
+export const ANALYTICS_PRODUCT_METRICS = ['units', 'sales', 'orders'] as const;
+export type AnalyticsProductMetric = (typeof ANALYTICS_PRODUCT_METRICS)[number];
+export const ANALYTICS_DEFAULT_PRODUCT_METRIC: AnalyticsProductMetric = 'units';
+export const ANALYTICS_TOP_PRODUCTS_DEFAULT_LIMIT = 5;
+export const ANALYTICS_TOP_PRODUCTS_MAX_LIMIT = 50;
+
+/** Ordered stages of the COD order-performance funnel. */
+export const FUNNEL_STAGE_KEYS = ['received', 'confirmed', 'dispatched', 'delivered'] as const;
+export type FunnelStageKey = (typeof FUNNEL_STAGE_KEYS)[number];

@@ -442,6 +442,43 @@ describe('OrdersService', () => {
         service.update(ORDER_ID.toString(), { status: OrderStatus.RETURNED } as UpdateOrderDto),
       ).rejects.toMatchObject({ errorCode: AppErrorCode.ORDER_ALREADY_DELIVERED });
     });
+
+    it('allows a POS order to move delivered -> returned (in-store return)', async () => {
+      const existing = makeOrder({
+        status: statusConfig(OrderStatus.DELIVERED),
+        source: 'POS',
+        shippingMethod: 'pickup',
+      });
+      const claimed = makeOrder({
+        status: statusConfig(OrderStatus.RETURNED),
+        source: 'POS',
+        shippingMethod: 'pickup',
+      });
+      orderModel.findById.mockReturnValue(query(existing));
+      orderModel.findOneAndUpdate.mockReturnValue(query(claimed));
+
+      await service.update(ORDER_ID.toString(), { status: OrderStatus.RETURNED } as UpdateOrderDto);
+
+      expect(orderModel.findOneAndUpdate).toHaveBeenCalledTimes(1);
+      // A return is status-only: neither the carrier edge nor the vendor PATCH restocks.
+      expect(reservationsService.onStatusChange).not.toHaveBeenCalled();
+      const write = orderModel.findOneAndUpdate.mock.calls[0][1];
+      expect(write.status.slug).toBe(OrderStatus.RETURNED);
+    });
+
+    it('still refuses any other change from a delivered POS order', async () => {
+      const existing = makeOrder({
+        status: statusConfig(OrderStatus.DELIVERED),
+        source: 'POS',
+        shippingMethod: 'pickup',
+      });
+      orderModel.findById.mockReturnValue(query(existing));
+
+      await expect(
+        service.update(ORDER_ID.toString(), { status: OrderStatus.CANCELLED } as UpdateOrderDto),
+      ).rejects.toMatchObject({ errorCode: AppErrorCode.ORDER_ALREADY_DELIVERED });
+      expect(orderModel.findOneAndUpdate).not.toHaveBeenCalled();
+    });
   });
 
   describe('update() — attribution (who performed the action)', () => {
@@ -1992,14 +2029,17 @@ describe('OrdersService', () => {
       consume: jest.Mock;
       release: jest.Mock;
       reconcileEditedLines: jest.Mock;
+      assertCartAvailability: jest.Mock;
     };
     let variantsService: { snapshotsForVariants: jest.Mock };
+    let boxesService: { resolveForCart: jest.Mock };
     let sessions: any[];
 
     const PRODUCT_A = new Types.ObjectId();
     const VARIANT_A = new Types.ObjectId();
     const VARIANT_B = new Types.ObjectId();
     const HOLD_ID = new Types.ObjectId();
+    const BOX_ID = new Types.ObjectId();
     const STORE = { _id: STORE_ID, vendorEmail: 'store@imraaah.com' };
 
     const snapshot = (variantId: Types.ObjectId, over: Record<string, any> = {}) => ({
@@ -2061,6 +2101,16 @@ describe('OrdersService', () => {
         consume: jest.fn().mockResolvedValue(undefined),
         release: jest.fn().mockResolvedValue(undefined),
         reconcileEditedLines: jest.fn().mockResolvedValue(undefined),
+        assertCartAvailability: jest.fn().mockResolvedValue(undefined),
+      };
+
+      boxesService = {
+        resolveForCart: jest.fn().mockResolvedValue({
+          bundleLines: [],
+          componentLines: [],
+          bundleSnapshots: [],
+          bundlesTotal: 0,
+        }),
       };
 
       variantsService = {
@@ -2099,7 +2149,7 @@ describe('OrdersService', () => {
           },
           { provide: ReservationsService, useValue: reservations },
           { provide: VariantsService, useValue: variantsService },
-        { provide: BoxesService, useValue: { resolveForCart: jest.fn().mockResolvedValue({ bundleLines: [], componentLines: [], bundleSnapshots: [], bundlesTotal: 0 }) } },
+          { provide: BoxesService, useValue: boxesService },
           { provide: AuditService, useValue: { record: jest.fn().mockResolvedValue(undefined) } },
         ],
       }).compile();
@@ -2109,6 +2159,67 @@ describe('OrdersService', () => {
 
     const posDto = (over: Record<string, any> = {}) =>
       ({ items: [{ variantId: VARIANT_A.toString(), quantity: 2 }], ...over }) as any;
+
+    const posBoxInput = (over: Record<string, any> = {}) => ({
+      bundleId: BOX_ID.toString(),
+      quantity: 1,
+      selections: [{ variantId: VARIANT_B.toString(), quantity: 2 }],
+      ...over,
+    });
+
+    const resolvedBox = () => ({
+      bundleLines: [
+        {
+          lineKey: 'bundle:box:comp',
+          bundleId: BOX_ID.toString(),
+          bundleSlug: 'gift',
+          bundleName: 'Gift',
+          price: 1500,
+          requiredQuantity: 2,
+          quantity: 1,
+          lineTotal: 1500,
+          availableBoxes: 3,
+          isAvailable: true,
+          issues: [],
+          selections: [],
+          referenceTotal: 1900,
+          savings: 400,
+        },
+      ],
+      componentLines: [
+        {
+          lineId: 'l-1',
+          productId: PRODUCT_A.toString(),
+          productName: 'Widget',
+          price: 250,
+          originalPrice: null,
+          quantity: 2,
+          variantId: VARIANT_B.toString(),
+          variantDetails: 'Blue / L',
+          image: null,
+          bundleGroupId: 'group-1',
+          bundleReferencePrice: 250,
+        },
+      ],
+      bundleSnapshots: [
+        {
+          bundleId: BOX_ID.toString(),
+          bundleGroupId: 'group-1',
+          slug: 'gift',
+          nameEn: 'Gift',
+          nameAr: 'Gift',
+          nameFr: 'Gift',
+          price: 1500,
+          requiredQuantity: 2,
+          quantity: 1,
+          lineTotal: 1500,
+          referenceTotal: 1900,
+          savings: 400,
+          contents: [],
+        },
+      ],
+      bundlesTotal: 1500,
+    });
 
     it('writes a delivered pickup CASH order and reserves then consumes in one transaction', async () => {
       await service.createImmediateSale(posDto(), VENDOR_USER);
@@ -2355,6 +2466,91 @@ describe('OrdersService', () => {
       expect(ctxArg.items).toHaveLength(2);
       expect(ctxArg.items[0].lineId).not.toBe(ctxArg.items[1].lineId);
     });
+
+    it('writes a box-only sale as fixed-price bundles plus component lines', async () => {
+      boxesService.resolveForCart.mockResolvedValue(resolvedBox());
+
+      await service.createImmediateSale(
+        { items: [], bundles: [posBoxInput()] } as any,
+        VENDOR_USER,
+      );
+
+      const doc = orderModel.mock.calls[0][0];
+      // The charge is the Box price, never the component reference sum (2 × 250 = 500).
+      expect(doc.total).toBe(1500);
+      expect(doc.items).toHaveLength(1);
+      expect(doc.items[0]).toMatchObject({
+        variantId: VARIANT_B.toString(),
+        quantity: 2,
+        bundleGroupId: 'group-1',
+        bundleReferencePrice: 250,
+      });
+      expect(doc.bundles).toHaveLength(1);
+      expect(doc.bundles[0]).toMatchObject({ bundleId: BOX_ID.toString(), price: 1500, lineTotal: 1500 });
+      // The strict stock gate covers the flattened component demand on a fresh sale.
+      expect(reservations.assertCartAvailability).toHaveBeenCalledWith([
+        { variantId: VARIANT_B.toString(), quantity: 2 },
+      ]);
+      expect(reservations.reserve).toHaveBeenCalledTimes(1);
+      expect(reservations.consume).toHaveBeenCalledTimes(1);
+    });
+
+    it('adds a Box to product lines without double counting the subtotal', async () => {
+      boxesService.resolveForCart.mockResolvedValue(resolvedBox());
+
+      await service.createImmediateSale(
+        { items: [{ variantId: VARIANT_A.toString(), quantity: 2 }], bundles: [posBoxInput()] } as any,
+        VENDOR_USER,
+      );
+
+      const doc = orderModel.mock.calls[0][0];
+      // Product 2 × 250 = 500, Box 1 × 1500 = 1500.
+      expect(doc.total).toBe(2000);
+      expect(doc.items).toHaveLength(2);
+      expect(doc.items.filter((item: any) => item.bundleGroupId)).toHaveLength(1);
+      expect(doc.bundles).toHaveLength(1);
+    });
+
+    it('refuses a structurally invalid Box before opening a transaction', async () => {
+      boxesService.resolveForCart.mockResolvedValue({
+        ...resolvedBox(),
+        bundleLines: [
+          {
+            ...resolvedBox().bundleLines[0],
+            isAvailable: false,
+            issues: ['BOX_SELECTION_INVALID'],
+          },
+        ],
+      });
+
+      await expect(
+        service.createImmediateSale({ items: [], bundles: [posBoxInput()] } as any, VENDOR_USER),
+      ).rejects.toMatchObject({
+        errorCode: AppErrorCode.CART_ITEMS_INVALID,
+        errorParams: {
+          issues: [{ bundleId: BOX_ID.toString(), code: 'BOX_SELECTION_INVALID' }],
+        },
+      });
+      expect(orderModel.startSession).not.toHaveBeenCalled();
+    });
+
+    it('validates a custom final price against the combined product + Box subtotal', async () => {
+      boxesService.resolveForCart.mockResolvedValue(resolvedBox());
+
+      await service.createImmediateSale(
+        {
+          items: [{ variantId: VARIANT_A.toString(), quantity: 2 }],
+          bundles: [posBoxInput()],
+          customFinalPrice: 1800,
+        } as any,
+        VENDOR_USER,
+      );
+
+      expect(orderModel.mock.calls[0][0]).toMatchObject({
+        total: 1800,
+        pricing: { subtotal: 2000, customFinalPrice: 1800, priceAdjustment: 200 },
+      });
+    });
   });
 
   describe('POS holds — a parked sale reserves its stock', () => {
@@ -2365,10 +2561,12 @@ describe('OrdersService', () => {
     let posHoldModel: any;
     let reservations: any;
     let storesService: any;
+    let boxesService: any;
     let sessions: any[];
 
     const PRODUCT = new Types.ObjectId();
     const VARIANT = new Types.ObjectId();
+    const BOX = new Types.ObjectId();
     const HOLD_ID = new Types.ObjectId();
     const HOLD_STORE = { _id: STORE_ID, vendorEmail: 'store@imraaah.com' };
 
@@ -2450,6 +2648,15 @@ describe('OrdersService', () => {
         consume: jest.fn().mockResolvedValue(undefined),
         release: jest.fn().mockResolvedValue(undefined),
         reconcileEditedLines: jest.fn().mockResolvedValue(undefined),
+        assertCartAvailability: jest.fn().mockResolvedValue(undefined),
+      };
+      boxesService = {
+        resolveForCart: jest.fn().mockResolvedValue({
+          bundleLines: [],
+          componentLines: [],
+          bundleSnapshots: [],
+          bundlesTotal: 0,
+        }),
       };
 
       const module: TestingModule = await Test.createTestingModule({
@@ -2491,17 +2698,7 @@ describe('OrdersService', () => {
                 .mockResolvedValue(new Map([[VARIANT.toString(), snapshot()]])),
             },
           },
-          {
-            provide: BoxesService,
-            useValue: {
-              resolveForCart: jest.fn().mockResolvedValue({
-                bundleLines: [],
-                componentLines: [],
-                bundleSnapshots: [],
-                bundlesTotal: 0,
-              }),
-            },
-          },
+          { provide: BoxesService, useValue: boxesService },
           { provide: AuditService, useValue: { record: jest.fn().mockResolvedValue(undefined) } },
         ],
       }).compile();
@@ -2511,6 +2708,60 @@ describe('OrdersService', () => {
 
     const holdDto = (over: Record<string, any> = {}) =>
       ({ items: [{ variantId: VARIANT.toString(), quantity: 2 }], ...over }) as any;
+
+    const resolvedHoldBox = () => ({
+      bundleLines: [
+        {
+          lineKey: 'bundle:box:comp',
+          bundleId: BOX.toString(),
+          bundleSlug: 'gift',
+          bundleName: 'Gift',
+          price: 1500,
+          requiredQuantity: 2,
+          quantity: 1,
+          lineTotal: 1500,
+          availableBoxes: 2,
+          isAvailable: true,
+          issues: [],
+          selections: [],
+          referenceTotal: 1900,
+          savings: 400,
+        },
+      ],
+      componentLines: [
+        {
+          lineId: 'l-box-1',
+          productId: PRODUCT.toString(),
+          productName: 'Widget',
+          price: 250,
+          originalPrice: null,
+          quantity: 2,
+          variantId: VARIANT.toString(),
+          variantDetails: 'Red / M',
+          image: null,
+          bundleGroupId: 'hold-group',
+          bundleReferencePrice: 250,
+        },
+      ],
+      bundleSnapshots: [
+        {
+          bundleId: BOX.toString(),
+          bundleGroupId: 'hold-group',
+          slug: 'gift',
+          nameEn: 'Gift',
+          nameAr: 'Gift',
+          nameFr: 'Gift',
+          price: 1500,
+          requiredQuantity: 2,
+          quantity: 1,
+          lineTotal: 1500,
+          referenceTotal: 1900,
+          savings: 400,
+          contents: [],
+        },
+      ],
+      bundlesTotal: 1500,
+    });
 
     it('parks the cart, allocates the order number and reserves under the hold id', async () => {
       const view = await service.createPosHold(holdDto(), VENDOR_USER);
@@ -2540,6 +2791,44 @@ describe('OrdersService', () => {
       // Probe session is discarded; the real one drives the hold write and its reservation.
       expect(sessions[0].withTransaction).not.toHaveBeenCalled();
       expect(reservations.reserve.mock.calls[0][2]).toBe(sessions[1]);
+    });
+
+    it('parks a Box hold as component lines plus a commercial bundle snapshot', async () => {
+      boxesService.resolveForCart.mockResolvedValue(resolvedHoldBox());
+
+      const view = await service.createPosHold(
+        {
+          items: [],
+          bundles: [
+            {
+              bundleId: BOX.toString(),
+              quantity: 1,
+              selections: [{ variantId: VARIANT.toString(), quantity: 2 }],
+            },
+          ],
+        } as any,
+        VENDOR_USER,
+      );
+
+      expect(posHoldModel.mock.calls[0][0]).toMatchObject({ total: 1500 });
+      const stored = posHoldModel.mock.calls[0][0];
+      expect(stored.items).toHaveLength(1);
+      expect(stored.items[0]).toMatchObject({
+        variantId: VARIANT.toString(),
+        quantity: 2,
+        bundleGroupId: 'hold-group',
+      });
+      expect(stored.bundles).toHaveLength(1);
+      expect(stored.bundles[0]).toMatchObject({ bundleId: BOX.toString(), price: 1500 });
+      // The register sees only the commercial Box line, not its component physical lines.
+      expect(view.lines).toHaveLength(0);
+      expect(view.bundles).toHaveLength(1);
+      expect(view.bundles?.[0]).toMatchObject({ bundleId: BOX.toString(), price: 1500 });
+      // A fresh hold pre-checks the flattened stock (components included) before reserving.
+      expect(reservations.assertCartAvailability).toHaveBeenCalledWith([
+        { variantId: VARIANT.toString(), quantity: 2 },
+      ]);
+      expect(reservations.reserve).toHaveBeenCalledTimes(1);
     });
 
     it('persists and serializes the hold note title and type', async () => {

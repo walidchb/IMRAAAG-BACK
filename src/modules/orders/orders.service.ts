@@ -5,11 +5,22 @@ import { InjectModel } from '@nestjs/mongoose';
 import { ClientSession, Model, Types } from 'mongoose';
 import { Order, OrderDocument } from './schemas/order.schema';
 import { Counter, CounterDocument } from './schemas/counter.schema';
-import { PosHold, PosHoldDocument, PosHoldItem, PosHoldNoteType } from './schemas/pos-hold.schema';
+import {
+  PosHold,
+  PosHoldBundle,
+  PosHoldDocument,
+  PosHoldItem,
+  PosHoldNoteType,
+} from './schemas/pos-hold.schema';
 import { Product, ProductDocument } from '../products/schemas/product.schema';
 import { CreateOrderDto } from './dto/create-order.dto';
-import { CartItemDto, CartValidationDto, CreateCartOrderDto } from './dto/create-cart-order.dto';
-import { CreatePosSaleDto } from './dto/create-pos-sale.dto';
+import {
+  CartBundleItemDto,
+  CartItemDto,
+  CartValidationDto,
+  CreateCartOrderDto,
+} from './dto/create-cart-order.dto';
+import { CreatePosSaleDto, PosSaleItemDto } from './dto/create-pos-sale.dto';
 import { CreatePosHoldDto } from './dto/pos-hold.dto';
 import { resolvePosPricing } from './pos-pricing';
 import { UpdateOrderDto } from './dto/update-order.dto';
@@ -166,6 +177,8 @@ export interface PosHoldView {
   noteTitle: string;
   noteType: PosHoldNoteType;
   lines: PosHoldViewLine[];
+  /** Commercial Box snapshots of a parked cart (absent on legacy product-only holds). */
+  bundles?: PosHoldBundle[];
   total: number;
 }
 
@@ -1341,6 +1354,48 @@ export class OrdersService {
   }
 
   /**
+   * Resolves a POS cart — ordinary product lines plus optional Box lines — into the flat
+   * physical lines the order/hold stores and the commercial Box snapshots.
+   *
+   * The Box engine (`BoxesService.resolveForCart`) is the only authority for Box eligibility,
+   * fixed price and component expansion; this helper never re-prices a Box from its contents.
+   * A short Box (`BOX_SELECTION_UNAVAILABLE`) is deliberately not structural here: stock is
+   * decided later by the reservation engine (or ignored entirely on hold update/complete,
+   * whose own units are already reserved and would otherwise be double-counted).
+   */
+  private async resolvePosCart(
+    storeId: Types.ObjectId,
+    dto: { items?: PosSaleItemDto[]; bundles?: CartBundleItemDto[] },
+    locale: 'en' | 'ar' | 'fr',
+  ): Promise<{
+    items: PosHoldItem[];
+    bundles: Array<Record<string, any>>;
+    subtotal: number;
+  }> {
+    const regular = await this.buildPosItems(storeId, dto.items ?? []);
+    const resolved = await this.boxesService.resolveForCart(storeId, dto.bundles ?? [], locale);
+
+    const blocking = resolved.bundleLines.flatMap((line) =>
+      line.issues
+        .filter((code) => code !== 'BOX_SELECTION_UNAVAILABLE')
+        .map((code) => ({ bundleId: line.bundleId, code })),
+    );
+    if (blocking.length > 0) {
+      throw new AppException(AppErrorCode.CART_ITEMS_INVALID, { issues: blocking });
+    }
+
+    return {
+      items: [...regular.items, ...(resolved.componentLines as PosHoldItem[])],
+      bundles: resolved.bundleSnapshots,
+      subtotal: regular.itemsTotal + resolved.bundlesTotal,
+    };
+  }
+
+  private isPosCartEmpty(dto: { items?: unknown[]; bundles?: unknown[] }): boolean {
+    return (dto.items?.length ?? 0) + (dto.bundles?.length ?? 0) === 0;
+  }
+
+  /**
    * In-store (POS) sale: an order that is paid for, handed over and completed the moment it is
    * rung up.
    *
@@ -1360,7 +1415,7 @@ export class OrdersService {
   async createImmediateSale(dto: CreatePosSaleDto, user: RequestUser): Promise<Order> {
     this.assertVendorOrAdmin(user);
 
-    if (!dto.items || dto.items.length === 0) {
+    if (this.isPosCartEmpty(dto)) {
       throw new AppException(AppErrorCode.POS_EMPTY_CART);
     }
 
@@ -1369,8 +1424,15 @@ export class OrdersService {
 
     const now = new Date();
 
-    const { items, itemsTotal } = await this.buildPosItems(storeId, dto.items);
-    const pricing = resolvePosPricing(itemsTotal, dto.customFinalPrice);
+    const resolved = await this.resolvePosCart(storeId, dto, 'en');
+    // A fresh sale has no reservation yet, so the strict pre-check is safe. Keep the product-only
+    // path exactly as before (no extra read when the cart carries no Box).
+    if ((dto.bundles?.length ?? 0) > 0) {
+      await this.reservationsService.assertCartAvailability(
+        resolved.items.map((item) => ({ variantId: item.variantId, quantity: item.quantity })),
+      );
+    }
+    const pricing = resolvePosPricing(resolved.subtotal, dto.customFinalPrice);
 
     const [placedStatus, confirmedStatus, dispatchedStatus, deliveredStatus] = await Promise.all([
       this.statusesService.getBySlug(OrderStatus.PLACED),
@@ -1419,7 +1481,8 @@ export class OrdersService {
           shippingMethod: 'pickup',
           paymentMethod: 'CASH',
           customer,
-          items,
+          items: resolved.items,
+          bundles: resolved.bundles,
           total: pricing.total,
           ...(pricing.customFinalPrice !== null
             ? {
@@ -1516,6 +1579,10 @@ export class OrdersService {
 
   private serializePosHold(hold: any): PosHoldView {
     const items = (hold.items || []) as PosHoldItem[];
+    // Box component lines are physical detail: the commercial line is `bundles`, so the
+    // register must not also show them as ordinary product rows.
+    const productLines = items.filter((item) => !item.bundleGroupId);
+    const bundles = Array.isArray(hold.bundles) ? (hold.bundles as PosHoldBundle[]) : [];
     return {
       id: String(hold._id),
       storeId: String(hold.storeId ?? ''),
@@ -1529,7 +1596,8 @@ export class OrdersService {
       noteTitle: hold.noteTitle ?? '',
       noteType: (hold.noteType as PosHoldNoteType) ?? 'general',
       total: hold.total ?? 0,
-      lines: items.map((item) => ({
+      ...(bundles.length > 0 ? { bundles } : {}),
+      lines: productLines.map((item) => ({
         variantId: item.variantId,
         productId: item.productId,
         name: item.productName,
@@ -1557,13 +1625,20 @@ export class OrdersService {
 
   async createPosHold(dto: CreatePosHoldDto, user: RequestUser): Promise<PosHoldView> {
     this.assertVendorOrAdmin(user);
-    if (!dto.items || dto.items.length === 0) {
+    if (this.isPosCartEmpty(dto)) {
       throw new AppException(AppErrorCode.POS_EMPTY_CART);
     }
 
     const store = await this.storesService.findByMemberIdOrThrow(user.id);
     const storeId = store._id as Types.ObjectId;
-    const { items, itemsTotal } = await this.buildPosItems(storeId, dto.items);
+    const resolved = await this.resolvePosCart(storeId, dto, 'en');
+    // A brand-new hold has reserved nothing yet, so the pre-check is safe. It also covers
+    // component lines (`selection.quantity × box.quantity`), aggregated per variant.
+    if ((dto.bundles?.length ?? 0) > 0) {
+      await this.reservationsService.assertCartAvailability(
+        resolved.items.map((item) => ({ variantId: item.variantId, quantity: item.quantity })),
+      );
+    }
     const orderNo = await this.generateOrderNo();
     const note = dto.customer?.note || dto.note || '';
     const noteTitle = dto.noteTitle?.trim() ?? '';
@@ -1581,8 +1656,9 @@ export class OrdersService {
           note,
           noteTitle,
           noteType,
-          items,
-          total: itemsTotal,
+          items: resolved.items,
+          bundles: resolved.bundles,
+          total: resolved.subtotal,
           createdBy: user.id,
         });
         saved = await created.save({ session });
@@ -1606,14 +1682,16 @@ export class OrdersService {
 
   async updatePosHold(id: string, dto: CreatePosHoldDto, user: RequestUser): Promise<PosHoldView> {
     this.assertVendorOrAdmin(user);
-    if (!dto.items || dto.items.length === 0) {
+    if (this.isPosCartEmpty(dto)) {
       throw new AppException(AppErrorCode.POS_EMPTY_CART);
     }
 
     const store = await this.storesService.findByMemberIdOrThrow(user.id);
     const storeId = store._id as Types.ObjectId;
     const existing = await this.findPosHoldOrThrow(id, storeId);
-    const { items, itemsTotal } = await this.buildPosItems(storeId, dto.items);
+    // No pre-assert: the hold's own units are already reserved, so a stock estimate would
+    // double-count them. `reconcileEditedLines` releases/re-reserves and is the authority.
+    const resolved = await this.resolvePosCart(storeId, dto, 'en');
     const note = dto.customer?.note || dto.note || '';
     const noteTitle = dto.noteTitle?.trim() ?? '';
     const noteType: PosHoldNoteType = dto.noteType ?? 'general';
@@ -1625,7 +1703,17 @@ export class OrdersService {
       await session.withTransaction(async () => {
         saved = await this.posHoldModel.findOneAndUpdate(
           { _id: existing._id, storeId },
-          { $set: { customer, note, noteTitle, noteType, items, total: itemsTotal } },
+          {
+            $set: {
+              customer,
+              note,
+              noteTitle,
+              noteType,
+              items: resolved.items,
+              bundles: resolved.bundles,
+              total: resolved.subtotal,
+            },
+          },
           { new: true, session },
         );
         if (!saved) {
@@ -1686,7 +1774,7 @@ export class OrdersService {
     user: RequestUser,
   ): Promise<Order> {
     this.assertVendorOrAdmin(user);
-    if (!dto.items || dto.items.length === 0) {
+    if (this.isPosCartEmpty(dto)) {
       throw new AppException(AppErrorCode.POS_EMPTY_CART);
     }
 
@@ -1695,8 +1783,10 @@ export class OrdersService {
     const hold = await this.findPosHoldOrThrow(id, storeId);
 
     const now = new Date();
-    const { items, itemsTotal } = await this.buildPosItems(storeId, dto.items);
-    const pricing = resolvePosPricing(itemsTotal, dto.customFinalPrice);
+    // No pre-assert: the hold already reserved these units. The transaction reconciles and
+    // consumes, which is the only correct stock decision here.
+    const resolved = await this.resolvePosCart(storeId, dto, 'en');
+    const pricing = resolvePosPricing(resolved.subtotal, dto.customFinalPrice);
 
     const [placedStatus, confirmedStatus, dispatchedStatus, deliveredStatus] = await Promise.all([
       this.statusesService.getBySlug(OrderStatus.PLACED),
@@ -1762,7 +1852,8 @@ export class OrdersService {
           shippingMethod: 'pickup',
           paymentMethod: 'CASH',
           customer,
-          items,
+          items: resolved.items,
+          bundles: resolved.bundles,
           total: pricing.total,
           ...(pricing.customFinalPrice !== null
             ? {
@@ -2910,7 +3001,16 @@ export class OrdersService {
       if (existingSlug === 'cancelled') {
         throw new AppException(AppErrorCode.ORDER_ALREADY_CANCELLED, { id });
       }
-      if (existingSlug === 'delivered') {
+      // A delivered order is terminal for the generic vendor PATCH — except a POS sale.
+      // POS orders are created directly at `delivered` and have no carrier/parcel journey,
+      // so an in-store return is a normal status move. It is still limited to `returned`
+      // (the transition table already allows `delivered → returned`) and stays
+      // status-only: `returned` is not inventory-affecting, so nothing is restocked here.
+      // A physical restock stays on `POST /orders/:id/inventory/receive-return`.
+      const isPosReturn =
+        updateOrderDto.status === OrderStatus.RETURNED &&
+        existing.source === OrderSource.POS;
+      if (existingSlug === 'delivered' && !isPosReturn) {
         throw new AppException(AppErrorCode.ORDER_ALREADY_DELIVERED, { id });
       }
       this.statusesService.validateTransition(existingSlug, updateOrderDto.status);

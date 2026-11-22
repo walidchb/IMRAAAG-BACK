@@ -29,6 +29,42 @@ export interface PosHoldItem {
     label: string;
   };
   image?: string;
+  /** Present on a component line of a Box; links it to `bundles[].contents[].lineId`. */
+  bundleGroupId?: string;
+  /** Reference unit price at hold time — history only; the charge is the Box price. */
+  bundleReferencePrice?: number;
+}
+
+/**
+ * Immutable commercial Box snapshot for a parked sale (same shape as `Order.bundles[]`), plus
+ * a display-only `availableBoxes` the register uses when a held cart is resumed.
+ */
+export interface PosHoldBundle {
+  bundleId: string;
+  bundleGroupId: string;
+  slug?: string;
+  nameEn: string;
+  nameAr: string;
+  nameFr: string;
+  image?: string;
+  price: number;
+  requiredQuantity: number;
+  quantity: number;
+  lineTotal: number;
+  referenceTotal: number;
+  savings: number;
+  availableBoxes?: number;
+  contents: Array<{
+    lineId: string;
+    productId?: string;
+    variantId?: string;
+    productName: string;
+    variantLabel?: string;
+    sku?: string;
+    image?: string;
+    quantityPerBox: number;
+    referenceUnitPrice: number;
+  }>;
 }
 
 export interface PosHoldCustomer {
@@ -83,6 +119,10 @@ export class PosHold {
 
   @Prop({ type: [Object], default: [] })
   items: PosHoldItem[];
+
+  /** Immutable commercial Box snapshots (same shape as `Order.bundles`). */
+  @Prop({ type: [Object], default: [] })
+  bundles: PosHoldBundle[];
 
   @Prop({ type: Number, default: 0 })
   total: number;

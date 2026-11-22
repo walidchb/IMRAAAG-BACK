@@ -91,6 +91,7 @@ describe('Store isolation', () => {
       posService as any,
       storesService as any,
       ordersService as any,
+      {} as any,
     );
 
     const req: any = {

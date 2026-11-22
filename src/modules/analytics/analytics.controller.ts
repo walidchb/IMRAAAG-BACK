@@ -10,6 +10,7 @@ import { RequirePermissions } from '../team/decorators/require-permissions.decor
 import { StoresService } from '../stores/stores.service';
 import { AnalyticsService, StoreScope } from './analytics.service';
 import { AnalyticsRangeQueryDto } from './dto/analytics-query.dto';
+import { AnalyticsProductsQueryDto } from './dto/analytics-products-query.dto';
 
 /**
  * Seller-dashboard analytics reads (roadmap Phase 1).
@@ -61,8 +62,17 @@ export class AnalyticsController {
     return this.analyticsService.ordersStatus(await this.scopeFor(req), query);
   }
 
+  /**
+   * COD order-performance funnel for the cohort of orders created in the selected window.
+   * Cancellations stay in the received baseline and appear as drop-offs.
+   */
+  @Get('orders/funnel')
+  async ordersFunnel(@Query() query: AnalyticsRangeQueryDto, @Req() req: any) {
+    return this.analyticsService.ordersFunnel(await this.scopeFor(req), query);
+  }
+
   @Get('products')
-  async products(@Query() query: AnalyticsRangeQueryDto, @Req() req: any) {
+  async products(@Query() query: AnalyticsProductsQueryDto, @Req() req: any) {
     return this.analyticsService.products(await this.scopeFor(req), query);
   }
 
@@ -74,6 +84,11 @@ export class AnalyticsController {
   @Get('products/:productId/variants')
   async productVariants(@Query() query: AnalyticsRangeQueryDto, @Req() req: any, @Param('productId') productId: string) {
     return this.analyticsService.productVariants(await this.scopeFor(req), query, productId);
+  }
+
+  @Get('team')
+  async team(@Query() query: AnalyticsRangeQueryDto, @Req() req: any) {
+    return this.analyticsService.team(await this.scopeFor(req), query);
   }
 
   private async scopeFor(req: any): Promise<StoreScope> {

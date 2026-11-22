@@ -3,10 +3,13 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import {
   ANALYTICS_DEFAULT_CHANNEL,
+  ANALYTICS_DEFAULT_PRODUCT_METRIC,
   ANALYTICS_DEFAULT_TREND_METRIC,
+  ANALYTICS_TOP_PRODUCTS_DEFAULT_LIMIT,
   CHANNEL_SOURCES,
   AnalyticsBucket,
   AnalyticsChannel,
+  AnalyticsProductMetric,
   AnalyticsRangePreset,
   AnalyticsTrendMetric,
 } from './constants/analytics.constants';
@@ -18,15 +21,27 @@ import {
 } from './lib/date-range';
 import { bucketAdvance, bucketKey, bucketStartAt } from './lib/trend-bucket';
 import { AnalyticsRangeQueryDto } from './dto/analytics-query.dto';
+import { AnalyticsProductsQueryDto } from './dto/analytics-products-query.dto';
+import { FunnelOrderInput, buildFunnel } from './lib/order-funnel';
+import { ProductSalesLine, rankProducts } from './lib/product-ranking';
 import {
   isReturned,
   isSalesEligible,
   isSettled,
   channelOf,
 } from './lib/order-eligibility';
+import {
+  TEAM_REPORT_ROLES,
+  TeamMemberAttribution,
+  TeamMemberPerformance,
+  TeamOrderAttribution,
+  buildTeamPerformance,
+} from './lib/team-attribution';
 import { Order, OrderDocument } from '../orders/schemas/order.schema';
 import { Product, ProductDocument } from '../products/schemas/product.schema';
 import { ProductVariant, ProductVariantDocument } from '../inventory/schemas/product-variant.schema';
+import { StoreMember, StoreMemberDocument } from '../team/schemas/store-member.schema';
+import { User, UserDocument } from '../users/schemas/user.schema';
 import { ORDER_STATUS_VALUES } from '../../common/constants/order-statuses.const';
 
 /**
@@ -105,6 +120,14 @@ export interface SummaryMetrics {
 export interface StoreScope {
   storeId: Types.ObjectId;
   vendorEmail: string;
+}
+
+export interface TeamAnalyticsResponse {
+  preset: AnalyticsRangePreset;
+  from: string;
+  to: string;
+  timezone: string;
+  members: TeamMemberPerformance[];
 }
 
 function emptyMetrics(): SummaryMetrics {
@@ -395,6 +418,56 @@ export interface AnalyticsStatusResponse {
   statuses: Record<string, number>;
 }
 
+export interface AnalyticsTopProductItem {
+  productId: string;
+  deleted: boolean;
+  archived: boolean | null;
+  name: { en: string; fr: string; ar: string } | null;
+  snapshotName: string | null;
+  image: string | null;
+  units: number;
+  sales: number;
+  orders: number;
+}
+
+export interface AnalyticsTopProductsResponse {
+  preset: AnalyticsRangePreset;
+  from: string;
+  to: string;
+  bucket: AnalyticsBucket;
+  channel: AnalyticsChannel;
+  currency: 'DZD';
+  metric: AnalyticsProductMetric;
+  limit: number;
+  total: number;
+  items: AnalyticsTopProductItem[];
+}
+
+export interface AnalyticsOrderFunnelResponse {
+  preset: AnalyticsRangePreset;
+  from: string;
+  to: string;
+  bucket: AnalyticsBucket;
+  channel: AnalyticsChannel;
+  currency: 'DZD';
+  stages: {
+    received: number;
+    confirmed: number;
+    dispatched: number;
+    delivered: number;
+  };
+  shares: {
+    received: number | null;
+    confirmed: number | null;
+    dispatched: number | null;
+    delivered: number | null;
+  };
+}
+
+interface ProductSalesLineRow extends ProductSalesLine {
+  variantId: string | null;
+}
+
 @Injectable()
 export class AnalyticsService {
   constructor(
@@ -404,6 +477,10 @@ export class AnalyticsService {
     private readonly productModel: Model<ProductDocument>,
     @InjectModel(ProductVariant.name)
     private readonly variantModel: Model<ProductVariantDocument>,
+    @InjectModel(StoreMember.name)
+    private readonly memberModel: Model<StoreMemberDocument>,
+    @InjectModel(User.name)
+    private readonly userModel: Model<UserDocument>,
   ) {}
 
   /** Resolve a validated query into the concrete half-open window every read aggregates over. */
@@ -432,15 +509,15 @@ export class AnalyticsService {
   }
 
   /**
-   * Projects the store's orders in `[from, to)` down to what the metrics need. The store is
-   * always passed in by the controller (session-derived), never read from the query — the
-   * channel filter is the only client-controlled condition in the `$match`.
+   * The store+window+channel `$match` every read aggregates over. The store is always passed in
+   * by the controller (session-derived), never read from the query — the channel filter is the
+   * only client-controlled condition.
    */
-  private async fetchProjected(
+  private buildOrderMatch(
     scope: StoreScope,
     range: DateWindow,
     channel: AnalyticsChannel,
-  ): Promise<AnalyticsProjectedOrder[]> {
+  ): Record<string, unknown> {
     const match: Record<string, unknown> = {
       $or: [{ storeId: scope.storeId }, { vendorEmail: scope.vendorEmail }],
       isDeleted: { $ne: true },
@@ -449,6 +526,19 @@ export class AnalyticsService {
     if (channel !== 'all') {
       match.source = { $in: CHANNEL_SOURCES[channel as Exclude<AnalyticsChannel, 'all'>] };
     }
+    return match;
+  }
+
+  /**
+   * Projects the store's orders in `[from, to)` down to what the metrics need. The store is
+   * always passed in by the controller (session-derived), never read from the query.
+   */
+  private async fetchProjected(
+    scope: StoreScope,
+    range: DateWindow,
+    channel: AnalyticsChannel,
+  ): Promise<AnalyticsProjectedOrder[]> {
+    const match = this.buildOrderMatch(scope, range, channel);
 
     const rows = await this.orderModel
       .aggregate([
@@ -730,7 +820,358 @@ export class AnalyticsService {
       statuses: countByStatus(rows),
     };
   }
-  async products(_scope: StoreScope, _query: AnalyticsRangeQueryDto): Promise<any> { return { items: [], total: 0 }; }
+  /** A sales line plus the raw variant id used to resolve legacy lines without a `productId`. */
+  private async fetchProductSalesLines(
+    scope: StoreScope,
+    range: DateWindow,
+    channel: AnalyticsChannel,
+  ): Promise<ProductSalesLineRow[]> {
+    const rows = await this.orderModel
+      .aggregate([
+        { $match: this.buildOrderMatch(scope, range, channel) },
+        {
+          $addFields: {
+            statusSlug: { $ifNull: ['$status.slug', '$status'] },
+          },
+        },
+        { $match: { statusSlug: { $ne: 'cancelled' } } },
+        { $unwind: '$items' },
+        // `$in: [null, '']` matches missing, null and empty; mirrors `salesBreakdown`'s
+        // truthiness check on `bundleGroupId`. Box components are reference-priced, not charged.
+        { $match: { 'items.bundleGroupId': { $in: [null, ''] } } },
+        {
+          $project: {
+            _id: 0,
+            orderId: { $toString: '$_id' },
+            productId: '$items.productId',
+            variantId: '$items.variantId',
+            productName: '$items.productName',
+            image: '$items.image',
+            quantity: { $ifNull: ['$items.quantity', 0] },
+            price: { $ifNull: ['$items.price', 0] },
+          },
+        },
+      ])
+      .exec();
+
+    return rows.map((row: any) => ({
+      orderId: String(row.orderId),
+      productId: row.productId == null || row.productId === '' ? null : String(row.productId),
+      variantId: row.variantId == null || row.variantId === '' ? null : String(row.variantId),
+      productName: row.productName == null ? null : String(row.productName),
+      image: row.image == null ? null : String(row.image),
+      quantity: Number(row.quantity) || 0,
+      price: Number(row.price) || 0,
+    }));
+  }
+
+  /**
+   * Resolves lines written before `items[].productId` existed, through one batched, store-scoped
+   * variant lookup. Soft-deleted variants are included (their tombstone keeps `productId`).
+   */
+  private async resolveProductIds(
+    scope: StoreScope,
+    lines: ProductSalesLineRow[],
+  ): Promise<ProductSalesLineRow[]> {
+    const needsVariant = [
+      ...new Set(
+        lines
+          .filter((line) => !line.productId && line.variantId)
+          .map((line) => String(line.variantId)),
+      ),
+    ].filter((id) => Types.ObjectId.isValid(id));
+
+    if (needsVariant.length === 0) return lines;
+
+    const variants = await this.variantModel
+      .find({
+        _id: { $in: needsVariant.map((id) => new Types.ObjectId(id)) },
+        storeId: scope.storeId, // tenant guard; soft-deleted variants are included
+      })
+      .select('productId')
+      .lean()
+      .exec();
+
+    const productByVariant = new Map<string, string>(
+      variants
+        .filter((variant: any) => variant.productId != null)
+        .map((variant: any) => [String(variant._id), String(variant.productId)]),
+    );
+
+    return lines.map((line) =>
+      line.productId || !line.variantId
+        ? line
+        : { ...line, productId: productByVariant.get(String(line.variantId)) ?? null },
+    );
+  }
+
+  /** GET /analytics/products — the top-N products by units or sales value (D-P1–D-P11). */
+  async products(
+    scope: StoreScope,
+    query: AnalyticsProductsQueryDto,
+  ): Promise<AnalyticsTopProductsResponse> {
+    const range = this.resolveRange(query);
+    const channel = this.channel(query);
+    const metric = (query.metric as AnalyticsProductMetric) ?? ANALYTICS_DEFAULT_PRODUCT_METRIC;
+    const limit = query.limit ?? ANALYTICS_TOP_PRODUCTS_DEFAULT_LIMIT;
+
+    const lines = await this.fetchProductSalesLines(scope, range, channel);
+    const resolved = await this.resolveProductIds(scope, lines);
+    const ranked = rankProducts(resolved, { metric, limit });
+
+    const productIds = ranked.items
+      .map((row) => row.productId)
+      .filter((id) => Types.ObjectId.isValid(id))
+      .map((id) => new Types.ObjectId(id));
+
+    const products = productIds.length
+      ? await this.productModel
+          .find({ _id: { $in: productIds }, storeId: scope.storeId })
+          .select('nameEn nameAr nameFr image images isArchived')
+          .lean()
+          .exec()
+      : [];
+
+    const byId = new Map(products.map((product: any) => [String(product._id), product]));
+
+    return {
+      preset: range.preset,
+      from: this.toIso(range.from),
+      to: this.toIso(range.to),
+      bucket: range.bucket,
+      channel,
+      currency: 'DZD',
+      metric,
+      limit,
+      total: ranked.total,
+      items: ranked.items.map((row) => {
+        const product: any = byId.get(row.productId);
+        return {
+          productId: row.productId,
+          deleted: !product,
+          archived: product ? product.isArchived === true : null,
+          name: product
+            ? {
+                en: product.nameEn ?? '',
+                fr: product.nameFr ?? '',
+                ar: product.nameAr ?? '',
+              }
+            : null,
+          snapshotName: row.snapshotName,
+          image: product?.image ?? product?.images?.[0] ?? row.snapshotImage ?? null,
+          units: row.units,
+          sales: row.sales,
+          orders: row.orders,
+        };
+      }),
+    };
+  }
+
+  /** One row per order in the cohort; the pure `buildFunnel` derives the stages. */
+  private async fetchFunnelRows(
+    scope: StoreScope,
+    range: DateWindow,
+    channel: AnalyticsChannel,
+  ): Promise<FunnelOrderInput[]> {
+    const rows = await this.orderModel
+      .aggregate([
+        { $match: this.buildOrderMatch(scope, range, channel) },
+        {
+          $addFields: {
+            statusSlug: { $ifNull: ['$status.slug', '$status'] },
+            historySlugs: {
+              $map: {
+                input: { $ifNull: ['$history', []] },
+                as: 'h',
+                in: { $ifNull: ['$$h.status.slug', '$$h.status'] },
+              },
+            },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            statusSlug: 1,
+            historySlugs: 1,
+            confirmedAt: 1,
+            dispatchedAt: 1,
+          },
+        },
+      ])
+      .exec();
+
+    return rows.map((row: any) => ({
+      statusSlug: row.statusSlug == null ? '' : String(row.statusSlug),
+      historySlugs: Array.isArray(row.historySlugs)
+        ? row.historySlugs.map((slug: any) => (slug == null ? null : String(slug)))
+        : [],
+      confirmedAt: row.confirmedAt ?? null,
+      dispatchedAt: row.dispatchedAt ?? null,
+    }));
+  }
+
+  /**
+   * GET /analytics/orders/funnel — received → confirmed → dispatched → delivered for the cohort
+   * of orders created in the window (cancellations included as drop-offs).
+   */
+  async ordersFunnel(
+    scope: StoreScope,
+    query: AnalyticsRangeQueryDto,
+  ): Promise<AnalyticsOrderFunnelResponse> {
+    const range = this.resolveRange(query);
+    const channel = this.channel(query);
+    const rows = await this.fetchFunnelRows(scope, range, channel);
+    const counts = buildFunnel(rows);
+    const share = (count: number): number | null =>
+      counts.received > 0 ? (count / counts.received) * 100 : null;
+    return {
+      preset: range.preset,
+      from: this.toIso(range.from),
+      to: this.toIso(range.to),
+      bucket: range.bucket,
+      channel,
+      currency: 'DZD',
+      stages: counts,
+      shares: {
+        received: share(counts.received),
+        confirmed: share(counts.confirmed),
+        dispatched: share(counts.dispatched),
+        delivered: share(counts.delivered),
+      },
+    };
+  }
+
   async productsNoSales(_scope: StoreScope, _query: AnalyticsRangeQueryDto): Promise<any> { return { items: [], total: 0 }; }
   async productVariants(_scope: StoreScope, _query: AnalyticsRangeQueryDto, _productId: string): Promise<any> { return { productId: _productId, items: [] }; }
+
+  /**
+   * GET /analytics/team — confirmation-cohort performance per eligible member.
+   *
+   * The cohort is every order whose confirmation event falls in the window; delivered/returned
+   * are eventual outcomes of that same cohort, so a delivered order always remains inside the
+   * window it was confirmed in. Attribution is to the confirming employee only.
+   */
+  async team(scope: StoreScope, query: AnalyticsRangeQueryDto): Promise<TeamAnalyticsResponse> {
+    const range = this.resolveRange(query);
+    const [members, orders] = await Promise.all([
+      this.teamMembers(scope),
+      this.teamCohortOrders(scope, range),
+    ]);
+
+    return {
+      preset: range.preset,
+      from: this.toIso(range.from),
+      to: this.toIso(range.to),
+      timezone: range.timezone,
+      members: buildTeamPerformance(orders, members),
+    };
+  }
+
+  /** Every reportable membership of the session store, including deactivated rows. */
+  private async teamMembers(scope: StoreScope): Promise<TeamMemberAttribution[]> {
+    const memberRows = await this.memberModel
+      .find({ storeId: scope.storeId, role: { $in: TEAM_REPORT_ROLES } })
+      .select('_id userId role status')
+      .lean()
+      .exec();
+    if (memberRows.length === 0) return [];
+
+    const users = await this.userModel
+      .find({ _id: { $in: memberRows.map((row: any) => row.userId) } })
+      .select('fullName email')
+      .lean()
+      .exec();
+    const byId = new Map(users.map((user: any) => [String(user._id), user]));
+
+    return memberRows.map((row: any) => {
+      const user: any = byId.get(String(row.userId));
+      return {
+        memberId: String(row._id),
+        userId: String(row.userId),
+        fullName: user?.fullName ?? '',
+        email: user?.email ?? null,
+        role: row.role,
+        status: row.status,
+      };
+    });
+  }
+
+  /**
+   * One row per confirmed order in the window. `confirmedAt` is the indexed fast path; the
+   * null/missing branch keeps legacy orders (confirmation only in history) correct without
+   * scanning the whole store.
+   */
+  private async teamCohortOrders(
+    scope: StoreScope,
+    range: DateWindow,
+  ): Promise<TeamOrderAttribution[]> {
+    const rows = await this.orderModel
+      .aggregate([
+        {
+          $match: {
+            $and: [
+              { $or: [{ storeId: scope.storeId }, { vendorEmail: scope.vendorEmail }] },
+              { isDeleted: { $ne: true } },
+              {
+                $or: [
+                  { confirmedAt: { $gte: range.from, $lt: range.to } },
+                  { confirmedAt: null },
+                  { confirmedAt: { $exists: false } },
+                ],
+              },
+            ],
+          },
+        },
+        {
+          $addFields: {
+            statusSlug: { $ifNull: ['$status.slug', '$status'] },
+            historySlugs: {
+              $map: {
+                input: { $ifNull: ['$history', []] },
+                as: 'h',
+                in: { $ifNull: ['$$h.status.slug', '$$h.status'] },
+              },
+            },
+            confirmedEntries: {
+              $filter: {
+                input: { $ifNull: ['$history', []] },
+                as: 'h',
+                cond: { $eq: [{ $ifNull: ['$$h.status.slug', '$$h.status'] }, 'confirmed'] },
+              },
+            },
+          },
+        },
+        {
+          $addFields: {
+            confirmationDate: {
+              $ifNull: ['$confirmedAt', { $arrayElemAt: ['$confirmedEntries.date', 0] }],
+            },
+            confirmerLabel: {
+              $ifNull: ['$confirmedBy', { $arrayElemAt: ['$confirmedEntries.user', 0] }],
+            },
+          },
+        },
+        { $match: { confirmationDate: { $gte: range.from, $lt: range.to } } },
+        {
+          $project: {
+            confirmationDate: 1,
+            confirmerLabel: 1,
+            confirmedByUserId: 1,
+            statusSlug: 1,
+            historySlugs: 1,
+          },
+        },
+      ])
+      .exec();
+
+    return rows.map((row: any) => ({
+      _id: String(row._id),
+      confirmerLabel: row.confirmerLabel == null ? null : String(row.confirmerLabel),
+      confirmedByUserId: row.confirmedByUserId == null ? null : String(row.confirmedByUserId),
+      statusSlug: row.statusSlug == null ? '' : String(row.statusSlug),
+      historySlugs: Array.isArray(row.historySlugs)
+        ? row.historySlugs.map((slug: any) => (slug == null ? null : String(slug)))
+        : [],
+    }));
+  }
 }
