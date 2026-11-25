@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { AppException } from '../../common/errors/app-exception';
@@ -13,6 +13,7 @@ import {
   StoreRole,
 } from '../../common/constants/store-roles.enum';
 import { StorePermission, hasStorePermission } from '../../common/constants/store-permissions.const';
+import { SubscriptionAccessService } from '../subscriptions/subscription-access.service';
 import { StoresService } from '../stores/stores.service';
 import { User, UserDocument } from '../users/schemas/user.schema';
 import { StoreMember, StoreMemberDocument } from './schemas/store-member.schema';
@@ -57,6 +58,7 @@ export class TeamService {
     private readonly userModel: Model<UserDocument>,
     private readonly auditService: AuditService,
     private readonly storesService: StoresService,
+    @Optional() private readonly subscriptionAccessService?: SubscriptionAccessService,
   ) {}
 
   async listMembers(access: StoreAccess): Promise<TeamMemberView[]> {
@@ -162,6 +164,7 @@ export class TeamService {
         });
       } else {
         this.assertAllowed(access, StorePermission.TEAM_REACTIVATE);
+        await this.assertTeamSeatAvailable(String(store._id));
         // Set active and clear the deactivation audit fields in one write.
         await this.memberModel.updateOne(
           { _id: member._id, storeId: store._id },
@@ -307,6 +310,26 @@ export class TeamService {
     }
   }
 
+  /**
+   * Reactivation consumes a seat, so a lowered plan blocks it until capacity frees up. No-op
+   * while enforcement is off; existing members are never deactivated by a plan change.
+   */
+  private async assertTeamSeatAvailable(storeId: string): Promise<void> {
+    const subscriptionAccess = this.subscriptionAccessService;
+    if (!subscriptionAccess || !subscriptionAccess.isFeatureEnforcementEnabled()) return;
+    const entitlement = await subscriptionAccess.getEntitlement(storeId);
+    if (!entitlement.entitled) {
+      throw new AppException(AppErrorCode.SUBSCRIPTION_INACTIVE, { storeId });
+    }
+    const usage = await subscriptionAccess.getUsage(storeId, entitlement.subscription);
+    if (usage.teamLimit !== null && usage.teamSeats >= usage.teamLimit) {
+      throw new AppException(AppErrorCode.SUBSCRIPTION_TEAM_LIMIT_REACHED, {
+        used: usage.teamSeats,
+        limit: usage.teamLimit,
+      });
+    }
+  }
+
   private async deactivate(
     member: StoreMemberDocument,
     actorId: string,
@@ -349,3 +372,4 @@ export class TeamService {
     return access.store as any;
   }
 }
+

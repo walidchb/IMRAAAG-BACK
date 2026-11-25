@@ -1,4 +1,3 @@
-import { StoreStatus } from '../schemas/store-status.enum';
 import {
   IsString,
   IsOptional,
@@ -6,7 +5,6 @@ import {
   IsArray,
   ArrayMaxSize,
   ValidateNested,
-  IsIn,
   MaxLength,
   IsUrl,
   IsBoolean,
@@ -137,12 +135,6 @@ export class UpdateStoreDto {
   @ValidateNested()
   @Type(() => SocialMediaDto)
   socialMedia?: SocialMediaDto;
-
-  @ApiPropertyOptional({ enum: StoreStatus })
-  @IsOptional()
-  @IsString()
-  @IsIn(Object.values(StoreStatus))
-  status?: string;
 
   @ApiPropertyOptional({
     description: 'Opt this store into variant inventory. Default false.',

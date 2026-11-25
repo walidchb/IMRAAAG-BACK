@@ -103,6 +103,15 @@ describe('ProductsService', () => {
       resolveStoreIdByEmail: jest.fn().mockResolvedValue(null),
       findByMemberId: jest.fn().mockResolvedValue(null),
       findByMemberIdOrThrow: jest.fn(),
+      findOne: jest.fn().mockImplementation(async (id: string) => ({
+        _id: new Types.ObjectId(id),
+        vendorEmail: VENDOR_EMAIL,
+      })),
+      findByEmail: jest.fn().mockResolvedValue({
+        _id: VENDOR_STORE_ID,
+        vendorEmail: VENDOR_EMAIL,
+      }),
+      findAvailableStoreIds: jest.fn().mockResolvedValue([VENDOR_STORE_ID]),
       incrementProductCount: jest.fn().mockResolvedValue(undefined),
     } as unknown as jest.Mocked<StoresService>;
 
@@ -367,8 +376,9 @@ describe('ProductsService', () => {
 
       await service.findAll({ vendorEmail: VENDOR_EMAIL } as any);
 
+      expect(storesService.findByEmail).toHaveBeenCalledWith(VENDOR_EMAIL);
       expect(productModel.find).toHaveBeenCalledWith(
-        expect.objectContaining({ vendorEmail: VENDOR_EMAIL }),
+        expect.objectContaining({ storeId: VENDOR_STORE_ID }),
       );
     });
   });

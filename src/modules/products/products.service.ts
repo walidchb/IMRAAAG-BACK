@@ -1,7 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { AppException } from '../../common/errors/app-exception';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
 import { InjectModel } from '@nestjs/mongoose';
+import { SubscriptionAccessService } from '../subscriptions/subscription-access.service';
 import { Model, Types } from 'mongoose';
 import { Product, ProductDocument } from './schemas/product.schema';
 import { Category, CategoryDocument } from '../categories/schemas/category.schema';
@@ -91,6 +92,7 @@ export class ProductsService {
     private readonly uploadService: UploadService,
     private readonly variantsService: VariantsService,
     private readonly auditService: AuditService,
+    @Optional() private readonly subscriptionAccessService?: SubscriptionAccessService,
   ) {}
 
   private slugify(name: string): string {
@@ -229,6 +231,11 @@ export class ProductsService {
       await this.assertProductCategories(storeId, createProductDto.category, createProductDto.subCategory);
     }
 
+    // Plans & Subscriptions: expired stores cannot create products at all, and a store at its
+    // active-product cap cannot start another product. This mirrors the team-seat gate and keeps
+    // the disabled Add Product action consistent with the API. No-op when enforcement is dark.
+    await this.assertProductWriteAllowed(storeId);
+
     const created = new this.productModel({
       ...createProductDto,
       vendorEmail,
@@ -275,13 +282,20 @@ export class ProductsService {
   async findAll(query: ProductQueryDto): Promise<CursorPaginatedResult<Product>> {
     const filter: Record<string, any> = { published: true, ...NOT_ARCHIVED_PRODUCT_FILTER };
 
-    // `storeId` is preferred and takes precedence. The legacy `vendorEmail` remains
-    // supported so the un-migrated storefront keeps working through Phase 3.
-    if (query.storeId) {
-      filter.storeId = new Types.ObjectId(query.storeId);
-    } else if (query.vendorEmail) {
-      filter.vendorEmail = query.vendorEmail;
-    }
+      // `storeId` is preferred and takes precedence. The legacy `vendorEmail` remains
+      // supported so the un-migrated storefront keeps working through Phase 3.
+      //
+      // Every public path checks the store's effective availability first: a store the
+      // owner or an admin has taken offline must not keep a public product listing.
+      if (query.storeId) {
+        const store = await this.storesService.findOne(query.storeId);
+        filter.storeId = new Types.ObjectId(String((store as { _id?: unknown })._id));
+      } else if (query.vendorEmail) {
+        const store = await this.storesService.findByEmail(query.vendorEmail);
+        filter.storeId = new Types.ObjectId(String((store as { _id?: unknown })._id));
+      } else {
+        filter.storeId = { $in: await this.storesService.findAvailableStoreIds() };
+      }
     if (query.category) filter.category = query.category;
     if (query.subCategory) filter.subCategory = query.subCategory;
     if (query.minPrice !== undefined || query.maxPrice !== undefined) {
@@ -673,9 +687,14 @@ export class ProductsService {
       .populate('category', 'nameEn nameAr nameFr slug image isPublished')
       .populate('subCategory', 'nameEn nameAr nameFr slug isPublished categoryId')
       .exec();
-    if (!product) throw new AppException(AppErrorCode.PRODUCT_NOT_FOUND, { id });
+      if (!product) throw new AppException(AppErrorCode.PRODUCT_NOT_FOUND, { id });
 
-    // The detail response carries the full matrix rather than making the storefront issue a
+      // A public product page belongs to its store; the store must be available.
+      if (product.storeId) {
+        await this.storesService.findOne(String(product.storeId));
+      }
+
+      // The detail response carries the full matrix rather than making the storefront issue a
     // second request for the page it renders first (§4.5). `toObject()` first: a lean
     // document has no `.get()`, and mixing the two is where a half-populated response
     // silently comes from. Every product is a variant product, so the matrix is always built.
@@ -723,13 +742,17 @@ export class ProductsService {
 
     if (!product) throw new AppException(AppErrorCode.PRODUCT_NOT_FOUND, { slug });
 
-    const productId = String(product._id);
-    if (!productId.endsWith(idSuffix)) {
-      throw new AppException(AppErrorCode.PRODUCT_NOT_FOUND, { slugId });
-    }
+      const productId = String(product._id);
+      if (!productId.endsWith(idSuffix)) {
+        throw new AppException(AppErrorCode.PRODUCT_NOT_FOUND, { slugId });
+      }
 
-    return product;
-  }
+      if (product.storeId) {
+        await this.storesService.findOne(String(product.storeId));
+      }
+
+      return product;
+    }
 
   async update(id: string, updateProductDto: UpdateProductDto, userEmail: string, userId?: string): Promise<Product> {
     const existing = await this.productModel.findById(id).exec();
@@ -812,6 +835,13 @@ export class ProductsService {
       );
     }
 
+    // A draft→published transition grows the active catalogue and must respect the plan.
+    const publishingNow =
+      updateProductDto.published === true && (existing as any).published !== true;
+    if (publishingNow) {
+      await this.assertProductWriteAllowed(existing.storeId);
+    }
+
     const updated = await this.productModel
       .findOneAndUpdate(
         { _id: id, ...NOT_ARCHIVED_PRODUCT_FILTER },
@@ -821,7 +851,6 @@ export class ProductsService {
       .populate('category', 'nameEn nameAr nameFr slug image isPublished')
       .populate('subCategory', 'nameEn nameAr nameFr slug isPublished categoryId')
       .exec();
-
     if (!updated) {
       // Lost a race with an archive or a delete between the pre-check and the write.
       const current = await this.productModel.findById(id).exec();
@@ -948,6 +977,40 @@ export class ProductsService {
   private assertNotArchived(product: { isArchived?: boolean | null }, id: string): void {
     if (product.isArchived === true) {
       throw new AppException(AppErrorCode.PRODUCT_ARCHIVED, { id });
+    }
+  }
+
+  /**
+   * Subscription gate for product writes (plan §10.2). With enforcement off this is a no-op, so
+   * existing workflows are unchanged. An expired/cancelled store may not create products, and a
+   * store at its active-product cap may not create or activate another one. The cap uses the
+   * subscription system's definition of a product: `published === true && isArchived !== true`
+   * (drafts and variants are not counted). Existing published products are never unpublished by
+   * enforcement, and editing already-published content remains allowed.
+   *
+   * The caller decides when the cap applies: creation, a draft→published transition and
+   * restore-to-published all call this; editing an existing product's content does not.
+   */
+  private async assertProductWriteAllowed(
+    storeId: Types.ObjectId | string | null | undefined,
+  ): Promise<void> {
+    const access = this.subscriptionAccessService;
+    if (!storeId || !access || !access.isFeatureEnforcementEnabled()) return;
+    const id = String(storeId);
+    const entitlement = await access.getEntitlement(id);
+    if (!entitlement.entitled) {
+      this.logger.warn(`[subscriptions] product write rejected: inactive store=${id}`);
+      throw new AppException(AppErrorCode.SUBSCRIPTION_INACTIVE, { storeId: id });
+    }
+    const usage = await access.getUsage(id, entitlement.subscription);
+    if (usage.productsLimit !== null && usage.activeProducts >= usage.productsLimit) {
+      this.logger.warn(
+        `[subscriptions] product write rejected: cap store=${id} used=${usage.activeProducts} limit=${usage.productsLimit}`,
+      );
+      throw new AppException(AppErrorCode.SUBSCRIPTION_PRODUCT_LIMIT_REACHED, {
+        used: usage.activeProducts,
+        limit: usage.productsLimit,
+      });
     }
   }
 
@@ -1087,6 +1150,12 @@ export class ProductsService {
       return { id: String(existing._id), archived: false };
     }
 
+    // Restoring a published product re-enters the storefront, so it is a publish transition.
+    // Restoring an archived *draft* stays allowed at the cap (it does not grow the active catalogue).
+    if (existing.published === true) {
+      await this.assertProductWriteAllowed(existing.storeId);
+    }
+
     const restored = await this.productModel
       .findOneAndUpdate(
         {
@@ -1206,6 +1275,10 @@ export class ProductsService {
     await this.assertOwnership(original, userId, userEmail, 'duplicate');
     this.assertNotArchived(original, id);
 
+    // Duplicating creates another product document, so it must not become a way around the
+    // creation cap. No-op while enforcement is off.
+    await this.assertProductWriteAllowed(original.storeId);
+
     // The copy inherits the original's category pair, so the pair must still be valid for
     // the store (a category could have been removed since the original was saved).
     if (original.storeId) {
@@ -1275,3 +1348,4 @@ export class ProductsService {
     return saved;
   }
 }
+

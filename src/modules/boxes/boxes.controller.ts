@@ -8,6 +8,7 @@ import {
   Post,
   Query,
   Req,
+  UseGuards,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -22,9 +23,11 @@ import { Role } from '../../common/constants/roles.enum';
 import { StorePermission } from '../../common/constants/store-permissions.const';
 import { RequirePermissions } from '../team/decorators/require-permissions.decorator';
 import { StoresService } from '../stores/stores.service';
+import { StoreSubscriptionGuard } from '../subscriptions/guards/store-subscription.guard';
 
 @ApiTags('Boxes')
 @Controller('boxes')
+@UseGuards(StoreSubscriptionGuard)
 export class BoxesController {
   constructor(
     private readonly boxesService: BoxesService,

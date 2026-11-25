@@ -1,4 +1,3 @@
-import { StoreStatus } from '../schemas/store-status.enum';
 import {
   IsString,
   IsNotEmpty,
@@ -7,10 +6,8 @@ import {
   IsArray,
   ArrayMaxSize,
   ValidateNested,
-  IsIn,
   MaxLength,
   MinLength,
-  IsMongoId,
   IsUrl,
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
@@ -159,12 +156,6 @@ export class CreateStoreDto {
   @ValidateNested()
   @Type(() => SocialMediaDto)
   socialMedia?: SocialMediaDto;
-
-  @ApiPropertyOptional({ description: 'Store status', enum: StoreStatus })
-  @IsOptional()
-  @IsString()
-  @IsIn(Object.values(StoreStatus))
-  status?: string;
 
   @ApiPropertyOptional({ description: 'Store logo URL' })
   @EmptyToUndefined()

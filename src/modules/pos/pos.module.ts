@@ -27,6 +27,8 @@ import { OrdersModule } from '../orders/orders.module';
 import { BoxesModule } from '../boxes/boxes.module';
 import { PosController } from './pos.controller';
 import { PosService } from './pos.service';
+import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
+import { PosSubscriptionGuard } from '../subscriptions/guards/pos-subscription.guard';
 
 /**
  * POS catalog module.
@@ -55,8 +57,10 @@ import { PosService } from './pos.service';
     // POS-scoped Box reads (list/detail/validate). The Box service is the same resolver the
     // storefront and cart checkout use, so register pricing/eligibility cannot drift.
     BoxesModule,
+    SubscriptionsModule,
   ],
   controllers: [PosController],
-  providers: [PosService],
+  providers: [PosService, PosSubscriptionGuard],
 })
 export class PosModule {}
+

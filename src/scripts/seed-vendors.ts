@@ -4,7 +4,11 @@ import { getModelToken } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { User } from '../modules/users/schemas/user.schema';
 import { Store, StoreDocument } from '../modules/stores/schemas/store.schema';
-import { StoreStatus } from '../modules/stores/schemas/store-status.enum';
+import {
+  StoreAdminStatus,
+  StoreOwnerStatus,
+  StoreStatus,
+} from '../modules/stores/schemas/store-status.enum';
 import { Product } from '../modules/products/schemas/product.schema';
 import { Role } from '../common/constants/roles.enum';
 import * as bcrypt from 'bcrypt';
@@ -88,6 +92,8 @@ async function bootstrap() {
         tagline: v.tagline,
         socialMedia: { instagram: '', facebook: '', tiktok: '' },
         status: StoreStatus.ACTIVE,
+        ownerStatus: StoreOwnerStatus.ENABLED,
+        adminStatus: StoreAdminStatus.ACTIVE,
         totalProducts: 0,
         totalOrders: 0,
       }) as StoreDocument;

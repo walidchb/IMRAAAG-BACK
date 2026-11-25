@@ -9,6 +9,7 @@ import {
   Query,
   Req,
   NotFoundException,
+  UseGuards,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
@@ -29,9 +30,11 @@ import { BulkActionDto } from './dto/bulk-action.dto';
 import { BulkShipDto } from './dto/bulk-ship.dto';
 import { ReceiveReturnDto } from '../inventory/dto/reservations.dto';
 import { Order } from './schemas/order.schema';
+import { StoreSubscriptionGuard } from '../subscriptions/guards/store-subscription.guard';
 
 @ApiTags('Orders')
 @Controller('orders')
+@UseGuards(StoreSubscriptionGuard)
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 

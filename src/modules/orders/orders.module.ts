@@ -16,6 +16,8 @@ import { StoresModule } from '../stores/stores.module';
 import { InventoryModule } from '../inventory/inventory.module';
 import { BoxesModule } from '../boxes/boxes.module';
 import { TeamModule } from '../team/team.module';
+import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
+import { StoreSubscriptionGuard } from '../subscriptions/guards/store-subscription.guard';
 
 @Module({
   imports: [
@@ -39,9 +41,11 @@ import { TeamModule } from '../team/team.module';
     InventoryModule,
     // Box cart resolution: `OrdersModule → BoxesModule → InventoryModule` (acyclic).
     BoxesModule,
+    SubscriptionsModule,
   ],
   controllers: [OrdersController, OrderStatusesController],
-  providers: [OrdersService, OrderStatusesService],
+  providers: [OrdersService, OrderStatusesService, StoreSubscriptionGuard],
   exports: [MongooseModule, OrdersService, OrderStatusesService],
 })
 export class OrdersModule {}
+

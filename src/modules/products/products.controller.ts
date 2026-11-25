@@ -8,6 +8,7 @@ import {
   Delete,
   Query,
   Req,
+  UseGuards,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
@@ -22,9 +23,11 @@ import { Role } from '../../common/constants/roles.enum';
 import { StorePermission } from '../../common/constants/store-permissions.const';
 import { RequirePermissions } from '../team/decorators/require-permissions.decorator';
 import { StoresService } from '../stores/stores.service';
+import { StoreSubscriptionGuard } from '../subscriptions/guards/store-subscription.guard';
 
 @ApiTags('Products')
 @Controller('products')
+@UseGuards(StoreSubscriptionGuard)
 export class ProductsController {
   constructor(
     private readonly productsService: ProductsService,

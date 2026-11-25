@@ -39,6 +39,8 @@ describe('Store isolation', () => {
       {} as any,
       memberModel as any,
       {} as any,
+      { assignDefaultSignupPlan: jest.fn().mockResolvedValue(undefined) } as any,
+      { get: jest.fn().mockReturnValue(undefined) } as any,
     );
     return { service, memberModel };
   }

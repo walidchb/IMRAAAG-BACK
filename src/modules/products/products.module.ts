@@ -11,6 +11,8 @@ import { StoresModule } from '../stores/stores.module';
 import { UploadModule } from '../upload/upload.module';
 import { InventoryModule } from '../inventory/inventory.module';
 import { AuditModule } from '../audit/audit.module';
+import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
+import { StoreSubscriptionGuard } from '../subscriptions/guards/store-subscription.guard';
 
 @Module({
   imports: [
@@ -28,9 +30,11 @@ import { AuditModule } from '../audit/audit.module';
     // never imports ProductsModule.
     InventoryModule,
     AuditModule,
+    SubscriptionsModule,
   ],
   controllers: [ProductsController],
-  providers: [ProductsService, CacheService],
+  providers: [ProductsService, CacheService, StoreSubscriptionGuard],
   exports: [MongooseModule, ProductsService]
 })
 export class ProductsModule {}
+

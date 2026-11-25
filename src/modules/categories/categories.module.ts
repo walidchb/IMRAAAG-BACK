@@ -8,6 +8,8 @@ import { CategoriesService } from './categories.service';
 import { StoresModule } from '../stores/stores.module';
 import { UploadModule } from '../upload/upload.module';
 import { AuditModule } from '../audit/audit.module';
+import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
+import { StoreSubscriptionGuard } from '../subscriptions/guards/store-subscription.guard';
 
 @Module({
   imports: [
@@ -21,9 +23,10 @@ import { AuditModule } from '../audit/audit.module';
     StoresModule,
     UploadModule,
     AuditModule,
+    SubscriptionsModule,
   ],
   controllers: [CategoriesController],
-  providers: [CategoriesService],
+  providers: [CategoriesService, StoreSubscriptionGuard],
   exports: [MongooseModule, CategoriesService],
 })
 export class CategoriesModule {}

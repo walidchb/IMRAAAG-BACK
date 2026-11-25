@@ -8,6 +8,8 @@ import { BoxesService } from './boxes.service';
 import { StoresModule } from '../stores/stores.module';
 import { InventoryModule } from '../inventory/inventory.module';
 import { UploadModule } from '../upload/upload.module';
+import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
+import { StoreSubscriptionGuard } from '../subscriptions/guards/store-subscription.guard';
 
 /**
  * Dependency direction: `OrdersModule → BoxesModule → InventoryModule`.
@@ -27,9 +29,10 @@ import { UploadModule } from '../upload/upload.module';
     StoresModule,
     InventoryModule,
     UploadModule,
+    SubscriptionsModule,
   ],
   controllers: [BoxesController],
-  providers: [BoxesService],
+  providers: [BoxesService, StoreSubscriptionGuard],
   exports: [BoxesService, MongooseModule],
 })
 export class BoxesModule {}

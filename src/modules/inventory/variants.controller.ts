@@ -35,6 +35,7 @@ import {
   UpdateVariantDto,
 } from './dto/variants.dto';
 import { LocaleQueryDto } from './dto/inventory-list.dto';
+import { StoreSubscriptionGuard } from '../subscriptions/guards/store-subscription.guard';
 
 /**
  * Option, value and variant management, always nested under the product that owns them.
@@ -50,7 +51,7 @@ import { LocaleQueryDto } from './dto/inventory-list.dto';
  */
 @ApiTags('variants')
 @Controller('products/:productId')
-@UseGuards(RolesGuard)
+@UseGuards(RolesGuard, StoreSubscriptionGuard)
 @Roles(Role.VENDOR, Role.ADMIN)
 @RequirePermissions(StorePermission.PRODUCTS_VARIANTS_MANAGE)
 export class VariantsController {

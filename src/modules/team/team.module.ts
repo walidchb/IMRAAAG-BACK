@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { StoresModule } from '../stores/stores.module';
 import { AuditModule } from '../audit/audit.module';
 import { EmailModule } from '../email/email.module';
+import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
 import { User, UserSchema } from '../users/schemas/user.schema';
 import { StoreMember, StoreMemberSchema } from './schemas/store-member.schema';
 import {
@@ -32,6 +33,7 @@ import { TeamController } from './team.controller';
     StoresModule,
     AuditModule,
     EmailModule,
+    SubscriptionsModule,
   ],
   controllers: [TeamController],
   providers: [StoreAccessService, PermissionsGuard, TeamService, InvitationsService],
@@ -44,3 +46,4 @@ import { TeamController } from './team.controller';
   ],
 })
 export class TeamModule {}
+

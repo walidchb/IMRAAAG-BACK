@@ -24,6 +24,7 @@ import {
 } from './dto/inventory-list.dto';
 import { AppException } from '../../common/errors/app-exception';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
+import { StoreSubscriptionGuard } from '../subscriptions/guards/store-subscription.guard';
 
 /**
  * Vendor-scoped inventory endpoints.
@@ -35,7 +36,7 @@ import { AppErrorCode } from '../../common/errors/error-codes.enum';
  */
 @ApiTags('inventory')
 @Controller('inventory')
-@UseGuards(RolesGuard)
+@UseGuards(RolesGuard, StoreSubscriptionGuard)
 @RequirePermissions(StorePermission.INVENTORY_VIEW)
 export class InventoryController {
   constructor(

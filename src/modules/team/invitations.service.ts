@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { ConfigService } from '@nestjs/config';
 import { Model, Types } from 'mongoose';
@@ -17,6 +17,7 @@ import {
 import { User, UserDocument } from '../users/schemas/user.schema';
 import { StoreDocument } from '../stores/schemas/store.schema';
 import { StoresService } from '../stores/stores.service';
+import { SubscriptionAccessService } from '../subscriptions/subscription-access.service';
 import { EmailService } from '../email/email.service';
 import {
   StoreInvitation,
@@ -78,6 +79,15 @@ function newRawToken(): string {
 export class InvitationsService {
   private readonly logger = new Logger(InvitationsService.name);
 
+  /**
+   * Per-store seat mutex. The seat cap is a check-then-write (`count` then `insert`), so two
+   * simultaneous invitations could otherwise both observe the last free seat and overshoot.
+   * Serializing the check+write for one store is enough for the MVP's single-instance API;
+   * `SubscriptionAccessService` still re-reads the live plan on every call, so a concurrent
+   * downgrade is observed by the next queued invite. The DB unique indexes remain the backstop.
+   */
+  private readonly seatLocks = new Map<string, Promise<void>>();
+
   constructor(
     @InjectModel(StoreInvitation.name)
     private readonly invitationModel: Model<StoreInvitationDocument>,
@@ -89,6 +99,7 @@ export class InvitationsService {
     private readonly emailService: EmailService,
     private readonly configService: ConfigService,
     private readonly auditService: AuditService,
+    @Optional() private readonly subscriptionAccessService?: SubscriptionAccessService,
   ) {}
 
   async list(store: StoreDocument): Promise<InvitationView[]> {
@@ -115,14 +126,13 @@ export class InvitationsService {
       throw new AppException(AppErrorCode.TEAM_INVITATION_OWNER_EMAIL);
     }
 
-    await this.assertEmailCanJoin(store, email);
-
-    const { rawToken, expiresAt, invitation } = await this.rotateOrCreate(
-      store,
-      actor,
-      email,
-      dto.role,
-    );
+    // The seat check and the invite write must be one serialized step, otherwise two requests
+    // for the last free seat can both pass and create three members on a two-seat plan.
+    const { rawToken, expiresAt, invitation } = await this.withSeatLock(String(store._id), async () => {
+      await this.assertEmailCanJoin(store, email);
+      await this.assertPendingInviteAllowed(store, email);
+      return this.rotateOrCreate(store, actor, email, dto.role);
+    });
 
     const invitedByName = actor.fullName || actor.email || 'A store owner';
     const emailDelivered = await this.sendInvitationEmail(
@@ -314,30 +324,37 @@ export class InvitationsService {
     const userObjectId = new Types.ObjectId(userId);
     const { storeId } = claimed;
 
-    const existing = await this.memberModel
-      .findOne({ storeId: new Types.ObjectId(storeId), userId: userObjectId })
-      .exec();
-    if (existing) {
-      await this.revertClaim(claimed);
-      throw new AppException(AppErrorCode.TEAM_MEMBER_ALREADY_EXISTS, { userId });
-    }
-
-    try {
-      await this.memberModel.create({
-        storeId: new Types.ObjectId(storeId),
-        userId: userObjectId,
-        role: claimed.invitation.role,
-        status: StoreMemberStatus.ACTIVE,
-        invitedBy: claimed.invitation.invitedBy,
-        joinedAt: new Date(),
-      });
-    } catch (err: any) {
-      if (err?.code === 11000) {
+    // Accepting an invitation consumes a seat, so the live check and the membership insert
+    // share the same per-store lock as invitations. A lowered plan therefore cannot be
+    // overshot by two invites accepted at the same instant.
+    await this.withSeatLock(storeId, async () => {
+      const existing = await this.memberModel
+        .findOne({ storeId: new Types.ObjectId(storeId), userId: userObjectId })
+        .exec();
+      if (existing) {
         await this.revertClaim(claimed);
         throw new AppException(AppErrorCode.TEAM_MEMBER_ALREADY_EXISTS, { userId });
       }
-      throw err;
-    }
+
+      await this.assertTeamSeatAcceptable(storeId);
+
+      try {
+        await this.memberModel.create({
+          storeId: new Types.ObjectId(storeId),
+          userId: userObjectId,
+          role: claimed.invitation.role,
+          status: StoreMemberStatus.ACTIVE,
+          invitedBy: claimed.invitation.invitedBy,
+          joinedAt: new Date(),
+        });
+      } catch (err: any) {
+        if (err?.code === 11000) {
+          await this.revertClaim(claimed);
+          throw new AppException(AppErrorCode.TEAM_MEMBER_ALREADY_EXISTS, { userId });
+        }
+        throw err;
+      }
+    });
 
     if (!claimed.invitation.acceptedByUserId) {
       claimed.invitation.acceptedByUserId = userObjectId;
@@ -374,6 +391,82 @@ export class InvitationsService {
     } catch (err) {
       // `join` already reverted the claim on a duplicate membership; re-throw the reason.
       throw err;
+    }
+  }
+
+  /**
+   * Runs `task` while holding the store's seat lock. Callers queue on the previous tail; a
+   * rejection still releases the gate, so one failed invite never wedges the store's queue.
+   * The map entry is removed once the last waiter finishes to keep it bounded.
+   */
+  private async withSeatLock<T>(storeId: string, task: () => Promise<T>): Promise<T> {
+    const key = String(storeId || 'unknown');
+    const previous = this.seatLocks.get(key) ?? Promise.resolve();
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const tail = previous.then(() => gate);
+    this.seatLocks.set(key, tail);
+
+    await previous;
+    try {
+      return await task();
+    } finally {
+      release();
+      if (this.seatLocks.get(key) === tail) this.seatLocks.delete(key);
+    }
+  }
+
+  /**
+   * Plans & Subscriptions team cap (plan §10.3). A pending invitation reserves a seat; a
+   * rotation of an existing pending invitation does not add one. A no-op while enforcement is
+   * off, and a lower limit never deactivates existing members.
+   */
+  private async assertPendingInviteAllowed(
+    store: StoreDocument,
+    email: string,
+  ): Promise<void> {
+    const access = this.subscriptionAccessService;
+    if (!access || !access.isFeatureEnforcementEnabled()) return;
+    const storeId = String(store._id);
+    const entitlement = await access.getEntitlement(storeId);
+    if (!entitlement.entitled) {
+      throw new AppException(AppErrorCode.SUBSCRIPTION_INACTIVE, { storeId });
+    }
+    const pendingExisting = await this.invitationModel
+      .findOne({ storeId: store._id, email, status: StoreInvitationStatus.PENDING })
+      .select('_id')
+      .lean()
+      .exec();
+    if (pendingExisting) return;
+    const usage = await access.getUsage(storeId, entitlement.subscription);
+    const reserved = usage.teamSeats + usage.pendingInvitations;
+    if (usage.teamLimit !== null && reserved >= usage.teamLimit) {
+      this.logger.warn(
+        `[subscriptions] invite rejected: seat cap store=${storeId} used=${reserved} limit=${usage.teamLimit}`,
+      );
+      throw new AppException(AppErrorCode.SUBSCRIPTION_TEAM_LIMIT_REACHED, {
+        used: reserved,
+        limit: usage.teamLimit,
+      });
+    }
+  }
+
+  /** Acceptance re-checks the live seat count in case the plan was lowered since the invite. */
+  private async assertTeamSeatAcceptable(storeId: string): Promise<void> {
+    const access = this.subscriptionAccessService;
+    if (!access || !access.isFeatureEnforcementEnabled()) return;
+    const entitlement = await access.getEntitlement(storeId);
+    if (!entitlement.entitled) {
+      throw new AppException(AppErrorCode.SUBSCRIPTION_INACTIVE, { storeId });
+    }
+    const usage = await access.getUsage(storeId, entitlement.subscription);
+    if (usage.teamLimit !== null && usage.teamSeats >= usage.teamLimit) {
+      throw new AppException(AppErrorCode.SUBSCRIPTION_TEAM_LIMIT_REACHED, {
+        used: usage.teamSeats,
+        limit: usage.teamLimit,
+      });
     }
   }
 
@@ -655,3 +748,4 @@ export class InvitationsService {
     return value && Types.ObjectId.isValid(value) ? new Types.ObjectId(value) : undefined;
   }
 }
+

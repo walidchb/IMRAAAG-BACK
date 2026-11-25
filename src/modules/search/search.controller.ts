@@ -4,7 +4,7 @@ import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { ProductsService } from '../products/products.service';
 import { ProductQueryDto } from '../products/dto/product-query.dto';
 import { StoresService } from '../stores/stores.service';
-import { StoreStatus } from '../stores/schemas/store-status.enum';
+import { availableStoreFilter } from '../stores/store-availability';
 import { Public } from '../auth/decorators/public.decorator';
 import { IsOptional, IsString, IsIn, IsNumber, Min } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -106,7 +106,7 @@ export class SearchController {
           { contactPhone: regex },
           { wilaya: regex },
         ],
-        status: StoreStatus.ACTIVE,
+        ...availableStoreFilter(),
       };
 
       // Projected to public store fields: the raw documents carry `vendorEmail`, `vendorId`

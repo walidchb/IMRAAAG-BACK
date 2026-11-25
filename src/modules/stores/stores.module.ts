@@ -11,6 +11,7 @@ import { StoresController } from './stores.controller';
 import { StoresService } from './stores.service';
 import { UploadModule } from '../upload/upload.module';
 import { StoreMember, StoreMemberSchema } from '../team/schemas/store-member.schema';
+import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
 
 @Module({
   imports: [
@@ -27,9 +28,11 @@ import { StoreMember, StoreMemberSchema } from '../team/schemas/store-member.sch
       { name: StoreMember.name, schema: StoreMemberSchema },
     ]),
     forwardRef(() => UploadModule),
+    SubscriptionsModule,
   ],
   controllers: [StoresController],
   providers: [StoresService],
   exports: [MongooseModule, StoresService]
 })
 export class StoresModule {}
+

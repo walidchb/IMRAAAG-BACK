@@ -9,6 +9,7 @@ import {
   Post,
   Query,
   Req,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
@@ -24,9 +25,11 @@ import { UpdateCategoryDto } from './dto/update-category.dto';
 import { CreateSubCategoryDto } from './dto/create-sub-category.dto';
 import { UpdateSubCategoryDto } from './dto/update-sub-category.dto';
 import { CategoryQueryDto } from './dto/category-query.dto';
+import { StoreSubscriptionGuard } from '../subscriptions/guards/store-subscription.guard';
 
 @ApiTags('Categories')
 @Controller('categories')
+@UseGuards(StoreSubscriptionGuard)
 export class CategoriesController {
   constructor(
     private readonly categoriesService: CategoriesService,

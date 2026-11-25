@@ -146,6 +146,8 @@ const makeService = (storeModel: any) => {
     subCategoryModel,
     storeMemberModel,
     {} as any,
+    { assignDefaultSignupPlan: jest.fn().mockResolvedValue(undefined) } as any,
+    { get: jest.fn().mockReturnValue(undefined) } as any,
   );
 };
 
@@ -401,7 +403,7 @@ describe('StoresService - subdomains', () => {
         findByMemberIdOrThrow: jest.fn().mockResolvedValue({ _id: sessionStoreId }),
         updateSubdomain: jest.fn().mockResolvedValue({ subdomain: 'zineb' }),
       };
-      const controller = new StoresController(serviceStub);
+      const controller = new StoresController(serviceStub, { isEnabled: () => false } as any);
 
       await controller.updateMineSubdomain(
         { subdomain: 'zineb', storeId: String(new Types.ObjectId()) } as any,
@@ -427,3 +429,4 @@ describe('StoresService - subdomains', () => {
     });
   });
 });
+

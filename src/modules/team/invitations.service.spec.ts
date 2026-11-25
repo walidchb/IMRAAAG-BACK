@@ -1,6 +1,8 @@
 import { Types } from 'mongoose';
 import { InvitationsService } from './invitations.service';
 import { StoreRole } from '../../common/constants/store-roles.enum';
+import { AppException } from '../../common/errors/app-exception';
+import { AppErrorCode } from '../../common/errors/error-codes.enum';
 
 function q<T>(result: T): any {
   const chain: any = {
@@ -319,5 +321,117 @@ describe('InvitationsService', () => {
     expect(filter.expiresAt).toBeDefined();
     expect(result.invitation).toBe(claimed);
     expect(JSON.stringify(result)).not.toContain(rawToken);
+  });
+
+  /**
+   * The seat cap is a check-then-write. These tests exercise the per-store seat lock that
+   * serialises it, so two simultaneous requests can never both claim the last free seat.
+   */
+  describe('team seat concurrency', () => {
+    const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    it('serialises concurrent invites so the cap is never exceeded', async () => {
+      let created = 0;
+      let active = 0;
+      let maxActive = 0;
+
+      const runTask = async () => {
+        active += 1;
+        maxActive = Math.max(maxActive, active);
+        await delay(5);
+        active -= 1;
+      };
+
+      (service as any).assertEmailCanJoin = async () => runTask();
+      (service as any).assertPendingInviteAllowed = async () => {
+        await runTask();
+        if (created >= 2) {
+          throw new AppException(AppErrorCode.SUBSCRIPTION_TEAM_LIMIT_REACHED, {
+            used: created,
+            limit: 2,
+          });
+        }
+      };
+      (service as any).rotateOrCreate = async (_store: any, _actor: any, email: string) => {
+        await runTask();
+        created += 1;
+        return { rawToken: 'token', expiresAt: new Date(), invitation: pendingDoc({ email }) };
+      };
+      (service as any).sendInvitationEmail = async () => true;
+
+      const results = await Promise.allSettled([
+        service.create(store, actor, { email: 'a@example.com', role: StoreRole.ORDER_CONFIRMER }),
+        service.create(store, actor, { email: 'b@example.com', role: StoreRole.ORDER_CONFIRMER }),
+        service.create(store, actor, { email: 'c@example.com', role: StoreRole.ORDER_CONFIRMER }),
+      ]);
+
+      expect(created).toBe(2);
+      expect(maxActive).toBe(1);
+      expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(2);
+      expect(results.filter((r) => r.status === 'rejected')).toHaveLength(1);
+      expect((service as any).seatLocks.size).toBe(0);
+    });
+
+    it('releases the lock after a rejected invite so the next request can run', async () => {
+      let created = 2;
+      (service as any).assertEmailCanJoin = async () => undefined;
+      (service as any).assertPendingInviteAllowed = async () => {
+        if (created >= 2) {
+          throw new AppException(AppErrorCode.SUBSCRIPTION_TEAM_LIMIT_REACHED, {
+            used: created,
+            limit: 2,
+          });
+        }
+      };
+      (service as any).rotateOrCreate = async (_store: any, _actor: any, email: string) => {
+        created += 1;
+        return { rawToken: 'token', expiresAt: new Date(), invitation: pendingDoc({ email }) };
+      };
+      (service as any).sendInvitationEmail = async () => true;
+
+      await expect(
+        service.create(store, actor, { email: 'full@example.com', role: StoreRole.ORDER_CONFIRMER }),
+      ).rejects.toMatchObject({ errorCode: 'SUBSCRIPTION_TEAM_LIMIT_REACHED' });
+      expect((service as any).seatLocks.size).toBe(0);
+
+      created = 1;
+      await expect(
+        service.create(store, actor, { email: 'free@example.com', role: StoreRole.ORDER_CONFIRMER }),
+      ).resolves.toBeDefined();
+      expect(created).toBe(2);
+    });
+
+    it('serialises acceptance so two claimed invitations cannot overshoot the cap', async () => {
+      let accepted = 0;
+      memberModel.findOne = jest.fn(() => q(null));
+      memberModel.create = jest.fn(async () => {
+        await delay(5);
+        accepted += 1;
+        return {};
+      });
+      (service as any).assertTeamSeatAcceptable = async () => {
+        await delay(5);
+        if (accepted >= 1) {
+          throw new AppException(AppErrorCode.SUBSCRIPTION_TEAM_LIMIT_REACHED, {
+            used: accepted,
+            limit: 1,
+          });
+        }
+      };
+
+      const claimed = (email: string) => ({
+        invitation: pendingDoc({ email, acceptedByUserId: new Types.ObjectId() }),
+        storeId: store._id.toString(),
+      });
+
+      const results = await Promise.allSettled([
+        service.join(claimed('a@example.com') as any, new Types.ObjectId().toHexString()),
+        service.join(claimed('b@example.com') as any, new Types.ObjectId().toHexString()),
+      ]);
+
+      expect(accepted).toBe(1);
+      expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+      expect(results.filter((r) => r.status === 'rejected')).toHaveLength(1);
+    });
   });
 });

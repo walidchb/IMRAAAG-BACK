@@ -41,6 +41,8 @@ import { MovementsService } from './services/movements.service';
 import { VariantsService } from './services/variants.service';
 import { ReservationsService } from './services/reservations.service';
 import { BarcodeService } from './services/barcode.service';
+import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
+import { StoreSubscriptionGuard } from '../subscriptions/guards/store-subscription.guard';
 
 /**
  * `Product` is registered here because `InventoryReadService` owns the stock choke point:
@@ -73,9 +75,11 @@ import { BarcodeService } from './services/barcode.service';
       { name: Store.name, schema: StoreSchema },
     ]),
     StoresModule,
+    SubscriptionsModule,
   ],
   controllers: [InventoryController, VariantsController],
   providers: [
+    StoreSubscriptionGuard,
     InventoryService,
     InventoryReadService,
     MovementsService,

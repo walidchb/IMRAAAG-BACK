@@ -31,6 +31,9 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { ItemViewsModule } from './modules/item-views/item-views.module';
 import { OrderLabelsModule } from './modules/order-labels/order-labels.module';
 import { TeamModule } from './modules/team/team.module';
+import { AdminModule } from './modules/admin/admin.module';
+import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
+import { VendorSubscriptionsModule } from './modules/subscriptions/vendor-subscriptions.module';
 
 @Module({
   imports: [
@@ -74,8 +77,12 @@ import { TeamModule } from './modules/team/team.module';
     ItemViewsModule,
     OrderLabelsModule,
     TeamModule,
+    AdminModule,
+    SubscriptionsModule,
+    VendorSubscriptionsModule,
   ],
   controllers: [AppController],
   providers: [AppService, CacheService, { provide: APP_GUARD, useClass: AppThrottlerGuard }],
 })
 export class AppModule {}
+

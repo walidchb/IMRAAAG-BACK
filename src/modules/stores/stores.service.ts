@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { AppException } from '../../common/errors/app-exception';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
 import { InjectModel } from '@nestjs/mongoose';
@@ -14,7 +15,18 @@ import {
 import { ensureDefaultCategoriesForStore } from '../categories/default-categories';
 import { CreateStoreDto } from './dto/create-store.dto';
 import { UpdateStoreDto } from './dto/update-store.dto';
-import { StoreStatus } from './schemas/store-status.enum';
+import {
+  StoreAdminStatus,
+  StoreOwnerStatus,
+  StoreStatus,
+} from './schemas/store-status.enum';
+import {
+  availableStoreFilter,
+  evaluateStoreAvailability,
+  resolveAdminStatus,
+  resolveOwnerStatus,
+  StoreAvailabilitySource,
+} from './store-availability';
 import { UploadService } from '../upload/upload.service';
 import { StoreMember, StoreMemberDocument } from '../team/schemas/store-member.schema';
 import { StoreMemberStatus, StoreRole } from '../../common/constants/store-roles.enum';
@@ -24,11 +36,23 @@ import {
   normalizeSubdomain,
   STORE_SUBDOMAIN_MAX_LENGTH,
 } from './store-subdomain.util';
+import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 
 export interface SubdomainAvailability {
   value: string;
   available: boolean;
   reason?: 'invalid' | 'reserved' | 'taken';
+}
+
+export interface StoreAdminStatusActor {
+  id: string;
+  email: string;
+}
+
+export interface SetStoreAdminStatusInput {
+  adminStatus: StoreAdminStatus;
+  reason?: string | null;
+  actor: StoreAdminStatusActor;
 }
 
 export interface CursorDto {
@@ -54,6 +78,8 @@ export class StoresService {
     @InjectModel(SubCategory.name) private subCategoryModel: Model<SubCategoryDocument>,
     @InjectModel(StoreMember.name) private storeMemberModel: Model<StoreMemberDocument>,
     private readonly uploadService: UploadService,
+    private readonly subscriptionsService: SubscriptionsService,
+    private readonly configService: ConfigService,
   ) {}
 
   private slugify(name: string): string {
@@ -128,6 +154,9 @@ export class StoresService {
       vendorEmail,
       storeSlug,
       subdomain: assignedSubdomain,
+      ownerStatus: StoreOwnerStatus.ENABLED,
+      adminStatus: StoreAdminStatus.ACTIVE,
+      status: StoreStatus.ACTIVE,
       // Cast explicitly rather than relying on Mongoose: a string here is exactly the
       // defect `vendorIdFilter()` has to tolerate, so do not create new instances of it.
       ...(vendorId ? { vendorId: new Types.ObjectId(vendorId) } : {}),
@@ -205,6 +234,27 @@ export class StoresService {
       );
     }
 
+    // Plans & Subscriptions: assign the configured default plan to a new store when the feature
+    // is enabled. With enforcement on and no default plan, this throws; the store must not
+    // survive without a usable subscription, so roll it back exactly like a taxonomy failure.
+    const defaultPlanCode =
+      this.configService.get<string>('subscriptions.defaultSignupPlanCode') || 'starter';
+    try {
+      await this.subscriptionsService.assignDefaultSignupPlan(String(saved._id), defaultPlanCode);
+    } catch (err) {
+      this.logger.error(
+        `Default subscription failed for store ${saved._id}; rolling the store back. ${String(
+          (err as Error)?.message ?? err,
+        )}`,
+      );
+      await this.storeMemberModel.deleteMany({ storeId: saved._id }).exec().catch(() => undefined);
+      await this.subCategoryModel.deleteMany({ storeId: saved._id }).exec().catch(() => undefined);
+      await this.categoryModel.deleteMany({ storeId: saved._id }).exec().catch(() => undefined);
+      await this.storeModel.findByIdAndDelete(saved._id).exec().catch(() => undefined);
+      this.storeIdByEmailCache.delete(vendorEmail);
+      throw err;
+    }
+
     return saved;
   }
 
@@ -213,7 +263,7 @@ export class StoresService {
     limit?: number;
     cursor?: string;
   }): Promise<CursorPaginatedStoresResult> {
-    const filter: Record<string, any> = { status: StoreStatus.ACTIVE };
+    const filter: Record<string, any> = availableStoreFilter();
 
     const limit = query.limit || 10;
 
@@ -290,9 +340,7 @@ export class StoresService {
   async findOne(id: string, opts?: { skipStatusCheck?: boolean; includePublishedCount?: boolean }): Promise<Store> {
     const store = await this.storeModel.findById(id).exec();
     if (!store) throw new AppException(AppErrorCode.STORE_NOT_FOUND, { id });
-    if (!opts?.skipStatusCheck && store.status !== StoreStatus.ACTIVE) {
-      throw new AppException(AppErrorCode.STORE_NOT_ACTIVE, { id });
-    }
+    if (!opts?.skipStatusCheck) this.assertStoreAvailable(store, { id });
     if (opts?.includePublishedCount) await this.attachPublishedProductCounts([store]);
     return store;
   }
@@ -300,9 +348,7 @@ export class StoresService {
   async findBySlug(slug: string, opts?: { skipStatusCheck?: boolean; includePublishedCount?: boolean }): Promise<Store> {
     const store = await this.storeModel.findOne({ storeSlug: slug }).exec();
     if (!store) throw new AppException(AppErrorCode.STORE_NOT_FOUND, { field: 'slug', value: slug });
-    if (!opts?.skipStatusCheck && store.status !== StoreStatus.ACTIVE) {
-      throw new AppException(AppErrorCode.STORE_NOT_ACTIVE, { slug });
-    }
+    if (!opts?.skipStatusCheck) this.assertStoreAvailable(store, { slug });
     if (opts?.includePublishedCount) await this.attachPublishedProductCounts([store]);
     return store;
   }
@@ -310,9 +356,7 @@ export class StoresService {
   async findByVendor(vendorId: string, opts?: { skipStatusCheck?: boolean; includePublishedCount?: boolean }): Promise<Store> {
     const store = await this.storeModel.findOne({ vendorId }).exec();
     if (!store) throw new AppException(AppErrorCode.STORE_NOT_FOUND, { field: 'vendorId', value: vendorId });
-    if (!opts?.skipStatusCheck && store.status !== StoreStatus.ACTIVE) {
-      throw new AppException(AppErrorCode.STORE_NOT_ACTIVE, { vendorId });
-    }
+    if (!opts?.skipStatusCheck) this.assertStoreAvailable(store, { vendorId });
     if (opts?.includePublishedCount) await this.attachPublishedProductCounts([store]);
     return store;
   }
@@ -320,9 +364,7 @@ export class StoresService {
   async findByEmail(email: string, opts?: { skipStatusCheck?: boolean; includePublishedCount?: boolean }): Promise<Store> {
     const store = await this.storeModel.findOne({ vendorEmail: email.toLowerCase() }).exec();
     if (!store) throw new AppException(AppErrorCode.STORE_NOT_FOUND, { field: 'email', value: email });
-    if (!opts?.skipStatusCheck && store.status !== StoreStatus.ACTIVE) {
-      throw new AppException(AppErrorCode.STORE_NOT_ACTIVE, { email });
-    }
+    if (!opts?.skipStatusCheck) this.assertStoreAvailable(store, { email });
     if (opts?.includePublishedCount) await this.attachPublishedProductCounts([store]);
     return store;
   }
@@ -407,9 +449,7 @@ export class StoresService {
     if (!value) throw new AppException(AppErrorCode.STORE_NOT_FOUND, { field: 'subdomain' });
     const store = await this.storeModel.findOne({ subdomain: value }).exec();
     if (!store) throw new AppException(AppErrorCode.STORE_NOT_FOUND, { field: 'subdomain' });
-    if (!opts?.skipStatusCheck && store.status !== StoreStatus.ACTIVE) {
-      throw new AppException(AppErrorCode.STORE_NOT_ACTIVE, { subdomain: value });
-    }
+    if (!opts?.skipStatusCheck) this.assertStoreAvailable(store, { subdomain: value });
     if (opts?.includePublishedCount) await this.attachPublishedProductCounts([store]);
     return store;
   }
@@ -527,9 +567,7 @@ export class StoresService {
     if (!store) {
       throw new AppException(AppErrorCode.STORE_NOT_FOUND, { field: 'vendorId', value: vendorId });
     }
-    if (!opts?.skipStatusCheck && store.status !== StoreStatus.ACTIVE) {
-      throw new AppException(AppErrorCode.STORE_NOT_ACTIVE, { vendorId });
-    }
+    if (!opts?.skipStatusCheck) this.assertStoreAvailable(store, { vendorId });
     return store;
   }
 
@@ -560,9 +598,7 @@ export class StoresService {
     if (!store) {
       throw new AppException(AppErrorCode.STORE_NOT_FOUND, { field: 'userId', value: userId });
     }
-    if (!opts?.skipStatusCheck && store.status !== StoreStatus.ACTIVE) {
-      throw new AppException(AppErrorCode.STORE_NOT_ACTIVE, { userId });
-    }
+    if (!opts?.skipStatusCheck) this.assertStoreAvailable(store, { userId });
     return store;
   }
 
@@ -656,7 +692,6 @@ export class StoresService {
     if (updateStoreDto.streetAddress !== undefined) updateData.streetAddress = updateStoreDto.streetAddress;
     if (updateStoreDto.googleMapsUrl !== undefined) updateData.googleMapsUrl = updateStoreDto.googleMapsUrl;
     if (updateStoreDto.socialMedia !== undefined) updateData.socialMedia = updateStoreDto.socialMedia;
-    if (updateStoreDto.status !== undefined) updateData.status = updateStoreDto.status;
     if (updateStoreDto.storeLogo !== undefined) updateData.storeLogo = updateStoreDto.storeLogo;
     if (updateStoreDto.coverImage !== undefined) updateData.coverImage = updateStoreDto.coverImage;
     if (updateStoreDto.wilaya !== undefined) updateData.wilaya = updateStoreDto.wilaya;
@@ -705,19 +740,197 @@ export class StoresService {
     return updated;
   }
 
-  async toggleStatus(id: string): Promise<Store> {
+  /**
+   * The owner's enable/disable switch.
+   *
+   * Only `ownerStatus` is written (together with the derived legacy `status` mirror). An
+   * admin suspension is never touched, so an owner cannot re-enable a suspended store by
+   * flipping this switch: `status` stays `Closed` and availability remains false.
+   */
+  async toggleOwnerStatus(id: string): Promise<Store> {
+    return this.writeStatusAtomically(id, 'owner');
+  }
+
+  /**
+   * The admin's suspend/reactivate action. Only admins reach this (through
+   * `AdminStoresService`); the reason and actor metadata are retained on the store.
+   */
+  async setAdminStatus(
+    id: string,
+    input: SetStoreAdminStatusInput,
+  ): Promise<Store> {
     const store = await this.storeModel.findById(id).exec();
     if (!store) throw new AppException(AppErrorCode.STORE_NOT_FOUND, { id });
 
-    const newStatus = store.status === StoreStatus.ACTIVE ? StoreStatus.PAUSED : StoreStatus.ACTIVE;
-    const updated = await this.storeModel.findByIdAndUpdate(
-      id,
-      { status: newStatus },
-      { returnDocument: 'after' }
-    ).exec();
+    const current = resolveAdminStatus(store as unknown as StoreAvailabilitySource);
+    if (current === input.adminStatus) return store;
 
-    if (!updated) throw new AppException(AppErrorCode.STORE_NOT_FOUND, { id });
-    return updated;
+    const reason = input.reason?.trim() ? input.reason.trim() : null;
+    return this.writeStatusAtomically(id, 'admin', {
+      adminStatus: input.adminStatus,
+      reason,
+      actor: input.actor,
+    });
+  }
+
+  /**
+   * Atomically write one side of the two-status pair and recompute the legacy mirror from
+   * the *stored* other side. The `$expr` predicate makes a concurrent owner/admin write
+   * retry instead of silently overwriting the other party's decision.
+   */
+  private async writeStatusAtomically(
+    id: string,
+    side: 'owner' | 'admin',
+    adminInput?: SetStoreAdminStatusInput,
+  ): Promise<Store> {
+    const ownerExpr = this.ownerStatusExpression();
+    const adminExpr = this.adminStatusExpression();
+    const now = new Date();
+
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const store = await this.storeModel.findById(id).exec();
+      if (!store) throw new AppException(AppErrorCode.STORE_NOT_FOUND, { id });
+
+      if (side === 'owner') {
+        const currentOwner = resolveOwnerStatus(
+          store as unknown as StoreAvailabilitySource,
+        );
+        const nextOwner =
+          currentOwner === StoreOwnerStatus.ENABLED
+            ? StoreOwnerStatus.DISABLED
+            : StoreOwnerStatus.ENABLED;
+
+        const updated = await this.storeModel
+          .findOneAndUpdate(
+            { _id: id, $expr: { $eq: [ownerExpr, currentOwner] } },
+            [
+              {
+                $set: {
+                  ownerStatus: nextOwner,
+                  adminStatus: adminExpr,
+                  ownerStatusChangedAt: now,
+                  status: this.storeStatusExpression({ $literal: nextOwner }, adminExpr),
+                },
+              },
+            ] as any,
+            { returnDocument: 'after', updatePipeline: true },
+          )
+          .exec();
+        if (updated) return updated;
+        continue;
+      }
+
+      const currentAdmin = resolveAdminStatus(
+        store as unknown as StoreAvailabilitySource,
+      );
+      const adminStatus = adminInput?.adminStatus ?? currentAdmin;
+      const actorId =
+        adminInput?.actor.id && Types.ObjectId.isValid(adminInput.actor.id)
+          ? new Types.ObjectId(adminInput.actor.id)
+          : null;
+
+      const updated = await this.storeModel
+        .findOneAndUpdate(
+          { _id: id, $expr: { $eq: [adminExpr, currentAdmin] } },
+          [
+            {
+              $set: {
+                ownerStatus: ownerExpr,
+                adminStatus,
+                adminStatusReason: adminInput?.reason ?? null,
+                adminStatusChangedAt: now,
+                adminStatusChangedBy: actorId,
+                adminStatusChangedByEmail: adminInput?.actor.email ?? null,
+                status: this.storeStatusExpression(ownerExpr, { $literal: adminStatus }),
+              },
+            },
+          ] as any,
+          { returnDocument: 'after', updatePipeline: true },
+        )
+        .exec();
+      if (updated) return updated;
+    }
+
+    throw new AppException(AppErrorCode.STORE_STATUS_CONFLICT, { id });
+  }
+
+  private ownerStatusExpression(): Record<string, unknown> {
+    return {
+      $ifNull: [
+        '$ownerStatus',
+        {
+          $cond: [
+            { $in: ['$status', [StoreStatus.PAUSED, StoreStatus.CLOSED]] },
+            StoreOwnerStatus.DISABLED,
+            StoreOwnerStatus.ENABLED,
+          ],
+        },
+      ],
+    };
+  }
+
+  private adminStatusExpression(): Record<string, unknown> {
+    return {
+      $ifNull: [
+        '$adminStatus',
+        {
+          $cond: [
+            { $eq: ['$status', StoreStatus.CLOSED] },
+            StoreAdminStatus.SUSPENDED,
+            StoreAdminStatus.ACTIVE,
+          ],
+        },
+      ],
+    };
+  }
+
+  private storeStatusExpression(
+    ownerExpr: unknown,
+    adminExpr: unknown,
+  ): Record<string, unknown> {
+    return {
+      $cond: [
+        { $eq: [adminExpr, StoreAdminStatus.SUSPENDED] },
+        StoreStatus.CLOSED,
+        {
+          $cond: [
+            { $eq: [ownerExpr, StoreOwnerStatus.DISABLED] },
+            StoreStatus.PAUSED,
+            StoreStatus.ACTIVE,
+          ],
+        },
+      ],
+    };
+  }
+
+  /** Throws `STORE_NOT_ACTIVE` unless both independent statuses allow operation. */
+  private assertStoreAvailable(
+    store: StoreAvailabilitySource,
+    params: Record<string, unknown>,
+  ): void {
+    const availability = evaluateStoreAvailability(store);
+    if (!availability.available) {
+      throw new AppException(AppErrorCode.STORE_NOT_ACTIVE, {
+        ...params,
+        reason: availability.blockedBy,
+      });
+    }
+  }
+
+  /**
+   * Ids of every store that is currently available.
+   *
+   * Used to keep global marketplace reads (which have no single store scope) from listing
+   * products belonging to a disabled/suspended store. Store-scoped reads should use
+   * `findOne`/`findBySlug`/... which throw `STORE_NOT_ACTIVE` directly.
+   */
+  async findAvailableStoreIds(): Promise<Types.ObjectId[]> {
+    const rows = (await this.storeModel
+      .find(availableStoreFilter())
+      .select('_id')
+      .lean()
+      .exec()) as Array<{ _id: Types.ObjectId }>;
+    return rows.map((row) => row._id).filter(Boolean);
   }
 
   async findAllRaw(filter: Record<string, any>): Promise<Store[]> {
@@ -735,7 +948,7 @@ export class StoresService {
     return this.storeModel
       .find(filter)
       .select(
-        '_id storeName storeSlug subdomain description storeLogo coverImage tagline wilaya commune streetAddress googleMapsUrl address contactEmail contactPhone contactPhones categories socialMedia status totalProducts totalOrders createdAt',
+        '_id storeName storeSlug subdomain description storeLogo coverImage tagline wilaya commune streetAddress googleMapsUrl address contactEmail contactPhone contactPhones categories socialMedia status ownerStatus adminStatus totalProducts totalOrders createdAt',
       )
       .sort({ createdAt: -1 })
       .limit(50)

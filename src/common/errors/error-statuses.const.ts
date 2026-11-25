@@ -1,8 +1,8 @@
-﻿import { HttpStatus } from '@nestjs/common';
+import { HttpStatus } from '@nestjs/common';
 import { AppErrorCode } from './error-codes.enum';
 
 export const ERROR_HTTP_STATUS: Record<string, number> = {
-  // ─── Auth (401, 403, 404, 409) ───
+  // --- Auth (401, 403, 404, 409) ---
   [AppErrorCode.AUTH_INVALID_CREDENTIALS]: HttpStatus.UNAUTHORIZED,
   [AppErrorCode.AUTH_INVALID_REFRESH_TOKEN]: HttpStatus.UNAUTHORIZED,
   [AppErrorCode.AUTH_REFRESH_TOKEN_EXPIRED]: HttpStatus.UNAUTHORIZED,
@@ -25,7 +25,7 @@ export const ERROR_HTTP_STATUS: Record<string, number> = {
   [AppErrorCode.AUTH_ACCOUNT_LOCKED]: HttpStatus.LOCKED,
   [AppErrorCode.AUTH_ACCOUNT_SUSPENDED]: HttpStatus.FORBIDDEN,
 
-  // ─── Authorization ───
+  // --- Authorization ---
   [AppErrorCode.AUTH_UNAUTHORIZED]: HttpStatus.UNAUTHORIZED,
   [AppErrorCode.AUTH_INSUFFICIENT_PERMISSIONS]: HttpStatus.FORBIDDEN,
   [AppErrorCode.AUTH_VENDOR_ONLY]: HttpStatus.FORBIDDEN,
@@ -33,10 +33,19 @@ export const ERROR_HTTP_STATUS: Record<string, number> = {
   [AppErrorCode.AUTH_CUSTOMER_ONLY]: HttpStatus.FORBIDDEN,
   [AppErrorCode.AUTH_STORE_OWNER_ONLY]: HttpStatus.FORBIDDEN,
   [AppErrorCode.AUTH_PRODUCT_OWNER_ONLY]: HttpStatus.FORBIDDEN,
+
+  // --- Admin Panel ---
+  [AppErrorCode.ADMIN_EMAIL_ALREADY_EXISTS]: HttpStatus.CONFLICT,
+  [AppErrorCode.ADMIN_NOT_FOUND]: HttpStatus.NOT_FOUND,
+  [AppErrorCode.ADMIN_CANNOT_DISABLE_SELF]: HttpStatus.FORBIDDEN,
+  [AppErrorCode.ADMIN_CANNOT_DELETE_SELF]: HttpStatus.FORBIDDEN,
+  [AppErrorCode.ADMIN_LAST_ACTIVE]: HttpStatus.CONFLICT,
+  [AppErrorCode.ADMIN_ORIGIN_REJECTED]: HttpStatus.FORBIDDEN,
+  [AppErrorCode.ADMIN_INVALID_STATUS]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.AUTH_ORDER_OWNER_ONLY]: HttpStatus.FORBIDDEN,
   [AppErrorCode.AUTH_STORE_ACCESS_REVOKED]: HttpStatus.FORBIDDEN,
 
-  // ─── Team management ───
+  // --- Team management ---
   [AppErrorCode.TEAM_MEMBER_NOT_FOUND]: HttpStatus.NOT_FOUND,
   [AppErrorCode.TEAM_MEMBER_ALREADY_EXISTS]: HttpStatus.CONFLICT,
   [AppErrorCode.TEAM_OWNER_PROTECTED]: HttpStatus.FORBIDDEN,
@@ -54,7 +63,7 @@ export const ERROR_HTTP_STATUS: Record<string, number> = {
   [AppErrorCode.TEAM_ACCOUNT_EXISTS_USE_LOGIN]: HttpStatus.CONFLICT,
   [AppErrorCode.TEAM_INVITATION_EMAIL_FAILED]: HttpStatus.BAD_GATEWAY,
 
-  // ─── User ───
+  // --- User ---
   [AppErrorCode.USER_NOT_FOUND]: HttpStatus.NOT_FOUND,
   [AppErrorCode.USER_EMAIL_ALREADY_EXISTS]: HttpStatus.CONFLICT,
   [AppErrorCode.USER_PHONE_ALREADY_EXISTS]: HttpStatus.CONFLICT,
@@ -64,11 +73,12 @@ export const ERROR_HTTP_STATUS: Record<string, number> = {
   [AppErrorCode.USER_PROFILE_NOT_FOUND]: HttpStatus.NOT_FOUND,
   [AppErrorCode.USER_ALREADY_HAS_STORE]: HttpStatus.CONFLICT,
 
-  // ─── Store ───
+  // --- Store ---
   [AppErrorCode.STORE_NOT_FOUND]: HttpStatus.NOT_FOUND,
   [AppErrorCode.STORE_VENDOR_EMAIL_REQUIRED]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.STORE_ALREADY_EXISTS]: HttpStatus.CONFLICT,
   [AppErrorCode.STORE_NOT_ACTIVE]: HttpStatus.FORBIDDEN,
+  [AppErrorCode.STORE_STATUS_CONFLICT]: HttpStatus.CONFLICT,
   [AppErrorCode.STORE_CATEGORY_LIMIT_EXCEEDED]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.STORE_HAS_PRODUCTS]: HttpStatus.CONFLICT,
   [AppErrorCode.STORE_CANNOT_PUBLISH_EMPTY]: HttpStatus.BAD_REQUEST,
@@ -76,7 +86,7 @@ export const ERROR_HTTP_STATUS: Record<string, number> = {
   [AppErrorCode.STORE_SUBDOMAIN_RESERVED]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.STORE_SUBDOMAIN_TAKEN]: HttpStatus.CONFLICT,
 
-  // ─── Product ───
+  // --- Product ---
   [AppErrorCode.PRODUCT_NOT_FOUND]: HttpStatus.NOT_FOUND,
   [AppErrorCode.PRODUCT_ACCESS_DENIED]: HttpStatus.FORBIDDEN,
   [AppErrorCode.PRODUCT_CANNOT_DELETE_HAS_ORDERS]: HttpStatus.CONFLICT,
@@ -98,7 +108,7 @@ export const ERROR_HTTP_STATUS: Record<string, number> = {
   [AppErrorCode.BOX_CANNOT_DELETE_HAS_ORDERS]: HttpStatus.CONFLICT,
   [AppErrorCode.BOX_CONFLICT]: HttpStatus.CONFLICT,
 
-  // ─── Category ───
+  // --- Category ---
   [AppErrorCode.CATEGORY_NOT_FOUND]: HttpStatus.NOT_FOUND,
   [AppErrorCode.CATEGORY_HAS_PRODUCTS]: HttpStatus.CONFLICT,
   [AppErrorCode.CATEGORY_ALREADY_EXISTS]: HttpStatus.CONFLICT,
@@ -111,7 +121,7 @@ export const ERROR_HTTP_STATUS: Record<string, number> = {
   [AppErrorCode.SUBCATEGORY_PARENT_MISMATCH]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.PRODUCT_CATEGORY_NOT_IN_STORE]: HttpStatus.BAD_REQUEST,
 
-  // ─── Order ───
+  // --- Order ---
   [AppErrorCode.ORDER_NOT_FOUND]: HttpStatus.NOT_FOUND,
   [AppErrorCode.ORDER_INVALID_STATUS]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.ORDER_CANNOT_TRANSITION]: HttpStatus.BAD_REQUEST,
@@ -131,7 +141,7 @@ export const ERROR_HTTP_STATUS: Record<string, number> = {
   [AppErrorCode.ORDER_STOPDESK_CODE_REQUIRED]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.ORDER_REFUND_NOT_ALLOWED]: HttpStatus.BAD_REQUEST,
 
-  // ─── Delivery ───
+  // --- Delivery ---
   [AppErrorCode.ORDER_LABEL_DISABLED]: HttpStatus.NOT_FOUND,
   [AppErrorCode.ORDER_LABEL_INVALID_FORMAT]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.ORDER_LABEL_INVALID_GROUPING]: HttpStatus.BAD_REQUEST,
@@ -170,22 +180,22 @@ export const ERROR_HTTP_STATUS: Record<string, number> = {
   [AppErrorCode.DELIVERY_ORDER_NOT_IN_RESPONSE]: HttpStatus.INTERNAL_SERVER_ERROR,
   [AppErrorCode.DELIVERY_UNKNOWN_ERROR]: HttpStatus.INTERNAL_SERVER_ERROR,
 
-  // ─── Delivery status sync ───
+  // --- Delivery status sync ---
   [AppErrorCode.DELIVERY_STATUS_SYNC_FAILED]: HttpStatus.BAD_GATEWAY,
-  /** Advisory only — the code is recorded on the record, never raised at a caller. */
+  /** Advisory only � the code is recorded on the record, never raised at a caller. */
   [AppErrorCode.DELIVERY_STATUS_UNKNOWN_STATE]: HttpStatus.OK,
-  /** Advisory only — the code is recorded on the record, never raised at a caller. */
+  /** Advisory only � the code is recorded on the record, never raised at a caller. */
   [AppErrorCode.DELIVERY_STATUS_ADVANCE_CONFLICT]: HttpStatus.CONFLICT,
   [AppErrorCode.DELIVERY_STATUS_NOT_FOUND]: HttpStatus.NOT_FOUND,
 
-  // ─── Delivery Fees ───
+  // --- Delivery Fees ---
   [AppErrorCode.FEE_NOT_FOUND_FOR_WILAYA]: HttpStatus.NOT_FOUND,
   [AppErrorCode.FEE_API_CREDENTIALS_MISSING]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.FEE_API_ERROR]: HttpStatus.BAD_GATEWAY,
   [AppErrorCode.FEE_API_NO_DATA]: HttpStatus.BAD_GATEWAY,
   [AppErrorCode.FEE_FETCH_FAILED]: HttpStatus.BAD_GATEWAY,
 
-  // ─── Upload ───
+  // --- Upload ---
   [AppErrorCode.UPLOAD_NO_FILE_PROVIDED]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.UPLOAD_MAX_FILES_EXCEEDED]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.UPLOAD_NO_KEY_PROVIDED]: HttpStatus.BAD_REQUEST,
@@ -198,14 +208,14 @@ export const ERROR_HTTP_STATUS: Record<string, number> = {
   [AppErrorCode.UPLOAD_DELETE_FAILED]: HttpStatus.INTERNAL_SERVER_ERROR,
   [AppErrorCode.UPLOAD_QUOTA_EXCEEDED]: HttpStatus.TOO_MANY_REQUESTS,
 
-  // ─── Tracking ───
+  // --- Tracking ---
   [AppErrorCode.TRACKING_CONFIG_NOT_FOUND]: HttpStatus.NOT_FOUND,
 
-  // ─── Audit ───
+  // --- Audit ---
   [AppErrorCode.AUDIT_ACTION_NOT_FOUND]: HttpStatus.NOT_FOUND,
   [AppErrorCode.AUDIT_UNAUTHORIZED]: HttpStatus.FORBIDDEN,
 
-  // ─── Infrastructure ───
+  // --- Infrastructure ---
   [AppErrorCode.RATE_LIMIT_EXCEEDED]: HttpStatus.TOO_MANY_REQUESTS,
   [AppErrorCode.INTERNAL_SERVER_ERROR]: HttpStatus.INTERNAL_SERVER_ERROR,
   [AppErrorCode.VALIDATION_FAILED]: HttpStatus.BAD_REQUEST,
@@ -218,17 +228,17 @@ export const ERROR_HTTP_STATUS: Record<string, number> = {
   [AppErrorCode.VALIDATION_AT_LEAST_ONE_LANGUAGE]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.VALIDATION_AT_LEAST_ONE_IMAGE]: HttpStatus.BAD_REQUEST,
 
-  // ─── Coupon ───
+  // --- Coupon ---
   [AppErrorCode.COUPON_EXPIRED]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.COUPON_EXHAUSTED]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.COUPON_MINIMUM_NOT_REACHED]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.COUPON_INVALID]: HttpStatus.BAD_REQUEST,
 
-  // ─── Payment ───\r\n  [AppErrorCode.PAYMENT_ALREADY_COMPLETED]: HttpStatus.BAD_REQUEST,\r\n\r\n  // ─── Inventory / Variants ───\r\n  // ─── Inventory / Variants ───
-  // ─── Payment ───
+  // --- Payment ---\r\n  [AppErrorCode.PAYMENT_ALREADY_COMPLETED]: HttpStatus.BAD_REQUEST,\r\n\r\n  // --- Inventory / Variants ---\r\n  // --- Inventory / Variants ---
+  // --- Payment ---
   [AppErrorCode.PAYMENT_ALREADY_COMPLETED]: HttpStatus.BAD_REQUEST,
 
-  // ─── Inventory / Variants ───
+  // --- Inventory / Variants ---
   [AppErrorCode.VARIANT_NOT_FOUND]: HttpStatus.NOT_FOUND,
   [AppErrorCode.VARIANT_INACTIVE]: HttpStatus.CONFLICT,
   [AppErrorCode.DUPLICATE_VARIANT_COMBINATION]: HttpStatus.CONFLICT,
@@ -269,7 +279,7 @@ export const ERROR_HTTP_STATUS: Record<string, number> = {
   [AppErrorCode.ORDER_ARCHIVED]: HttpStatus.CONFLICT,
   [AppErrorCode.ORDER_ARCHIVE_INVALID_STATUS]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.ORDER_PRODUCT_ARCHIVED]: HttpStatus.CONFLICT,
-  // ─── Inventory lookup ───
+  // --- Inventory lookup ---
   [AppErrorCode.INVENTORY_BARCODE_NOT_FOUND]: HttpStatus.NOT_FOUND,
 
   // Point of Sale
@@ -283,4 +293,22 @@ export const ERROR_HTTP_STATUS: Record<string, number> = {
   // Cart checkout
   [AppErrorCode.CART_EMPTY]: HttpStatus.BAD_REQUEST,
   [AppErrorCode.CART_ITEMS_INVALID]: HttpStatus.CONFLICT,
+
+  // --- Plans & Subscriptions ---
+  [AppErrorCode.SUBSCRIPTION_PLAN_NOT_FOUND]: HttpStatus.NOT_FOUND,
+  [AppErrorCode.SUBSCRIPTION_PLAN_INACTIVE]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.SUBSCRIPTION_PLAN_NAME_TAKEN]: HttpStatus.CONFLICT,
+  [AppErrorCode.SUBSCRIPTION_NOT_FOUND]: HttpStatus.NOT_FOUND,
+  [AppErrorCode.SUBSCRIPTION_ALREADY_ACTIVE]: HttpStatus.CONFLICT,
+  [AppErrorCode.SUBSCRIPTION_INACTIVE]: HttpStatus.FORBIDDEN,
+  [AppErrorCode.SUBSCRIPTION_FEATURE_NOT_INCLUDED]: HttpStatus.FORBIDDEN,
+  [AppErrorCode.SUBSCRIPTION_ORDER_LIMIT_REACHED]: HttpStatus.CONFLICT,
+  [AppErrorCode.SUBSCRIPTION_PRODUCT_LIMIT_REACHED]: HttpStatus.CONFLICT,
+  [AppErrorCode.SUBSCRIPTION_TEAM_LIMIT_REACHED]: HttpStatus.CONFLICT,
+  [AppErrorCode.SUBSCRIPTION_TRIAL_NOT_AVAILABLE]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.SUBSCRIPTION_TRIAL_ALREADY_USED]: HttpStatus.CONFLICT,
+  [AppErrorCode.SUBSCRIPTION_INVALID_DATES]: HttpStatus.BAD_REQUEST,
+  [AppErrorCode.SUBSCRIPTION_STATE_CONFLICT]: HttpStatus.CONFLICT,
+  [AppErrorCode.SUBSCRIPTION_REPLACE_CONFIRMATION_REQUIRED]: HttpStatus.CONFLICT,
+  [AppErrorCode.SUBSCRIPTION_NOT_CONFIGURED]: HttpStatus.INTERNAL_SERVER_ERROR,
 };

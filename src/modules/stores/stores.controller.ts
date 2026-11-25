@@ -23,6 +23,8 @@ import { StorePermission } from '../../common/constants/store-permissions.const'
 import { RequirePermissions } from '../team/decorators/require-permissions.decorator';
 import { AppException } from '../../common/errors/app-exception';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
+import { evaluateStoreAvailability } from './store-availability';
+import { SubscriptionAccessService } from '../subscriptions/subscription-access.service';
 
 /**
  * Fields a public storefront read may expose. `vendorId`, `vendorEmail`, the legacy
@@ -51,7 +53,10 @@ const PUBLIC_STORE_FIELDS = [
   'categories',
   'tagline',
   'socialMedia',
+  // Legacy mirror plus the two authoritative decisions. `isAvailable` is derived below.
   'status',
+  'ownerStatus',
+  'adminStatus',
   'totalProducts',
   'totalOrders',
   'createdAt',
@@ -64,6 +69,12 @@ function toPublicStore(store: any): Record<string, unknown> | null {
   for (const field of PUBLIC_STORE_FIELDS) {
     if (plain[field] !== undefined) result[field] = plain[field];
   }
+
+  // Always expose the derived decision, even for a legacy row that only has `status`.
+  const availability = evaluateStoreAvailability(plain);
+  result.ownerStatus = availability.ownerStatus;
+  result.adminStatus = availability.adminStatus;
+  result.isAvailable = availability.available;
   return result;
 }
 
@@ -71,7 +82,47 @@ function toPublicStore(store: any): Record<string, unknown> | null {
 @ApiBearerAuth()
 @Controller('stores')
 export class StoresController {
-  constructor(private readonly storesService: StoresService) {}
+  constructor(
+    private readonly storesService: StoresService,
+    private readonly subscriptionAccessService: SubscriptionAccessService,
+  ) {}
+
+  /**
+   * Additive public subscription state. Omitted entirely while `SUBSCRIPTIONS_ENABLED` is off,
+   * so existing storefront payloads are unchanged. Only `acceptingOrders` and a minimal state
+   * are exposed — never plan price, limits, admin actor or event history (plan §14.1).
+   */
+  private async withPublicSubscription<T extends Record<string, any> | null>(store: T): Promise<T> {
+    if (!store || !this.subscriptionAccessService.isEnabled()) return store;
+    const id = String((store as Record<string, any>)._id ?? '');
+    if (!id) return store;
+    const state = await this.subscriptionAccessService.getPublicState(id);
+    return {
+      ...store,
+      acceptingOrders: state.acceptingOrders,
+      subscriptionState: state.subscriptionState,
+    } as T;
+  }
+
+  private async withPublicSubscriptions(
+    stores: Array<Record<string, any> | null>,
+  ): Promise<Array<Record<string, any> | null>> {
+    if (!this.subscriptionAccessService.isEnabled()) return stores;
+    const ids = stores
+      .map((store) => (store?._id ? String(store._id) : ''))
+      .filter((id) => Boolean(id));
+    const states = await this.subscriptionAccessService.getPublicStates(ids);
+    return stores.map((store) => {
+      if (!store) return store;
+      const state = states.get(String(store._id));
+      if (!state) return store;
+      return {
+        ...store,
+        acceptingOrders: state.acceptingOrders,
+        subscriptionState: state.subscriptionState,
+      };
+    });
+  }
 
   @Roles(Role.VENDOR)
   @Throttle({ default: { limit: 5, ttl: 3600000 } })
@@ -161,15 +212,15 @@ export class StoresController {
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Patch('mine/toggle-status')
   @RequirePermissions(StorePermission.STORE_TOGGLE_STATUS)
-  @ApiOperation({ summary: 'Toggle own store status Active/Paused' })
-  @ApiResponse({ status: 200, description: 'Status toggled', type: Store })
+  @ApiOperation({ summary: 'Toggle own store owner status Enabled/Disabled' })
+  @ApiResponse({ status: 200, description: 'Owner status toggled', type: Store })
   @ApiResponse({ status: 404, description: 'Store not found' })
   async toggleStatus(@Req() req: any) {
     const user = req.user as { id: string };
     const store = await this.storesService.findByMemberIdOrThrow(user.id, {
       skipStatusCheck: true,
     }) as any;
-    return this.storesService.toggleStatus(store._id.toString());
+    return this.storesService.toggleOwnerStatus(store._id.toString());
   }
 
   /**
@@ -208,7 +259,7 @@ export class StoresController {
       limit: limit ? Number(limit) : undefined,
       cursor,
     });
-    return { ...result, stores: result.stores.map((store) => toPublicStore(store)) };
+    return { ...result, stores: await this.withPublicSubscriptions(result.stores.map((store) => toPublicStore(store))) };
   }
 
   /**
@@ -230,7 +281,7 @@ export class StoresController {
   @ApiResponse({ status: 403, description: 'Store is not active' })
   async findBySubdomain(@Param('subdomain') subdomain: string) {
     const store = await this.storesService.findBySubdomain(subdomain, { includePublishedCount: true });
-    return toPublicStore(store);
+    return this.withPublicSubscription(toPublicStore(store));
   }
 
   /**
@@ -258,7 +309,7 @@ export class StoresController {
   @ApiResponse({ status: 404, description: 'Store not found' })
   async findByEmail(@Param('email') email: string) {
     const store = await this.storesService.findByEmail(email, { includePublishedCount: true });
-    return toPublicStore(store);
+    return this.withPublicSubscription(toPublicStore(store));
   }
 
   @Public()
@@ -277,18 +328,26 @@ export class StoresController {
     @Query('by') by?: string,
   ) {
     if (by === 'slug') {
-      return toPublicStore(await this.storesService.findBySlug(id, { includePublishedCount: true }));
+      return this.withPublicSubscription(
+        toPublicStore(await this.storesService.findBySlug(id, { includePublishedCount: true })),
+      );
     }
     if (by === 'vendor') {
-      return toPublicStore(await this.storesService.findByVendor(id, { includePublishedCount: true }));
+      return this.withPublicSubscription(
+        toPublicStore(await this.storesService.findByVendor(id, { includePublishedCount: true })),
+      );
     }
 
     const isMongoId = /^[0-9a-fA-F]{24}$/.test(id);
     if (isMongoId) {
-      return toPublicStore(await this.storesService.findOne(id, { includePublishedCount: true }));
+      return this.withPublicSubscription(
+        toPublicStore(await this.storesService.findOne(id, { includePublishedCount: true })),
+      );
     }
 
-    return toPublicStore(await this.storesService.findBySlug(id, { includePublishedCount: true }));
+    return this.withPublicSubscription(
+      toPublicStore(await this.storesService.findBySlug(id, { includePublishedCount: true })),
+    );
   }
 
   @Roles(Role.ADMIN)
@@ -311,3 +370,5 @@ export class StoresController {
     return this.storesService.remove(id);
   }
 }
+
+

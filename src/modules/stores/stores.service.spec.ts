@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
+import { ConfigService } from '@nestjs/config';
 import { Types } from 'mongoose';
 import { StoresService } from './stores.service';
 import { Store } from './schemas/store.schema';
@@ -7,8 +8,9 @@ import { StoreMember } from '../team/schemas/store-member.schema';
 import { Product } from '../products/schemas/product.schema';
 import { Category } from '../categories/schemas/category.schema';
 import { SubCategory } from '../categories/schemas/sub-category.schema';
-import { StoreStatus } from './schemas/store-status.enum';
+import { StoreStatus, StoreOwnerStatus, StoreAdminStatus } from './schemas/store-status.enum';
 import { UploadService } from '../upload/upload.service';
+import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
 
 /**
@@ -105,6 +107,11 @@ describe('StoresService', () => {
           },
         },
         { provide: UploadService, useValue: {} },
+        {
+          provide: SubscriptionsService,
+          useValue: { assignDefaultSignupPlan: jest.fn().mockResolvedValue(undefined) },
+        },
+        { provide: ConfigService, useValue: { get: jest.fn().mockReturnValue(undefined) } },
       ],
     }).compile();
 
@@ -375,6 +382,52 @@ describe('StoresService', () => {
       const result = await service.findAll({ limit: 10 });
 
       expect(result.stores[0].totalProducts).toBe(0);
+    });
+  });
+
+  describe('owner/admin status writes - Mongoose 9 update pipeline', () => {
+    it('toggles the owner status with `updatePipeline: true`', async () => {
+      // Mongoose 9 throws "Cannot pass an array to query updates unless the
+      // `updatePipeline` option is set" when a pipeline array is used as the update
+      // without the option. This was the `PATCH /stores/mine/toggle-status` 500.
+      const store = activeStore({
+        ownerStatus: StoreOwnerStatus.ENABLED,
+        adminStatus: StoreAdminStatus.ACTIVE,
+      });
+      storeModel.findById = jest.fn().mockReturnValue(query(store));
+      storeModel.findOneAndUpdate = jest
+        .fn()
+        .mockReturnValue(query({ ...store, ownerStatus: StoreOwnerStatus.DISABLED }));
+
+      const updated = await service.toggleOwnerStatus(String(store._id));
+
+      expect(updated).toBeDefined();
+      expect(Array.isArray(storeModel.findOneAndUpdate.mock.calls[0][1])).toBe(true);
+      expect(storeModel.findOneAndUpdate.mock.calls[0][2]).toMatchObject({
+        updatePipeline: true,
+      });
+    });
+
+    it('writes the admin status with `updatePipeline: true`', async () => {
+      const store = activeStore({
+        ownerStatus: StoreOwnerStatus.ENABLED,
+        adminStatus: StoreAdminStatus.ACTIVE,
+      });
+      storeModel.findById = jest.fn().mockReturnValue(query(store));
+      storeModel.findOneAndUpdate = jest
+        .fn()
+        .mockReturnValue(query({ ...store, adminStatus: StoreAdminStatus.SUSPENDED }));
+
+      const updated = await service.setAdminStatus(String(store._id), {
+        adminStatus: StoreAdminStatus.SUSPENDED,
+        actor: { id: String(VENDOR_USER_ID), email: 'admin@test.com' },
+      });
+
+      expect(updated).toBeDefined();
+      expect(Array.isArray(storeModel.findOneAndUpdate.mock.calls[0][1])).toBe(true);
+      expect(storeModel.findOneAndUpdate.mock.calls[0][2]).toMatchObject({
+        updatePipeline: true,
+      });
     });
   });
 

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { AppException } from '../../common/errors/app-exception';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
 import { InjectModel } from '@nestjs/mongoose';
@@ -54,6 +54,7 @@ import { openTransactionSession, withOptionalSession } from '../inventory/servic
 import { ReceiveReturnDto } from '../inventory/dto/reservations.dto';
 import { BoxesService } from '../boxes/boxes.service';
 import { BoxCartLineQuote } from '../boxes/box.types';
+import { SubscriptionAccessService } from '../subscriptions/subscription-access.service';
 
 export interface RequestUser {
   id: string;
@@ -361,12 +362,69 @@ export class OrdersService {
     private readonly variantsService: VariantsService,
     private readonly auditService: AuditService,
     private readonly boxesService: BoxesService,
+    @Optional() private readonly subscriptionAccessService?: SubscriptionAccessService,
   ) {}
 
   private assertVendorOrAdmin(user: RequestUser): void {
     if (user.role !== Role.VENDOR && user.role !== Role.ADMIN) {
       throw new AppException(AppErrorCode.AUTH_VENDOR_ONLY);
     }
+  }
+
+  /**
+   * POS defence-in-depth (the controller guard is the primary gate). No-op while enforcement
+   * is off; the Owner wildcard cannot bypass it because it checks the subscription, not a
+   * permission.
+   */
+  private async assertPosSubscription(storeId: Types.ObjectId | string): Promise<void> {
+    const access = this.subscriptionAccessService;
+    if (!access || !access.isEnforcementEnabled()) return;
+    const capabilities = await access.getCapabilities(String(storeId));
+    if (!capabilities.canUsePos) {
+      throw new AppException(AppErrorCode.SUBSCRIPTION_FEATURE_NOT_INCLUDED, { feature: 'pos' });
+    }
+  }
+
+  /**
+   * Order creation requires an active subscription. Vendor writes are already blocked by
+   * `StoreSubscriptionGuard`, but public storefront checkouts carry no session, so the same
+   * entitlement rule is enforced here. Plan quotas stay in `reserveOrderQuota` (broad rollout).
+   */
+  private async assertOrderCreationEntitled(
+    storeId?: Types.ObjectId | string | null,
+  ): Promise<void> {
+    const access = this.subscriptionAccessService;
+    if (!access || !access.isFeatureEnforcementEnabled() || !storeId) return;
+    const entitlement = await access.getEntitlement(String(storeId));
+    if (!entitlement.entitled) {
+      this.logger.warn(
+        `[subscriptions] order rejected: inactive store=${String(storeId)}`,
+      );
+      throw new AppException(AppErrorCode.SUBSCRIPTION_INACTIVE, {
+        storeId: String(storeId),
+      });
+    }
+  }
+
+  /**
+   * Consume one order slot for `storeId` when enforcement is on. Returns `true` only when a
+   * slot was actually taken, so every failure path can compensate exactly once.
+   */
+  private async reserveOrderQuota(storeId?: Types.ObjectId | string | null): Promise<boolean> {
+    const access = this.subscriptionAccessService;
+    if (!access || !access.isEnforcementEnabled() || !storeId) return false;
+    await access.reserveOrderSlot(String(storeId));
+    return true;
+  }
+
+  private async releaseOrderQuota(
+    storeId: Types.ObjectId | string | null | undefined,
+    reserved: boolean,
+  ): Promise<void> {
+    if (!reserved || !storeId || !this.subscriptionAccessService) return;
+    await this.subscriptionAccessService.releaseOrderSlot(String(storeId)).catch((err) => {
+      this.logger.warn(`Failed to release subscription order slot: ${String(err?.message ?? err)}`);
+    });
   }
 
   /** Enforces the store permission a status target needs. Admin bypasses. */
@@ -462,18 +520,19 @@ export class OrdersService {
     dto: CreateOrderDto,
   ): Promise<{ storeId: Types.ObjectId | null; vendorEmail: string }> {
     if (dto.storeId) {
-      const store = await this.storesService.findOne(dto.storeId, { skipStatusCheck: true });
-      if (!store) {
-        throw new AppException(AppErrorCode.STORE_NOT_FOUND, { id: dto.storeId });
-      }
+      // Availability is checked here (owner + admin status). A storefront order can never
+      // be filed against a store the platform or its owner has taken offline.
+      const store = await this.storesService.findOne(dto.storeId);
       return { storeId: new Types.ObjectId(dto.storeId), vendorEmail: store.vendorEmail };
     }
 
     if (dto.vendorEmail) {
-      const storeId = await this.storesService
-        .resolveStoreIdByEmail(dto.vendorEmail)
-        .catch(() => null);
-      return { storeId, vendorEmail: dto.vendorEmail };
+      const store = await this.storesService.findByEmail(dto.vendorEmail);
+      const storeId = (store as { _id?: unknown })._id;
+      return {
+        storeId: storeId ? new Types.ObjectId(String(storeId)) : null,
+        vendorEmail: store.vendorEmail,
+      };
     }
 
     throw new AppException(AppErrorCode.VALIDATION_REQUIRED, { field: 'storeId' });
@@ -590,6 +649,8 @@ export class OrdersService {
         }
       }
     }
+
+    await this.assertOrderCreationEntitled(storeRef.storeId);
 
     const now = new Date();
 
@@ -859,64 +920,75 @@ export class OrdersService {
     // `storeId` was already resolved (and validated) at the top of `create()`.
     const storeId = storeRef.storeId;
 
-    let saved: OrderDocument;
+    const quotaReserved = await this.reserveOrderQuota(storeId);
+    let saved!: OrderDocument;
     let retries = 0;
 
-    while (true) {
-      const nextNumber = await this.generateOrderNo();
+    try {
+      while (true) {
+        const nextNumber = await this.generateOrderNo();
 
-      const created = new this.orderModel({
-        ...createOrderDto,
-        ...(storeId ? { storeId } : {}),
-        // The channel is decided here, never accepted from the request: an authenticated
-        // vendor entering an order is a manual sale, an unauthenticated storefront checkout
-        // is an online one. POS sales are created by their own service.
-        source: user ? OrderSource.MANUAL : OrderSource.ONLINE,
-        // Attribution is server-derived: the acting team member's identity, never the
-        // client-supplied `createdBy` (which a dashboard echoes back from the stored order).
-        ...(user ? { createdBy: this.actorLabel(user) } : {}),
-        items,
-        total,
-        shippingFee,
-        orderNo: nextNumber,
-        // Public checkouts have had their client-supplied dates stripped above, so these fall
-        // back to `now`; a vendor's manual entry keeps the date the seller recorded.
-        date: createOrderDto.date || now,
-        createdAt: createOrderDto.createdAt || now,
-        deliveryCompanyId: deliveryCompanyId || undefined,
-        status: placedStatus,
-        history: [{ status: placedStatus, date: now, user: user ? this.actorLabel(user) : 'Customer' }],
-        updatedAt: now,
-        ...(isCart && options.idempotencyKey ? { clientRequestId: options.idempotencyKey } : {}),
-      });
+        const created = new this.orderModel({
+          ...createOrderDto,
+          ...(storeId ? { storeId } : {}),
+          // The channel is decided here, never accepted from the request: an authenticated
+          // vendor entering an order is a manual sale, an unauthenticated storefront checkout
+          // is an online one. POS sales are created by their own service.
+          source: user ? OrderSource.MANUAL : OrderSource.ONLINE,
+          // Attribution is server-derived: the acting team member's identity, never the
+          // client-supplied `createdBy` (which a dashboard echoes back from the stored order).
+          ...(user ? { createdBy: this.actorLabel(user) } : {}),
+          items,
+          total,
+          shippingFee,
+          orderNo: nextNumber,
+          // Public checkouts have had their client-supplied dates stripped above, so these fall
+          // back to `now`; a vendor's manual entry keeps the date the seller recorded.
+          date: createOrderDto.date || now,
+          createdAt: createOrderDto.createdAt || now,
+          deliveryCompanyId: deliveryCompanyId || undefined,
+          status: placedStatus,
+          history: [{ status: placedStatus, date: now, user: user ? this.actorLabel(user) : 'Customer' }],
+          updatedAt: now,
+          ...(isCart && options.idempotencyKey ? { clientRequestId: options.idempotencyKey } : {}),
+        });
 
-      try {
-        saved = await created.save();
-        if (createOrderDto.vendorEmail) {
-          await this.storesService.incrementOrderCount(createOrderDto.vendorEmail, 1);
-        }
-        break;
-      } catch (err: any) {
-        if (err.code === 11000) {
-          // A replay that lost the insert race: return the order the other request created.
-          const isIdempotencyDup =
-            isCart &&
-            !!options.idempotencyKey &&
-            !!storeId &&
-            (err?.keyPattern?.clientRequestId || err?.keyValue?.clientRequestId);
-          if (isIdempotencyDup) {
-            const existing = await this.orderModel
-              .findOne({ storeId: new Types.ObjectId(String(storeId)), clientRequestId: options.idempotencyKey })
-              .exec();
-            if (existing) return existing;
+        try {
+          saved = await created.save();
+          if (createOrderDto.vendorEmail) {
+            await this.storesService.incrementOrderCount(createOrderDto.vendorEmail, 1);
           }
-          if (retries < 3) {
-            retries++;
-            continue;
+          break;
+        } catch (err: any) {
+          if (err.code === 11000) {
+            // A replay that lost the insert race: return the order the other request created.
+            const isIdempotencyDup =
+              isCart &&
+              !!options.idempotencyKey &&
+              !!storeId &&
+              (err?.keyPattern?.clientRequestId || err?.keyValue?.clientRequestId);
+            if (isIdempotencyDup) {
+              const existing = await this.orderModel
+                .findOne({ storeId: new Types.ObjectId(String(storeId)), clientRequestId: options.idempotencyKey })
+                .exec();
+              if (existing) {
+                // The replay must not consume a slot of its own.
+                await this.releaseOrderQuota(storeId, quotaReserved);
+                return existing;
+              }
+            }
+            if (retries < 3) {
+              retries++;
+              continue;
+            }
           }
+          throw err;
         }
-        throw err;
       }
+    } catch (err) {
+      // No order document was written, so give the slot back exactly once.
+      if (!saved) await this.releaseOrderQuota(storeId, quotaReserved);
+      throw err;
     }
 
     if (!isCart) {
@@ -955,11 +1027,16 @@ export class OrdersService {
    * Returns localized names/labels, server-resolved prices/images, live availability and
    * non-throwing per-line issues. It writes nothing.
    */
-  async validateCart(dto: CartValidationDto): Promise<CartQuote & { validatedAt: string }> {
+  async validateCart(
+    dto: CartValidationDto,
+  ): Promise<CartQuote & { validatedAt: string; acceptingOrders?: boolean }> {
     if ((dto.items?.length ?? 0) + (dto.bundles?.length ?? 0) < 1) {
       throw new AppException(AppErrorCode.CART_EMPTY);
     }
     const store = await this.resolveActiveStore(dto.storeId);
+    const acceptingOrders = this.subscriptionAccessService?.isEnabled()
+      ? (await this.subscriptionAccessService!.getPublicState(dto.storeId)).acceptingOrders
+      : undefined;
     const locale = dto.locale ?? 'en';
     const resolved = await this.resolveCartLines(
       new Types.ObjectId(dto.storeId),
@@ -987,6 +1064,7 @@ export class OrdersService {
         resolved.quote.hasBlockingIssues ||
         bundles.bundleLines.some((line) => !line.isAvailable),
       validatedAt: new Date().toISOString(),
+      ...(acceptingOrders !== undefined ? { acceptingOrders } : {}),
     };
   }
 
@@ -1421,6 +1499,7 @@ export class OrdersService {
 
     const store = await this.storesService.findByMemberIdOrThrow(user.id);
     const storeId = store._id as Types.ObjectId;
+    await this.assertPosSubscription(storeId);
 
     const now = new Date();
 
@@ -1469,8 +1548,10 @@ export class OrdersService {
     ];
 
     const session = await openTransactionSession(this.orderModel, this.logger);
+    let quotaReserved = false;
     let saved: OrderDocument | null = null;
     try {
+      quotaReserved = await this.reserveOrderQuota(storeId);
       await session.withTransaction(async () => {
         const created = new this.orderModel({
           _id: orderId,
@@ -1517,6 +1598,10 @@ export class OrdersService {
         await this.reservationsService.reserve(ctx, actorUserId, session);
         await this.reservationsService.consume(ctx, actorUserId, session);
       });
+    } catch (err) {
+      // The transaction did not commit an order, so the slot is returned.
+      await this.releaseOrderQuota(storeId, quotaReserved);
+      throw err;
     } finally {
       await session.endSession();
     }
@@ -1631,6 +1716,7 @@ export class OrdersService {
 
     const store = await this.storesService.findByMemberIdOrThrow(user.id);
     const storeId = store._id as Types.ObjectId;
+    await this.assertPosSubscription(storeId);
     const resolved = await this.resolvePosCart(storeId, dto, 'en');
     // A brand-new hold has reserved nothing yet, so the pre-check is safe. It also covers
     // component lines (`selection.quantity × box.quantity`), aggregated per variant.
@@ -1780,6 +1866,7 @@ export class OrdersService {
 
     const store = await this.storesService.findByMemberIdOrThrow(user.id);
     const storeId = store._id as Types.ObjectId;
+    await this.assertPosSubscription(storeId);
     const hold = await this.findPosHoldOrThrow(id, storeId);
 
     const now = new Date();
@@ -1828,8 +1915,10 @@ export class OrdersService {
     ];
 
     const session = await openTransactionSession(this.orderModel, this.logger);
+    let quotaReserved = false;
     let saved: OrderDocument | null = null;
     try {
+      quotaReserved = await this.reserveOrderQuota(storeId);
       await session.withTransaction(async () => {
         // Delete first: the hold and the order it becomes can never coexist, so two tills
         // racing to complete the same hold see exactly one winner.
@@ -1885,6 +1974,10 @@ export class OrdersService {
         await this.reservationsService.reconcileEditedLines(ctx, actorUserId, session);
         await this.reservationsService.consume(ctx, actorUserId, session);
       });
+    } catch (err) {
+      // No order was committed (the hold delete rolled back too), so return the slot.
+      await this.releaseOrderQuota(storeId, quotaReserved);
+      throw err;
     } finally {
       await session.endSession();
     }
@@ -3845,3 +3938,6 @@ export class OrdersService {
     return results;
   }
 }
+
+
+

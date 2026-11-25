@@ -27,6 +27,7 @@ import { ValidateBoxSelectionDto } from '../boxes/dto/box-selection.dto';
 import { AppException } from '../../common/errors/app-exception';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
 import { PosService } from './pos.service';
+import { PosSubscriptionGuard } from '../subscriptions/guards/pos-subscription.guard';
 import { PosBoxQueryDto, PosProductQueryDto } from './dto/pos.dto';
 
 /**
@@ -38,7 +39,7 @@ import { PosBoxQueryDto, PosProductQueryDto } from './dto/pos.dto';
  */
 @ApiTags('pos')
 @Controller('pos')
-@UseGuards(RolesGuard)
+@UseGuards(RolesGuard, PosSubscriptionGuard)
 @Roles(Role.VENDOR, Role.ADMIN)
 @RequirePermissions(StorePermission.POS_ACCESS)
 @Throttle({ default: { limit: 120, ttl: 60000 } })
@@ -178,3 +179,4 @@ export class PosController {
     return box;
   }
 }
+

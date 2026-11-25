@@ -8,6 +8,27 @@
   jwt: {
     secret: process.env.JWT_SECRET,
   },
+  /**
+   * Admin Panel authentication. Deliberately separate from `jwt` — a seller token and an
+   * admin token share neither secret nor claims. Production refuses to boot when
+   * `ADMIN_JWT_SECRET` is empty (see `main.ts`); local development derives a stable
+   * non-production secret so the API still starts without extra setup.
+   */
+  adminAuth: {
+    jwtSecret: process.env.ADMIN_JWT_SECRET || '',
+    accessTtl: process.env.ADMIN_ACCESS_TOKEN_TTL || '15m',
+    refreshTtlHours: parseInt(process.env.ADMIN_REFRESH_TOKEN_TTL_HOURS || '12', 10),
+    bcryptRounds: parseInt(process.env.ADMIN_BCRYPT_ROUNDS || '12', 10),
+    webOrigins: (
+      process.env.ADMIN_WEB_ORIGINS ||
+      (process.env.NODE_ENV === 'production'
+        ? ''
+        : 'http://localhost:3003,http://127.0.0.1:3003')
+    )
+      .split(',')
+      .map((o) => o.trim().replace(/\/+$/, ''))
+      .filter(Boolean),
+  },
   smtp: {
     host: process.env.SMTP_HOST || '',
     port: parseInt(process.env.SMTP_PORT || '587', 10),
@@ -207,6 +228,33 @@
     deliveredWatchDays: parseInt(process.env.ZR_STATUS_SYNC_DELIVERED_WATCH_DAYS || '14', 10),
     deliveredPollMinutes: parseInt(
       process.env.ZR_STATUS_SYNC_DELIVERED_POLL_MINUTES || '60',
+      10,
+    ),
+  },
+
+  /**
+   * Plans & Subscriptions (V1).
+   * - `enabled` — vendor/public subscription surfaces + admin management.
+   * - `enforcementEnabled` — hard blocking of **orders/products/team/POS** (the broad rollout
+   *   gate). Stays false until the Phase 2 backfill is applied and Phases 4/5 are complete.
+   * - `featureEnforcementEnabled` — team/POS feature gating only. Defaults to `enabled` so a
+   *   live subscription controls team seats and POS without turning on the order/product
+   *   quotas; it is still an OR with `enforcementEnabled`. Set
+   *   `SUBSCRIPTIONS_FEATURE_ENFORCEMENT_ENABLED=false` to keep team/POS dark too.
+   * The sweep is reporting-only; authorization never depends on it.
+   */
+  subscriptions: {
+    enabled: process.env.SUBSCRIPTIONS_ENABLED === 'true',
+    enforcementEnabled: process.env.SUBSCRIPTIONS_ENFORCEMENT_ENABLED === 'true',
+    featureEnforcementEnabled:
+      process.env.SUBSCRIPTIONS_FEATURE_ENFORCEMENT_ENABLED === undefined
+        ? process.env.SUBSCRIPTIONS_ENABLED === 'true'
+        : process.env.SUBSCRIPTIONS_FEATURE_ENFORCEMENT_ENABLED === 'true',
+    legacyPlanCode: process.env.SUBSCRIPTIONS_LEGACY_PLAN_CODE || 'legacy-unlimited',
+    defaultSignupPlanCode: process.env.SUBSCRIPTIONS_DEFAULT_SIGNUP_PLAN_CODE || 'starter',
+    expirySweepEnabled: process.env.SUBSCRIPTIONS_EXPIRY_SWEEP_ENABLED === 'true',
+    expirySweepIntervalMinutes: parseInt(
+      process.env.SUBSCRIPTIONS_EXPIRY_SWEEP_INTERVAL_MINUTES || '60',
       10,
     ),
   },

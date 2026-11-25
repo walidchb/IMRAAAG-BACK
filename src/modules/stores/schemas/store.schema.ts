@@ -1,6 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import { StoreStatus } from './store-status.enum';
+import {
+  StoreAdminStatus,
+  StoreOwnerStatus,
+  StoreStatus,
+} from './store-status.enum';
 
 export type StoreDocument = Store & Document;
 
@@ -75,8 +79,47 @@ export class Store {
   @Prop({ type: Object, default: {} })
   socialMedia: Record<string, string>;
 
+  /**
+   * Legacy, denormalised mirror of `ownerStatus` + `adminStatus`.
+   *
+   * Kept for older API clients and existing queries. It is never accepted from a request
+   * and is not the availability source of truth; see `store-availability.ts`.
+   */
   @Prop({ type: String, default: StoreStatus.ACTIVE, enum: Object.values(StoreStatus) })
   status: StoreStatus;
+
+  /** Seller's own decision: may the store operate at all? */
+  @Prop({
+    type: String,
+    default: StoreOwnerStatus.ENABLED,
+    enum: Object.values(StoreOwnerStatus),
+  })
+  ownerStatus: StoreOwnerStatus;
+
+  @Prop({ type: Date, default: null })
+  ownerStatusChangedAt?: Date | null;
+
+  /** Platform decision: may this store operate on IMRAAAH? */
+  @Prop({
+    type: String,
+    default: StoreAdminStatus.ACTIVE,
+    enum: Object.values(StoreAdminStatus),
+  })
+  adminStatus: StoreAdminStatus;
+
+  /** Human explanation shown to the seller when an admin suspends the store. */
+  @Prop({ type: String, default: null, maxlength: 500 })
+  adminStatusReason?: string | null;
+
+  @Prop({ type: Date, default: null })
+  adminStatusChangedAt?: Date | null;
+
+  @Prop({ type: Types.ObjectId, ref: 'Admin', default: null })
+  adminStatusChangedBy?: Types.ObjectId | null;
+
+  /** Denormalised actor label so the admin/seller UI needs no extra join. */
+  @Prop({ type: String, default: null })
+  adminStatusChangedByEmail?: string | null;
 
   /**
    * Per-store rollout switch for variant inventory.
@@ -135,6 +178,8 @@ StoreSchema.index({ storeSlug: 1 });
 StoreSchema.index({ vendorEmail: 1 });
 StoreSchema.index({ vendorId: 1 });
 StoreSchema.index({ status: 1 });
+StoreSchema.index({ ownerStatus: 1, adminStatus: 1 });
+StoreSchema.index({ adminStatus: 1, createdAt: -1 });
 
 // A partial unique index (not `unique: true` on the @Prop) so the many legacy documents
 // without a subdomain remain valid while actual strings stay unique platform-wide.

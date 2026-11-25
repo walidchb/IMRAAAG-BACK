@@ -46,6 +46,16 @@ async function bootstrap() {
     process.exit(1);
   }
 
+  // The Admin Panel signs its own tokens. Missing in production means the admin auth module
+  // cannot verify a single session; refuse to boot instead of silently deriving a secret that
+  // would invalidate every admin session on the next restart.
+  if (isProduction && !process.env.ADMIN_JWT_SECRET?.trim()) {
+    console.error(
+      'FATAL: ADMIN_JWT_SECRET is required in production. Set a strong random value (openssl rand -hex 48) that is never shared with JWT_SECRET.',
+    );
+    process.exit(1);
+  }
+
   // H8: without this key `encryptRecord`/`decryptRecord` pass values through unchanged, so
   // carrier API keys and tokens are stored (and were served) in plaintext. In production the
   // process must refuse to start rather than silently degrade.
