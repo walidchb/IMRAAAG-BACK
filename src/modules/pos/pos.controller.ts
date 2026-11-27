@@ -28,6 +28,7 @@ import { AppException } from '../../common/errors/app-exception';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
 import { PosService } from './pos.service';
 import { PosSubscriptionGuard } from '../subscriptions/guards/pos-subscription.guard';
+import { SkipPosSubscription } from './decorators/skip-pos-subscription.decorator';
 import { PosBoxQueryDto, PosProductQueryDto } from './dto/pos.dto';
 
 /**
@@ -108,8 +109,9 @@ export class PosController {
     return this.ordersService.createImmediateSale(dto, req.user);
   }
 
-  /** Parked sales for this store, newest first. */
+  /** Parked sales for this store, newest first. Exempt: it lists stock stranded by lost POS. */
   @Get('holds')
+  @SkipPosSubscription()
   async listHolds(@Req() req: any) {
     return this.ordersService.listPosHolds(req.user);
   }
@@ -133,8 +135,12 @@ export class PosController {
     return this.ordersService.updatePosHold(id, dto, req.user);
   }
 
-  /** Discards a parked sale and releases the stock it was holding. */
+  /**
+   * Discards a parked sale and releases the stock it was holding. Exempt from the POS gate so
+   * a vendor whose plan no longer includes POS can recover the reserved units.
+   */
   @Delete('holds/:id')
+  @SkipPosSubscription()
   @RequirePermissions(StorePermission.POS_MANAGE_HOLDS)
   @Throttle({ default: { limit: 60, ttl: 60000 } })
   async deleteHold(@Param('id') id: string, @Req() req: any) {

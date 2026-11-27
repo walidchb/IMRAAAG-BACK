@@ -9,6 +9,10 @@ import {
   SubscriptionEvent,
   SubscriptionEventSchema,
 } from './schemas/subscription-event.schema';
+import {
+  SubscriptionBillingConfig,
+  SubscriptionBillingConfigSchema,
+} from './schemas/subscription-billing-config.schema';
 import { Product, ProductSchema } from '../products/schemas/product.schema';
 import { StoreMember, StoreMemberSchema } from '../team/schemas/store-member.schema';
 import {
@@ -19,6 +23,7 @@ import { PosHold, PosHoldSchema } from '../orders/schemas/pos-hold.schema';
 import { PlansService } from './plans.service';
 import { SubscriptionsService } from './subscriptions.service';
 import { SubscriptionAccessService } from './subscription-access.service';
+import { SubscriptionBillingConfigService } from './subscription-billing-config.service';
 
 /**
  * Plans & Subscriptions (leaf module).
@@ -34,13 +39,28 @@ import { SubscriptionAccessService } from './subscription-access.service';
       { name: SubscriptionPlan.name, schema: SubscriptionPlanSchema },
       { name: Subscription.name, schema: SubscriptionSchema },
       { name: SubscriptionEvent.name, schema: SubscriptionEventSchema },
+      {
+        name: SubscriptionBillingConfig.name,
+        schema: SubscriptionBillingConfigSchema,
+      },
       { name: Product.name, schema: ProductSchema },
       { name: StoreMember.name, schema: StoreMemberSchema },
       { name: StoreInvitation.name, schema: StoreInvitationSchema },
       { name: PosHold.name, schema: PosHoldSchema },
     ]),
   ],
-  providers: [PlansService, SubscriptionsService, SubscriptionAccessService],
-  exports: [PlansService, SubscriptionsService, SubscriptionAccessService, MongooseModule],
+  providers: [
+    PlansService,
+    SubscriptionsService,
+    SubscriptionAccessService,
+    SubscriptionBillingConfigService,
+  ],
+  exports: [
+    PlansService,
+    SubscriptionsService,
+    SubscriptionAccessService,
+    SubscriptionBillingConfigService,
+    MongooseModule,
+  ],
 })
 export class SubscriptionsModule {}

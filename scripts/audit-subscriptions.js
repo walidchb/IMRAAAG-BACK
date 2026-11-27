@@ -48,6 +48,13 @@ async function main() {
   let orphan = 0;
   let inactivePlanAssigned = 0;
   let usageDrift = 0;
+  let legacySnapshots = 0;
+  let allowanceDrift = 0;
+  let priceFormulaMismatch = 0;
+  let duplicateDurations = 0;
+  let unsupportedDurations = 0;
+  let invalidDiscounts = 0;
+  let missingOneMonth = 0;
   const reconcileOps = [];
 
   for (const sub of subs) {
@@ -68,6 +75,37 @@ async function main() {
       if (Boolean(plan.features?.pos) !== Boolean(sub.planSnapshot?.features?.pos)) posMismatch += 1;
     }
 
+    // Billing/entitlement integrity (read-only reporting; never auto-fixed here).
+    const snap = sub.planSnapshot || {};
+    const ent = snap.entitlements;
+    const billing = snap.billing;
+    if (!ent) {
+      legacySnapshots += 1;
+    } else {
+      if (
+        ent.ordersAllowance !== null &&
+        ent.monthlyOrders !== null &&
+        Number.isInteger(ent.durationMonths) &&
+        billing?.priceSource !== 'legacy' &&
+        ent.ordersAllowance !== ent.monthlyOrders * ent.durationMonths
+      ) {
+        allowanceDrift += 1;
+      }
+      if (billing && Number.isInteger(billing.durationMonths)) {
+        if (billing.listPrice !== billing.monthlyBasePrice * billing.durationMonths) {
+          priceFormulaMismatch += 1;
+        } else {
+          const expectedFinal =
+            billing.priceSource === 'override'
+              ? billing.priceOverride
+              : Math.round((billing.listPrice * (100 - billing.discountPercent)) / 100);
+          if (billing.priceSource !== 'legacy' && billing.finalPrice !== expectedFinal) {
+            priceFormulaMismatch += 1;
+          }
+        }
+      }
+    }
+
     // Usage drift: orders created since this period started.
     const start = sub.startDate ? new Date(sub.startDate) : null;
     const orderFilter = { storeId: sub.storeId };
@@ -82,6 +120,22 @@ async function main() {
       if (RECONCILE) {
         reconcileOps.push({ subId: sub._id, liveCount, stored });
       }
+    }
+  }
+
+  for (const plan of plans) {
+    if ((plan.billingMode || 'legacy') !== 'monthly') continue;
+    const options = Array.isArray(plan.billingOptions) ? plan.billingOptions : [];
+    const durations = options.map((o) => Number(o.durationMonths));
+    if (new Set(durations).size !== durations.length) duplicateDurations += 1;
+    if (durations.some((duration) => ![1, 3, 6, 12].includes(duration))) unsupportedDurations += 1;
+    if (!durations.includes(1)) missingOneMonth += 1;
+    if (
+      options.some(
+        (o) => !Number.isInteger(Number(o.discountPercent)) || Number(o.discountPercent) < 0 || Number(o.discountPercent) > 100,
+      )
+    ) {
+      invalidDiscounts += 1;
     }
   }
 
@@ -101,6 +155,13 @@ async function main() {
   console.log(`POS mismatch (snapshot vs live plan): ${posMismatch}`);
   console.log(`inactive plans still assigned: ${inactivePlanAssigned}`);
   console.log(`order-usage drift: ${usageDrift}`);
+  console.log(`legacy snapshots without billing/entitlements: ${legacySnapshots}`);
+  console.log(`allowance drift (total != monthly × months): ${allowanceDrift}`);
+  console.log(`billing price formula mismatch: ${priceFormulaMismatch}`);
+  console.log(`plans with duplicate option durations: ${duplicateDurations}`);
+  console.log(`plans with unsupported billing durations: ${unsupportedDurations}`);
+  console.log(`plans missing the mandatory 1-month duration: ${missingOneMonth}`);
+  console.log(`plans with invalid discount values: ${invalidDiscounts}`);
 
   if (RECONCILE) {
     console.log('');

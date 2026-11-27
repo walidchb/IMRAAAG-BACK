@@ -21,6 +21,46 @@ export class AssignSubscriptionDto {
   @IsMongoId()
   planId: string;
 
+  @ApiPropertyOptional({
+    description: 'Billing duration in months (1, 3, 6 or 12). Required for monthly plans.',
+    enum: [1, 3, 6, 12],
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @IsIn([1, 3, 6, 12])
+  durationMonths?: number;
+
+  @ApiPropertyOptional({ description: 'Deprecated: use durationMonths.' })
+  @IsOptional()
+  @IsMongoId()
+  billingOptionId?: string;
+
+  @ApiPropertyOptional({
+    type: Number,
+    nullable: true,
+    description: 'Admin-only negotiated total price (0..listPrice). Snapshotted, not applied to the plan.',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  agreedPriceOverride?: number | null;
+
+  @ApiPropertyOptional({ maxLength: 500 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  reason?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Prepend the plan trial (plan.trial.days) before the paid period. The trial starts now, the paid period starts when it ends.',
+  })
+  @IsOptional()
+  @IsBoolean()
+  includeTrial?: boolean;
+
   @ApiPropertyOptional({ description: 'Required to replace an active/trialing subscription' })
   @IsOptional()
   @IsBoolean()
@@ -46,6 +86,28 @@ export class ChangePlanDto {
   @ApiProperty()
   @IsMongoId()
   planId: string;
+  @ApiPropertyOptional({
+    description: 'Billing duration in months (1, 3, 6 or 12). Required for monthly plans.',
+    enum: [1, 3, 6, 12],
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @IsIn([1, 3, 6, 12])
+  durationMonths?: number;
+
+  @ApiPropertyOptional({ description: 'Deprecated: use durationMonths.' })
+  @IsOptional()
+  @IsMongoId()
+  billingOptionId?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Prepend the new plan trial (plan.trial.days) before the paid period. Off = paid period starts now.',
+  })
+  @IsOptional()
+  @IsBoolean()
+  includeTrial?: boolean;
 
   @ApiPropertyOptional({ maxLength: 500 })
   @IsOptional()
@@ -55,12 +117,29 @@ export class ChangePlanDto {
 }
 
 export class ExtendSubscriptionDto {
-  @ApiProperty({ minimum: 1 })
+  @ApiPropertyOptional({
+    minimum: 1,
+    maximum: 36,
+    description: 'Preferred. Adds calendar months and the corresponding orders allowance.',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(36)
+  months?: number;
+
+  @ApiPropertyOptional({
+    minimum: 1,
+    maximum: 3650,
+    description: 'Legacy/compat. Adds days and a prorated orders allowance.',
+  })
+  @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
   @Max(3650)
-  days: number;
+  days?: number;
 
   @ApiPropertyOptional({ maxLength: 500 })
   @IsOptional()
@@ -78,7 +157,37 @@ export class CancelSubscriptionDto {
 }
 
 export class ReactivateSubscriptionDto {
-  @ApiPropertyOptional({ minimum: 1, description: 'Defaults to the snapshot duration' })
+  @ApiPropertyOptional({
+    description: 'Billing duration in months (1, 3, 6 or 12) for a monthly plan.',
+    enum: [1, 3, 6, 12],
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @IsIn([1, 3, 6, 12])
+  durationMonths?: number;
+
+  @ApiPropertyOptional({ description: 'Deprecated: use durationMonths.' })
+  @IsOptional()
+  @IsMongoId()
+  billingOptionId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Reuse the snapshot billing terms when the original option is gone/inactive.',
+  })
+  @IsOptional()
+  @IsBoolean()
+  sameTerms?: boolean;
+
+  @ApiPropertyOptional({ minimum: 1, maximum: 36, description: 'Override period in calendar months' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(36)
+  months?: number;
+
+  @ApiPropertyOptional({ minimum: 1, description: 'Override period in days (legacy)' })
   @IsOptional()
   @Type(() => Number)
   @IsInt()

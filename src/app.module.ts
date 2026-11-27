@@ -34,6 +34,7 @@ import { TeamModule } from './modules/team/team.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
 import { VendorSubscriptionsModule } from './modules/subscriptions/vendor-subscriptions.module';
+import { PublicPlansModule } from './modules/subscriptions/public-plans.module';
 
 @Module({
   imports: [
@@ -80,6 +81,7 @@ import { VendorSubscriptionsModule } from './modules/subscriptions/vendor-subscr
     AdminModule,
     SubscriptionsModule,
     VendorSubscriptionsModule,
+    PublicPlansModule,
   ],
   controllers: [AppController],
   providers: [AppService, CacheService, { provide: APP_GUARD, useClass: AppThrottlerGuard }],

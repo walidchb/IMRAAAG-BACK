@@ -4,6 +4,15 @@ import { SubscriptionAccessService } from './subscription-access.service';
 import { SubscriptionStatus } from '../../common/constants/subscription.const';
 import { AppException } from '../../common/errors/app-exception';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
+import { openTransactionSession } from '../inventory/services/session.util';
+
+jest.mock('../inventory/services/session.util', () => ({
+  openTransactionSession: jest.fn(),
+}));
+
+const mockedOpenSession = openTransactionSession as jest.MockedFunction<
+  typeof openTransactionSession
+>;
 
 const STORE_ID = '507f1f77bcf86cd799439011';
 
@@ -52,6 +61,7 @@ function build(options: {
   const subscriptionModel: any = {
     findOne: jest.fn(() => q(options.subscription ?? null)),
     find: jest.fn(() => q(options.subscription ? [options.subscription] : [])),
+    findOneAndUpdate: jest.fn(() => q(options.subscription ?? null)),
   };
   const productModel: any = {
     countDocuments: jest.fn(() => q(options.activeProducts ?? 0)),
@@ -125,7 +135,7 @@ describe('SubscriptionAccessService', () => {
     expect(entitlement.entitled).toBe(false);
   });
 
-  it('enforces team/POS/product caps through the feature gate while order acceptance stays on the broad switch', async () => {
+  it('enforces team/POS/product caps through the feature gate while an active subscription still accepts orders', async () => {
     const { service } = build({
       subscription: subDoc(),
       enforcement: false,
@@ -139,6 +149,8 @@ describe('SubscriptionAccessService', () => {
     expect(caps.canInviteTeam).toBe(false);
     // Product limits follow the feature gate; the order quota is still dark.
     expect(caps.canCreateProduct).toBe(true);
+    // An active, valid subscription is entitled, so order acceptance is true even in
+    // feature-only mode.
     expect(caps.acceptingOrders).toBe(true);
   });
 
@@ -155,12 +167,72 @@ describe('SubscriptionAccessService', () => {
     expect(caps.acceptingOrders).toBe(true);
   });
 
-  it('fails team/POS closed for a missing subscription under the feature gate only', async () => {
+  it('fails team/POS/order acceptance closed for a missing subscription under the feature gate only', async () => {
     const { service } = build({ subscription: null, enforcement: false, featureEnforcement: true });
     const caps = await service.getCapabilities(STORE_ID);
     expect(caps.canUsePos).toBe(false);
     expect(caps.canInviteTeam).toBe(false);
-    expect(caps.acceptingOrders).toBe(true);
+    // A missing subscription has no plan shape to gate on; the page stays viewable.
+    expect(caps.canManageTeam).toBe(true);
+    // The public state and the order writer fail closed under the feature gate.
+    expect(caps.acceptingOrders).toBe(false);
+    expect((await service.getPublicState(STORE_ID)).acceptingOrders).toBe(false);
+  });
+
+  it('closes team management on a one-seat plan but keeps it for a real team', async () => {
+    const oneSeat = build({
+      subscription: subDoc({
+        planSnapshot: {
+          ...subDoc().planSnapshot,
+          limits: { maxOrders: 100, maxProducts: 50, maxTeamMembers: 1 },
+        },
+      }),
+      enforcement: true,
+      activeMembers: 1,
+      ownerMembers: 1,
+    });
+    const single = await oneSeat.service.getCapabilities(STORE_ID);
+    expect(single.canManageTeam).toBe(false);
+    expect(single.canInviteTeam).toBe(false);
+
+    const twoSeats = build({
+      subscription: subDoc({
+        planSnapshot: {
+          ...subDoc().planSnapshot,
+          limits: { maxOrders: 100, maxProducts: 50, maxTeamMembers: 2 },
+        },
+      }),
+      enforcement: true,
+      activeMembers: 1,
+      ownerMembers: 1,
+    });
+    expect((await twoSeats.service.getCapabilities(STORE_ID)).canManageTeam).toBe(true);
+
+    const unlimited = build({
+      subscription: subDoc({
+        planSnapshot: {
+          ...subDoc().planSnapshot,
+          limits: { maxOrders: 100, maxProducts: 50, maxTeamMembers: null },
+        },
+      }),
+      enforcement: true,
+      activeMembers: 5,
+      ownerMembers: 1,
+    });
+    expect((await unlimited.service.getCapabilities(STORE_ID)).canManageTeam).toBe(true);
+  });
+
+  it('never closes team management while feature enforcement is off', async () => {
+    const { service } = build({
+      subscription: subDoc({
+        planSnapshot: {
+          ...subDoc().planSnapshot,
+          limits: { maxOrders: 100, maxProducts: 50, maxTeamMembers: 1 },
+        },
+      }),
+      enforcement: false,
+    });
+    expect((await service.getCapabilities(STORE_ID)).canManageTeam).toBe(true);
   });
 
   it('counts the owner seat when no Owner membership row exists', async () => {
@@ -210,6 +282,8 @@ describe('SubscriptionAccessService', () => {
     const caps = await service.getCapabilities(STORE_ID);
     expect(caps.canUsePos).toBe(false);
     expect(caps.canInviteTeam).toBe(false);
+    // The team page stays viewable when the subscription lapses; only invites are paused.
+    expect(caps.canManageTeam).toBe(true);
     expect(caps.acceptingOrders).toBe(false);
   });
 
@@ -306,6 +380,167 @@ describe('SubscriptionAccessService', () => {
   });
 });
 
+describe('SubscriptionAccessService acceptance truth', () => {
+  it('keeps orders open in every state while all enforcement is off', async () => {
+    const expired = build({
+      subscription: subDoc({ endDate: new Date(Date.now() - 1) }),
+      enforcement: false,
+      featureEnforcement: false,
+    });
+    expect((await expired.service.getPublicState(STORE_ID)).acceptingOrders).toBe(true);
+    expect((await expired.service.getCapabilities(STORE_ID)).acceptingOrders).toBe(true);
+
+    const missing = build({ subscription: null, enforcement: false, featureEnforcement: false });
+    expect((await missing.service.getPublicState(STORE_ID)).acceptingOrders).toBe(true);
+    expect(await missing.service.getOrderAcceptance(STORE_ID)).toBe(true);
+  });
+
+  it('pauses an expired subscription under the feature gate alone', async () => {
+    const { service } = build({
+      subscription: subDoc({ endDate: new Date(Date.now() - 1) }),
+      featureEnforcement: true,
+    });
+    expect((await service.getPublicState(STORE_ID)).acceptingOrders).toBe(false);
+    expect((await service.getCapabilities(STORE_ID)).acceptingOrders).toBe(false);
+    expect(await service.getOrderAcceptance(STORE_ID)).toBe(false);
+  });
+
+  it('accepts an active subscription under the feature gate and applies quota only when broad is on', async () => {
+    const below = build({
+      subscription: subDoc({ usage: { ordersUsed: 99 } }),
+      featureEnforcement: true,
+    });
+    expect((await below.service.getPublicState(STORE_ID)).acceptingOrders).toBe(true);
+
+    // The quota is a broad-rollout rule: feature-only keeps accepting at the numeric limit.
+    const featureAtLimit = build({
+      subscription: subDoc({ usage: { ordersUsed: 100 } }),
+      featureEnforcement: true,
+    });
+    expect((await featureAtLimit.service.getPublicState(STORE_ID)).acceptingOrders).toBe(true);
+
+    const broadAtLimit = build({
+      subscription: subDoc({ usage: { ordersUsed: 100 } }),
+      enforcement: true,
+    });
+    expect((await broadAtLimit.service.getPublicState(STORE_ID)).acceptingOrders).toBe(false);
+    expect((await broadAtLimit.service.getCapabilities(STORE_ID)).acceptingOrders).toBe(false);
+    expect(await broadAtLimit.service.getOrderAcceptance(STORE_ID)).toBe(false);
+  });
+
+  it('fails closed for a corrupt snapshot or inconsistent entitlements under the feature gate', async () => {
+    const corrupt = build({ subscription: subDoc({ planSnapshot: {} }), featureEnforcement: true });
+    expect((await corrupt.service.getPublicState(STORE_ID)).acceptingOrders).toBe(false);
+
+    const inconsistent = build({
+      subscription: subDoc({
+        planSnapshot: {
+          ...subDoc().planSnapshot,
+          entitlements: {
+            monthlyOrders: 10,
+            ordersAllowance: null,
+            maxProducts: null,
+            maxTeamMembers: null,
+            features: { pos: false },
+            durationMonths: 1,
+          },
+        },
+      }),
+      featureEnforcement: true,
+    });
+    expect((await inconsistent.service.getPublicState(STORE_ID)).acceptingOrders).toBe(false);
+    expect((await inconsistent.service.getCapabilities(STORE_ID)).acceptingOrders).toBe(false);
+  });
+
+  it('keeps a legacy snapshot without an entitlements block valid', async () => {
+    const { service } = build({ subscription: subDoc(), featureEnforcement: true });
+    expect((await service.getPublicState(STORE_ID)).acceptingOrders).toBe(true);
+    expect((await service.getCapabilities(STORE_ID)).acceptingOrders).toBe(true);
+  });
+
+  it('batched public state matches the per-store state', async () => {
+    const { service } = build({ subscription: subDoc(), featureEnforcement: true });
+    const batched = await service.getPublicStates([STORE_ID]);
+    const single = await service.getPublicState(STORE_ID);
+    expect(batched.get(STORE_ID)).toEqual(single);
+  });
+});
+
+describe('SubscriptionAccessService cap lock', () => {
+  function capSession() {
+    return {
+      withTransaction: jest.fn(async (fn: () => Promise<void>) => fn()),
+      endSession: jest.fn(async () => undefined),
+    } as any;
+  }
+
+  beforeEach(() => {
+    mockedOpenSession.mockReset();
+  });
+
+  it('bumps the per-store version, re-reads usage in the session and runs the write', async () => {
+    const session = capSession();
+    mockedOpenSession.mockResolvedValue(session);
+    const { service, subscriptionModel, productModel } = build({
+      subscription: subDoc(),
+      featureEnforcement: true,
+      activeProducts: 49,
+    });
+
+    const result = await service.withStoreCapLock(STORE_ID, async (ctx) => ({
+      sameSession: ctx.session === session,
+      entitled: ctx.entitlement.entitled,
+      activeProducts: ctx.usage.activeProducts,
+    }));
+
+    expect(subscriptionModel.findOneAndUpdate).toHaveBeenCalledWith(
+      expect.anything(),
+      { $inc: { 'usage.capVersion': 1 } },
+      { new: true, session },
+    );
+    expect(session.withTransaction).toHaveBeenCalledTimes(1);
+    expect(session.endSession).toHaveBeenCalledTimes(1);
+    expect(productModel.countDocuments.mock.results[0].value.session).toHaveBeenCalledWith(
+      session,
+    );
+    expect(result).toEqual({ sameSession: true, entitled: true, activeProducts: 49 });
+  });
+
+  it('fails closed when the store has no subscription row', async () => {
+    const session = capSession();
+    mockedOpenSession.mockResolvedValue(session);
+    const { service } = build({ subscription: null, featureEnforcement: true });
+
+    await expect(
+      service.withStoreCapLock(STORE_ID, jest.fn(async () => undefined)),
+    ).rejects.toMatchObject({ errorCode: AppErrorCode.SUBSCRIPTION_INACTIVE });
+  });
+
+  it('falls back to check-then-act when transactions are unavailable', async () => {
+    mockedOpenSession.mockRejectedValue(
+      new AppException(AppErrorCode.INVALID_COMBINATION, { reason: 'transactions_unavailable' }),
+    );
+    const { service } = build({ subscription: subDoc(), featureEnforcement: true });
+
+    const result = await service.withStoreCapLock(STORE_ID, async (ctx) => ({
+      session: ctx.session,
+      activeProducts: ctx.usage.activeProducts,
+    }));
+    expect(result.session).toBeNull();
+  });
+
+  it('does not open a transaction while feature enforcement is off', async () => {
+    const { service } = build({
+      subscription: subDoc(),
+      enforcement: false,
+      featureEnforcement: false,
+    });
+
+    const session = await service.withStoreCapLock(STORE_ID, async (ctx) => ctx.session);
+    expect(session).toBeNull();
+    expect(mockedOpenSession).not.toHaveBeenCalled();
+  });
+});
 
 describe('SubscriptionAccessService order quota', () => {
   function quotaService(options: {

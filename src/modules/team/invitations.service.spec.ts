@@ -10,6 +10,7 @@ function q<T>(result: T): any {
     sort: () => chain,
     limit: () => chain,
     lean: () => chain,
+    session: () => chain,
     exec: async () => result,
   };
   return chain;
@@ -433,5 +434,70 @@ describe('InvitationsService', () => {
       expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
       expect(results.filter((r) => r.status === 'rejected')).toHaveLength(1);
     });
+  });
+});
+
+describe('InvitationsService cap lock', () => {
+  it('creates an invitation inside the per-store DB lock when feature enforcement is on', async () => {
+    const store: any = {
+      _id: new Types.ObjectId(),
+      vendorEmail: 'owner@store.test',
+      vendorId: new Types.ObjectId(),
+      storeName: 'Test Store',
+    };
+    const invitationModel: any = {
+      findOne: jest.fn(() => q(null)),
+      find: jest.fn(),
+      findById: jest.fn(),
+      create: jest.fn(async () => pendingDoc()),
+      findOneAndUpdate: jest.fn(),
+      updateOne: jest.fn(() => q({ modifiedCount: 1 })),
+    };
+    const memberModel: any = { findOne: jest.fn(() => q(null)) };
+    const userModel: any = { findOne: jest.fn(() => q(null)) };
+    const session = { id: 'cap-session' };
+    const access: any = {
+      isFeatureEnforcementEnabled: jest.fn(() => true),
+      withStoreCapLock: jest.fn(async (_storeId: string, work: any) =>
+        work({
+          session,
+          entitlement: { entitled: true, subscription: {} },
+          usage: { teamSeats: 0, pendingInvitations: 0, teamLimit: 5 },
+        }),
+      ),
+      getEntitlement: jest.fn(async () => ({ entitled: true, subscription: {} })),
+      getUsage: jest.fn(async () => ({ teamSeats: 0, pendingInvitations: 0, teamLimit: 5 })),
+    };
+    const service = new InvitationsService(
+      invitationModel,
+      memberModel,
+      userModel,
+      { findOne: jest.fn() } as any,
+      { sendTeamInvitationEmail: jest.fn(async () => true) } as any,
+      {
+        get: jest.fn((key: string) => {
+          if (key === 'teamInvitation.expiryHours') return 48;
+          if (key === 'teamInvitation.acceptUrl') return 'http://localhost:3001/team/accept';
+          if (key === 'frontendUrl') return 'http://localhost:3001';
+          return undefined;
+        }),
+      } as any,
+      { record: jest.fn() } as any,
+      access,
+    );
+
+    await service.create(
+      store,
+      { id: new Types.ObjectId().toHexString(), email: store.vendorEmail, fullName: 'Owner' },
+      { email: 'employee@example.com', role: StoreRole.ORDER_CONFIRMER },
+    );
+
+    expect(access.withStoreCapLock).toHaveBeenCalledWith(
+      String(store._id),
+      expect.any(Function),
+    );
+    const payload = invitationModel.create.mock.calls[0][0];
+    expect(payload.email).toBe('employee@example.com');
+    expect(invitationModel.create.mock.calls[0][1]).toEqual({ session });
   });
 });

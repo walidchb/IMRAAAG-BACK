@@ -70,10 +70,15 @@ export class Subscription {
   cancelReason?: string | null;
 
   @Prop({
-    type: { ordersUsed: { type: Number, default: 0, min: 0 } },
-    default: { ordersUsed: 0 },
+    type: {
+      ordersUsed: { type: Number, default: 0, min: 0 },
+      // Serialization point for cap-sensitive writes (products/team). Incremented inside the
+      // per-store transaction; never displayed or used as a count.
+      capVersion: { type: Number, default: 0, min: 0 },
+    },
+    default: { ordersUsed: 0, capVersion: 0 },
   })
-  usage: { ordersUsed: number };
+  usage: { ordersUsed: number; capVersion: number };
 
   @Prop({
     type: String,

@@ -8,6 +8,7 @@ import {
   Post,
   Query,
   Req,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
@@ -18,6 +19,7 @@ import type { AppLocale } from '../../common/constants/locales.const';
 import { AppException } from '../../common/errors/app-exception';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
 import { RequirePermissions } from './decorators/require-permissions.decorator';
+import { TeamSubscriptionGuard } from '../subscriptions/guards/team-subscription.guard';
 import { StoreAccessService } from './store-access.service';
 import { TeamService } from './team.service';
 import { InvitationsService } from './invitations.service';
@@ -34,6 +36,9 @@ import { UpdateMemberDto } from './dto/update-member.dto';
  * Route-level `@RequirePermissions` covers the coarse capability. `PATCH /team/members/:id`
  * is one route for role/status changes, so the service enforces the exact permission the body
  * requires (`team.update_role`, `team.deactivate`, `team.reactivate`).
+ *
+ * `TeamSubscriptionGuard` adds the plan gate: a one-seat plan only covers the Owner, so team
+ * management is refused (while `GET /team/me`, which describes the caller, stays open).
  */
 @ApiTags('Team')
 @Controller('team')
@@ -58,6 +63,7 @@ export class TeamController {
   }
 
   @Get('members')
+  @UseGuards(TeamSubscriptionGuard)
   @RequirePermissions(StorePermission.TEAM_VIEW)
   @Throttle({ default: { limit: 120, ttl: 60000 } })
   @ApiOperation({ summary: "List the store's members" })
@@ -66,6 +72,7 @@ export class TeamController {
   }
 
   @Get('invitations')
+  @UseGuards(TeamSubscriptionGuard)
   @RequirePermissions(StorePermission.TEAM_VIEW)
   @Throttle({ default: { limit: 120, ttl: 60000 } })
   @ApiOperation({ summary: "List the store's invitations" })
@@ -75,6 +82,7 @@ export class TeamController {
   }
 
   @Post('invitations')
+  @UseGuards(TeamSubscriptionGuard)
   @RequirePermissions(StorePermission.TEAM_INVITE)
   @Throttle({ default: { limit: 20, ttl: 3600000 } })
   @ApiOperation({ summary: 'Invite an employee' })
@@ -85,6 +93,7 @@ export class TeamController {
   }
 
   @Post('invitations/:id/resend')
+  @UseGuards(TeamSubscriptionGuard)
   @RequirePermissions(StorePermission.TEAM_RESEND_INVITATION)
   @Throttle({ default: { limit: 60, ttl: 60000 } })
   @ApiOperation({ summary: 'Resend a pending invitation (rotates its token)' })
@@ -103,6 +112,7 @@ export class TeamController {
   }
 
   @Delete('invitations/:id')
+  @UseGuards(TeamSubscriptionGuard)
   @RequirePermissions(StorePermission.TEAM_REVOKE_INVITATION)
   @Throttle({ default: { limit: 60, ttl: 60000 } })
   @ApiOperation({ summary: 'Revoke a pending invitation' })
@@ -112,6 +122,7 @@ export class TeamController {
   }
 
   @Patch('members/:id')
+  @UseGuards(TeamSubscriptionGuard)
   @RequirePermissions(StorePermission.TEAM_VIEW)
   @Throttle({ default: { limit: 60, ttl: 60000 } })
   @ApiOperation({ summary: "Change an employee's role or status" })
@@ -124,6 +135,7 @@ export class TeamController {
   }
 
   @Delete('members/:id')
+  @UseGuards(TeamSubscriptionGuard)
   @RequirePermissions(StorePermission.TEAM_REMOVE)
   @Throttle({ default: { limit: 60, ttl: 60000 } })
   @ApiOperation({ summary: 'Remove an employee' })

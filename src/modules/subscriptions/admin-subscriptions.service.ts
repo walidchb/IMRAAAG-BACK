@@ -5,6 +5,8 @@ import { AppException } from '../../common/errors/app-exception';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
 import {
   SubscriptionStatus,
+  daysRemainingUntil,
+  effectiveEntitlements,
   resolveEffectiveSubscriptionStatus,
 } from '../../common/constants/subscription.const';
 import { Store, StoreDocument } from '../stores/schemas/store.schema';
@@ -12,6 +14,7 @@ import { User, UserDocument } from '../users/schemas/user.schema';
 import { SubscriptionActor } from './plans.service';
 import { SubscriptionsService } from './subscriptions.service';
 import { SubscriptionAccessService } from './subscription-access.service';
+import { SubscriptionBillingConfigService } from './subscription-billing-config.service';
 import { SubscriptionQueryDto } from './dto/subscription.dto';
 import {
   Subscription,
@@ -49,7 +52,21 @@ export class AdminSubscriptionsService {
     private readonly userModel: Model<UserDocument>,
     private readonly subscriptionsService: SubscriptionsService,
     private readonly accessService: SubscriptionAccessService,
+    private readonly billingConfigService: SubscriptionBillingConfigService,
   ) {}
+
+  // ─── Global billing duration configuration ───
+
+  getBillingConfig() {
+    return this.billingConfigService.get();
+  }
+
+  updateBillingConfig(
+    enabledDurations: unknown,
+    actor: SubscriptionActor,
+  ) {
+    return this.billingConfigService.update(enabledDurations, actor);
+  }
 
   async list(query: SubscriptionQueryDto): Promise<Record<string, unknown>> {
     const filter = await this.buildFilter(query);
@@ -118,10 +135,17 @@ export class AdminSubscriptionsService {
     storeId: string,
     planId: string,
     actor: SubscriptionActor,
-    replace?: boolean,
+    options: {
+      replace?: boolean;
+      durationMonths?: number;
+      billingOptionId?: string;
+      agreedPriceOverride?: number | null;
+      includeTrial?: boolean;
+      reason?: string;
+    } = {},
   ): Promise<Record<string, unknown>> {
     await this.assertStoreExists(storeId);
-    const doc = await this.subscriptionsService.assignPlan(storeId, planId, actor, { replace });
+    const doc = await this.subscriptionsService.assignPlan(storeId, planId, actor, options);
     return this.enriched(doc);
   }
 
@@ -140,19 +164,24 @@ export class AdminSubscriptionsService {
     id: string,
     planId: string,
     actor: SubscriptionActor,
-    reason?: string,
+    options: {
+      durationMonths?: number;
+      billingOptionId?: string;
+      includeTrial?: boolean;
+      reason?: string;
+    } = {},
   ): Promise<Record<string, unknown>> {
-    const doc = await this.subscriptionsService.changePlan(id, planId, actor, reason);
+    const doc = await this.subscriptionsService.changePlan(id, planId, actor, options);
     return this.enriched(doc);
   }
 
   async extend(
     id: string,
-    days: number,
+    options: { months?: number; days?: number },
     actor: SubscriptionActor,
     reason?: string,
   ): Promise<Record<string, unknown>> {
-    const doc = await this.subscriptionsService.extend(id, days, actor, reason);
+    const doc = await this.subscriptionsService.extend(id, options, actor, reason);
     return this.enriched(doc);
   }
 
@@ -168,7 +197,14 @@ export class AdminSubscriptionsService {
   async reactivate(
     id: string,
     actor: SubscriptionActor,
-    options: { days?: number; reason?: string },
+    options: {
+      durationMonths?: number;
+      billingOptionId?: string;
+      sameTerms?: boolean;
+      months?: number;
+      days?: number;
+      reason?: string;
+    },
   ): Promise<Record<string, unknown>> {
     const doc = await this.subscriptionsService.reactivate(id, actor, options);
     return this.enriched(doc);
@@ -213,16 +249,21 @@ export class AdminSubscriptionsService {
         ],
       });
     } else if (query.status === 'trialing') {
-      filter.status = SubscriptionStatus.TRIALING;
-      filter.isTrial = true;
+      // Effective trialing: inside the trial window, either a pure trial (`isTrial`) or the
+      // trial that precedes a paid period (`trialEndsAt` in the future).
+      filter.status = { $ne: SubscriptionStatus.CANCELLED };
       and.push({ $or: [{ endDate: null }, { endDate: { $gt: now } }] });
+      and.push({ $or: [{ trialEndsAt: { $gt: now } }, { isTrial: true }] });
     } else if (query.status === 'active') {
       filter.status = SubscriptionStatus.ACTIVE;
-      filter.isTrial = false;
+      and.push({ isTrial: { $ne: true } });
       and.push({ $or: [{ endDate: null }, { endDate: { $gt: now } }] });
+      and.push({ $or: [{ trialEndsAt: null }, { trialEndsAt: { $lte: now } }] });
     }
 
-    if (query.trial) filter.isTrial = query.trial === 'yes';
+    if (query.trial) {
+      filter.trialEndsAt = query.trial === 'yes' ? { $ne: null } : null;
+    }
 
     if (query.startFrom) {
       filter.startDate = {
@@ -365,27 +406,56 @@ export class AdminSubscriptionsService {
   private toResponse(doc: SubscriptionDocument): Record<string, unknown> {
     const now = new Date();
     const effectiveStatus = resolveEffectiveSubscriptionStatus(
-      { status: doc.status, isTrial: doc.isTrial, endDate: doc.endDate },
+      {
+        status: doc.status,
+        isTrial: doc.isTrial,
+        endDate: doc.endDate,
+        trialEndsAt: doc.trialEndsAt,
+      },
       now,
     );
+    const entitlements = effectiveEntitlements(doc.planSnapshot);
+    const ordersUsed = doc.usage?.ordersUsed ?? 0;
+    const ordersAllowance = entitlements.ordersAllowance;
+    const ordersRemaining =
+      ordersAllowance === null ? null : Math.max(0, ordersAllowance - ordersUsed);
+    const ordersPercent =
+      ordersAllowance === null
+        ? null
+        : ordersAllowance <= 0
+          ? ordersUsed > 0
+            ? 100
+            : 0
+          : Math.min(100, Math.floor((ordersUsed / ordersAllowance) * 100));
     return {
       id: String(doc._id),
       storeId: String(doc.storeId),
       planId: doc.planId ? String(doc.planId) : null,
       plan: doc.planSnapshot,
+      billing: doc.planSnapshot?.billing ?? null,
+      entitlements,
       status: doc.status,
       effectiveStatus,
       isTrial: Boolean(doc.isTrial),
+      inTrial: effectiveStatus === SubscriptionStatus.TRIALING,
       startDate: doc.startDate,
       endDate: doc.endDate ?? null,
       trialStartedAt: doc.trialStartedAt ?? null,
       trialEndsAt: doc.trialEndsAt ?? null,
+      trialDaysRemaining:
+        effectiveStatus === SubscriptionStatus.TRIALING
+          ? daysRemainingUntil(doc.trialEndsAt ?? null, now)
+          : null,
       trialUsedAt: doc.trialUsedAt ?? null,
       cancelledAt: doc.cancelledAt ?? null,
       cancelReason: doc.cancelReason ?? null,
       usage: {
-        ordersUsed: doc.usage?.ordersUsed ?? 0,
-        ordersLimit: doc.planSnapshot?.limits?.maxOrders ?? null,
+        ordersUsed,
+        ordersLimit: ordersAllowance,
+        ordersAllowance,
+        ordersRemaining,
+        ordersPercent,
+        ordersMonthlyAllowance: entitlements.monthlyOrders,
       },
       source: doc.source,
       createdAt: (doc as unknown as { createdAt?: Date }).createdAt ?? null,

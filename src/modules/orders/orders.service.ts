@@ -372,13 +372,13 @@ export class OrdersService {
   }
 
   /**
-   * POS defence-in-depth (the controller guard is the primary gate). No-op while enforcement
-   * is off; the Owner wildcard cannot bypass it because it checks the subscription, not a
-   * permission.
+   * POS defence-in-depth (the controller guard is the primary gate). No-op while feature
+   * enforcement is off; the Owner wildcard cannot bypass it because it checks the subscription,
+   * not a permission. Sale-creating routes must never be exempted from this check.
    */
   private async assertPosSubscription(storeId: Types.ObjectId | string): Promise<void> {
     const access = this.subscriptionAccessService;
-    if (!access || !access.isEnforcementEnabled()) return;
+    if (!access || !access.isFeatureEnforcementEnabled()) return;
     const capabilities = await access.getCapabilities(String(storeId));
     if (!capabilities.canUsePos) {
       throw new AppException(AppErrorCode.SUBSCRIPTION_FEATURE_NOT_INCLUDED, { feature: 'pos' });

@@ -12,6 +12,7 @@ import { StoreStatus, StoreOwnerStatus, StoreAdminStatus } from './schemas/store
 import { UploadService } from '../upload/upload.service';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
+import { AppException } from '../../common/errors/app-exception';
 
 /**
  * Coverage for store -> vendor ownership resolution.
@@ -60,6 +61,7 @@ describe('StoresService', () => {
     const model: any = jest.fn();
     model.findOne = jest.fn().mockReturnValue(query(null));
     model.findById = jest.fn().mockReturnValue(query(null));
+    model.findByIdAndDelete = jest.fn().mockReturnValue(query(null));
     model.find = jest.fn().mockReturnValue(query([]));
     // `create()` derives a public subdomain; a free label keeps the existing assertions.
     model.exists = jest.fn().mockReturnValue(query(null));
@@ -104,6 +106,7 @@ describe('StoresService', () => {
           useValue: {
             findOne: jest.fn().mockReturnValue(query(null)),
             updateOne: jest.fn().mockReturnValue(query({})),
+            deleteMany: jest.fn().mockReturnValue(query({ deletedCount: 0 })),
           },
         },
         { provide: UploadService, useValue: {} },
@@ -295,6 +298,18 @@ describe('StoresService', () => {
       await expect(service.create({ ...dto(), vendorEmail: '' })).rejects.toMatchObject({
         errorCode: AppErrorCode.STORE_VENDOR_EMAIL_REQUIRED,
       });
+    });
+
+    it('rolls the store back when no default subscription can be assigned', async () => {
+      const subscriptions = (service as any).subscriptionsService;
+      subscriptions.assignDefaultSignupPlan.mockRejectedValueOnce(
+        new AppException(AppErrorCode.SUBSCRIPTION_NOT_CONFIGURED, { reason: 'no_default_plan' }),
+      );
+
+      await expect(service.create(dto(), VENDOR_USER_ID.toString())).rejects.toMatchObject({
+        errorCode: AppErrorCode.SUBSCRIPTION_NOT_CONFIGURED,
+      });
+      expect((service as any).storeModel.findByIdAndDelete).toHaveBeenCalled();
     });
   });
 

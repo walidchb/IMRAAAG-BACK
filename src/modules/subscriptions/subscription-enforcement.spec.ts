@@ -151,23 +151,27 @@ describe('POS subscription guard', () => {
   function ctx(role = 'VENDOR') {
     return {
       switchToHttp: () => ({ getRequest: () => ({ user: { id: 'u1', role } }) }),
+      getHandler: () => undefined,
+      getClass: () => undefined,
     } as any;
   }
 
+  const noSkip = { getAllAndOverride: () => undefined } as any;
+  const guardFor = (access: any) => new PosSubscriptionGuard(access, stores, noSkip);
+
   it('does not block while enforcement is off', async () => {
-    const guard = new PosSubscriptionGuard(accessMock({ enforcement: false, pos: false }), stores);
+    const guard = guardFor(accessMock({ enforcement: false, pos: false }));
     await expect(guard.canActivate(ctx())).resolves.toBe(true);
   });
 
   it('blocks when POS is not in the plan (Owner wildcard cannot bypass)', async () => {
-    const guard = new PosSubscriptionGuard(accessMock({ pos: false }), stores);
+    const guard = guardFor(accessMock({ pos: false }));
     await expect(guard.canActivate(ctx('VENDOR'))).rejects.toBeInstanceOf(AppException);
   });
 
   it('enforces POS through the feature gate while broad enforcement is off', async () => {
-    const guard = new PosSubscriptionGuard(
+    const guard = guardFor(
       accessMock({ enforcement: false, featureEnforcement: true, pos: false }),
-      stores,
     );
     await expect(guard.canActivate(ctx('VENDOR'))).rejects.toMatchObject({
       errorCode: AppErrorCode.SUBSCRIPTION_FEATURE_NOT_INCLUDED,
@@ -175,12 +179,12 @@ describe('POS subscription guard', () => {
   });
 
   it('allows POS when the plan includes it', async () => {
-    const guard = new PosSubscriptionGuard(accessMock({ pos: true }), stores);
+    const guard = guardFor(accessMock({ pos: true }));
     await expect(guard.canActivate(ctx('VENDOR'))).resolves.toBe(true);
   });
 
   it('lets a platform admin through (no store membership)', async () => {
-    const guard = new PosSubscriptionGuard(accessMock({ pos: false }), stores);
+    const guard = guardFor(accessMock({ pos: false }));
     await expect(guard.canActivate(ctx('ADMIN'))).resolves.toBe(true);
   });
 });

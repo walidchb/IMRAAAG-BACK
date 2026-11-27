@@ -15,6 +15,7 @@ import { StoreAccessService } from '../team/store-access.service';
 import { ReservationsService } from '../inventory/services/reservations.service';
 import { VariantsService } from '../inventory/services/variants.service';
 import { BoxesService } from '../boxes/boxes.service';
+import { SubscriptionAccessService } from '../subscriptions/subscription-access.service';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
 import { AppException } from '../../common/errors/app-exception';
 import { UpdateOrderDto } from './dto/update-order.dto';
@@ -2562,6 +2563,7 @@ describe('OrdersService', () => {
     let reservations: any;
     let storesService: any;
     let boxesService: any;
+    let subscriptionAccessService: any;
     let sessions: any[];
 
     const PRODUCT = new Types.ObjectId();
@@ -2658,6 +2660,13 @@ describe('OrdersService', () => {
           bundlesTotal: 0,
         }),
       };
+      subscriptionAccessService = {
+        isEnforcementEnabled: jest.fn().mockReturnValue(false),
+        isFeatureEnforcementEnabled: jest.fn().mockReturnValue(false),
+        getCapabilities: jest.fn().mockResolvedValue({ canUsePos: true }),
+        reserveOrderSlot: jest.fn().mockResolvedValue(false),
+        releaseOrderSlot: jest.fn().mockResolvedValue(undefined),
+      };
 
       const module: TestingModule = await Test.createTestingModule({
         providers: [
@@ -2699,6 +2708,7 @@ describe('OrdersService', () => {
             },
           },
           { provide: BoxesService, useValue: boxesService },
+          { provide: SubscriptionAccessService, useValue: subscriptionAccessService },
           { provide: AuditService, useValue: { record: jest.fn().mockResolvedValue(undefined) } },
         ],
       }).compile();
@@ -2912,6 +2922,48 @@ describe('OrdersService', () => {
         expect.anything(),
         sessions[1],
       );
+    });
+
+    it('treats a second release of the same hold as not found', async () => {
+      posHoldModel.findOne
+        .mockReturnValueOnce(query(holdDoc()))
+        .mockReturnValueOnce(query(null));
+      posHoldModel.findOneAndDelete.mockResolvedValue(holdDoc());
+
+      await service.deletePosHold(HOLD_ID.toString(), VENDOR_USER);
+      await expect(
+        service.deletePosHold(HOLD_ID.toString(), VENDOR_USER),
+      ).rejects.toMatchObject({ errorCode: AppErrorCode.POS_HOLD_NOT_FOUND });
+    });
+
+    it('releases a hold even when the plan no longer includes POS', async () => {
+      subscriptionAccessService.isFeatureEnforcementEnabled.mockReturnValue(true);
+      subscriptionAccessService.getCapabilities.mockResolvedValue({ canUsePos: false });
+      posHoldModel.findOne.mockReturnValue(query(holdDoc()));
+      posHoldModel.findOneAndDelete.mockResolvedValue(holdDoc());
+
+      await expect(service.deletePosHold(HOLD_ID.toString(), VENDOR_USER)).resolves.toEqual({
+        id: HOLD_ID.toString(),
+        deleted: true,
+      });
+      expect(reservations.release).toHaveBeenCalledWith(
+        expect.objectContaining({ orderId: HOLD_ID, orderNo: '000007' }),
+        expect.anything(),
+        sessions[1],
+      );
+    });
+
+    it('refuses to complete a hold when the plan no longer includes POS', async () => {
+      subscriptionAccessService.isFeatureEnforcementEnabled.mockReturnValue(true);
+      subscriptionAccessService.getCapabilities.mockResolvedValue({ canUsePos: false });
+
+      await expect(
+        service.completePosHold(HOLD_ID.toString(), holdDto(), VENDOR_USER),
+      ).rejects.toMatchObject({
+        errorCode: AppErrorCode.SUBSCRIPTION_FEATURE_NOT_INCLUDED,
+        errorParams: { feature: 'pos' },
+      });
+      expect(reservations.consume).not.toHaveBeenCalled();
     });
 
     it('completes a hold into the same order identity, reconciles and consumes', async () => {

@@ -1,7 +1,7 @@
 import { Injectable, Logger, Optional } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { ConfigService } from '@nestjs/config';
-import { Model, Types } from 'mongoose';
+import { Model, Types, ClientSession } from 'mongoose';
 import * as crypto from 'crypto';
 import { AppException } from '../../common/errors/app-exception';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
@@ -128,10 +128,10 @@ export class InvitationsService {
 
     // The seat check and the invite write must be one serialized step, otherwise two requests
     // for the last free seat can both pass and create three members on a two-seat plan.
-    const { rawToken, expiresAt, invitation } = await this.withSeatLock(String(store._id), async () => {
+    const { rawToken, expiresAt, invitation } = await this.withSeatLock(String(store._id), async (session) => {
       await this.assertEmailCanJoin(store, email);
-      await this.assertPendingInviteAllowed(store, email);
-      return this.rotateOrCreate(store, actor, email, dto.role);
+      await this.assertPendingInviteAllowed(store, email, session);
+      return this.rotateOrCreate(store, actor, email, dto.role, session);
     });
 
     const invitedByName = actor.fullName || actor.email || 'A store owner';
@@ -327,26 +327,36 @@ export class InvitationsService {
     // Accepting an invitation consumes a seat, so the live check and the membership insert
     // share the same per-store lock as invitations. A lowered plan therefore cannot be
     // overshot by two invites accepted at the same instant.
-    await this.withSeatLock(storeId, async () => {
-      const existing = await this.memberModel
-        .findOne({ storeId: new Types.ObjectId(storeId), userId: userObjectId })
-        .exec();
+    await this.withSeatLock(storeId, async (session) => {
+      const existingQuery = this.memberModel.findOne({
+        storeId: new Types.ObjectId(storeId),
+        userId: userObjectId,
+      });
+      if (session) existingQuery.session(session);
+      const existing = await existingQuery.exec();
       if (existing) {
         await this.revertClaim(claimed);
         throw new AppException(AppErrorCode.TEAM_MEMBER_ALREADY_EXISTS, { userId });
       }
 
-      await this.assertTeamSeatAcceptable(storeId);
+      await this.assertTeamSeatAcceptable(storeId, session);
 
       try {
-        await this.memberModel.create({
-          storeId: new Types.ObjectId(storeId),
-          userId: userObjectId,
-          role: claimed.invitation.role,
-          status: StoreMemberStatus.ACTIVE,
-          invitedBy: claimed.invitation.invitedBy,
-          joinedAt: new Date(),
-        });
+        const memberCreate = this.memberModel.create as unknown as (
+          doc: Record<string, unknown>,
+          options?: Record<string, unknown>,
+        ) => Promise<unknown>;
+        await memberCreate(
+          {
+            storeId: new Types.ObjectId(storeId),
+            userId: userObjectId,
+            role: claimed.invitation.role,
+            status: StoreMemberStatus.ACTIVE,
+            invitedBy: claimed.invitation.invitedBy,
+            joinedAt: new Date(),
+          },
+          session ? { session } : undefined,
+        );
       } catch (err: any) {
         if (err?.code === 11000) {
           await this.revertClaim(claimed);
@@ -395,11 +405,16 @@ export class InvitationsService {
   }
 
   /**
-   * Runs `task` while holding the store's seat lock. Callers queue on the previous tail; a
+   * Runs `task` while holding the store's seat lock. The in-process map stays as a cheap fast
+   * path, but the authoritative serialization point is the per-store DB lock on the subscription
+   * row so multiple API instances cannot overshoot. Callers queue on the previous tail; a
    * rejection still releases the gate, so one failed invite never wedges the store's queue.
    * The map entry is removed once the last waiter finishes to keep it bounded.
    */
-  private async withSeatLock<T>(storeId: string, task: () => Promise<T>): Promise<T> {
+  private async withSeatLock<T>(
+    storeId: string,
+    task: (session: ClientSession | null) => Promise<T>,
+  ): Promise<T> {
     const key = String(storeId || 'unknown');
     const previous = this.seatLocks.get(key) ?? Promise.resolve();
     let release!: () => void;
@@ -411,7 +426,9 @@ export class InvitationsService {
 
     await previous;
     try {
-      return await task();
+      const access = this.subscriptionAccessService;
+      if (!access || !access.isFeatureEnforcementEnabled() || !storeId) return await task(null);
+      return await access.withStoreCapLock(storeId, ({ session }) => task(session));
     } finally {
       release();
       if (this.seatLocks.get(key) === tail) this.seatLocks.delete(key);
@@ -426,21 +443,23 @@ export class InvitationsService {
   private async assertPendingInviteAllowed(
     store: StoreDocument,
     email: string,
+    session?: ClientSession | null,
   ): Promise<void> {
     const access = this.subscriptionAccessService;
     if (!access || !access.isFeatureEnforcementEnabled()) return;
     const storeId = String(store._id);
-    const entitlement = await access.getEntitlement(storeId);
+    const entitlement = await access.getEntitlement(storeId, session ?? undefined);
     if (!entitlement.entitled) {
       throw new AppException(AppErrorCode.SUBSCRIPTION_INACTIVE, { storeId });
     }
-    const pendingExisting = await this.invitationModel
+    const pendingQuery = this.invitationModel
       .findOne({ storeId: store._id, email, status: StoreInvitationStatus.PENDING })
       .select('_id')
-      .lean()
-      .exec();
+      .lean();
+    if (session) pendingQuery.session(session);
+    const pendingExisting = await pendingQuery.exec();
     if (pendingExisting) return;
-    const usage = await access.getUsage(storeId, entitlement.subscription);
+    const usage = await access.getUsage(storeId, entitlement.subscription, session ?? undefined);
     const reserved = usage.teamSeats + usage.pendingInvitations;
     if (usage.teamLimit !== null && reserved >= usage.teamLimit) {
       this.logger.warn(
@@ -454,14 +473,17 @@ export class InvitationsService {
   }
 
   /** Acceptance re-checks the live seat count in case the plan was lowered since the invite. */
-  private async assertTeamSeatAcceptable(storeId: string): Promise<void> {
+  private async assertTeamSeatAcceptable(
+    storeId: string,
+    session?: ClientSession | null,
+  ): Promise<void> {
     const access = this.subscriptionAccessService;
     if (!access || !access.isFeatureEnforcementEnabled()) return;
-    const entitlement = await access.getEntitlement(storeId);
+    const entitlement = await access.getEntitlement(storeId, session ?? undefined);
     if (!entitlement.entitled) {
       throw new AppException(AppErrorCode.SUBSCRIPTION_INACTIVE, { storeId });
     }
-    const usage = await access.getUsage(storeId, entitlement.subscription);
+    const usage = await access.getUsage(storeId, entitlement.subscription, session ?? undefined);
     if (usage.teamLimit !== null && usage.teamSeats >= usage.teamLimit) {
       throw new AppException(AppErrorCode.SUBSCRIPTION_TEAM_LIMIT_REACHED, {
         used: usage.teamSeats,
@@ -509,6 +531,7 @@ export class InvitationsService {
     actor: InviterActor,
     email: string,
     role: StoreRole,
+    session?: ClientSession | null,
   ): Promise<{
     rawToken: string;
     expiresAt: Date;
@@ -517,13 +540,13 @@ export class InvitationsService {
     const { rawToken, expiresAt } = this.rotateValues();
     const tokenHash = sha256(rawToken);
 
-    const pending = await this.invitationModel
-      .findOne({
-        storeId: store._id,
-        email,
-        status: StoreInvitationStatus.PENDING,
-      })
-      .exec();
+    const pendingQuery = this.invitationModel.findOne({
+      storeId: store._id,
+      email,
+      status: StoreInvitationStatus.PENDING,
+    });
+    if (session) pendingQuery.session(session);
+    const pending = await pendingQuery.exec();
 
     if (pending) {
       pending.role = role;
@@ -531,41 +554,48 @@ export class InvitationsService {
       pending.expiresAt = expiresAt;
       pending.lastSentAt = new Date();
       pending.sendCount = (pending.sendCount ?? 0) + 1;
-      await pending.save();
+      await pending.save(session ? { session } : {});
       return { rawToken, expiresAt, invitation: pending };
     }
 
     try {
-      const created = await this.invitationModel.create({
-        storeId: store._id,
-        email,
-        role,
-        tokenHash,
-        status: StoreInvitationStatus.PENDING,
-        invitedBy: this.toObjectId(actor.id),
-        expiresAt,
-        lastSentAt: new Date(),
-        sendCount: 1,
-      });
-      return { rawToken, expiresAt, invitation: created as StoreInvitationDocument };
+      const create = this.invitationModel.create as unknown as (
+        doc: Record<string, unknown>,
+        options?: Record<string, unknown>,
+      ) => Promise<StoreInvitationDocument>;
+      const created = await create(
+        {
+          storeId: store._id,
+          email,
+          role,
+          tokenHash,
+          status: StoreInvitationStatus.PENDING,
+          invitedBy: this.toObjectId(actor.id),
+          expiresAt,
+          lastSentAt: new Date(),
+          sendCount: 1,
+        },
+        session ? { session } : undefined,
+      );
+      return { rawToken, expiresAt, invitation: created };
     } catch (err: any) {
       if (err?.code === 11000) {
         // Concurrent create for the same (store, email): rotate the winner's row instead of
         // surfacing a duplicate-key error.
-        const winner = await this.invitationModel
-          .findOne({
-            storeId: store._id,
-            email,
-            status: StoreInvitationStatus.PENDING,
-          })
-          .exec();
+        const winnerQuery = this.invitationModel.findOne({
+          storeId: store._id,
+          email,
+          status: StoreInvitationStatus.PENDING,
+        });
+        if (session) winnerQuery.session(session);
+        const winner = await winnerQuery.exec();
         if (winner) {
           winner.role = role;
           winner.tokenHash = tokenHash;
           winner.expiresAt = expiresAt;
           winner.lastSentAt = new Date();
           winner.sendCount = (winner.sendCount ?? 0) + 1;
-          await winner.save();
+          await winner.save(session ? { session } : {});
           return { rawToken, expiresAt, invitation: winner };
         }
       }

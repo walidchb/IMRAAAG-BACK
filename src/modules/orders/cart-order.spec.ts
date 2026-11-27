@@ -15,6 +15,7 @@ import { StoreAccessService } from '../team/store-access.service';
 import { ReservationsService } from '../inventory/services/reservations.service';
 import { VariantsService } from '../inventory/services/variants.service';
 import { BoxesService } from '../boxes/boxes.service';
+import { SubscriptionAccessService } from '../subscriptions/subscription-access.service';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
 import { AppException } from '../../common/errors/app-exception';
 import { StatusConfig } from '../../common/constants/order-statuses.const';
@@ -58,6 +59,7 @@ describe('OrdersService — cart checkout', () => {
   let variantsService: any;
   let reservations: any;
   let boxesService: any;
+  let subscriptionAccess: any;
 
   const snapshot = (over: Record<string, any> = {}) => ({
     variantId: VARIANT_ID.toString(),
@@ -128,6 +130,17 @@ describe('OrdersService — cart checkout', () => {
         bundlesTotal: 0,
       }),
     };
+    subscriptionAccess = {
+      isEnabled: jest.fn().mockReturnValue(false),
+      isEnforcementEnabled: jest.fn().mockReturnValue(false),
+      isFeatureEnforcementEnabled: jest.fn().mockReturnValue(false),
+      getPublicState: jest
+        .fn()
+        .mockResolvedValue({ acceptingOrders: true, subscriptionState: 'active' }),
+      getEntitlement: jest.fn().mockResolvedValue({ entitled: true }),
+      reserveOrderSlot: jest.fn().mockResolvedValue(false),
+      releaseOrderSlot: jest.fn().mockResolvedValue(undefined),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -169,6 +182,7 @@ describe('OrdersService — cart checkout', () => {
         { provide: ReservationsService, useValue: reservations },
         { provide: VariantsService, useValue: variantsService },
         { provide: BoxesService, useValue: boxesService },
+        { provide: SubscriptionAccessService, useValue: subscriptionAccess },
         { provide: AuditService, useValue: { record: jest.fn().mockResolvedValue(undefined) } },
       ],
     }).compile();
@@ -212,6 +226,38 @@ describe('OrdersService — cart checkout', () => {
     expect(quote.lines[0].isAvailable).toBe(false);
     expect(quote.lines[0].issues).toContain('INSUFFICIENT_STOCK');
     expect(quote.hasBlockingIssues).toBe(true);
+  });
+
+  it('advertises and enforces the same order acceptance under the feature gate', async () => {
+    subscriptionAccess.isEnabled.mockReturnValue(true);
+    subscriptionAccess.isFeatureEnforcementEnabled.mockReturnValue(true);
+
+    // Active subscription: the quote says accepting, and an order is allowed.
+    subscriptionAccess.getPublicState.mockResolvedValue({
+      acceptingOrders: true,
+      subscriptionState: 'active',
+    });
+    subscriptionAccess.getEntitlement.mockResolvedValue({ entitled: true });
+    const accepted = await service.validateCart({
+      storeId: STORE_ID.toString(),
+      items: [{ variantId: VARIANT_ID.toString(), quantity: 1 }],
+    });
+    expect(accepted.acceptingOrders).toBe(true);
+
+    // Expired subscription: the quote pauses and the writer refuses with the same rule.
+    subscriptionAccess.getPublicState.mockResolvedValue({
+      acceptingOrders: false,
+      subscriptionState: 'expired',
+    });
+    subscriptionAccess.getEntitlement.mockResolvedValue({ entitled: false });
+    const paused = await service.validateCart({
+      storeId: STORE_ID.toString(),
+      items: [{ variantId: VARIANT_ID.toString(), quantity: 1 }],
+    });
+    expect(paused.acceptingOrders).toBe(false);
+    await expect(service.createCartOrder(buildDto())).rejects.toMatchObject({
+      errorCode: AppErrorCode.SUBSCRIPTION_INACTIVE,
+    });
   });
 
   it('createCartOrder computes price/shipping/total server-side and stores the idempotency key', async () => {

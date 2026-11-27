@@ -12,6 +12,7 @@ import {
 } from './schemas/store-invitation.schema';
 import { StoreAccessService } from './store-access.service';
 import { PermissionsGuard } from './permissions.guard';
+import { TeamSubscriptionGuard } from '../subscriptions/guards/team-subscription.guard';
 import { TeamService } from './team.service';
 import { InvitationsService } from './invitations.service';
 import { TeamController } from './team.controller';
@@ -36,7 +37,13 @@ import { TeamController } from './team.controller';
     SubscriptionsModule,
   ],
   controllers: [TeamController],
-  providers: [StoreAccessService, PermissionsGuard, TeamService, InvitationsService],
+  providers: [
+    StoreAccessService,
+    PermissionsGuard,
+    TeamSubscriptionGuard,
+    TeamService,
+    InvitationsService,
+  ],
   exports: [
     StoreAccessService,
     PermissionsGuard,

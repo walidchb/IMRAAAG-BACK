@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
 import {
+  IsArray,
   IsBoolean,
   IsIn,
   IsInt,
@@ -59,17 +60,59 @@ export class PlanTrialDto {
   days?: number | null;
 }
 
+export class PlanBillingOptionDto {
+  @ApiProperty({
+    description: 'Supported billing duration in months (1, 3, 6 or 12)',
+    enum: [1, 3, 6, 12],
+  })
+  @Type(() => Number)
+  @IsInt()
+  @IsIn([1, 3, 6, 12])
+  durationMonths: number;
+
+  @ApiProperty({ description: 'Integer percent discount for this duration, 0-100', minimum: 0, maximum: 100 })
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  discountPercent: number;
+}
+
 export class CreatePlanDto {
   @ApiProperty({ maxLength: 120 })
   @IsString()
   @MaxLength(120)
   name: string;
 
-  @ApiPropertyOptional({ maxLength: 2000 })
+  @ApiPropertyOptional({ maxLength: 2000, description: 'Legacy single-language description' })
   @IsOptional()
   @IsString()
   @MaxLength(2000)
   description?: string;
+
+  @ApiPropertyOptional({ maxLength: 2000 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  descriptionEn?: string;
+
+  @ApiPropertyOptional({ maxLength: 2000 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  descriptionFr?: string;
+
+  @ApiPropertyOptional({ maxLength: 2000 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  descriptionAr?: string;
+
+  @ApiPropertyOptional({ maxLength: 2048, description: 'Plan icon URL' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(2048)
+  image?: string;
 
   @ApiProperty({ description: 'Integer DZD, >= 0' })
   @Type(() => Number)
@@ -81,12 +124,31 @@ export class CreatePlanDto {
   @IsIn(['DZD'])
   currency: 'DZD';
 
-  @ApiProperty({ description: 'Integer days, >= 1' })
+  @ApiPropertyOptional({
+    description: 'Integer days, >= 1. Required for legacy plans; monthly plans use 30.',
+  })
+  @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
   @Max(3650)
-  durationDays: number;
+  durationDays?: number;
+
+  @ApiPropertyOptional({
+    enum: ['legacy', 'monthly'],
+    default: 'monthly',
+    description: 'monthly ⇒ price is the monthly base and billingOptions drive duration',
+  })
+  @IsOptional()
+  @IsIn(['legacy', 'monthly'])
+  billingMode?: 'legacy' | 'monthly';
+
+  @ApiPropertyOptional({ type: [PlanBillingOptionDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PlanBillingOptionDto)
+  billingOptions?: PlanBillingOptionDto[];
 
   @ApiPropertyOptional({ default: true })
   @IsOptional()
@@ -125,11 +187,35 @@ export class UpdatePlanDto {
   @MaxLength(120)
   name?: string;
 
-  @ApiPropertyOptional({ maxLength: 2000 })
+  @ApiPropertyOptional({ maxLength: 2000, description: 'Legacy single-language description' })
   @IsOptional()
   @IsString()
   @MaxLength(2000)
   description?: string;
+
+  @ApiPropertyOptional({ maxLength: 2000 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  descriptionEn?: string;
+
+  @ApiPropertyOptional({ maxLength: 2000 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  descriptionFr?: string;
+
+  @ApiPropertyOptional({ maxLength: 2000 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  descriptionAr?: string;
+
+  @ApiPropertyOptional({ maxLength: 2048, description: 'Plan icon URL' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(2048)
+  image?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -150,6 +236,21 @@ export class UpdatePlanDto {
   @Min(1)
   @Max(3650)
   durationDays?: number;
+
+  @ApiPropertyOptional({
+    enum: ['legacy', 'monthly'],
+    description: 'monthly ⇒ price is the monthly base and billingOptions drive duration',
+  })
+  @IsOptional()
+  @IsIn(['legacy', 'monthly'])
+  billingMode?: 'legacy' | 'monthly';
+
+  @ApiPropertyOptional({ type: [PlanBillingOptionDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PlanBillingOptionDto)
+  billingOptions?: PlanBillingOptionDto[];
 
   @ApiPropertyOptional()
   @IsOptional()

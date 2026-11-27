@@ -8,6 +8,11 @@ import {
   SubscriptionFeatures,
   SubscriptionLimits,
   SubscriptionStatus,
+  daysRemainingUntil,
+  effectiveEntitlements,
+  effectiveOrderAllowance,
+  hasConsistentEntitlements,
+  hasValidSubscriptionSnapshot,
   isSubscriptionEntitled,
   resolveEffectiveSubscriptionStatus,
 } from '../../common/constants/subscription.const';
@@ -19,10 +24,16 @@ import {
   StoreInvitationDocument,
 } from '../team/schemas/store-invitation.schema';
 import { Subscription, SubscriptionDocument } from './schemas/subscription.schema';
+import { openTransactionSession } from '../inventory/services/session.util';
 
 export interface SubscriptionUsage {
   ordersUsed: number;
+  /** Total order allowance for the purchased period (semantic change from the old monthly base). */
   ordersLimit: number | null;
+  ordersAllowance: number | null;
+  ordersRemaining: number | null;
+  ordersPercent: number | null;
+  ordersMonthlyAllowance: number | null;
   activeProducts: number;
   productsLimit: number | null;
   teamSeats: number;
@@ -36,6 +47,12 @@ export interface SubscriptionCapabilities {
   canCreateProduct: boolean;
   canActivateProduct: boolean;
   canInviteTeam: boolean;
+  /**
+   * Whether the plan includes team management at all. A plan whose seat limit is `1` (or `0`)
+   * covers only the Owner, so the team page is closed — distinct from `canInviteTeam`, which is
+   * about free seats on a plan that does include a team.
+   */
+  canManageTeam: boolean;
 }
 
 export interface SubscriptionEntitlement {
@@ -49,6 +66,14 @@ export interface SubscriptionEntitlement {
 export interface PublicSubscriptionState {
   acceptingOrders: boolean;
   subscriptionState: SubscriptionStatus | 'none';
+}
+
+/** Context handed to cap-sensitive writes inside the per-store serialization point. */
+export interface StoreCapLockContext {
+  /** `null` when feature enforcement is off or transactions are unavailable (dev fallback). */
+  session: ClientSession | null;
+  entitlement: SubscriptionEntitlement;
+  usage: SubscriptionUsage;
 }
 
 const UNLIMITED: SubscriptionLimits = { maxOrders: null, maxProducts: null, maxTeamMembers: null };
@@ -143,80 +168,188 @@ export class SubscriptionAccessService {
       };
     }
     const effectiveStatus = resolveEffectiveSubscriptionStatus(subscription);
-    // A corrupt/missing snapshot must fail closed for enforcement — never silent unlimited.
+    // A corrupt/missing/inconsistent snapshot must fail closed for enforcement — never silent
+    // unlimited. Both helpers are shared with the public-state composition so the rules cannot
+    // drift between the order writer and every display surface.
     const snapshot = subscription.planSnapshot;
-    const snapshotValid = Boolean(
-      snapshot &&
-        typeof snapshot.name === 'string' &&
-        snapshot.name.trim().length > 0 &&
-        Number.isInteger(snapshot.durationDays) &&
-        snapshot.durationDays >= 1 &&
-        Number.isInteger(snapshot.planVersion) &&
-        snapshot.limits &&
-        typeof snapshot.limits === 'object' &&
-        snapshot.features &&
-        typeof snapshot.features === 'object',
-    );
+    const snapshotValid =
+      hasValidSubscriptionSnapshot(snapshot) && hasConsistentEntitlements(snapshot);
     const entitled =
       isSubscriptionEntitled(effectiveStatus) &&
       (!enforcement || snapshotValid);
+    const effective = effectiveEntitlements(subscription.planSnapshot);
     return {
       subscription,
       effectiveStatus,
       entitled,
-      limits: { ...UNLIMITED, ...(subscription.planSnapshot?.limits ?? {}) },
-      features: { pos: subscription.planSnapshot?.features?.pos ?? false },
+      limits: {
+        maxOrders: effective.monthlyOrders,
+        maxProducts: effective.maxProducts,
+        maxTeamMembers: effective.maxTeamMembers,
+      },
+      features: effective.features,
     };
   }
 
   async getUsage(
     storeId: string,
     subscription?: SubscriptionDocument | null,
+    session?: ClientSession,
   ): Promise<SubscriptionUsage> {
-    const sub = subscription ?? (await this.getSubscription(storeId));
+    const sub = subscription ?? (await this.getSubscription(storeId, session));
     const filter = storeIdFilter(storeId) as unknown as Types.ObjectId;
     const now = new Date();
 
+    const count = (query: any) => {
+      if (session) query.session(session);
+      return query.exec();
+    };
+
     const [activeProducts, activeMembers, ownerMembers, pendingInvitations] = await Promise.all([
-      this.productModel
-        .countDocuments({ storeId: filter, published: true, isArchived: { $ne: true } })
-        .exec(),
-      this.memberModel
-        .countDocuments({ storeId: filter, status: StoreMemberStatus.ACTIVE })
-        .exec(),
-      this.memberModel
-        .countDocuments({
+      count(
+        this.productModel.countDocuments({
+          storeId: filter,
+          published: true,
+          isArchived: { $ne: true },
+        }),
+      ),
+      count(this.memberModel.countDocuments({ storeId: filter, status: StoreMemberStatus.ACTIVE })),
+      count(
+        this.memberModel.countDocuments({
           storeId: filter,
           status: StoreMemberStatus.ACTIVE,
           role: StoreRole.OWNER,
-        })
-        .exec(),
-      this.invitationModel
-        .countDocuments({
+        }),
+      ),
+      count(
+        this.invitationModel.countDocuments({
           storeId: filter,
           status: StoreInvitationStatus.PENDING,
           expiresAt: { $gt: now },
-        })
-        .exec(),
+        }),
+      ),
     ]);
 
     // Owner occupies one seat. Legacy stores may lack an Owner membership row, so count one.
     const teamSeats = activeMembers + (ownerMembers > 0 ? 0 : 1);
-    const limits = { ...UNLIMITED, ...(sub?.planSnapshot?.limits ?? {}) };
+    const effective = effectiveEntitlements(sub?.planSnapshot ?? null);
+    const ordersUsed = sub?.usage?.ordersUsed ?? 0;
+    const ordersAllowance = effective.ordersAllowance;
+    const ordersRemaining =
+      ordersAllowance === null ? null : Math.max(0, ordersAllowance - ordersUsed);
+    const ordersPercent =
+      ordersAllowance === null
+        ? null
+        : ordersAllowance <= 0
+          ? ordersUsed > 0
+            ? 100
+            : 0
+          : Math.min(100, Math.floor((ordersUsed / ordersAllowance) * 100));
 
     return {
-      ordersUsed: sub?.usage?.ordersUsed ?? 0,
-      ordersLimit: limits.maxOrders,
+      ordersUsed,
+      ordersLimit: ordersAllowance,
+      ordersAllowance,
+      ordersRemaining,
+      ordersPercent,
+      ordersMonthlyAllowance: effective.monthlyOrders,
       activeProducts,
-      productsLimit: limits.maxProducts,
+      productsLimit: effective.maxProducts,
       teamSeats,
-      teamLimit: limits.maxTeamMembers,
+      teamLimit: effective.maxTeamMembers,
       pendingInvitations,
     };
   }
 
+  /**
+   * Serialize a cap-sensitive read-count-then-write across API instances.
+   *
+   * A conditional `$inc` on the store's subscription row (`usage.capVersion`) forces a write
+   * conflict between concurrent cap operations, so the count and the caller's write commit in
+   * one transaction. Live counts remain authoritative; `capVersion` is only a lock version.
+   *
+   * With feature enforcement off this runs the work directly (session `null`) — the caps are not
+   * enforced anyway. On a single-node datastore without transactions it logs once and falls back
+   * to the previous check-then-act behaviour (development only).
+   */
+  async withStoreCapLock<T>(
+    storeId: string,
+    work: (ctx: StoreCapLockContext) => Promise<T>,
+  ): Promise<T> {
+    if (!storeId || !this.isFeatureEnforcementEnabled()) {
+      const entitlement = await this.getEntitlement(storeId);
+      const usage = await this.getUsage(storeId, entitlement.subscription);
+      return work({ session: null, entitlement, usage });
+    }
+
+    let session: ClientSession;
+    try {
+      session = await openTransactionSession(this.subscriptionModel, this.logger);
+    } catch (err) {
+      if (
+        err instanceof AppException &&
+        err.errorCode === AppErrorCode.INVALID_COMBINATION
+      ) {
+        this.logger.warn(
+          '[subscriptions] transactions unavailable; cap-sensitive write falls back to ' +
+            'check-then-act (development only).',
+        );
+        const entitlement = await this.getEntitlement(storeId);
+        const usage = await this.getUsage(storeId, entitlement.subscription);
+        return work({ session: null, entitlement, usage });
+      }
+      throw err;
+    }
+
+    try {
+      let result!: T;
+      await session.withTransaction(async () => {
+        const bumped = await this.subscriptionModel
+          .findOneAndUpdate(
+            { storeId: storeIdFilter(storeId) as unknown as Types.ObjectId },
+            { $inc: { 'usage.capVersion': 1 } },
+            { new: true, session },
+          )
+          .exec();
+        if (!bumped) {
+          throw new AppException(AppErrorCode.SUBSCRIPTION_INACTIVE, { storeId });
+        }
+        const entitlement = await this.getEntitlement(storeId, session);
+        if (!entitlement.entitled) {
+          throw new AppException(AppErrorCode.SUBSCRIPTION_INACTIVE, { storeId });
+        }
+        const usage = await this.getUsage(storeId, entitlement.subscription, session);
+        result = await work({ session, entitlement, usage });
+      });
+      return result;
+    } finally {
+      await session.endSession();
+    }
+  }
+
   private isBelowLimit(used: number, limit: number | null): boolean {
     return limit === null || used < limit;
+  }
+
+  /**
+   * The single order-acceptance rule used by vendor capabilities, public state and the order
+   * writer's pre-check:
+   * - feature enforcement off -> orders open (flag-off no-op);
+   * - feature enforcement on -> requires an entitled subscription with a valid/inconsistent-free
+   *   snapshot (the same rule `assertOrderCreationEntitled` enforces);
+   * - broad enforcement on -> additionally requires capacity under the period order allowance.
+   */
+  async getOrderAcceptance(
+    storeId: string,
+    entitlement?: SubscriptionEntitlement,
+    usage?: SubscriptionUsage,
+  ): Promise<boolean> {
+    if (!this.isFeatureEnforcementEnabled()) return true;
+    const ent = entitlement ?? (await this.getEntitlement(storeId));
+    if (!ent.entitled) return false;
+    if (!this.isEnforcementEnabled()) return true;
+    const use = usage ?? (await this.getUsage(storeId, ent.subscription));
+    return this.isBelowLimit(use.ordersUsed, use.ordersAllowance);
   }
 
   async getCapabilities(
@@ -226,17 +359,21 @@ export class SubscriptionAccessService {
   ): Promise<SubscriptionCapabilities> {
     const ent = entitlement ?? (await this.getEntitlement(storeId));
     const use = usage ?? (await this.getUsage(storeId, ent.subscription));
-    const orderEnforcement = this.isEnforcementEnabled();
     const featureEnforcement = this.isFeatureEnforcementEnabled();
+    const broadEnforcement = this.isEnforcementEnabled();
     const entitled = ent.entitled;
 
-    // Order acceptance is the only quota on the broad rollout switch. Team, POS and product
-    // creation/activation follow the feature gate (which the broad switch implies), so product
-    // limits go live wherever team seats do.
+    // Order acceptance follows the feature gate (matching `assertOrderCreationEntitled`) and,
+    // when the broad rollout is on, the period quota. Team, POS and product
+    // creation/activation follow the feature gate, so product limits go live wherever team
+    // seats do.
+    const acceptingOrders =
+      !featureEnforcement ||
+      (entitled &&
+        (!broadEnforcement || this.isBelowLimit(use.ordersUsed, use.ordersAllowance)));
+
     return {
-      acceptingOrders:
-        !orderEnforcement ||
-        (entitled && this.isBelowLimit(use.ordersUsed, use.ordersLimit)),
+      acceptingOrders,
       canUsePos:
         !featureEnforcement || (entitled && ent.features.pos === true),
       // Both product capabilities consult the same active-product cap. `canCreateProduct`
@@ -254,6 +391,12 @@ export class SubscriptionAccessService {
         !featureEnforcement ||
         (entitled &&
           this.isBelowLimit(use.teamSeats + use.pendingInvitations, use.teamLimit)),
+      // A one-seat plan (the Owner only) does not include team management, so the team page is
+      // unavailable even though the Owner occupies that single seat. `null` stays unlimited.
+      // This is a plan-shape fact, not an entitlement fact: an expired subscription keeps the
+      // page viewable (invites stay blocked by `canInviteTeam`), matching the existing rule that
+      // an inactive subscription never hides the store's data.
+      canManageTeam: !featureEnforcement || use.teamLimit === null || use.teamLimit > 1,
     };
   }
 
@@ -276,10 +419,11 @@ export class SubscriptionAccessService {
     }
 
     const now = new Date();
-    const daysRemaining =
-      sub.endDate === null || sub.endDate === undefined
-        ? null
-        : Math.max(0, Math.ceil((new Date(sub.endDate).getTime() - now.getTime()) / 86_400_000));
+    const daysRemaining = daysRemainingUntil(sub.endDate, now);
+    const trialDaysRemaining =
+      entitlement.effectiveStatus === SubscriptionStatus.TRIALING
+        ? daysRemainingUntil(sub.trialEndsAt ?? null, now)
+        : null;
 
     return {
       storeId,
@@ -287,12 +431,16 @@ export class SubscriptionAccessService {
         status: sub.status,
         effectiveStatus: entitlement.effectiveStatus,
         isTrial: Boolean(sub.isTrial),
+        inTrial: entitlement.effectiveStatus === SubscriptionStatus.TRIALING,
         startDate: sub.startDate,
         endDate: sub.endDate ?? null,
         trialStartedAt: sub.trialStartedAt ?? null,
         trialEndsAt: sub.trialEndsAt ?? null,
         daysRemaining,
+        trialDaysRemaining,
         plan: sub.planSnapshot,
+        billing: sub.planSnapshot?.billing ?? null,
+        entitlements: effectiveEntitlements(sub.planSnapshot),
       },
       usage,
       capabilities,
@@ -303,8 +451,9 @@ export class SubscriptionAccessService {
 
   /**
    * Public projection. Only `acceptingOrders` + a minimal state leave the server — never plan
-   * price, limits, admin actor or event history. While enforcement is off, ordering is never
-   * blocked, so the flag stays true (flag-off no-op, plan §19.3).
+   * price, limits, admin actor or event history. It uses the same feature-gate + snapshot
+   * validity rule as order creation, plus the period quota when the broad rollout is on. While
+   * all enforcement is off, ordering is never blocked, so the flag stays true (flag-off no-op).
    */
   async getPublicStates(
     storeIds: string[],
@@ -320,23 +469,28 @@ export class SubscriptionAccessService {
     const byStore = new Map<string, SubscriptionDocument>();
     for (const sub of subs) byStore.set(String(sub.storeId), sub);
 
-    const enforcement = this.isEnforcementEnabled();
+    const featureEnforcement = this.isFeatureEnforcementEnabled();
+    const broadEnforcement = this.isEnforcementEnabled();
     for (const storeId of storeIds) {
       const sub = byStore.get(storeId) ?? null;
       if (!sub) {
         result.set(storeId, {
-          acceptingOrders: !enforcement,
+          acceptingOrders: !featureEnforcement,
           subscriptionState: 'none',
         });
         continue;
       }
       const effective = resolveEffectiveSubscriptionStatus(sub);
-      const entitled = isSubscriptionEntitled(effective);
-      const limit = sub.planSnapshot?.limits?.maxOrders ?? null;
+      const snapshotValid =
+        hasValidSubscriptionSnapshot(sub.planSnapshot) &&
+        hasConsistentEntitlements(sub.planSnapshot);
+      const entitled =
+        isSubscriptionEntitled(effective) && (!featureEnforcement || snapshotValid);
+      const limit = effectiveOrderAllowance(sub.planSnapshot);
       const used = sub.usage?.ordersUsed ?? 0;
-      const capacity = limit === null || used < limit;
+      const capacity = !broadEnforcement || this.isBelowLimit(used, limit);
       result.set(storeId, {
-        acceptingOrders: enforcement ? entitled && capacity : true,
+        acceptingOrders: !featureEnforcement || (entitled && capacity),
         subscriptionState: effective,
       });
     }
@@ -347,7 +501,7 @@ export class SubscriptionAccessService {
     const map = await this.getPublicStates([storeId]);
     return (
       map.get(storeId) ?? {
-        acceptingOrders: !this.isEnforcementEnabled(),
+        acceptingOrders: !this.isFeatureEnforcementEnabled(),
         subscriptionState: 'none',
       }
     );
@@ -386,7 +540,7 @@ export class SubscriptionAccessService {
       throw new AppException(AppErrorCode.SUBSCRIPTION_INACTIVE, { storeId });
     }
 
-    const limit = subscription.planSnapshot?.limits?.maxOrders ?? null;
+    const limit = effectiveOrderAllowance(subscription.planSnapshot);
     const filter: Record<string, unknown> = {
       _id: subscription._id,
       status: { $in: [SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING] },

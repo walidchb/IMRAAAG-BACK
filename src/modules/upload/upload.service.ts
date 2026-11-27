@@ -135,6 +135,17 @@ export class UploadService {
   }
 
   /**
+   * A single optimized WebP used as a subscription plan's icon. Plans render one small image,
+   * so no derivatives are generated.
+   */
+  async uploadPlanImage(file: Express.Multer.File, scope: string): Promise<UploadResult> {
+    this.validateFile(file);
+    const folder = IMAGE_CONFIG.folders.plan;
+    const maxWidth = IMAGE_CONFIG.maxWidths.plan;
+    return this.processUpload(file, folder, [], maxWidth, scope);
+  }
+
+  /**
    * A single optimized WebP for a Box's primary or gallery image. Boxes never render the
    * product thumbnail/medium/large derivatives, so none are generated — only the resized
    * main image is written, under the store's own `boxes/` namespace.

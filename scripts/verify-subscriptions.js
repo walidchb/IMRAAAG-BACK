@@ -63,6 +63,39 @@ async function main() {
   const planIds = new Set(plans.map((p) => String(p._id)));
   const subs = await db.collection('subscriptions').find({}).toArray();
 
+  // 2a. Signup-default invariant. `isDefaultForSignup` implies `isActive` (the partial unique
+  // index covers active defaults only), and exactly one active default is required whenever
+  // subscription feature enforcement is on.
+  const truthy = (value) => String(value ?? '').toLowerCase() === 'true';
+  const subscriptionsEnabled = truthy(process.env.SUBSCRIPTIONS_ENABLED);
+  const broadEnforcement = truthy(process.env.SUBSCRIPTIONS_ENFORCEMENT_ENABLED);
+  const featureFlag =
+    process.env.SUBSCRIPTIONS_FEATURE_ENFORCEMENT_ENABLED === undefined
+      ? subscriptionsEnabled
+      : truthy(process.env.SUBSCRIPTIONS_FEATURE_ENFORCEMENT_ENABLED);
+  const featureEnforcement = broadEnforcement || featureFlag;
+
+  const activeDefaults = plans.filter((p) => p.isActive === true && p.isDefaultForSignup === true);
+  const inactiveDefaults = plans.filter((p) => p.isActive !== true && p.isDefaultForSignup === true);
+  if (inactiveDefaults.length > 0) {
+    fail(
+      `${inactiveDefaults.length} inactive plan(s) are marked as the signup default: ` +
+        inactiveDefaults.map((p) => String(p._id)).join(', '),
+    );
+  }
+  if (activeDefaults.length > 1) {
+    fail(
+      `${activeDefaults.length} active plans are marked as the signup default: ` +
+        activeDefaults.map((p) => String(p._id)).join(', '),
+    );
+  }
+  if (featureEnforcement && activeDefaults.length === 0) {
+    fail('subscription feature enforcement is on but there is no active signup default plan');
+  }
+  if (!featureEnforcement && activeDefaults.length === 0) {
+    notes.push('no active signup default plan (feature enforcement is off)');
+  }
+
   const seen = new Set();
   for (const sub of subs) {
     const id = String(sub._id);
@@ -92,6 +125,68 @@ async function main() {
     } else {
       if (!snap.limits || typeof snap.limits !== 'object') fail(`subscription ${id} snapshot has no limits`);
       if (!snap.features || typeof snap.features !== 'object') fail(`subscription ${id} snapshot has no features`);
+
+      const ent = snap.entitlements;
+      const nullableInt = (v) => v === null || (Number.isInteger(v) && v >= 0);
+      if (ent != null) {
+        if (
+          !nullableInt(ent.monthlyOrders) ||
+          !nullableInt(ent.ordersAllowance) ||
+          !nullableInt(ent.maxProducts) ||
+          !nullableInt(ent.maxTeamMembers) ||
+          !ent.features ||
+          typeof ent.features !== 'object'
+        ) {
+          fail(`subscription ${id} has a malformed entitlements block`);
+        }
+        const billing = snap.billing;
+        if (billing && billing.priceSource !== 'legacy') {
+          // Cumulative allowance must equal monthly base × duration when both are finite.
+          if (
+            ent.ordersAllowance !== null &&
+            ent.monthlyOrders !== null &&
+            Number.isInteger(ent.durationMonths)
+          ) {
+            if (ent.ordersAllowance !== ent.monthlyOrders * ent.durationMonths) {
+              fail(
+                `subscription ${id} allowance ${ent.ordersAllowance} != ${ent.monthlyOrders} × ${ent.durationMonths}`,
+              );
+            }
+          }
+          // Concurrent limits are never multiplied by duration.
+          if (snap.limits) {
+            if (ent.maxProducts !== (snap.limits.maxProducts ?? null)) {
+              fail(`subscription ${id} entitlements.maxProducts differs from plan limits`);
+            }
+            if (ent.maxTeamMembers !== (snap.limits.maxTeamMembers ?? null)) {
+              fail(`subscription ${id} entitlements.maxTeamMembers differs from plan limits`);
+            }
+          }
+          if (Number.isInteger(billing.durationMonths)) {
+            const expectedList = billing.monthlyBasePrice * billing.durationMonths;
+            if (billing.listPrice !== expectedList) {
+              fail(`subscription ${id} billing.listPrice ${billing.listPrice} != ${expectedList}`);
+            }
+            if (billing.priceSource === 'calculated') {
+              const expectedFinal = Math.round(
+                (billing.listPrice * (100 - billing.discountPercent)) / 100,
+              );
+              if (billing.finalPrice !== expectedFinal) {
+                fail(
+                  `subscription ${id} billing.finalPrice ${billing.finalPrice} != ${expectedFinal}`,
+                );
+              }
+            } else if (billing.priceSource === 'override') {
+              if (billing.finalPrice !== billing.priceOverride) {
+                fail(`subscription ${id} override finalPrice != priceOverride`);
+              }
+              if (billing.priceOverride < 0 || billing.priceOverride > billing.listPrice) {
+                fail(`subscription ${id} priceOverride ${billing.priceOverride} out of range`);
+              }
+            }
+          }
+        }
+      }
     }
 
     const used = sub.usage?.ordersUsed;
@@ -108,6 +203,32 @@ async function main() {
   for (const plan of plans) {
     for (const key of Object.keys(plan)) {
       if (SECRET_PATTERN.test(key)) fail(`plan ${plan._id} contains a credential-like field "${key}"`);
+    }
+
+    const mode = plan.billingMode || 'legacy';
+    if (!['legacy', 'monthly'].includes(mode)) {
+      fail(`plan ${plan._id} has invalid billingMode ${mode}`);
+    }
+    const options = Array.isArray(plan.billingOptions) ? plan.billingOptions : [];
+    if (mode === 'monthly') {
+      const durations = new Set();
+      for (const option of options) {
+        const duration = Number(option.durationMonths);
+        if (![1, 3, 6, 12].includes(duration)) {
+          fail(`plan ${plan._id} has unsupported billing duration ${option.durationMonths}`);
+        }
+        if (durations.has(duration)) {
+          fail(`plan ${plan._id} has duplicate option duration ${duration}`);
+        }
+        durations.add(duration);
+        const discount = Number(option.discountPercent);
+        if (!Number.isInteger(discount) || discount < 0 || discount > 100) {
+          fail(`plan ${plan._id} has invalid discountPercent ${option.discountPercent}`);
+        }
+      }
+      if (!durations.has(1)) {
+        fail(`plan ${plan._id} is monthly but missing the mandatory 1-month duration`);
+      }
     }
   }
 

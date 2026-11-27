@@ -3,7 +3,7 @@ import { AppException } from '../../common/errors/app-exception';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
 import { InjectModel } from '@nestjs/mongoose';
 import { SubscriptionAccessService } from '../subscriptions/subscription-access.service';
-import { Model, Types } from 'mongoose';
+import { Model, Types, ClientSession } from 'mongoose';
 import { Product, ProductDocument } from './schemas/product.schema';
 import { Category, CategoryDocument } from '../categories/schemas/category.schema';
 import { SubCategory, SubCategoryDocument } from '../categories/schemas/sub-category.schema';
@@ -232,9 +232,9 @@ export class ProductsService {
     }
 
     // Plans & Subscriptions: expired stores cannot create products at all, and a store at its
-    // active-product cap cannot start another product. This mirrors the team-seat gate and keeps
-    // the disabled Add Product action consistent with the API. No-op when enforcement is dark.
-    await this.assertProductWriteAllowed(storeId);
+    // active-product cap cannot start another product. The count and the insert are serialized
+    // through the subscription row so concurrent requests cannot exceed the cap. No-op when
+    // enforcement is dark.
 
     const created = new this.productModel({
       ...createProductDto,
@@ -245,8 +245,10 @@ export class ProductsService {
       slug,
     });
 
-    this.cacheService.clear('categories:');
-    const saved = await created.save();
+    const saved = await this.withProductCapLock(storeId, async (session) => {
+      this.cacheService.clear('categories:');
+      return session ? created.save({ session }) : created.save();
+    });
     await this.storesService.incrementProductCount(vendorEmail, 1);
 
     // Every product is a variant product, so a brand-new product needs its default
@@ -838,19 +840,23 @@ export class ProductsService {
     // A draft→published transition grows the active catalogue and must respect the plan.
     const publishingNow =
       updateProductDto.published === true && (existing as any).published !== true;
-    if (publishingNow) {
-      await this.assertProductWriteAllowed(existing.storeId);
-    }
 
-    const updated = await this.productModel
-      .findOneAndUpdate(
+    const runUpdate = (session?: ClientSession | null) => {
+      const query = this.productModel.findOneAndUpdate(
         { _id: id, ...NOT_ARCHIVED_PRODUCT_FILTER },
         updateData,
         { new: true },
-      )
-      .populate('category', 'nameEn nameAr nameFr slug image isPublished')
-      .populate('subCategory', 'nameEn nameAr nameFr slug isPublished categoryId')
-      .exec();
+      );
+      if (session) query.session(session);
+      return query
+        .populate('category', 'nameEn nameAr nameFr slug image isPublished')
+        .populate('subCategory', 'nameEn nameAr nameFr slug isPublished categoryId')
+        .exec();
+    };
+
+    const updated = publishingNow
+      ? await this.withProductCapLock(existing.storeId, (session) => runUpdate(session))
+      : await runUpdate();
     if (!updated) {
       // Lost a race with an archive or a delete between the pre-check and the write.
       const current = await this.productModel.findById(id).exec();
@@ -993,16 +999,17 @@ export class ProductsService {
    */
   private async assertProductWriteAllowed(
     storeId: Types.ObjectId | string | null | undefined,
+    session?: ClientSession | null,
   ): Promise<void> {
     const access = this.subscriptionAccessService;
     if (!storeId || !access || !access.isFeatureEnforcementEnabled()) return;
     const id = String(storeId);
-    const entitlement = await access.getEntitlement(id);
+    const entitlement = await access.getEntitlement(id, session ?? undefined);
     if (!entitlement.entitled) {
       this.logger.warn(`[subscriptions] product write rejected: inactive store=${id}`);
       throw new AppException(AppErrorCode.SUBSCRIPTION_INACTIVE, { storeId: id });
     }
-    const usage = await access.getUsage(id, entitlement.subscription);
+    const usage = await access.getUsage(id, entitlement.subscription, session ?? undefined);
     if (usage.productsLimit !== null && usage.activeProducts >= usage.productsLimit) {
       this.logger.warn(
         `[subscriptions] product write rejected: cap store=${id} used=${usage.activeProducts} limit=${usage.productsLimit}`,
@@ -1012,6 +1019,23 @@ export class ProductsService {
         limit: usage.productsLimit,
       });
     }
+  }
+
+  /**
+   * Run a cap-sensitive product write inside the per-store serialization point. With feature
+   * enforcement off (or a non-transactional dev datastore) the callback receives `null` and the
+   * write proceeds exactly as before.
+   */
+  private async withProductCapLock<T>(
+    storeId: Types.ObjectId | string | null | undefined,
+    work: (session: ClientSession | null) => Promise<T>,
+  ): Promise<T> {
+    const access = this.subscriptionAccessService;
+    if (!storeId || !access || !access.isFeatureEnforcementEnabled()) return work(null);
+    return access.withStoreCapLock(String(storeId), async ({ session }) => {
+      await this.assertProductWriteAllowed(storeId, session);
+      return work(session);
+    });
   }
 
   /**
@@ -1152,12 +1176,8 @@ export class ProductsService {
 
     // Restoring a published product re-enters the storefront, so it is a publish transition.
     // Restoring an archived *draft* stays allowed at the cap (it does not grow the active catalogue).
-    if (existing.published === true) {
-      await this.assertProductWriteAllowed(existing.storeId);
-    }
-
-    const restored = await this.productModel
-      .findOneAndUpdate(
+    const runRestore = (session?: ClientSession | null) => {
+      const query = this.productModel.findOneAndUpdate(
         {
           _id: id,
           isArchived: true,
@@ -1167,8 +1187,15 @@ export class ProductsService {
         },
         { $set: { isArchived: false, archivedAt: null, archivedBy: null } },
         { new: true },
-      )
-      .exec();
+      );
+      if (session) query.session(session);
+      return query.exec();
+    };
+
+    const restored =
+      existing.published === true
+        ? await this.withProductCapLock(existing.storeId, (session) => runRestore(session))
+        : await runRestore();
 
     if (!restored) {
       const current = await this.productModel.findById(id).exec();
@@ -1276,8 +1303,7 @@ export class ProductsService {
     this.assertNotArchived(original, id);
 
     // Duplicating creates another product document, so it must not become a way around the
-    // creation cap. No-op while enforcement is off.
-    await this.assertProductWriteAllowed(original.storeId);
+    // creation cap. The count and the insert are serialized through the subscription row.
 
     // The copy inherits the original's category pair, so the pair must still be valid for
     // the store (a category could have been removed since the original was saved).
@@ -1317,8 +1343,10 @@ export class ProductsService {
       published: false,
     });
 
-    this.cacheService.clear('categories:');
-    const saved = await duplicateDoc.save();
+    const saved = await this.withProductCapLock(original.storeId, async (session) => {
+      this.cacheService.clear('categories:');
+      return session ? duplicateDoc.save({ session }) : duplicateDoc.save();
+    });
 
     // The option/value/variant structure is cloned onto the duplicate, but every quantity
     // opens at zero (see `duplicateMatrix`): the copy must not claim stock it was never

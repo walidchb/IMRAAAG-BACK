@@ -50,6 +50,7 @@ export const IMAGE_CONFIG = {
     storeCover: 1920,
     profileAvatar: 256,
     category: 800,
+    plan: 512,
   } as const,
 
   variants: {
@@ -79,5 +80,6 @@ export const IMAGE_CONFIG = {
     storeCover: 'stores/covers',
     profileAvatar: 'profiles',
     category: 'categories',
+    plan: 'plans',
   } as const,
 } as const;

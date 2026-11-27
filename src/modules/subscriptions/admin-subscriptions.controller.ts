@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AdminProtected } from '../admin/decorators/admin-protected.decorator';
@@ -15,6 +15,7 @@ import {
   SubscriptionQueryDto,
   TrialSubscriptionDto,
 } from './dto/subscription.dto';
+import { UpdateBillingConfigDto } from './dto/billing-config.dto';
 
 @ApiTags('Admin Subscriptions')
 @AdminProtected()
@@ -29,6 +30,23 @@ export class AdminSubscriptionsController {
     return this.adminSubscriptionsService.list(query);
   }
 
+  @Get('billing-config')
+  @Throttle({ default: { limit: 120, ttl: 60000 } })
+  @ApiOperation({ summary: 'Global monthly billing durations (1/3/6/12)' })
+  getBillingConfig() {
+    return this.adminSubscriptionsService.getBillingConfig();
+  }
+
+  @Patch('billing-config')
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  @ApiOperation({ summary: 'Enable/disable global monthly billing durations (1 always enabled)' })
+  updateBillingConfig(
+    @CurrentAdmin() admin: AdminPrincipal,
+    @Body() dto: UpdateBillingConfigDto,
+  ) {
+    return this.adminSubscriptionsService.updateBillingConfig(dto.enabledDurations, this.actor(admin));
+  }
+
   @Get(':id')
   @Throttle({ default: { limit: 120, ttl: 60000 } })
   @ApiOperation({ summary: 'Subscription detail with store, owner and event history' })
@@ -40,7 +58,14 @@ export class AdminSubscriptionsController {
   @Throttle({ default: { limit: 30, ttl: 60000 } })
   @ApiOperation({ summary: 'Assign a plan and start a new period' })
   assign(@CurrentAdmin() admin: AdminPrincipal, @Body() dto: AssignSubscriptionDto) {
-    return this.adminSubscriptionsService.assign(dto.storeId, dto.planId, this.actor(admin), dto.replace);
+    return this.adminSubscriptionsService.assign(dto.storeId, dto.planId, this.actor(admin), {
+      replace: dto.replace,
+      durationMonths: dto.durationMonths,
+      billingOptionId: dto.billingOptionId,
+      agreedPriceOverride: dto.agreedPriceOverride,
+      includeTrial: dto.includeTrial,
+      reason: dto.reason,
+    });
   }
 
   @Post('trial')
@@ -58,18 +83,28 @@ export class AdminSubscriptionsController {
     @Param() params: AdminIdParamDto,
     @Body() dto: ChangePlanDto,
   ) {
-    return this.adminSubscriptionsService.changePlan(params.id, dto.planId, this.actor(admin), dto.reason);
+    return this.adminSubscriptionsService.changePlan(params.id, dto.planId, this.actor(admin), {
+      durationMonths: dto.durationMonths,
+      billingOptionId: dto.billingOptionId,
+      includeTrial: dto.includeTrial,
+      reason: dto.reason,
+    });
   }
 
   @Post(':id/extend')
   @Throttle({ default: { limit: 30, ttl: 60000 } })
-  @ApiOperation({ summary: 'Extend the current period; usage preserved' })
+  @ApiOperation({ summary: 'Extend the current period by months/days and the orders allowance' })
   extend(
     @CurrentAdmin() admin: AdminPrincipal,
     @Param() params: AdminIdParamDto,
     @Body() dto: ExtendSubscriptionDto,
   ) {
-    return this.adminSubscriptionsService.extend(params.id, dto.days, this.actor(admin), dto.reason);
+    return this.adminSubscriptionsService.extend(
+      params.id,
+      { months: dto.months, days: dto.days },
+      this.actor(admin),
+      dto.reason,
+    );
   }
 
   @Post(':id/cancel')
@@ -92,6 +127,10 @@ export class AdminSubscriptionsController {
     @Body() dto: ReactivateSubscriptionDto,
   ) {
     return this.adminSubscriptionsService.reactivate(params.id, this.actor(admin), {
+      durationMonths: dto.durationMonths,
+      billingOptionId: dto.billingOptionId,
+      sameTerms: dto.sameTerms,
+      months: dto.months,
       days: dto.days,
       reason: dto.reason,
     });

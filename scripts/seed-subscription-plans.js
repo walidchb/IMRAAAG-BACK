@@ -28,9 +28,14 @@ const PLANS = [
     name: 'Legacy Unlimited',
     nameKey: 'legacy unlimited',
     description: 'Grandfathered plan for stores that existed before subscriptions.',
+    descriptionEn: 'Grandfathered plan for stores that existed before subscriptions.',
+    descriptionFr: 'Forfait historique pour les boutiques créées avant les abonnements.',
+    descriptionAr: 'باقة تاريخية للمتاجر التي كانت موجودة قبل الاشتراكات.',
     price: 0,
     currency: 'DZD',
     durationDays: 3650,
+    billingMode: 'legacy',
+    billingOptions: [],
     isActive: true,
     isDefaultForSignup: false,
     version: 1,
@@ -43,9 +48,20 @@ const PLANS = [
     name: 'Starter',
     nameKey: 'starter',
     description: 'Entry-level plan assigned to new stores.',
+    descriptionEn: 'Entry-level plan assigned to new stores.',
+    descriptionFr: 'Forfait de base attribué aux nouvelles boutiques.',
+    descriptionAr: 'الباقة الأساسية المُخصصة للمتاجر الجديدة.',
     price: 2500,
     currency: 'DZD',
     durationDays: 30,
+    billingMode: 'monthly',
+    // Fixed durations (1/3/6/12). Only discounts vary; global enablement lives separately.
+    billingOptions: [
+      { durationMonths: 1, discountPercent: 0 },
+      { durationMonths: 3, discountPercent: 5 },
+      { durationMonths: 6, discountPercent: 10 },
+      { durationMonths: 12, discountPercent: 20 },
+    ],
     isActive: true,
     isDefaultForSignup: true,
     version: 1,
@@ -73,8 +89,13 @@ async function main() {
       continue;
     }
     const now = new Date();
+    const billingOptions = (plan.billingOptions ?? []).map((option) => ({
+      _id: new mongoose.Types.ObjectId(),
+      ...option,
+    }));
     await collection.insertOne({
       ...plan,
+      billingOptions,
       createdByAdminId: null,
       createdByAdminEmail: null,
       lastEditedByAdminId: null,

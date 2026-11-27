@@ -1,6 +1,6 @@
 import { Injectable, Optional } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model, Types, ClientSession } from 'mongoose';
 import { AppException } from '../../common/errors/app-exception';
 import { AppErrorCode } from '../../common/errors/error-codes.enum';
 import { Role } from '../../common/constants/roles.enum';
@@ -164,15 +164,20 @@ export class TeamService {
         });
       } else {
         this.assertAllowed(access, StorePermission.TEAM_REACTIVATE);
-        await this.assertTeamSeatAvailable(String(store._id));
-        // Set active and clear the deactivation audit fields in one write.
-        await this.memberModel.updateOne(
-          { _id: member._id, storeId: store._id },
-          {
-            $set: { status: StoreMemberStatus.ACTIVE },
-            $unset: { deactivatedAt: 1, deactivatedBy: 1 },
-          },
-        ).exec();
+        // Set active and clear the deactivation audit fields in one write, serialized with the
+        // live seat count so concurrent reactivations cannot exceed the plan's cap.
+        await this.withTeamSeatLock(String(store._id), async (session) => {
+          await this.assertTeamSeatAvailable(String(store._id), session);
+          const query = this.memberModel.updateOne(
+            { _id: member._id, storeId: store._id },
+            {
+              $set: { status: StoreMemberStatus.ACTIVE },
+              $unset: { deactivatedAt: 1, deactivatedBy: 1 },
+            },
+          );
+          if (session) query.session(session);
+          await query.exec();
+        });
 
         this.auditService.record({
           action: AuditAction.TEAM_MEMBER_REACTIVATED,
@@ -314,20 +319,37 @@ export class TeamService {
    * Reactivation consumes a seat, so a lowered plan blocks it until capacity frees up. No-op
    * while enforcement is off; existing members are never deactivated by a plan change.
    */
-  private async assertTeamSeatAvailable(storeId: string): Promise<void> {
+  private async assertTeamSeatAvailable(
+    storeId: string,
+    session?: ClientSession | null,
+  ): Promise<void> {
     const subscriptionAccess = this.subscriptionAccessService;
     if (!subscriptionAccess || !subscriptionAccess.isFeatureEnforcementEnabled()) return;
-    const entitlement = await subscriptionAccess.getEntitlement(storeId);
+    const entitlement = await subscriptionAccess.getEntitlement(storeId, session ?? undefined);
     if (!entitlement.entitled) {
       throw new AppException(AppErrorCode.SUBSCRIPTION_INACTIVE, { storeId });
     }
-    const usage = await subscriptionAccess.getUsage(storeId, entitlement.subscription);
+    const usage = await subscriptionAccess.getUsage(
+      storeId,
+      entitlement.subscription,
+      session ?? undefined,
+    );
     if (usage.teamLimit !== null && usage.teamSeats >= usage.teamLimit) {
       throw new AppException(AppErrorCode.SUBSCRIPTION_TEAM_LIMIT_REACHED, {
         used: usage.teamSeats,
         limit: usage.teamLimit,
       });
     }
+  }
+
+  /** Per-store serialization point for a seat-consuming write (feature gate only). */
+  private async withTeamSeatLock<T>(
+    storeId: string,
+    work: (session: ClientSession | null) => Promise<T>,
+  ): Promise<T> {
+    const access = this.subscriptionAccessService;
+    if (!access || !access.isFeatureEnforcementEnabled()) return work(null);
+    return access.withStoreCapLock(storeId, ({ session }) => work(session));
   }
 
   private async deactivate(
